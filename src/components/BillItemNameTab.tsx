@@ -3,6 +3,7 @@ import { macAudio } from '../utils/macAudio';
 import { Search, Plus, Trash2, Edit2, Check, Tag, Hash, FileText, Layers, Banknote } from 'lucide-react';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
 import type { BillNameMap } from '../data/billMapsData';
+import { GlassInput, GlassSelect } from './common/GlassInput';
 
 const DEFAULT_BILL_COLS = { srNo: 40, on: 40, shortCode: 150, printName: 300, rate: 80, category: 130 };
 
@@ -92,10 +93,14 @@ export const BillItemNameTab: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '8px' }} tabIndex={0} onKeyDown={handleKeyDown} className="mac-focus-ring">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="mac-notched-field" style={{ margin: 0, padding: '6px 12px', minWidth: '300px' }}>
-          <Search size={14} color="#94a3b8" />
-          <input type="text" placeholder="Search bill names..." value={search} onChange={e => setSearch(e.target.value)} className="mac-notched-input" style={{ fontSize: '12px', width: '100%' }} />
-        </div>
+        <GlassInput
+          label="Search bill names..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          icon={Search}
+          style={{ minWidth: '300px' }}
+          inputStyle={{ fontSize: '12px' }}
+        />
         <button className="mac-btn primary" onClick={() => { setEditingId(null); setFormData({ id: 'bm' + Date.now(), isActive: true, shortCode: '', printName: '', rate: 0, category: '' }); setIsModalOpen(true); macAudio.playClick(); }}>
           <Plus size={14} /><span>New Map (Enter)</span>
         </button>
@@ -137,22 +142,39 @@ export const BillItemNameTab: React.FC = () => {
           <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '94vw', borderRadius: '12px', padding: '18px 22px', background: 'linear-gradient(135deg, rgba(13, 21, 38, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%)', border: '1px solid rgba(56, 189, 248, 0.35)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}><Tag size={15} color="#38bdf8" /><div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>{editingId ? 'EDIT MAP' : 'NEW MAP'}</div></div>
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Hash size={10} /><span>SHORT CODE *</span></div>
-                <input type="text" required value={formData.shortCode} onChange={e => setFormData({...formData, shortCode: e.target.value.toUpperCase()})} className="mac-notched-input" style={{ fontWeight: 700, color: '#38bdf8' }} />
-              </div>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><FileText size={10} /><span>PRINT / INVOICE NAME *</span></div>
-                <input type="text" required value={formData.printName} onChange={e => setFormData({...formData, printName: e.target.value.toUpperCase()})} className="mac-notched-input" style={{ fontWeight: 700, color: '#f8fafc' }} />
-              </div>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Banknote size={10} /><span>RATE *</span></div>
-                <input type="number" step="0.01" required value={formData.rate} onChange={e => setFormData({...formData, rate: parseFloat(e.target.value) || 0})} className="mac-notched-input" style={{ color: '#fbbf24', fontWeight: 700 }} />
-              </div>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Layers size={10} /><span>CATEGORY</span></div>
-                <input type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value.toUpperCase()})} className="mac-notched-input" style={{ color: '#a78bfa' }} />
-              </div>
+              <GlassInput
+                label="SHORT CODE *"
+                value={formData.shortCode}
+                onChange={e => setFormData({...formData, shortCode: e.target.value.toUpperCase()})}
+                icon={Hash}
+                required
+                inputStyle={{ fontWeight: 700, color: '#38bdf8' }}
+              />
+              <GlassInput
+                label="PRINT / INVOICE NAME *"
+                value={formData.printName}
+                onChange={e => setFormData({...formData, printName: e.target.value.toUpperCase()})}
+                icon={FileText}
+                required
+                inputStyle={{ fontWeight: 700, color: '#f8fafc' }}
+              />
+              <GlassInput
+                label="RATE *"
+                type="number"
+                step="0.01"
+                required
+                value={formData.rate}
+                onChange={e => setFormData({...formData, rate: parseFloat(e.target.value) || 0})}
+                icon={Banknote}
+                inputStyle={{ color: '#fbbf24', fontWeight: 700 }}
+              />
+              <GlassInput
+                label="CATEGORY"
+                value={formData.category}
+                onChange={e => setFormData({...formData, category: e.target.value.toUpperCase()})}
+                icon={Layers}
+                inputStyle={{ color: '#a78bfa' }}
+              />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="mac-btn">Cancel</button>
                 <button type="submit" className="mac-btn primary"><Check size={14} /> {editingId ? 'Update' : 'Save'}</button>

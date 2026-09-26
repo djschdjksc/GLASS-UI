@@ -4,6 +4,7 @@ import { SkipItemNameTab } from './SkipItemNameTab';
 import { BillItemNameTab } from './BillItemNameTab';
 import { macAudio } from '../utils/macAudio';
 import { useSettings } from '../context/SettingsContext';
+import { GlassInput, GlassSelect } from './common/GlassInput';
 import {
   Plus,
   Trash2,
@@ -702,180 +703,95 @@ export const ControlPanelView: React.FC = () => {
               {/* Row 1: Group Name & Group Index */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '12px' }}>
                 {/* 1. Group Name */}
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label">
-                    <Layers size={10} />
-                    <span>GROUP NAME *</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <Layers size={13} color="#38bdf8" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. BFP, MOULDS"
-                    value={formData.groupName}
-                    onChange={(e) => setFormData({ ...formData, groupName: e.target.value.toUpperCase() })}
-                    className="mac-notched-input"
-                    style={{ fontWeight: 700, color: '#38bdf8' }}
-                  />
-                </div>
+                <GlassInput
+                  label="GROUP NAME *"
+                  value={formData.groupName}
+                  onChange={(e) => setFormData({ ...formData, groupName: e.target.value.toUpperCase() })}
+                  icon={Layers}
+                  required
+                  inputStyle={{ fontWeight: 700, color: '#38bdf8' }}
+                />
 
                 {/* 2. Group Index */}
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label">
-                    <Hash size={10} />
-                    <span>GROUP INDEX *</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <Hash size={13} color="#fbbf24" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. G-101"
-                    value={formData.groupIndex}
-                    onChange={(e) => setFormData({ ...formData, groupIndex: e.target.value.toUpperCase() })}
-                    className="mac-notched-input"
-                    style={{ fontFamily: 'monospace', fontWeight: 700, color: '#fbbf24' }}
-                  />
-                </div>
+                <GlassInput
+                  label="GROUP INDEX *"
+                  value={formData.groupIndex}
+                  onChange={(e) => setFormData({ ...formData, groupIndex: e.target.value.toUpperCase() })}
+                  icon={Hash}
+                  required
+                  inputStyle={{ fontFamily: 'monospace', fontWeight: 700, color: '#fbbf24' }}
+                />
               </div>
 
               {/* Row 2: Weight/PC, Pcs Per Box, Multiplication */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr', gap: '12px' }}>
                 {/* 3. Weight / PC */}
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label">
-                    <Scale size={10} />
-                    <span>WEIGHT / PC (KGS) *</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <Scale size={13} color="#34d399" />
-                  </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={formData.weightPerPc}
-                    onChange={(e) => setFormData({ ...formData, weightPerPc: parseFloat(e.target.value) || 0 })}
-                    className="mac-notched-input"
-                    style={{ color: '#34d399', fontWeight: 700 }}
-                  />
-                </div>
+                <GlassInput
+                  label="WEIGHT / PC (KGS) *"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.weightPerPc}
+                  onChange={(e) => setFormData({ ...formData, weightPerPc: parseFloat(e.target.value) || 0 })}
+                  icon={Scale}
+                  inputStyle={{ color: '#34d399', fontWeight: 700 }}
+                />
 
                 {/* 4. Pcs Per Box */}
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label">
-                    <Package size={10} />
-                    <span>PCS PER BOX *</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <Package size={13} color="#60a5fa" />
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={formData.pcsPerBox}
-                    onChange={(e) => setFormData({ ...formData, pcsPerBox: parseInt(e.target.value) || 1 })}
-                    className="mac-notched-input"
-                    style={{ fontWeight: 600, color: '#ffffff' }}
-                  />
-                </div>
+                <GlassInput
+                  label="PCS PER BOX *"
+                  type="number"
+                  required
+                  value={formData.pcsPerBox}
+                  onChange={(e) => setFormData({ ...formData, pcsPerBox: parseInt(e.target.value) || 1 })}
+                  icon={Package}
+                  inputStyle={{ fontWeight: 600, color: '#ffffff' }}
+                />
 
                 {/* 5. Multiplication */}
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label">
-                    <Percent size={10} />
-                    <span>MULTIPLICATION *</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <Percent size={13} color="#a78bfa" />
-                  </div>
-                  <input
-                    type="number"
-                    step="0.05"
-                    min="0.1"
-                    required
-                    value={formData.multiplication}
-                    onChange={(e) => setFormData({ ...formData, multiplication: parseFloat(e.target.value) || 1.0 })}
-                    className="mac-notched-input"
-                    style={{ color: '#a78bfa', fontWeight: 700 }}
-                  />
-                </div>
+                <GlassInput
+                  label="MULTIPLICATION *"
+                  type="number"
+                  step="0.05"
+                  required
+                  value={formData.multiplication}
+                  onChange={(e) => setFormData({ ...formData, multiplication: parseFloat(e.target.value) || 1.0 })}
+                  icon={Percent}
+                  inputStyle={{ color: '#a78bfa', fontWeight: 700 }}
+                />
               </div>
 
               {/* Row 3: Real Item Name */}
-              <div className="mac-notched-field">
-                <div className="mac-notched-label">
-                  <FileText size={10} />
-                  <span>REAL ITEM NAME *</span>
-                </div>
-                <div className="mac-notched-icon">
-                  <FileText size={13} color="#f8fafc" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. BFP Gold Series Aluminium Housing"
-                  value={formData.realItemName}
-                  onChange={(e) => setFormData({ ...formData, realItemName: e.target.value })}
-                  className="mac-notched-input"
-                  style={{ color: '#f8fafc', fontWeight: 500 }}
-                />
-              </div>
+              <GlassInput
+                label="REAL ITEM NAME *"
+                value={formData.realItemName}
+                onChange={(e) => setFormData({ ...formData, realItemName: e.target.value })}
+                icon={FileText}
+                required
+                inputStyle={{ color: '#f8fafc', fontWeight: 500 }}
+              />
 
               {/* Row 4: Skip Eq & Chain Parent */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '12px' }}>
                 {/* 7. Skip Equation */}
-                <div className="mac-notched-field" style={{ padding: '7px 10px 5px 10px' }}>
-                  <div className="mac-notched-label">
-                    <Filter size={10} />
-                    <span>SKIP EQUATION (SKIP EQ)</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <Filter size={13} color={formData.skipEq ? '#f87171' : '#34d399'} />
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, skipEq: false })}
-                      className={'mac-btn ' + (!formData.skipEq ? 'active' : '')}
-                      style={{ flex: 1, height: '26px', fontSize: '10.5px', fontWeight: 700, color: !formData.skipEq ? '#34d399' : '#94a3b8' }}
-                    >
-                      NO
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, skipEq: true })}
-                      className={'mac-btn ' + (formData.skipEq ? 'active' : '')}
-                      style={{ flex: 1, height: '26px', fontSize: '10.5px', fontWeight: 700, color: formData.skipEq ? '#f87171' : '#94a3b8' }}
-                    >
-                      YES
-                    </button>
-                  </div>
-                </div>
+                <GlassSelect
+                  label="SKIP EQUATION (SKIP EQ)"
+                  value={formData.skipEq ? 'YES' : 'NO'}
+                  onChange={(e) => setFormData({ ...formData, skipEq: e.target.value === 'YES' })}
+                  icon={Filter}
+                >
+                  <option value="NO">NO</option>
+                  <option value="YES">YES</option>
+                </GlassSelect>
 
                 {/* 8. Chain Parent */}
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label">
-                    <GitBranch size={10} />
-                    <span>CHAIN PARENT</span>
-                  </div>
-                  <div className="mac-notched-icon">
-                    <GitBranch size={13} color="#38bdf8" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="e.g. RAW-ALUM-6063 or NONE"
-                    value={formData.chainParent}
-                    onChange={(e) => setFormData({ ...formData, chainParent: e.target.value.toUpperCase() })}
-                    className="mac-notched-input"
-                    style={{ fontFamily: 'monospace', color: formData.chainParent === 'NONE' ? '#64748b' : '#38bdf8' }}
-                  />
-                </div>
+                <GlassInput
+                  label="CHAIN PARENT"
+                  value={formData.chainParent}
+                  onChange={(e) => setFormData({ ...formData, chainParent: e.target.value.toUpperCase() })}
+                  icon={GitBranch}
+                  inputStyle={{ fontFamily: 'monospace', color: formData.chainParent === 'NONE' ? '#64748b' : '#38bdf8' }}
+                />
               </div>
 
               {/* Actions Ribbon */}

@@ -3,6 +3,7 @@ import { macAudio } from '../utils/macAudio';
 import { Search, Plus, Trash2, Edit2, Check, Layers, Tag, Hash, Percent, FileText, Scale, Package } from 'lucide-react';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import type { SqliteControlRow } from '../data/sqliteControlPanel';
+import { GlassInput, GlassSelect } from './common/GlassInput';
 
 const CONV_COL_DEFAULTS = {
   srNo: 40,
@@ -246,52 +247,90 @@ export const ManageConversionsTab: React.FC = () => {
             </div>
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><Hash size={10} /><span>SHORTCUT *</span></div>
-                  <input type="text" required value={formData.shortcut} onChange={e => setFormData({...formData, shortcut: e.target.value})} className="mac-notched-input" style={{ fontWeight: 700, color: '#38bdf8' }} disabled={!!editingId} />
-                </div>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><Tag size={10} /><span>CONVERSION *</span></div>
-                  <input type="text" required value={formData.conversion} onChange={e => setFormData({...formData, conversion: e.target.value})} className="mac-notched-input" style={{ fontWeight: 700 }} />
-                </div>
+                <GlassInput
+                  label="SHORTCUT *"
+                  value={formData.shortcut}
+                  onChange={e => setFormData({...formData, shortcut: e.target.value})}
+                  icon={Hash}
+                  required
+                  disabled={!!editingId}
+                  inputStyle={{ fontWeight: 700, color: '#38bdf8' }}
+                />
+                <GlassInput
+                  label="CONVERSION *"
+                  value={formData.conversion}
+                  onChange={e => setFormData({...formData, conversion: e.target.value})}
+                  icon={Tag}
+                  required
+                  inputStyle={{ fontWeight: 700 }}
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><span>U CAP</span></div>
-                  <input type="text" value={formData.u_cap} onChange={e => setFormData({...formData, u_cap: e.target.value})} className="mac-notched-input" />
-                </div>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><span>L CAP</span></div>
-                  <input type="text" value={formData.l_cap} onChange={e => setFormData({...formData, l_cap: e.target.value})} className="mac-notched-input" />
-                </div>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><Percent size={10} /><span>MULTIPLICATION</span></div>
-                  <input type="number" step="0.01" required value={formData.multiplication} onChange={e => setFormData({...formData, multiplication: parseFloat(e.target.value) || 1})} className="mac-notched-input" style={{ color: '#a78bfa', fontWeight: 700 }} />
-                </div>
+                <GlassInput
+                  label="U CAP"
+                  value={formData.u_cap}
+                  onChange={e => setFormData({...formData, u_cap: e.target.value})}
+                />
+                <GlassInput
+                  label="L CAP"
+                  value={formData.l_cap}
+                  onChange={e => setFormData({...formData, l_cap: e.target.value})}
+                />
+                <GlassInput
+                  label="MULTIPLICATION"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.multiplication}
+                  onChange={e => setFormData({...formData, multiplication: parseFloat(e.target.value) || 1})}
+                  icon={Percent}
+                  inputStyle={{ color: '#a78bfa', fontWeight: 700 }}
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><span>COLOR</span></div>
-                  <input type="color" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} style={{ width: '100%', height: '30px', border: 'none', background: 'transparent' }} />
-                </div>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><Package size={10} /><span>BOX SIZE</span></div>
-                  <input type="number" step="1" required value={formData.box_size} onChange={e => setFormData({...formData, box_size: parseInt(e.target.value) || 1})} className="mac-notched-input" style={{ color: '#fbbf24', fontWeight: 700 }} />
-                </div>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><Scale size={10} /><span>WT/PCS</span></div>
-                  <input type="number" step="0.01" required value={formData.weight_per_pcs} onChange={e => setFormData({...formData, weight_per_pcs: parseFloat(e.target.value) || 0})} className="mac-notched-input" style={{ color: '#f87171', fontWeight: 700 }} />
-                </div>
+                <GlassInput
+                  label="COLOR"
+                  type="color"
+                  value={formData.color}
+                  onChange={e => setFormData({...formData, color: e.target.value})}
+                  inputStyle={{ width: '100%', height: '30px', border: 'none', background: 'transparent' }}
+                />
+                <GlassInput
+                  label="BOX SIZE"
+                  type="number"
+                  step="1"
+                  required
+                  value={formData.box_size}
+                  onChange={e => setFormData({...formData, box_size: parseInt(e.target.value) || 1})}
+                  icon={Package}
+                  inputStyle={{ color: '#fbbf24', fontWeight: 700 }}
+                />
+                <GlassInput
+                  label="WT/PCS"
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.weight_per_pcs}
+                  onChange={e => setFormData({...formData, weight_per_pcs: parseFloat(e.target.value) || 0})}
+                  icon={Scale}
+                  inputStyle={{ color: '#f87171', fontWeight: 700 }}
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><FileText size={10} /><span>REAL ITEM NAME *</span></div>
-                  <input type="text" required value={formData.real_item_name} onChange={e => setFormData({...formData, real_item_name: e.target.value})} className="mac-notched-input" />
-                </div>
-                <div className="mac-notched-field">
-                  <div className="mac-notched-label"><Layers size={10} /><span>GROUP NAME *</span></div>
-                  <input type="text" required value={formData.group_name} onChange={e => setFormData({...formData, group_name: e.target.value})} className="mac-notched-input" />
-                </div>
+                <GlassInput
+                  label="REAL ITEM NAME *"
+                  value={formData.real_item_name}
+                  onChange={e => setFormData({...formData, real_item_name: e.target.value})}
+                  icon={FileText}
+                  required
+                />
+                <GlassInput
+                  label="GROUP NAME *"
+                  value={formData.group_name}
+                  onChange={e => setFormData({...formData, group_name: e.target.value})}
+                  icon={Layers}
+                  required
+                />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button type="button" onClick={closeModal} className="mac-btn">Cancel</button>

@@ -3,6 +3,7 @@ import { macAudio } from '../utils/macAudio';
 import { Search, Plus, Trash2, Edit2, Check, X, Layers, Tag, Type } from 'lucide-react';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
+import { GlassInput, GlassSelect } from './common/GlassInput';
 
 const DEFAULT_MAIN_COLS = { srNo: 40, mainGroup: 130, groupName: 200, sumCol: 80, items: 60 };
 const DEFAULT_SUB_COLS = { srNo: 40, itemName: 300 };
@@ -231,24 +232,32 @@ export const SkipItemNameTab: React.FC = () => {
           <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '94vw', borderRadius: '12px', padding: '18px 22px', background: 'linear-gradient(135deg, rgba(13, 21, 38, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%)', border: '1px solid rgba(56, 189, 248, 0.35)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}><Layers size={15} color="#38bdf8" /><div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>{editingMainId ? 'EDIT GROUP' : 'NEW GROUP'}</div></div>
             <form onSubmit={handleMainSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Tag size={10} /><span>MAIN GROUP</span></div>
-                <select className="mac-notched-input" value={mainFormData.mainGroupId} onChange={e => setMainFormData({...mainFormData, mainGroupId: e.target.value})} style={{ background: 'transparent', border: 'none', color: '#38bdf8', fontWeight: 700, width: '100%', outline: 'none' }}>
-                  {mainGroups.map(m => <option key={m.id} value={m.id} style={{ color: 'black' }}>{m.name}</option>)}
-                </select>
-              </div>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Layers size={10} /><span>GROUP NAME *</span></div>
-                <input type="text" required value={mainFormData.groupName} onChange={e => setMainFormData({...mainFormData, groupName: e.target.value})} className="mac-notched-input" style={{ fontWeight: 700 }} />
-              </div>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Type size={10} /><span>SUM COLUMN</span></div>
-                <select className="mac-notched-input" value={mainFormData.sumColumn} onChange={e => setMainFormData({...mainFormData, sumColumn: e.target.value as any})} style={{ background: 'transparent', border: 'none', color: '#a78bfa', fontWeight: 700, width: '100%', outline: 'none' }}>
-                  <option value="QTY" style={{ color: 'black' }}>QTY</option>
-                  <option value="U CAP" style={{ color: 'black' }}>U CAP</option>
-                  <option value="L CAP" style={{ color: 'black' }}>L CAP</option>
-                </select>
-              </div>
+              <GlassSelect
+                label="MAIN GROUP"
+                value={mainFormData.mainGroupId}
+                onChange={e => setMainFormData({...mainFormData, mainGroupId: e.target.value})}
+                icon={Tag}
+              >
+                {mainGroups.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </GlassSelect>
+              <GlassInput
+                label="GROUP NAME *"
+                value={mainFormData.groupName}
+                onChange={e => setMainFormData({...mainFormData, groupName: e.target.value})}
+                icon={Layers}
+                required
+                inputStyle={{ fontWeight: 700 }}
+              />
+              <GlassSelect
+                label="SUM COLUMN"
+                value={mainFormData.sumColumn}
+                onChange={e => setMainFormData({...mainFormData, sumColumn: e.target.value as any})}
+                icon={Type}
+              >
+                <option value="QTY">QTY</option>
+                <option value="U CAP">U CAP</option>
+                <option value="L CAP">L CAP</option>
+              </GlassSelect>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
                 <button type="button" onClick={() => setIsMainModalOpen(false)} className="mac-btn">Cancel</button>
                 <button type="submit" className="mac-btn primary"><Check size={14} /> {editingMainId ? 'Update' : 'Save'}</button>
@@ -263,10 +272,14 @@ export const SkipItemNameTab: React.FC = () => {
           <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '94vw', borderRadius: '12px', padding: '18px 22px', background: 'linear-gradient(135deg, rgba(13, 21, 38, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%)', border: '1px solid rgba(56, 189, 248, 0.35)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}><Type size={15} color="#38bdf8" /><div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>{editingSubId ? 'EDIT ITEM' : 'NEW ITEM'}</div></div>
             <form onSubmit={handleSubSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="mac-notched-field">
-                <div className="mac-notched-label"><Type size={10} /><span>ITEM PREFIX / NAME *</span></div>
-                <input type="text" required value={subFormData.itemPrefix} onChange={e => setSubFormData({...subFormData, itemPrefix: e.target.value})} className="mac-notched-input" style={{ fontWeight: 700 }} />
-              </div>
+              <GlassInput
+                label="ITEM PREFIX / NAME *"
+                value={subFormData.itemPrefix}
+                onChange={e => setSubFormData({...subFormData, itemPrefix: e.target.value})}
+                icon={Type}
+                required
+                inputStyle={{ fontWeight: 700 }}
+              />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
                 <button type="button" onClick={() => setIsSubModalOpen(false)} className="mac-btn">Cancel</button>
                 <button type="submit" className="mac-btn primary"><Check size={14} /> {editingSubId ? 'Update' : 'Save'}</button>
