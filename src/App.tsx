@@ -431,8 +431,8 @@ function AppContent() {
         return;
       }
 
-      // Ctrl+G: Instant Calculate Left Panel into Right Panel (Mould Table)
-      if (isCtrlOrCmd && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
+      // Ctrl+G or Ctrl++: Instant Calculate Left Panel into Right Panel (Mould Table)
+      if (isCtrlOrCmd && (e.key === 'g' || e.key === 'G' || e.key === '+' || e.key === '=' || e.code === 'NumpadAdd')) {
         e.preventDefault();
         calcSummaryRef.current?.();
         return;
@@ -1087,14 +1087,14 @@ function AppContent() {
     const itemSummary: { [mouldName: string]: number } = {};
     const groupSummary: { [groupName: string]: number } = {};
 
-        // Load Skip Items from localStorage or use Seed
+    // Load Skip Items from localStorage or use Seed
     let skipMainGroups = SQLITE_SKIP_MAIN_GROUPS;
     let skipSubGroups = SQLITE_SKIP_SUB_GROUPS;
     let skipItems = SQLITE_SKIP_ITEMS;
     try {
-      const ms = localStorage.getItem('si_main_groups'); if (ms) skipMainGroups = JSON.parse(ms);
-      const ss = localStorage.getItem('si_sub_groups'); if (ss) skipSubGroups = JSON.parse(ss);
-      const is = localStorage.getItem('si_items'); if (is) skipItems = JSON.parse(is);
+      const ms = localStorage.getItem('billapp_skip_main_groups') || localStorage.getItem('si_main_groups'); if (ms) skipMainGroups = JSON.parse(ms);
+      const ss = localStorage.getItem('billapp_skip_sub_groups') || localStorage.getItem('si_sub_groups'); if (ss) skipSubGroups = JSON.parse(ss);
+      const is = localStorage.getItem('billapp_skip_items') || localStorage.getItem('si_items'); if (is) skipItems = JSON.parse(is);
     } catch {}
 
     const sortedShortcuts = [...SQLITE_SHORTCUTS].sort((a: any, b: any) => ((b.shortcut || '').length - (a.shortcut || '').length));
@@ -1112,39 +1112,37 @@ function AppContent() {
       // Check if item name starts with any skip item prefix
       const matchedSkipItem = skipItems.find((si: any) => nameLower.startsWith((si.itemPrefix || '').toLowerCase()));
       if (matchedSkipItem) {
-        const subGrp = skipSubGroups.find((sg: any) => sg.id === matchedSkipItem.subGroupId);
+        const subGrp = skipSubGroups.find((sg: any) => sg.id === matchedSkipItem.subGroupId || sg.groupName === matchedSkipItem.subGroupId);
         if (subGrp) {
-          const mainGrp = skipMainGroups.find((mg: any) => mg.id === subGrp.mainGroupId);
-          if (mainGrp) {
-            const sumCol = subGrp.sumColumn || 'QTY';
-            const baseName = mainGrp.name;
+          const sumCol = subGrp.sumColumn || 'QTY';
+          // User Requirement: Use GROUP NAME (subGrp.groupName) instead of MAIN GROUP name in right panel!
+          const baseName = subGrp.groupName || subGrp.id;
 
-            if (sumCol === 'QTY') {
-              if (qty10 > 0) {
-                const key10 = formatMouldWithSize(baseName, 10);
-                itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
-              }
-              if (dynCols && dynCols.length > 0) {
-                dynCols.forEach(col => {
-                  const colQty = Number((it as any)[col.field]) || 0;
-                  if (colQty > 0) {
-                    const size = extractSizeFromColLabel(col.label || col.field);
-                    const keyCol = formatMouldWithSize(baseName, size);
-                    itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
-                  }
-                });
-              }
-            } else if (sumCol === 'U CAP') {
-              if (uCap > 0) {
-                groupSummary[baseName] = (groupSummary[baseName] || 0) + uCap;
-              }
-            } else if (sumCol === 'L CAP') {
-              if (lCap > 0) {
-                groupSummary[baseName] = (groupSummary[baseName] || 0) + lCap;
-              }
+          if (sumCol === 'QTY') {
+            if (qty10 > 0) {
+              const key10 = formatMouldWithSize(baseName, 10);
+              itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
             }
-            return; // Skip normal conversion logic!
+            if (dynCols && dynCols.length > 0) {
+              dynCols.forEach(col => {
+                const colQty = Number((it as any)[col.field]) || 0;
+                if (colQty > 0) {
+                  const size = extractSizeFromColLabel(col.label || col.field);
+                  const keyCol = formatMouldWithSize(baseName, size);
+                  itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+                }
+              });
+            }
+          } else if (sumCol === 'U CAP') {
+            if (uCap > 0) {
+              groupSummary[baseName] = (groupSummary[baseName] || 0) + uCap;
+            }
+          } else if (sumCol === 'L CAP') {
+            if (lCap > 0) {
+              groupSummary[baseName] = (groupSummary[baseName] || 0) + lCap;
+            }
           }
+          return; // Skip normal conversion logic!
         }
       }
       // --- END SKIP ITEM LOGIC ---
