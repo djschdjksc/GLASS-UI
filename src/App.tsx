@@ -638,12 +638,9 @@ function AppContent() {
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(false);
   const [noteText, setNoteText] = useState<string>('Urgent delivery for Apex Industries scheduled by end of week.');
 
-  // Notification Toast Capsule
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' } | null>(null);
-
-  const showToast = (message: string, type: 'success' | 'info' | 'warning' = 'info') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 2500);
+  // Notification toast disabled per user request
+  const showToast = (_message: string, _type: 'success' | 'info' | 'warning' = 'info') => {
+    // Disabled: no recurring top toast notifications
   };
 
   // Keyboard-Friendly Skip / Clear Bill Handlers
@@ -2157,35 +2154,6 @@ function AppContent() {
         onToast={showToast} 
       />
 
-      {/* Apple Toast Capsule */}
-      {toast && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: '18px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9999999,
-            background: 'rgba(18, 22, 28, 0.92)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
-            padding: '6px 16px',
-            borderRadius: '9999px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '7px',
-            fontSize: '12px',
-            fontWeight: 500,
-            color: '#f5f5f7'
-          }}
-        >
-          {toast.type === 'success' && <CheckCircle2 size={13} color="#34c759" />}
-          {toast.type === 'info' && <Info size={13} color="#38bdf8" />}
-          {toast.type === 'warning' && <AlertTriangle size={13} color="#fbbf24" />}
-          <span>{toast.message}</span>
-        </div>
-      )}
     </div>
   );
 }
