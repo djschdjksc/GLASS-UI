@@ -618,8 +618,23 @@ export const OtherTabsView: React.FC<Props> = ({
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
         if (e.key === 'Enter') {
           e.preventDefault();
+          const target = e.target as HTMLElement;
+          const row = target.closest('tr');
+          if (row) {
+            const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+            const currIdx = inputs.indexOf(target as any);
+            if (currIdx >= 0 && currIdx < inputs.length - 1) {
+              macAudio.playHover();
+              inputs[currIdx + 1].focus();
+              if ('select' in inputs[currIdx + 1]) {
+                (inputs[currIdx + 1] as HTMLInputElement).select();
+              }
+              return;
+            }
+          }
+          // Reached last cell of row -> finish / save editing!
           macAudio.playSuccess();
-          handleStartNewParty();
+          setEditingPartyId(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingPartyId(null);
@@ -646,18 +661,20 @@ export const OtherTabsView: React.FC<Props> = ({
         return;
       }
 
-      if (e.key === 'Enter' || e.key === 'Insert') {
-        e.preventDefault();
-        handleStartNewParty();
-        return;
-      }
-
-      if (e.key === 'F2') {
+      // Ctrl + Enter: Make Selected Row Editable
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (selectedPartyId) {
           macAudio.playClick();
           setEditingPartyId(selectedPartyId);
         }
+        return;
+      }
+
+      // Insert Key: Insert New Row at Top (Index 0)
+      if (e.key === 'Insert') {
+        e.preventDefault();
+        handleStartNewParty();
         return;
       }
 
@@ -1972,9 +1989,9 @@ export const OtherTabsView: React.FC<Props> = ({
                                   macAudio.playSuccess();
                                   setEditingPartyId(null);
                                 }}
-                                title="Save Changes"
+                                title="Add / Save Party"
                               >
-                                <Check size={12} /> Save
+                                <Plus size={12} /> Add
                               </button>
                             ) : null}
                           </td>

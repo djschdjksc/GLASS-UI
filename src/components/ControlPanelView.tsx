@@ -314,8 +314,23 @@ export const ControlPanelView: React.FC = () => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
         if (e.key === 'Enter') {
           e.preventDefault();
+          const target = e.target as HTMLElement;
+          const row = target.closest('tr');
+          if (row) {
+            const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+            const currIdx = inputs.indexOf(target as any);
+            if (currIdx >= 0 && currIdx < inputs.length - 1) {
+              macAudio.playHover();
+              inputs[currIdx + 1].focus();
+              if ('select' in inputs[currIdx + 1]) {
+                (inputs[currIdx + 1] as HTMLInputElement).select();
+              }
+              return;
+            }
+          }
+          // Reached last cell of row -> finish / save editing!
           macAudio.playSuccess();
-          handleAddNewGroup();
+          setEditingGroupId(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingGroupId(null);
@@ -383,20 +398,20 @@ export const ControlPanelView: React.FC = () => {
           return;
         }
 
-        // Enter / Insert: Insert New Row at Top
-        if (e.key === 'Enter' || e.key === 'Insert') {
-          e.preventDefault();
-          handleAddNewGroup();
-          return;
-        }
-
-        // F2: Edit Selected Row
-        if (e.key === 'F2') {
+        // Ctrl + Enter: Make Selected Row Editable
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault();
           if (selectedGroupId) {
             macAudio.playClick();
             setEditingGroupId(selectedGroupId);
           }
+          return;
+        }
+
+        // Insert Key: Insert New Row at Top (Index 0)
+        if (e.key === 'Insert') {
+          e.preventDefault();
+          handleAddNewGroup();
           return;
         }
 
@@ -732,9 +747,9 @@ export const ControlPanelView: React.FC = () => {
                               macAudio.playSuccess();
                               setEditingGroupId(null);
                             }}
-                            title="Save Changes"
+                            title="Add / Save Group"
                           >
-                            <Check size={12} /> Save
+                            <Plus size={12} /> Add
                           </button>
                         ) : null}
                       </td>

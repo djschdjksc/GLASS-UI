@@ -245,12 +245,24 @@ export const SkipItemNameTab: React.FC = () => {
       if (isInput) {
         if (e.key === 'Enter') {
           e.preventDefault();
-          macAudio.playSuccess();
-          if (editingItemId) {
-            handleAddItem();
-          } else {
-            handleAddSubGroup();
+          const target = e.target as HTMLElement;
+          const row = target.closest('tr');
+          if (row) {
+            const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+            const currIdx = inputs.indexOf(target as any);
+            if (currIdx >= 0 && currIdx < inputs.length - 1) {
+              macAudio.playHover();
+              inputs[currIdx + 1].focus();
+              if ('select' in inputs[currIdx + 1]) {
+                (inputs[currIdx + 1] as HTMLInputElement).select();
+              }
+              return;
+            }
           }
+          // Reached last cell of row -> finish / save editing!
+          macAudio.playSuccess();
+          setEditingGroupId(null);
+          setEditingItemId(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingGroupId(null);
@@ -259,14 +271,8 @@ export const SkipItemNameTab: React.FC = () => {
         return;
       }
 
-      if (e.key === 'Enter' || e.key === 'Insert') {
-        e.preventDefault();
-        if (selectedItemId) {
-          handleAddItem();
-        } else {
-          handleAddSubGroup();
-        }
-      } else if (e.key === 'F2') {
+      // Ctrl + Enter: Make Selected Row Editable
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (selectedItemId) {
           macAudio.playClick();
@@ -275,7 +281,21 @@ export const SkipItemNameTab: React.FC = () => {
           macAudio.playClick();
           setEditingGroupId(selectedMainGroupId);
         }
-      } else if (e.key === 'Delete') {
+        return;
+      }
+
+      // Insert Key: Insert New Row at Top (Index 0)
+      if (e.key === 'Insert') {
+        e.preventDefault();
+        if (selectedItemId) {
+          handleAddItem();
+        } else {
+          handleAddSubGroup();
+        }
+        return;
+      }
+
+      if (e.key === 'Delete') {
         e.preventDefault();
         if (selectedItemId) {
           handleDeleteItem(selectedItemId);
@@ -417,9 +437,9 @@ export const SkipItemNameTab: React.FC = () => {
                             macAudio.playSuccess();
                             setEditingGroupId(null);
                           }}
-                          title="Save Group Changes"
+                          title="Add / Save Group"
                         >
-                          <Check size={12} /> Save
+                          <Plus size={12} /> Add
                         </button>
                       )}
                     </td>
@@ -519,9 +539,9 @@ export const SkipItemNameTab: React.FC = () => {
                               macAudio.playSuccess();
                               setEditingItemId(null);
                             }}
-                            title="Save Item Changes"
+                            title="Add / Save Item"
                           >
-                            <Check size={12} /> Save
+                            <Plus size={12} /> Add
                           </button>
                         )}
                       </td>

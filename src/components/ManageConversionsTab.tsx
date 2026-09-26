@@ -180,12 +180,44 @@ export const ManageConversionsTab: React.FC = () => {
       if (isInput) {
         if (e.key === 'Enter') {
           e.preventDefault();
+          const target = e.target as HTMLElement;
+          const row = target.closest('tr');
+          if (row) {
+            const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+            const currIdx = inputs.indexOf(target as any);
+            if (currIdx >= 0 && currIdx < inputs.length - 1) {
+              macAudio.playHover();
+              inputs[currIdx + 1].focus();
+              if ('select' in inputs[currIdx + 1]) {
+                (inputs[currIdx + 1] as HTMLInputElement).select();
+              }
+              return;
+            }
+          }
+          // Reached last cell of row -> finish / save editing!
           macAudio.playSuccess();
-          handleAddNewRow();
+          setEditingIdx(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingIdx(null);
         }
+        return;
+      }
+
+      // Ctrl + Enter: Make Selected Row Editable
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIdx !== null) {
+          macAudio.playClick();
+          setEditingIdx(selectedIdx);
+        }
+        return;
+      }
+
+      // Insert Key: Insert New Row at Top (Index 0)
+      if (e.key === 'Insert') {
+        e.preventDefault();
+        handleAddNewRow();
         return;
       }
 
@@ -202,15 +234,6 @@ export const ManageConversionsTab: React.FC = () => {
         macAudio.playHover();
         const prevPos = currentPos > 0 ? currentPos - 1 : 0;
         setSelectedIdx(filtered[prevPos].originalIndex);
-      } else if (e.key === 'Enter' || e.key === 'Insert') {
-        e.preventDefault();
-        handleAddNewRow();
-      } else if (e.key === 'F2') {
-        e.preventDefault();
-        if (selectedIdx !== null) {
-          macAudio.playClick();
-          setEditingIdx(selectedIdx);
-        }
       } else if (e.key === 'Delete') {
         e.preventDefault();
         if (selectedIdx !== null) {
@@ -485,9 +508,9 @@ export const ManageConversionsTab: React.FC = () => {
                           macAudio.playSuccess();
                           setEditingIdx(null);
                         }}
-                        title="Save Row Changes"
+                        title="Add / Save Row"
                       >
-                        <Check size={12} /> Save
+                        <Plus size={12} /> Add
                       </button>
                     )}
                   </td>
