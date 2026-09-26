@@ -616,7 +616,43 @@ export const OtherTabsView: React.FC<Props> = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
-        if (e.key === 'Enter') {
+        if (e.key === 'ArrowRight') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtEnd = target.selectionEnd === target.value?.length;
+          if (isAtEnd || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx >= 0 && currIdx < inputs.length - 1) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx + 1].focus();
+                if ('select' in inputs[currIdx + 1]) (inputs[currIdx + 1] as HTMLInputElement).select();
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'ArrowLeft') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtStart = target.selectionStart === 0;
+          if (isAtStart || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx > 0) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx - 1].focus();
+                if ('select' in inputs[currIdx - 1]) (inputs[currIdx - 1] as HTMLInputElement).select();
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'Enter') {
           e.preventDefault();
           const target = e.target as HTMLElement;
           const row = target.closest('tr');
@@ -1856,13 +1892,13 @@ export const OtherTabsView: React.FC<Props> = ({
 
                       const cellInputStyle: React.CSSProperties = {
                         width: '100%',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(56, 189, 248, 0.4)',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
                         outline: 'none',
-                        color: '#f8fafc',
+                        color: '#ffffff',
                         fontSize: '11px',
                         padding: '3px 6px',
-                        fontFamily: 'inherit',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                         borderRadius: '4px'
                       };
 
@@ -1870,6 +1906,8 @@ export const OtherTabsView: React.FC<Props> = ({
                         padding: '3px 6px',
                         display: 'block',
                         userSelect: 'text',
+                        color: '#ffffff',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
@@ -1893,11 +1931,11 @@ export const OtherTabsView: React.FC<Props> = ({
                                 type="text"
                                 value={p.name || ''}
                                 onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#38bdf8', fontWeight: 600 }}
+                                style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                                 autoFocus
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, color: '#38bdf8', fontWeight: 600 }}>{p.name}</span>
+                              <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>{p.name}</span>
                             )}
                           </td>
                           <td style={{ padding: '1px' }}>
@@ -1906,10 +1944,10 @@ export const OtherTabsView: React.FC<Props> = ({
                                 type="text"
                                 value={p.phone || ''}
                                 onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#93c5fd', fontFamily: 'monospace' }}
+                                style={{ ...cellInputStyle, color: '#ffffff' }}
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, color: '#93c5fd', fontFamily: 'monospace' }}>{p.phone || '-'}</span>
+                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.phone || '-'}</span>
                             )}
                           </td>
                           <td style={{ padding: '1px' }}>
@@ -1918,10 +1956,10 @@ export const OtherTabsView: React.FC<Props> = ({
                                 type="text"
                                 value={p.station || p.city || ''}
                                 onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#e2e8f0' }}
+                                style={{ ...cellInputStyle, color: '#ffffff' }}
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, color: '#e2e8f0' }}>{p.station || p.city || '-'}</span>
+                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.station || p.city || '-'}</span>
                             )}
                           </td>
                           <td style={{ padding: '1px' }}>
@@ -1930,10 +1968,10 @@ export const OtherTabsView: React.FC<Props> = ({
                                 type="text"
                                 value={p.district || ''}
                                 onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#cbd5e1' }}
+                                style={{ ...cellInputStyle, color: '#ffffff' }}
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, color: '#cbd5e1' }}>{p.district || '-'}</span>
+                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.district || '-'}</span>
                             )}
                           </td>
                           <td style={{ padding: '1px' }}>
@@ -1942,10 +1980,10 @@ export const OtherTabsView: React.FC<Props> = ({
                                 type="text"
                                 value={p.state || ''}
                                 onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#94a3b8' }}
+                                style={{ ...cellInputStyle, color: '#ffffff' }}
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, color: '#94a3b8' }}>{p.state || '-'}</span>
+                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.state || '-'}</span>
                             )}
                           </td>
                           <td style={{ padding: '1px' }}>
@@ -1954,19 +1992,19 @@ export const OtherTabsView: React.FC<Props> = ({
                                 type="text"
                                 value={p.pincode || ''}
                                 onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#94a3b8', fontFamily: 'monospace' }}
+                                style={{ ...cellInputStyle, color: '#ffffff' }}
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, color: '#94a3b8', fontFamily: 'monospace' }}>{p.pincode || '-'}</span>
+                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.pincode || '-'}</span>
                             )}
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             {stat.count > 0 ? (
-                              <span style={{ background: 'rgba(56,189,248,0.16)', color: '#38bdf8', padding: '1px 6px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 600 }}>
+                              <span style={{ background: 'rgba(255,255,255,0.12)', color: '#ffffff', padding: '1px 6px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 600 }}>
                                 {stat.count} bills
                               </span>
                             ) : (
-                              <span style={{ color: '#475569', fontSize: '9.5px' }}>0</span>
+                              <span style={{ color: '#94a3b8', fontSize: '9.5px' }}>0</span>
                             )}
                           </td>
                           <td style={{ padding: '1px', textAlign: 'right' }}>
@@ -1977,13 +2015,13 @@ export const OtherTabsView: React.FC<Props> = ({
                                 onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
                                 style={{
                                   ...cellInputStyle,
-                                  color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171',
+                                  color: '#ffffff',
                                   fontWeight: 600,
                                   textAlign: 'right'
                                 }}
                               />
                             ) : (
-                              <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171' }}>
+                              <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: '#ffffff' }}>
                                 {p.balance !== undefined ? p.balance : 0}
                               </span>
                             )}

@@ -312,7 +312,43 @@ export const ControlPanelView: React.FC = () => {
 
       // If user is typing in an input
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
-        if (e.key === 'Enter') {
+        if (e.key === 'ArrowRight') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtEnd = target.selectionEnd === target.value?.length;
+          if (isAtEnd || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx >= 0 && currIdx < inputs.length - 1) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx + 1].focus();
+                if ('select' in inputs[currIdx + 1]) (inputs[currIdx + 1] as HTMLInputElement).select();
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'ArrowLeft') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtStart = target.selectionStart === 0;
+          if (isAtStart || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx > 0) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx - 1].focus();
+                if ('select' in inputs[currIdx - 1]) (inputs[currIdx - 1] as HTMLInputElement).select();
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'Enter') {
           e.preventDefault();
           const target = e.target as HTMLElement;
           const row = target.closest('tr');
@@ -627,19 +663,21 @@ export const ControlPanelView: React.FC = () => {
                   const isEditing = editingGroupId === grp.id;
                   const cellInputStyle: React.CSSProperties = {
                     width: '100%',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
                     outline: 'none',
-                    color: '#f8fafc',
+                    color: '#ffffff',
                     fontSize: '11.5px',
                     padding: '3px 6px',
-                    fontFamily: 'inherit',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     borderRadius: '4px'
                   };
                   const cellTextStyle: React.CSSProperties = {
                     padding: '3px 6px',
                     display: 'block',
                     userSelect: 'text',
+                    color: '#ffffff',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
@@ -658,24 +696,24 @@ export const ControlPanelView: React.FC = () => {
                       <td style={{ padding: '1px' }}>
                         {isEditing ? (
                           <input
-                            style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                            style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                             value={grp.groupName}
                             onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)}
                             autoFocus
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, fontWeight: 700, color: '#38bdf8' }}>{grp.groupName}</span>
+                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>{grp.groupName}</span>
                         )}
                       </td>
                       <td style={{ padding: '1px' }}>
                         {isEditing ? (
                           <input
-                            style={{ ...cellInputStyle, fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}
+                            style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                             value={grp.groupIndex}
                             onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)}
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}>{grp.groupIndex}</span>
+                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>{grp.groupIndex}</span>
                         )}
                       </td>
                       <td style={{ padding: '1px' }}>
@@ -683,24 +721,24 @@ export const ControlPanelView: React.FC = () => {
                           <input
                             type="number"
                             step="any"
-                            style={{ ...cellInputStyle, textAlign: 'right', fontWeight: 600, color: '#34d399' }}
+                            style={{ ...cellInputStyle, textAlign: 'right', fontWeight: 600, color: '#ffffff' }}
                             value={grp.weightPerPc}
                             onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)}
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: '#34d399' }}>{grp.weightPerPc}</span>
+                          <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: '#ffffff' }}>{grp.weightPerPc}</span>
                         )}
                       </td>
                       <td style={{ padding: '1px' }}>
                         {isEditing ? (
                           <input
                             type="number"
-                            style={{ ...cellInputStyle, textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}
+                            style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}
                             value={grp.pcsPerBox}
                             onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)}
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}>{grp.pcsPerBox}</span>
+                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}>{grp.pcsPerBox}</span>
                         )}
                       </td>
                       <td style={{ padding: '1px' }}>
@@ -708,23 +746,23 @@ export const ControlPanelView: React.FC = () => {
                           <input
                             type="number"
                             step="any"
-                            style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}
+                            style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}
                             value={grp.multiplication}
                             onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)}
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}>{grp.multiplication}</span>
+                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}>{grp.multiplication}</span>
                         )}
                       </td>
                       <td style={{ padding: '1px' }}>
                         {isEditing ? (
                           <input
-                            style={{ ...cellInputStyle, color: '#f8fafc', fontWeight: 500 }}
+                            style={{ ...cellInputStyle, color: '#ffffff', fontWeight: 500 }}
                             value={grp.realItemName}
                             onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)}
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, color: '#f8fafc', fontWeight: 500 }}>{grp.realItemName || '-'}</span>
+                          <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 500 }}>{grp.realItemName || '-'}</span>
                         )}
                       </td>
                       <td style={{ textAlign: 'center', padding: '2px' }}>
@@ -733,18 +771,18 @@ export const ControlPanelView: React.FC = () => {
                           checked={grp.skipEq}
                           disabled={!isEditing}
                           onChange={e => handleCellChange(grp.id, 'skipEq', e.target.checked)}
-                          style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#f87171' }}
+                          style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#ffffff' }}
                         />
                       </td>
                       <td style={{ padding: '1px' }}>
                         {isEditing ? (
                           <input
-                            style={{ ...cellInputStyle, color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}
+                            style={{ ...cellInputStyle, color: '#ffffff' }}
                             value={grp.chainParent}
                             onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)}
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}>{grp.chainParent}</span>
+                          <span style={{ ...cellTextStyle, color: grp.chainParent === 'NONE' ? '#94a3b8' : '#ffffff' }}>{grp.chainParent}</span>
                         )}
                       </td>
                       <td style={{ textAlign: 'center', padding: '1px' }}>

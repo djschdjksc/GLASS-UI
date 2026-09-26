@@ -136,18 +136,20 @@ export const BillItemNameTab: React.FC = () => {
     width: '100%',
     height: '100%',
     background: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(56, 189, 248, 0.3)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
     outline: 'none',
-    color: '#f8fafc',
+    color: '#ffffff',
     fontSize: '11.5px',
     padding: '3px 6px',
-    fontFamily: 'inherit',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: '4px'
   };
 
   const cellTextStyle: React.CSSProperties = {
     padding: '3px 6px',
     fontSize: '11.5px',
+    color: '#ffffff',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -177,6 +179,46 @@ export const BillItemNameTab: React.FC = () => {
           // Reached last cell of row -> finish / save editing!
           macAudio.playSuccess();
           setEditingIdx(null);
+        } else if (e.key === 'ArrowRight') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtEnd = target.selectionEnd === target.value?.length;
+          if (isAtEnd || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx >= 0 && currIdx < inputs.length - 1) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx + 1].focus();
+                if ('select' in inputs[currIdx + 1]) {
+                  (inputs[currIdx + 1] as HTMLInputElement).select();
+                }
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'ArrowLeft') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtStart = target.selectionStart === 0;
+          if (isAtStart || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx > 0) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx - 1].focus();
+                if ('select' in inputs[currIdx - 1]) {
+                  (inputs[currIdx - 1] as HTMLInputElement).select();
+                }
+                return;
+              }
+            }
+          }
         } else if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
@@ -326,13 +368,13 @@ export const BillItemNameTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                        style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                         value={m.shortCode}
                         onChange={e => handleCellChange(originalIndex, 'shortCode', e.target.value)}
                         autoFocus
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 700, color: '#38bdf8' }}>
+                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>
                         {m.shortCode || '—'}
                       </span>
                     )}
@@ -342,12 +384,12 @@ export const BillItemNameTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                        style={{ ...cellInputStyle, fontWeight: 500, color: '#ffffff' }}
                         value={m.printName}
                         onChange={e => handleCellChange(originalIndex, 'printName', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                      <span style={{ ...cellTextStyle, fontWeight: 500, color: '#ffffff' }}>
                         {m.printName || '—'}
                       </span>
                     )}
@@ -359,12 +401,12 @@ export const BillItemNameTab: React.FC = () => {
                       <input
                         type="number"
                         step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#34d399', fontWeight: 600 }}
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff', fontWeight: 500 }}
                         value={m.rate ?? 0}
                         onChange={e => handleCellChange(originalIndex, 'rate', parseFloat(e.target.value) || 0)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#34d399', fontWeight: 600 }}>
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff', fontWeight: 500 }}>
                         ₹{(m.rate ?? 0).toLocaleString('en-IN')}
                       </span>
                     )}
@@ -374,12 +416,12 @@ export const BillItemNameTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, color: '#fbbf24' }}
+                        style={{ ...cellInputStyle, color: '#ffffff' }}
                         value={m.category}
                         onChange={e => handleCellChange(originalIndex, 'category', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, color: '#fbbf24' }}>
+                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
                         {m.category || '—'}
                       </span>
                     )}

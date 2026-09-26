@@ -155,12 +155,12 @@ export const ManageConversionsTab: React.FC = () => {
     width: '100%',
     height: '100%',
     background: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(56, 189, 248, 0.3)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
     outline: 'none',
-    color: '#f8fafc',
+    color: '#ffffff',
     fontSize: '11.5px',
     padding: '3px 6px',
-    fontFamily: 'inherit',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: '4px',
     transition: 'background 0.15s ease, box-shadow 0.15s ease'
   };
@@ -168,6 +168,8 @@ export const ManageConversionsTab: React.FC = () => {
   const cellTextStyle: React.CSSProperties = {
     padding: '3px 6px',
     fontSize: '11.5px',
+    color: '#ffffff',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -197,6 +199,46 @@ export const ManageConversionsTab: React.FC = () => {
           // Reached last cell of row -> finish / save editing!
           macAudio.playSuccess();
           setEditingIdx(null);
+        } else if (e.key === 'ArrowRight') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtEnd = target.selectionEnd === target.value?.length;
+          if (isAtEnd || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx >= 0 && currIdx < inputs.length - 1) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx + 1].focus();
+                if ('select' in inputs[currIdx + 1]) {
+                  (inputs[currIdx + 1] as HTMLInputElement).select();
+                }
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'ArrowLeft') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtStart = target.selectionStart === 0;
+          if (isAtStart || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx > 0) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx - 1].focus();
+                if ('select' in inputs[currIdx - 1]) {
+                  (inputs[currIdx - 1] as HTMLInputElement).select();
+                }
+                return;
+              }
+            }
+          }
         } else if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
@@ -352,13 +394,13 @@ export const ManageConversionsTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                        style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                         value={shortcutDisplay}
                         onChange={e => handleCellChange(originalIndex, 'shortcut', e.target.value)}
                         autoFocus
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 700, color: '#38bdf8' }}>
+                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>
                         {shortcutDisplay || '—'}
                       </span>
                     )}
@@ -368,12 +410,12 @@ export const ManageConversionsTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                        style={{ ...cellInputStyle, fontWeight: 500, color: '#ffffff' }}
                         value={conv.conversion}
                         onChange={e => handleCellChange(originalIndex, 'conversion', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                      <span style={{ ...cellTextStyle, fontWeight: 500, color: '#ffffff' }}>
                         {conv.conversion || '—'}
                       </span>
                     )}
@@ -383,12 +425,12 @@ export const ManageConversionsTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, color: '#cbd5e1' }}
+                        style={{ ...cellInputStyle, color: '#ffffff' }}
                         value={conv.u_cap || ''}
                         onChange={e => handleCellChange(originalIndex, 'u_cap', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, color: '#cbd5e1' }}>
+                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
                         {conv.u_cap || '—'}
                       </span>
                     )}
@@ -398,12 +440,12 @@ export const ManageConversionsTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, color: '#cbd5e1' }}
+                        style={{ ...cellInputStyle, color: '#ffffff' }}
                         value={conv.l_cap || ''}
                         onChange={e => handleCellChange(originalIndex, 'l_cap', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, color: '#cbd5e1' }}>
+                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
                         {conv.l_cap || '—'}
                       </span>
                     )}
@@ -415,12 +457,12 @@ export const ManageConversionsTab: React.FC = () => {
                       <input
                         type="number"
                         step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa' }}
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
                         value={conv.multiplication ?? 1}
                         onChange={e => handleCellChange(originalIndex, 'multiplication', parseFloat(e.target.value) || 1)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 600 }}>
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
                         {conv.multiplication ?? 1}
                       </span>
                     )}
@@ -448,12 +490,12 @@ export const ManageConversionsTab: React.FC = () => {
                       <input
                         type="number"
                         step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#fbbf24' }}
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
                         value={conv.box_size ?? 1}
                         onChange={e => handleCellChange(originalIndex, 'box_size', parseFloat(e.target.value) || 1)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#fbbf24' }}>
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
                         {conv.box_size ?? 1}
                       </span>
                     )}
@@ -465,12 +507,12 @@ export const ManageConversionsTab: React.FC = () => {
                       <input
                         type="number"
                         step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#f87171' }}
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
                         value={conv.weight_per_pcs ?? 0}
                         onChange={e => handleCellChange(originalIndex, 'weight_per_pcs', parseFloat(e.target.value) || 0)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#f87171' }}>
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
                         {conv.weight_per_pcs ?? 0}
                       </span>
                     )}
@@ -480,12 +522,12 @@ export const ManageConversionsTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, color: '#f8fafc' }}
+                        style={{ ...cellInputStyle, color: '#ffffff' }}
                         value={conv.real_item_name || ''}
                         onChange={e => handleCellChange(originalIndex, 'real_item_name', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, color: '#f8fafc' }}>
+                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
                         {conv.real_item_name || '—'}
                       </span>
                     )}
@@ -495,12 +537,12 @@ export const ManageConversionsTab: React.FC = () => {
                   <td style={{ padding: '1px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, color: '#34d399', fontWeight: 600 }}
+                        style={{ ...cellInputStyle, color: '#ffffff', fontWeight: 600 }}
                         value={conv.group_name || ''}
                         onChange={e => handleCellChange(originalIndex, 'group_name', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, color: '#34d399', fontWeight: 600 }}>
+                      <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 600 }}>
                         {conv.group_name || '—'}
                       </span>
                     )}

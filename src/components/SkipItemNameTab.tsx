@@ -209,18 +209,20 @@ export const SkipItemNameTab: React.FC = () => {
     width: '100%',
     height: '100%',
     background: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(56, 189, 248, 0.3)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
     outline: 'none',
-    color: '#f8fafc',
+    color: '#ffffff',
     fontSize: '11.5px',
     padding: '3px 6px',
-    fontFamily: 'inherit',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: '4px'
   };
 
   const cellTextStyle: React.CSSProperties = {
     padding: '3px 6px',
     fontSize: '11.5px',
+    color: '#ffffff',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -229,13 +231,14 @@ export const SkipItemNameTab: React.FC = () => {
 
   const selectStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(15, 23, 42, 0.85)',
-    border: '1px solid rgba(56, 189, 248, 0.3)',
-    color: '#38bdf8',
+    background: 'rgba(15, 23, 42, 0.95)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    color: '#ffffff',
     fontSize: '11px',
     fontWeight: 600,
     borderRadius: '4px',
     padding: '2px 4px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     outline: 'none'
   };
 
@@ -243,7 +246,43 @@ export const SkipItemNameTab: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
       if (isInput) {
-        if (e.key === 'Enter') {
+        if (e.key === 'ArrowRight') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtEnd = target.selectionEnd === target.value?.length;
+          if (isAtEnd || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx >= 0 && currIdx < inputs.length - 1) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx + 1].focus();
+                if ('select' in inputs[currIdx + 1]) (inputs[currIdx + 1] as HTMLInputElement).select();
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'ArrowLeft') {
+          const target = e.target as HTMLInputElement;
+          const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
+          const isAtStart = target.selectionStart === 0;
+          if (isAtStart || isFullSelect) {
+            const row = target.closest('tr');
+            if (row) {
+              const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
+              const currIdx = inputs.indexOf(target as any);
+              if (currIdx > 0) {
+                e.preventDefault();
+                macAudio.playHover();
+                inputs[currIdx - 1].focus();
+                if ('select' in inputs[currIdx - 1]) (inputs[currIdx - 1] as HTMLInputElement).select();
+                return;
+              }
+            }
+          }
+        } else if (e.key === 'Enter') {
           e.preventDefault();
           const target = e.target as HTMLElement;
           const row = target.closest('tr');
@@ -383,13 +422,13 @@ export const SkipItemNameTab: React.FC = () => {
                           autoFocus
                         >
                           {mainGroups.map(m => (
-                            <option key={m.id} value={m.name} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                            <option key={m.id} value={m.name} style={{ background: '#0f172a', color: '#ffffff' }}>
                               {m.name}
                             </option>
                           ))}
                         </select>
                       ) : (
-                        <span style={{ ...cellTextStyle, color: '#38bdf8', fontWeight: 600 }}>
+                        <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 600 }}>
                           {sg.mainGroup}
                         </span>
                       )}
@@ -399,13 +438,13 @@ export const SkipItemNameTab: React.FC = () => {
                     <td style={{ padding: '1px' }}>
                       {isEditing ? (
                         <input
-                          style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                          style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                           value={sg.groupName}
                           onChange={e => handleSubGroupChange(sg.id, 'groupName', e.target.value)}
                           onClick={e => e.stopPropagation()}
                         />
                       ) : (
-                        <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                        <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>
                           {sg.groupName}
                         </span>
                       )}
@@ -415,24 +454,24 @@ export const SkipItemNameTab: React.FC = () => {
                     <td style={{ padding: '2px', textAlign: 'center' }}>
                       {isEditing ? (
                         <select
-                          style={{ ...selectStyle, color: '#a78bfa', textAlign: 'center' }}
+                          style={{ ...selectStyle, color: '#ffffff', textAlign: 'center' }}
                           value={sg.sumColumn}
                           onChange={e => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
                           onClick={e => e.stopPropagation()}
                         >
-                          <option value="QTY" style={{ background: '#0f172a', color: '#f8fafc' }}>QTY</option>
-                          <option value="U CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>U CAP</option>
-                          <option value="L CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>L CAP</option>
+                          <option value="QTY" style={{ background: '#0f172a', color: '#ffffff' }}>QTY</option>
+                          <option value="U CAP" style={{ background: '#0f172a', color: '#ffffff' }}>U CAP</option>
+                          <option value="L CAP" style={{ background: '#0f172a', color: '#ffffff' }}>L CAP</option>
                         </select>
                       ) : (
-                        <span style={{ ...cellTextStyle, color: '#a78bfa', fontWeight: 600, textAlign: 'center' }}>
+                        <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 600, textAlign: 'center' }}>
                           {sg.sumColumn}
                         </span>
                       )}
                     </td>
 
                     {/* ITEM COUNT */}
-                    <td style={{ textAlign: 'center', color: '#34d399', fontWeight: 700, fontSize: '11px' }}>
+                    <td style={{ textAlign: 'center', color: '#ffffff', fontWeight: 600, fontSize: '11px' }}>
                       {itemCount}
                     </td>
 
@@ -528,13 +567,13 @@ export const SkipItemNameTab: React.FC = () => {
                       <td style={{ padding: '1px' }}>
                         {isEditingItem ? (
                           <input
-                            style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                            style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
                             value={si.itemPrefix}
                             onChange={e => handleItemChange(si.id, e.target.value)}
                             autoFocus
                           />
                         ) : (
-                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>
                             {si.itemPrefix || '—'}
                           </span>
                         )}
