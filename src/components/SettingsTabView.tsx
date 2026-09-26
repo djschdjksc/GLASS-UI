@@ -1434,32 +1434,33 @@ export const SettingsTabView: React.FC<Props> = ({
 
                     if (data.skip_items && data.skip_items.length > 0) {
                        const si = data.skip_items.map((s: any, i: number) => ({
-                          id: 'si-leg-' + i,
-                          subGroupId: s.group_name || 'leg-sg',
+                          id: 'si-json-' + i,
+                          subGroupId: s.group_name || 'sg-1',
+                          mainGroup: s.main_group || '',
+                          groupName: s.group_name || '',
                           itemPrefix: s.item_prefix || ''
                        }));
                        localStorage.setItem('billapp_skip_items', JSON.stringify(si));
-                       localStorage.setItem('si_skip_items', JSON.stringify(si));
                        count++;
                     }
                     if (data.skip_groups && data.skip_groups.length > 0) {
                        const sg = data.skip_groups.map((s: any, i: number) => ({
-                          id: s.group_name || ('leg-sg-' + i),
-                          mainGroupId: s.main_group || 'leg-mg',
+                          id: s.group_name || ('sg-json-' + i),
+                          mainGroupId: s.main_group || 'mg-1',
+                          mainGroup: s.main_group || '',
                           groupName: s.group_name || '',
                           sumColumn: s.sum_column || 'QTY'
                        }));
                        localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(sg));
-                       localStorage.setItem('si_sub_groups', JSON.stringify(sg));
                     }
                     if (data.main_groups && data.main_groups.length > 0) {
                        const mg = data.main_groups.map((m: any, i: number) => ({
-                          id: (typeof m === 'string' ? m : m.main_group) || ('leg-mg-' + i),
+                          id: (typeof m === 'string' ? m : m.main_group) || ('mg-json-' + i),
                           name: (typeof m === 'string' ? m : m.main_group) || ''
                        }));
                        localStorage.setItem('billapp_skip_main_groups', JSON.stringify(mg));
-                       localStorage.setItem('si_main_groups', JSON.stringify(mg));
                     }
+                    localStorage.setItem('billapp_skip_version_v5', 'true');
 
                     alert('Legacy Backup Imported Successfully! ' + count + ' sections loaded into Control Panel and Settings.');
                   }).catch(e => {

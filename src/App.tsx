@@ -1092,12 +1092,16 @@ function AppContent() {
     let skipSubGroups = SQLITE_SKIP_SUB_GROUPS;
     let skipItems = SQLITE_SKIP_ITEMS;
     try {
-      const ms = localStorage.getItem('billapp_skip_main_groups') || localStorage.getItem('si_main_groups'); if (ms) skipMainGroups = JSON.parse(ms);
-      const ss = localStorage.getItem('billapp_skip_sub_groups') || localStorage.getItem('si_sub_groups'); if (ss) skipSubGroups = JSON.parse(ss);
-      const is = localStorage.getItem('billapp_skip_items') || localStorage.getItem('si_items'); if (is) skipItems = JSON.parse(is);
+      const isClean = localStorage.getItem('billapp_skip_version_v5');
+      if (isClean) {
+        const ms = localStorage.getItem('billapp_skip_main_groups'); if (ms) skipMainGroups = JSON.parse(ms);
+        const ss = localStorage.getItem('billapp_skip_sub_groups'); if (ss) skipSubGroups = JSON.parse(ss);
+        const is = localStorage.getItem('billapp_skip_items'); if (is) skipItems = JSON.parse(is);
+      }
     } catch {}
 
     const sortedShortcuts = [...SQLITE_SHORTCUTS].sort((a: any, b: any) => ((b.shortcut || '').length - (a.shortcut || '').length));
+    const sortedSkipItems = [...skipItems].sort((a: any, b: any) => ((b.itemPrefix || '').length - (a.itemPrefix || '').length));
 
     rawList.forEach(it => {
       const name = (it.name || '').trim();
@@ -1110,9 +1114,17 @@ function AppContent() {
 
       // --- NEW SKIP ITEM LOGIC ---
       // Check if item name starts with any skip item prefix
-      const matchedSkipItem = skipItems.find((si: any) => nameLower.startsWith((si.itemPrefix || '').toLowerCase()));
+      const matchedSkipItem = sortedSkipItems.find((si: any) => {
+        const pfx = (si.itemPrefix || '').toLowerCase().trim();
+        if (!pfx) return false;
+        return nameLower === pfx || nameLower.startsWith(pfx + ' ') || nameLower.startsWith(pfx + '-') || nameLower.startsWith(pfx + '/');
+      });
       if (matchedSkipItem) {
-        const subGrp = skipSubGroups.find((sg: any) => sg.id === matchedSkipItem.subGroupId || sg.groupName === matchedSkipItem.subGroupId);
+        const subGrp = skipSubGroups.find((sg: any) => 
+          sg.id === matchedSkipItem.subGroupId || 
+          sg.groupName === matchedSkipItem.subGroupId ||
+          (sg.groupName === matchedSkipItem.groupName && (!matchedSkipItem.mainGroup || sg.mainGroup === matchedSkipItem.mainGroup))
+        );
         if (subGrp) {
           const sumCol = subGrp.sumColumn || 'QTY';
           // User Requirement: Use GROUP NAME (subGrp.groupName) instead of MAIN GROUP name in right panel!

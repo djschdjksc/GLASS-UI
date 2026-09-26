@@ -1,3734 +1,5178 @@
 // =====================================================================
-// SQLITE_SKIP_MAIN_GROUPS — from BillApp_Backup.json (Desktop)
+// SQLITE_SKIP_DATA — Generated directly from BillApp_Backup.json (Desktop)
+// Fresh Clean Data: 5 Main Groups, 34 Sub Groups, 698 Skip Items
 // =====================================================================
-export interface SkipMainGroupSeed { id: string; name: string; }
+
+export interface SkipMainGroupSeed {
+  id: string;
+  name: string;
+}
+
+export interface SkipSubGroupSeed {
+  id: string;
+  mainGroupId: string;
+  mainGroup: string;
+  groupName: string;
+  sumColumn: 'QTY' | 'U CAP' | 'L CAP';
+}
+
+export interface SkipItemSeed {
+  id: string;
+  subGroupId: string;
+  mainGroup: string;
+  groupName: string;
+  itemPrefix: string;
+}
+
 export const SQLITE_SKIP_MAIN_GROUPS: SkipMainGroupSeed[] = [
   {
-    "id": "mg-sqlite-1",
+    "id": "mg-1",
     "name": "General"
   },
   {
-    "id": "mg-sqlite-2",
+    "id": "mg-2",
     "name": "Digital or Golden"
   },
   {
-    "id": "mg-sqlite-3",
+    "id": "mg-3",
     "name": "Digital"
   },
   {
-    "id": "mg-sqlite-4",
+    "id": "mg-4",
     "name": "Digital or Golden Lower Film"
   },
   {
-    "id": "mg-sqlite-5",
+    "id": "mg-5",
     "name": "7D UV SHEET"
   }
 ];
 
-// =====================================================================
-// SQLITE_SKIP_SUB_GROUPS — from BillApp_Backup.json (Desktop)
-// =====================================================================
-export interface SkipSubGroupSeed { id: string; mainGroupId: string; groupName: string; sumColumn: 'QTY' | 'U CAP' | 'L CAP'; }
 export const SQLITE_SKIP_SUB_GROUPS: SkipSubGroupSeed[] = [
   {
-    "id": "sg-sqlite-1",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-1",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(A)-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-2",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-2",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-3",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-3",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-4",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-4",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-5",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-5",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-6",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-6",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-7",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-7",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-8",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-8",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-9",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-9",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-10",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-10",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(B)-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-11",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-11",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(G)-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-12",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-12",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "C.M-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-13",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-13",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "F.P-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-14",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-14",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "F.P.C.G-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-15",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-15",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "F.P.G-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-16",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-16",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "S.L-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-17",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-17",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "S.P-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-18",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-18",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "T.G-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-19",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-19",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-20",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-20",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-21",
-    "mainGroupId": "mg-sqlite-3",
+    "id": "sg-21",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-22",
-    "mainGroupId": "mg-sqlite-2",
+    "id": "sg-22",
+    "mainGroupId": "mg-2",
+    "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-23",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-23",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-24",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-24",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-25",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-25",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-26",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-26",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-27",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-27",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "C.M-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-28",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-28",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-29",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-29",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P.C.G-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-30",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-30",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P.G-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-31",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-31",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "S.L-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-32",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-32",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "S.P-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-33",
-    "mainGroupId": "mg-sqlite-4",
+    "id": "sg-33",
+    "mainGroupId": "mg-4",
+    "mainGroup": "Digital or Golden Lower Film",
     "groupName": "T.G-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-sqlite-34",
-    "mainGroupId": "mg-sqlite-5",
+    "id": "sg-34",
+    "mainGroupId": "mg-5",
+    "mainGroup": "7D UV SHEET",
     "groupName": "7D UV",
     "sumColumn": "QTY"
   }
 ];
 
-// =====================================================================
-// SQLITE_SKIP_ITEMS — from BillApp_Backup.json (Desktop) (Total: 698 items)
-// =====================================================================
-export interface SkipItemSeed { id: string; subGroupId: string; itemPrefix: string; }
 export const SQLITE_SKIP_ITEMS: SkipItemSeed[] = [
   {
-    "id": "si-sqlite-1",
-    "subGroupId": "sg-sqlite-1",
+    "id": "si-1",
+    "subGroupId": "sg-1",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(A)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(A) 770"
   },
   {
-    "id": "si-sqlite-2",
-    "subGroupId": "sg-sqlite-11",
+    "id": "si-2",
+    "subGroupId": "sg-11",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(G)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(G) 770"
   },
   {
-    "id": "si-sqlite-3",
-    "subGroupId": "sg-sqlite-10",
+    "id": "si-3",
+    "subGroupId": "sg-10",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(B)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(B) 770"
   },
   {
-    "id": "si-sqlite-4",
-    "subGroupId": "sg-sqlite-13",
+    "id": "si-4",
+    "subGroupId": "sg-13",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P-(Digital-or-Golden)",
     "itemPrefix": "F.P 770"
   },
   {
-    "id": "si-sqlite-5",
-    "subGroupId": "sg-sqlite-15",
+    "id": "si-5",
+    "subGroupId": "sg-15",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.G 770"
   },
   {
-    "id": "si-sqlite-6",
-    "subGroupId": "sg-sqlite-16",
+    "id": "si-6",
+    "subGroupId": "sg-16",
+    "mainGroup": "Digital or Golden",
+    "groupName": "S.L-(Digital-or-Golden)",
     "itemPrefix": "S.L 770"
   },
   {
-    "id": "si-sqlite-7",
-    "subGroupId": "sg-sqlite-17",
+    "id": "si-7",
+    "subGroupId": "sg-17",
+    "mainGroup": "Digital or Golden",
+    "groupName": "S.P-(Digital-or-Golden)",
     "itemPrefix": "S.P 770"
   },
   {
-    "id": "si-sqlite-8",
-    "subGroupId": "sg-sqlite-18",
+    "id": "si-8",
+    "subGroupId": "sg-18",
+    "mainGroup": "Digital or Golden",
+    "groupName": "T.G-(Digital-or-Golden)",
     "itemPrefix": "T.G 770"
   },
   {
-    "id": "si-sqlite-9",
-    "subGroupId": "sg-sqlite-14",
+    "id": "si-9",
+    "subGroupId": "sg-14",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P.C.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.C.G 770"
   },
   {
-    "id": "si-sqlite-10",
-    "subGroupId": "sg-sqlite-12",
+    "id": "si-10",
+    "subGroupId": "sg-12",
+    "mainGroup": "Digital or Golden",
+    "groupName": "C.M-(Digital-or-Golden)",
     "itemPrefix": "C.M 770"
   },
   {
-    "id": "si-sqlite-11",
-    "subGroupId": "sg-sqlite-22",
+    "id": "si-11",
+    "subGroupId": "sg-22",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(Digital-or-Golden)",
     "itemPrefix": "B.F.P 770"
   },
   {
-    "id": "si-sqlite-12",
-    "subGroupId": "sg-sqlite-23",
+    "id": "si-12",
+    "subGroupId": "sg-23",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(A) 780"
   },
   {
-    "id": "si-sqlite-13",
-    "subGroupId": "sg-sqlite-24",
+    "id": "si-13",
+    "subGroupId": "sg-24",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(B) 780"
   },
   {
-    "id": "si-sqlite-14",
-    "subGroupId": "sg-sqlite-25",
+    "id": "si-14",
+    "subGroupId": "sg-25",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P 780"
   },
   {
-    "id": "si-sqlite-15",
-    "subGroupId": "sg-sqlite-26",
+    "id": "si-15",
+    "subGroupId": "sg-26",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(G) 780"
   },
   {
-    "id": "si-sqlite-16",
-    "subGroupId": "sg-sqlite-27",
+    "id": "si-16",
+    "subGroupId": "sg-27",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "C.M-(Digital)-Lower-Film",
     "itemPrefix": "C.M 780"
   },
   {
-    "id": "si-sqlite-17",
-    "subGroupId": "sg-sqlite-28",
+    "id": "si-17",
+    "subGroupId": "sg-28",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P-(Digital)-Lower-Film",
     "itemPrefix": "F.P 780"
   },
   {
-    "id": "si-sqlite-18",
-    "subGroupId": "sg-sqlite-29",
+    "id": "si-18",
+    "subGroupId": "sg-29",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P.C.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.C.G 780"
   },
   {
-    "id": "si-sqlite-19",
-    "subGroupId": "sg-sqlite-30",
+    "id": "si-19",
+    "subGroupId": "sg-30",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.G 780"
   },
   {
-    "id": "si-sqlite-20",
-    "subGroupId": "sg-sqlite-31",
+    "id": "si-20",
+    "subGroupId": "sg-31",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "S.L-(Digital)-Lower-Film",
     "itemPrefix": "S.L 780"
   },
   {
-    "id": "si-sqlite-21",
-    "subGroupId": "sg-sqlite-32",
+    "id": "si-21",
+    "subGroupId": "sg-32",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "S.P-(Digital)-Lower-Film",
     "itemPrefix": "S.P 780"
   },
   {
-    "id": "si-sqlite-22",
-    "subGroupId": "sg-sqlite-33",
+    "id": "si-22",
+    "subGroupId": "sg-33",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "T.G-(Digital)-Lower-Film",
     "itemPrefix": "T.G 780"
   },
   {
-    "id": "si-sqlite-23",
-    "subGroupId": "sg-sqlite-1",
+    "id": "si-23",
+    "subGroupId": "sg-1",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(A)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(A) 770"
   },
   {
-    "id": "si-sqlite-24",
-    "subGroupId": "sg-sqlite-11",
+    "id": "si-24",
+    "subGroupId": "sg-11",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(G)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(G) 770"
   },
   {
-    "id": "si-sqlite-25",
-    "subGroupId": "sg-sqlite-10",
+    "id": "si-25",
+    "subGroupId": "sg-10",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(B)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(B) 770"
   },
   {
-    "id": "si-sqlite-26",
-    "subGroupId": "sg-sqlite-13",
+    "id": "si-26",
+    "subGroupId": "sg-13",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P-(Digital-or-Golden)",
     "itemPrefix": "F.P 770"
   },
   {
-    "id": "si-sqlite-27",
-    "subGroupId": "sg-sqlite-15",
+    "id": "si-27",
+    "subGroupId": "sg-15",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.G 770"
   },
   {
-    "id": "si-sqlite-28",
-    "subGroupId": "sg-sqlite-16",
+    "id": "si-28",
+    "subGroupId": "sg-16",
+    "mainGroup": "Digital or Golden",
+    "groupName": "S.L-(Digital-or-Golden)",
     "itemPrefix": "S.L 770"
   },
   {
-    "id": "si-sqlite-29",
-    "subGroupId": "sg-sqlite-17",
+    "id": "si-29",
+    "subGroupId": "sg-17",
+    "mainGroup": "Digital or Golden",
+    "groupName": "S.P-(Digital-or-Golden)",
     "itemPrefix": "S.P 770"
   },
   {
-    "id": "si-sqlite-30",
-    "subGroupId": "sg-sqlite-18",
+    "id": "si-30",
+    "subGroupId": "sg-18",
+    "mainGroup": "Digital or Golden",
+    "groupName": "T.G-(Digital-or-Golden)",
     "itemPrefix": "T.G 770"
   },
   {
-    "id": "si-sqlite-31",
-    "subGroupId": "sg-sqlite-14",
+    "id": "si-31",
+    "subGroupId": "sg-14",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P.C.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.C.G 770"
   },
   {
-    "id": "si-sqlite-32",
-    "subGroupId": "sg-sqlite-12",
+    "id": "si-32",
+    "subGroupId": "sg-12",
+    "mainGroup": "Digital or Golden",
+    "groupName": "C.M-(Digital-or-Golden)",
     "itemPrefix": "C.M 770"
   },
   {
-    "id": "si-sqlite-33",
-    "subGroupId": "sg-sqlite-22",
+    "id": "si-33",
+    "subGroupId": "sg-22",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(Digital-or-Golden)",
     "itemPrefix": "B.F.P 770"
   },
   {
-    "id": "si-sqlite-34",
-    "subGroupId": "sg-sqlite-23",
+    "id": "si-34",
+    "subGroupId": "sg-23",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(A) 780"
   },
   {
-    "id": "si-sqlite-35",
-    "subGroupId": "sg-sqlite-24",
+    "id": "si-35",
+    "subGroupId": "sg-24",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(B) 780"
   },
   {
-    "id": "si-sqlite-36",
-    "subGroupId": "sg-sqlite-25",
+    "id": "si-36",
+    "subGroupId": "sg-25",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P 780"
   },
   {
-    "id": "si-sqlite-37",
-    "subGroupId": "sg-sqlite-26",
+    "id": "si-37",
+    "subGroupId": "sg-26",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(G) 780"
   },
   {
-    "id": "si-sqlite-38",
-    "subGroupId": "sg-sqlite-27",
+    "id": "si-38",
+    "subGroupId": "sg-27",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "C.M-(Digital)-Lower-Film",
     "itemPrefix": "C.M 780"
   },
   {
-    "id": "si-sqlite-39",
-    "subGroupId": "sg-sqlite-28",
+    "id": "si-39",
+    "subGroupId": "sg-28",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P-(Digital)-Lower-Film",
     "itemPrefix": "F.P 780"
   },
   {
-    "id": "si-sqlite-40",
-    "subGroupId": "sg-sqlite-29",
+    "id": "si-40",
+    "subGroupId": "sg-29",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P.C.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.C.G 780"
   },
   {
-    "id": "si-sqlite-41",
-    "subGroupId": "sg-sqlite-30",
+    "id": "si-41",
+    "subGroupId": "sg-30",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.G 780"
   },
   {
-    "id": "si-sqlite-42",
-    "subGroupId": "sg-sqlite-31",
+    "id": "si-42",
+    "subGroupId": "sg-31",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "S.L-(Digital)-Lower-Film",
     "itemPrefix": "S.L 780"
   },
   {
-    "id": "si-sqlite-43",
-    "subGroupId": "sg-sqlite-32",
+    "id": "si-43",
+    "subGroupId": "sg-32",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "S.P-(Digital)-Lower-Film",
     "itemPrefix": "S.P 780"
   },
   {
-    "id": "si-sqlite-44",
-    "subGroupId": "sg-sqlite-33",
+    "id": "si-44",
+    "subGroupId": "sg-33",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "T.G-(Digital)-Lower-Film",
     "itemPrefix": "T.G 780"
   },
   {
-    "id": "si-sqlite-45",
-    "subGroupId": "sg-sqlite-1",
+    "id": "si-45",
+    "subGroupId": "sg-1",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(A)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(A) 770"
   },
   {
-    "id": "si-sqlite-46",
-    "subGroupId": "sg-sqlite-11",
+    "id": "si-46",
+    "subGroupId": "sg-11",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(G)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(G) 770"
   },
   {
-    "id": "si-sqlite-47",
-    "subGroupId": "sg-sqlite-10",
+    "id": "si-47",
+    "subGroupId": "sg-10",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(B)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(B) 770"
   },
   {
-    "id": "si-sqlite-48",
-    "subGroupId": "sg-sqlite-13",
+    "id": "si-48",
+    "subGroupId": "sg-13",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P-(Digital-or-Golden)",
     "itemPrefix": "F.P 770"
   },
   {
-    "id": "si-sqlite-49",
-    "subGroupId": "sg-sqlite-15",
+    "id": "si-49",
+    "subGroupId": "sg-15",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.G 770"
   },
   {
-    "id": "si-sqlite-50",
-    "subGroupId": "sg-sqlite-16",
+    "id": "si-50",
+    "subGroupId": "sg-16",
+    "mainGroup": "Digital or Golden",
+    "groupName": "S.L-(Digital-or-Golden)",
     "itemPrefix": "S.L 770"
   },
   {
-    "id": "si-sqlite-51",
-    "subGroupId": "sg-sqlite-17",
+    "id": "si-51",
+    "subGroupId": "sg-17",
+    "mainGroup": "Digital or Golden",
+    "groupName": "S.P-(Digital-or-Golden)",
     "itemPrefix": "S.P 770"
   },
   {
-    "id": "si-sqlite-52",
-    "subGroupId": "sg-sqlite-18",
+    "id": "si-52",
+    "subGroupId": "sg-18",
+    "mainGroup": "Digital or Golden",
+    "groupName": "T.G-(Digital-or-Golden)",
     "itemPrefix": "T.G 770"
   },
   {
-    "id": "si-sqlite-53",
-    "subGroupId": "sg-sqlite-14",
+    "id": "si-53",
+    "subGroupId": "sg-14",
+    "mainGroup": "Digital or Golden",
+    "groupName": "F.P.C.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.C.G 770"
   },
   {
-    "id": "si-sqlite-54",
-    "subGroupId": "sg-sqlite-12",
+    "id": "si-54",
+    "subGroupId": "sg-12",
+    "mainGroup": "Digital or Golden",
+    "groupName": "C.M-(Digital-or-Golden)",
     "itemPrefix": "C.M 770"
   },
   {
-    "id": "si-sqlite-55",
-    "subGroupId": "sg-sqlite-22",
+    "id": "si-55",
+    "subGroupId": "sg-22",
+    "mainGroup": "Digital or Golden",
+    "groupName": "B.F.P-(Digital-or-Golden)",
     "itemPrefix": "B.F.P 770"
   },
   {
-    "id": "si-sqlite-56",
-    "subGroupId": "sg-sqlite-23",
+    "id": "si-56",
+    "subGroupId": "sg-23",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(A) 780"
   },
   {
-    "id": "si-sqlite-57",
-    "subGroupId": "sg-sqlite-24",
+    "id": "si-57",
+    "subGroupId": "sg-24",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(B) 780"
   },
   {
-    "id": "si-sqlite-58",
-    "subGroupId": "sg-sqlite-25",
+    "id": "si-58",
+    "subGroupId": "sg-25",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P 780"
   },
   {
-    "id": "si-sqlite-59",
-    "subGroupId": "sg-sqlite-26",
+    "id": "si-59",
+    "subGroupId": "sg-26",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(G) 780"
   },
   {
-    "id": "si-sqlite-60",
-    "subGroupId": "sg-sqlite-27",
+    "id": "si-60",
+    "subGroupId": "sg-27",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "C.M-(Digital)-Lower-Film",
     "itemPrefix": "C.M 780"
   },
   {
-    "id": "si-sqlite-61",
-    "subGroupId": "sg-sqlite-28",
+    "id": "si-61",
+    "subGroupId": "sg-28",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P-(Digital)-Lower-Film",
     "itemPrefix": "F.P 780"
   },
   {
-    "id": "si-sqlite-62",
-    "subGroupId": "sg-sqlite-29",
+    "id": "si-62",
+    "subGroupId": "sg-29",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P.C.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.C.G 780"
   },
   {
-    "id": "si-sqlite-63",
-    "subGroupId": "sg-sqlite-30",
+    "id": "si-63",
+    "subGroupId": "sg-30",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "F.P.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.G 780"
   },
   {
-    "id": "si-sqlite-64",
-    "subGroupId": "sg-sqlite-31",
+    "id": "si-64",
+    "subGroupId": "sg-31",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "S.L-(Digital)-Lower-Film",
     "itemPrefix": "S.L 780"
   },
   {
-    "id": "si-sqlite-65",
-    "subGroupId": "sg-sqlite-32",
+    "id": "si-65",
+    "subGroupId": "sg-32",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "S.P-(Digital)-Lower-Film",
     "itemPrefix": "S.P 780"
   },
   {
-    "id": "si-sqlite-66",
-    "subGroupId": "sg-sqlite-33",
+    "id": "si-66",
+    "subGroupId": "sg-33",
+    "mainGroup": "Digital or Golden Lower Film",
+    "groupName": "T.G-(Digital)-Lower-Film",
     "itemPrefix": "T.G 780"
   },
   {
-    "id": "si-sqlite-67",
-    "subGroupId": "sg-sqlite-34",
+    "id": "si-67",
+    "subGroupId": "sg-34",
+    "mainGroup": "7D UV SHEET",
+    "groupName": "7D UV",
     "itemPrefix": "UVD 2044"
   },
   {
-    "id": "si-sqlite-68",
-    "subGroupId": "sg-sqlite-34",
+    "id": "si-68",
+    "subGroupId": "sg-34",
+    "mainGroup": "7D UV SHEET",
+    "groupName": "7D UV",
     "itemPrefix": "UVD 2043"
   },
   {
-    "id": "si-sqlite-69",
-    "subGroupId": "sg-sqlite-34",
+    "id": "si-69",
+    "subGroupId": "sg-34",
+    "mainGroup": "7D UV SHEET",
+    "groupName": "7D UV",
     "itemPrefix": "UVD 2042"
   },
   {
-    "id": "si-sqlite-70",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-70",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 200"
   },
   {
-    "id": "si-sqlite-71",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-71",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 209"
   },
   {
-    "id": "si-sqlite-72",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-72",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 216"
   },
   {
-    "id": "si-sqlite-73",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-73",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 217"
   },
   {
-    "id": "si-sqlite-74",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-74",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 756"
   },
   {
-    "id": "si-sqlite-75",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-75",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 768"
   },
   {
-    "id": "si-sqlite-76",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-76",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 769"
   },
   {
-    "id": "si-sqlite-77",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-77",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 770"
   },
   {
-    "id": "si-sqlite-78",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-78",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 773"
   },
   {
-    "id": "si-sqlite-79",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-79",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 773"
   },
   {
-    "id": "si-sqlite-80",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-80",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 773"
   },
   {
-    "id": "si-sqlite-81",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-81",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 774"
   },
   {
-    "id": "si-sqlite-82",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-82",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 774"
   },
   {
-    "id": "si-sqlite-83",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-83",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 774"
   },
   {
-    "id": "si-sqlite-84",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-84",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 775"
   },
   {
-    "id": "si-sqlite-85",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-85",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 775"
   },
   {
-    "id": "si-sqlite-86",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-86",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 775"
   },
   {
-    "id": "si-sqlite-87",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-87",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 776"
   },
   {
-    "id": "si-sqlite-88",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-88",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 776"
   },
   {
-    "id": "si-sqlite-89",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-89",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 776"
   },
   {
-    "id": "si-sqlite-90",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-90",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 777"
   },
   {
-    "id": "si-sqlite-91",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-91",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 777"
   },
   {
-    "id": "si-sqlite-92",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-92",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 777"
   },
   {
-    "id": "si-sqlite-93",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-93",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 778"
   },
   {
-    "id": "si-sqlite-94",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-94",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 778"
   },
   {
-    "id": "si-sqlite-95",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-95",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 778"
   },
   {
-    "id": "si-sqlite-96",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-96",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 779"
   },
   {
-    "id": "si-sqlite-97",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-97",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 779"
   },
   {
-    "id": "si-sqlite-98",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-98",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 779"
   },
   {
-    "id": "si-sqlite-99",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-99",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 780"
   },
   {
-    "id": "si-sqlite-100",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-100",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 781"
   },
   {
-    "id": "si-sqlite-101",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-101",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 781"
   },
   {
-    "id": "si-sqlite-102",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-102",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 781"
   },
   {
-    "id": "si-sqlite-103",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-103",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 782"
   },
   {
-    "id": "si-sqlite-104",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-104",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 782"
   },
   {
-    "id": "si-sqlite-105",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-105",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 782"
   },
   {
-    "id": "si-sqlite-106",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-106",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 783"
   },
   {
-    "id": "si-sqlite-107",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-107",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 783"
   },
   {
-    "id": "si-sqlite-108",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-108",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 783"
   },
   {
-    "id": "si-sqlite-109",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-109",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 785"
   },
   {
-    "id": "si-sqlite-110",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-110",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 785"
   },
   {
-    "id": "si-sqlite-111",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-111",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 785"
   },
   {
-    "id": "si-sqlite-112",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-112",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 786"
   },
   {
-    "id": "si-sqlite-113",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-113",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 787"
   },
   {
-    "id": "si-sqlite-114",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-114",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 800"
   },
   {
-    "id": "si-sqlite-115",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-115",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 801"
   },
   {
-    "id": "si-sqlite-116",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-116",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 802"
   },
   {
-    "id": "si-sqlite-117",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-117",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 802"
   },
   {
-    "id": "si-sqlite-118",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-118",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 803"
   },
   {
-    "id": "si-sqlite-119",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-119",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 803"
   },
   {
-    "id": "si-sqlite-120",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-120",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 804"
   },
   {
-    "id": "si-sqlite-121",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-121",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 804"
   },
   {
-    "id": "si-sqlite-122",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-122",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 805"
   },
   {
-    "id": "si-sqlite-123",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-123",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 805"
   },
   {
-    "id": "si-sqlite-124",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-124",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 808"
   },
   {
-    "id": "si-sqlite-125",
-    "subGroupId": "sg-sqlite-2",
+    "id": "si-125",
+    "subGroupId": "sg-2",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 809"
   },
   {
-    "id": "si-sqlite-126",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-126",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 200"
   },
   {
-    "id": "si-sqlite-127",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-127",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 209"
   },
   {
-    "id": "si-sqlite-128",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-128",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 216"
   },
   {
-    "id": "si-sqlite-129",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-129",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 217"
   },
   {
-    "id": "si-sqlite-130",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-130",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 756"
   },
   {
-    "id": "si-sqlite-131",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-131",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 768"
   },
   {
-    "id": "si-sqlite-132",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-132",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 769"
   },
   {
-    "id": "si-sqlite-133",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-133",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 770"
   },
   {
-    "id": "si-sqlite-134",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-134",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 773"
   },
   {
-    "id": "si-sqlite-135",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-135",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 773"
   },
   {
-    "id": "si-sqlite-136",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-136",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 773"
   },
   {
-    "id": "si-sqlite-137",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-137",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 774"
   },
   {
-    "id": "si-sqlite-138",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-138",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 774"
   },
   {
-    "id": "si-sqlite-139",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-139",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 774"
   },
   {
-    "id": "si-sqlite-140",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-140",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 775"
   },
   {
-    "id": "si-sqlite-141",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-141",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 775"
   },
   {
-    "id": "si-sqlite-142",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-142",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 775"
   },
   {
-    "id": "si-sqlite-143",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-143",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 776"
   },
   {
-    "id": "si-sqlite-144",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-144",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 776"
   },
   {
-    "id": "si-sqlite-145",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-145",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 776"
   },
   {
-    "id": "si-sqlite-146",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-146",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 777"
   },
   {
-    "id": "si-sqlite-147",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-147",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 777"
   },
   {
-    "id": "si-sqlite-148",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-148",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 777"
   },
   {
-    "id": "si-sqlite-149",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-149",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 778"
   },
   {
-    "id": "si-sqlite-150",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-150",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 778"
   },
   {
-    "id": "si-sqlite-151",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-151",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 778"
   },
   {
-    "id": "si-sqlite-152",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-152",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 779"
   },
   {
-    "id": "si-sqlite-153",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-153",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 779"
   },
   {
-    "id": "si-sqlite-154",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-154",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 779"
   },
   {
-    "id": "si-sqlite-155",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-155",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 780"
   },
   {
-    "id": "si-sqlite-156",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-156",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 781"
   },
   {
-    "id": "si-sqlite-157",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-157",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 781"
   },
   {
-    "id": "si-sqlite-158",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-158",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 781"
   },
   {
-    "id": "si-sqlite-159",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-159",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 782"
   },
   {
-    "id": "si-sqlite-160",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-160",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 782"
   },
   {
-    "id": "si-sqlite-161",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-161",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 782"
   },
   {
-    "id": "si-sqlite-162",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-162",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 783"
   },
   {
-    "id": "si-sqlite-163",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-163",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 783"
   },
   {
-    "id": "si-sqlite-164",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-164",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 783"
   },
   {
-    "id": "si-sqlite-165",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-165",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 785"
   },
   {
-    "id": "si-sqlite-166",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-166",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 785"
   },
   {
-    "id": "si-sqlite-167",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-167",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 786"
   },
   {
-    "id": "si-sqlite-168",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-168",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 787"
   },
   {
-    "id": "si-sqlite-169",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-169",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 800"
   },
   {
-    "id": "si-sqlite-170",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-170",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 801"
   },
   {
-    "id": "si-sqlite-171",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-171",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 802"
   },
   {
-    "id": "si-sqlite-172",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-172",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 802"
   },
   {
-    "id": "si-sqlite-173",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-173",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 803"
   },
   {
-    "id": "si-sqlite-174",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-174",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 803"
   },
   {
-    "id": "si-sqlite-175",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-175",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 804"
   },
   {
-    "id": "si-sqlite-176",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-176",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 804"
   },
   {
-    "id": "si-sqlite-177",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-177",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 805"
   },
   {
-    "id": "si-sqlite-178",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-178",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 805"
   },
   {
-    "id": "si-sqlite-179",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-179",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 808"
   },
   {
-    "id": "si-sqlite-180",
-    "subGroupId": "sg-sqlite-3",
+    "id": "si-180",
+    "subGroupId": "sg-3",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 809"
   },
   {
-    "id": "si-sqlite-181",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-181",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 200"
   },
   {
-    "id": "si-sqlite-182",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-182",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 209"
   },
   {
-    "id": "si-sqlite-183",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-183",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 216"
   },
   {
-    "id": "si-sqlite-184",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-184",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 217"
   },
   {
-    "id": "si-sqlite-185",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-185",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 756"
   },
   {
-    "id": "si-sqlite-186",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-186",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 768"
   },
   {
-    "id": "si-sqlite-187",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-187",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 769"
   },
   {
-    "id": "si-sqlite-188",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-188",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 770"
   },
   {
-    "id": "si-sqlite-189",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-189",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 773"
   },
   {
-    "id": "si-sqlite-190",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-190",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 773"
   },
   {
-    "id": "si-sqlite-191",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-191",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 773"
   },
   {
-    "id": "si-sqlite-192",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-192",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 774"
   },
   {
-    "id": "si-sqlite-193",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-193",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 774"
   },
   {
-    "id": "si-sqlite-194",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-194",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 774"
   },
   {
-    "id": "si-sqlite-195",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-195",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 775"
   },
   {
-    "id": "si-sqlite-196",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-196",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 775"
   },
   {
-    "id": "si-sqlite-197",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-197",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 775"
   },
   {
-    "id": "si-sqlite-198",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-198",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 776"
   },
   {
-    "id": "si-sqlite-199",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-199",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 776"
   },
   {
-    "id": "si-sqlite-200",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-200",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 776"
   },
   {
-    "id": "si-sqlite-201",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-201",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 777"
   },
   {
-    "id": "si-sqlite-202",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-202",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 777"
   },
   {
-    "id": "si-sqlite-203",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-203",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 777"
   },
   {
-    "id": "si-sqlite-204",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-204",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 778"
   },
   {
-    "id": "si-sqlite-205",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-205",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 778"
   },
   {
-    "id": "si-sqlite-206",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-206",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 778"
   },
   {
-    "id": "si-sqlite-207",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-207",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 779"
   },
   {
-    "id": "si-sqlite-208",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-208",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 779"
   },
   {
-    "id": "si-sqlite-209",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-209",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 779"
   },
   {
-    "id": "si-sqlite-210",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-210",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 780"
   },
   {
-    "id": "si-sqlite-211",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-211",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 781"
   },
   {
-    "id": "si-sqlite-212",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-212",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 781"
   },
   {
-    "id": "si-sqlite-213",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-213",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 781"
   },
   {
-    "id": "si-sqlite-214",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-214",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 782"
   },
   {
-    "id": "si-sqlite-215",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-215",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 782"
   },
   {
-    "id": "si-sqlite-216",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-216",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 782"
   },
   {
-    "id": "si-sqlite-217",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-217",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 783"
   },
   {
-    "id": "si-sqlite-218",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-218",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 783"
   },
   {
-    "id": "si-sqlite-219",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-219",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 783"
   },
   {
-    "id": "si-sqlite-220",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-220",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 785"
   },
   {
-    "id": "si-sqlite-221",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-221",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 785"
   },
   {
-    "id": "si-sqlite-222",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-222",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 785"
   },
   {
-    "id": "si-sqlite-223",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-223",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 786"
   },
   {
-    "id": "si-sqlite-224",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-224",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 787"
   },
   {
-    "id": "si-sqlite-225",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-225",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 787"
   },
   {
-    "id": "si-sqlite-226",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-226",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 787"
   },
   {
-    "id": "si-sqlite-227",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-227",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 800"
   },
   {
-    "id": "si-sqlite-228",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-228",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 801"
   },
   {
-    "id": "si-sqlite-229",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-229",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 802"
   },
   {
-    "id": "si-sqlite-230",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-230",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 802"
   },
   {
-    "id": "si-sqlite-231",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-231",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 803"
   },
   {
-    "id": "si-sqlite-232",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-232",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 803"
   },
   {
-    "id": "si-sqlite-233",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-233",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 804"
   },
   {
-    "id": "si-sqlite-234",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-234",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 804"
   },
   {
-    "id": "si-sqlite-235",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-235",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 805"
   },
   {
-    "id": "si-sqlite-236",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-236",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 808"
   },
   {
-    "id": "si-sqlite-237",
-    "subGroupId": "sg-sqlite-21",
+    "id": "si-237",
+    "subGroupId": "sg-21",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 809"
   },
   {
-    "id": "si-sqlite-238",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-238",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 200"
   },
   {
-    "id": "si-sqlite-239",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-239",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 209"
   },
   {
-    "id": "si-sqlite-240",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-240",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 216"
   },
   {
-    "id": "si-sqlite-241",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-241",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 217"
   },
   {
-    "id": "si-sqlite-242",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-242",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 756"
   },
   {
-    "id": "si-sqlite-243",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-243",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 768"
   },
   {
-    "id": "si-sqlite-244",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-244",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 769"
   },
   {
-    "id": "si-sqlite-245",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-245",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 770"
   },
   {
-    "id": "si-sqlite-246",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-246",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 773"
   },
   {
-    "id": "si-sqlite-247",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-247",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 773"
   },
   {
-    "id": "si-sqlite-248",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-248",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 773"
   },
   {
-    "id": "si-sqlite-249",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-249",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 774"
   },
   {
-    "id": "si-sqlite-250",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-250",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 774"
   },
   {
-    "id": "si-sqlite-251",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-251",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 774"
   },
   {
-    "id": "si-sqlite-252",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-252",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 775"
   },
   {
-    "id": "si-sqlite-253",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-253",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 775"
   },
   {
-    "id": "si-sqlite-254",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-254",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 775"
   },
   {
-    "id": "si-sqlite-255",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-255",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 776"
   },
   {
-    "id": "si-sqlite-256",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-256",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 776"
   },
   {
-    "id": "si-sqlite-257",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-257",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 776"
   },
   {
-    "id": "si-sqlite-258",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-258",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 777"
   },
   {
-    "id": "si-sqlite-259",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-259",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 777"
   },
   {
-    "id": "si-sqlite-260",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-260",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 777"
   },
   {
-    "id": "si-sqlite-261",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-261",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 778"
   },
   {
-    "id": "si-sqlite-262",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-262",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 778"
   },
   {
-    "id": "si-sqlite-263",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-263",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 778"
   },
   {
-    "id": "si-sqlite-264",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-264",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 779"
   },
   {
-    "id": "si-sqlite-265",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-265",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 779"
   },
   {
-    "id": "si-sqlite-266",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-266",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 779"
   },
   {
-    "id": "si-sqlite-267",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-267",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 780"
   },
   {
-    "id": "si-sqlite-268",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-268",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 781"
   },
   {
-    "id": "si-sqlite-269",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-269",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 781"
   },
   {
-    "id": "si-sqlite-270",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-270",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 781"
   },
   {
-    "id": "si-sqlite-271",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-271",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 782"
   },
   {
-    "id": "si-sqlite-272",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-272",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 782"
   },
   {
-    "id": "si-sqlite-273",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-273",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 782"
   },
   {
-    "id": "si-sqlite-274",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-274",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 783"
   },
   {
-    "id": "si-sqlite-275",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-275",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 783"
   },
   {
-    "id": "si-sqlite-276",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-276",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 783"
   },
   {
-    "id": "si-sqlite-277",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-277",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 785"
   },
   {
-    "id": "si-sqlite-278",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-278",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 785"
   },
   {
-    "id": "si-sqlite-279",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-279",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 785"
   },
   {
-    "id": "si-sqlite-280",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-280",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 786"
   },
   {
-    "id": "si-sqlite-281",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-281",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 787"
   },
   {
-    "id": "si-sqlite-282",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-282",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 787"
   },
   {
-    "id": "si-sqlite-283",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-283",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 787"
   },
   {
-    "id": "si-sqlite-284",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-284",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 800"
   },
   {
-    "id": "si-sqlite-285",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-285",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 801"
   },
   {
-    "id": "si-sqlite-286",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-286",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 802"
   },
   {
-    "id": "si-sqlite-287",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-287",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 802"
   },
   {
-    "id": "si-sqlite-288",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-288",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 803"
   },
   {
-    "id": "si-sqlite-289",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-289",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 803"
   },
   {
-    "id": "si-sqlite-290",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-290",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 804"
   },
   {
-    "id": "si-sqlite-291",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-291",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 804"
   },
   {
-    "id": "si-sqlite-292",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-292",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 805"
   },
   {
-    "id": "si-sqlite-293",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-293",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 805"
   },
   {
-    "id": "si-sqlite-294",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-294",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 808"
   },
   {
-    "id": "si-sqlite-295",
-    "subGroupId": "sg-sqlite-4",
+    "id": "si-295",
+    "subGroupId": "sg-4",
+    "mainGroup": "Digital",
+    "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 809"
   },
   {
-    "id": "si-sqlite-296",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-296",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 200"
   },
   {
-    "id": "si-sqlite-297",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-297",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 209"
   },
   {
-    "id": "si-sqlite-298",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-298",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 216"
   },
   {
-    "id": "si-sqlite-299",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-299",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 217"
   },
   {
-    "id": "si-sqlite-300",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-300",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 756"
   },
   {
-    "id": "si-sqlite-301",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-301",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 768"
   },
   {
-    "id": "si-sqlite-302",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-302",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 769"
   },
   {
-    "id": "si-sqlite-303",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-303",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 770"
   },
   {
-    "id": "si-sqlite-304",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-304",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 773"
   },
   {
-    "id": "si-sqlite-305",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-305",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 773"
   },
   {
-    "id": "si-sqlite-306",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-306",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 773"
   },
   {
-    "id": "si-sqlite-307",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-307",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 774"
   },
   {
-    "id": "si-sqlite-308",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-308",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 774"
   },
   {
-    "id": "si-sqlite-309",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-309",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 774"
   },
   {
-    "id": "si-sqlite-310",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-310",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 775"
   },
   {
-    "id": "si-sqlite-311",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-311",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 775"
   },
   {
-    "id": "si-sqlite-312",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-312",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 775"
   },
   {
-    "id": "si-sqlite-313",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-313",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 776"
   },
   {
-    "id": "si-sqlite-314",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-314",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 776"
   },
   {
-    "id": "si-sqlite-315",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-315",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 776"
   },
   {
-    "id": "si-sqlite-316",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-316",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 777"
   },
   {
-    "id": "si-sqlite-317",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-317",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 777"
   },
   {
-    "id": "si-sqlite-318",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-318",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 777"
   },
   {
-    "id": "si-sqlite-319",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-319",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 778"
   },
   {
-    "id": "si-sqlite-320",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-320",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 778"
   },
   {
-    "id": "si-sqlite-321",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-321",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 778"
   },
   {
-    "id": "si-sqlite-322",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-322",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 779"
   },
   {
-    "id": "si-sqlite-323",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-323",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 779"
   },
   {
-    "id": "si-sqlite-324",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-324",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 779"
   },
   {
-    "id": "si-sqlite-325",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-325",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 780"
   },
   {
-    "id": "si-sqlite-326",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-326",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 781"
   },
   {
-    "id": "si-sqlite-327",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-327",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 781"
   },
   {
-    "id": "si-sqlite-328",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-328",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 781"
   },
   {
-    "id": "si-sqlite-329",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-329",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 782"
   },
   {
-    "id": "si-sqlite-330",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-330",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 782"
   },
   {
-    "id": "si-sqlite-331",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-331",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 782"
   },
   {
-    "id": "si-sqlite-332",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-332",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 783"
   },
   {
-    "id": "si-sqlite-333",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-333",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 783"
   },
   {
-    "id": "si-sqlite-334",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-334",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 783"
   },
   {
-    "id": "si-sqlite-335",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-335",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 785"
   },
   {
-    "id": "si-sqlite-336",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-336",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 785"
   },
   {
-    "id": "si-sqlite-337",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-337",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 785"
   },
   {
-    "id": "si-sqlite-338",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-338",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 786"
   },
   {
-    "id": "si-sqlite-339",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-339",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 787"
   },
   {
-    "id": "si-sqlite-340",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-340",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 787"
   },
   {
-    "id": "si-sqlite-341",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-341",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 787"
   },
   {
-    "id": "si-sqlite-342",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-342",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 800"
   },
   {
-    "id": "si-sqlite-343",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-343",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 801"
   },
   {
-    "id": "si-sqlite-344",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-344",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 802"
   },
   {
-    "id": "si-sqlite-345",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-345",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 802"
   },
   {
-    "id": "si-sqlite-346",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-346",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 803"
   },
   {
-    "id": "si-sqlite-347",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-347",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 803"
   },
   {
-    "id": "si-sqlite-348",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-348",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 804"
   },
   {
-    "id": "si-sqlite-349",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-349",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 804"
   },
   {
-    "id": "si-sqlite-350",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-350",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 805"
   },
   {
-    "id": "si-sqlite-351",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-351",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 805"
   },
   {
-    "id": "si-sqlite-352",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-352",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 808"
   },
   {
-    "id": "si-sqlite-353",
-    "subGroupId": "sg-sqlite-5",
+    "id": "si-353",
+    "subGroupId": "sg-5",
+    "mainGroup": "Digital",
+    "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 809"
   },
   {
-    "id": "si-sqlite-354",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-354",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 200"
   },
   {
-    "id": "si-sqlite-355",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-355",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 209"
   },
   {
-    "id": "si-sqlite-356",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-356",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 216"
   },
   {
-    "id": "si-sqlite-357",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-357",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 217"
   },
   {
-    "id": "si-sqlite-358",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-358",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 756"
   },
   {
-    "id": "si-sqlite-359",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-359",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 768"
   },
   {
-    "id": "si-sqlite-360",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-360",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 769"
   },
   {
-    "id": "si-sqlite-361",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-361",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 770"
   },
   {
-    "id": "si-sqlite-362",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-362",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 773"
   },
   {
-    "id": "si-sqlite-363",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-363",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 773"
   },
   {
-    "id": "si-sqlite-364",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-364",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 773"
   },
   {
-    "id": "si-sqlite-365",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-365",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 774"
   },
   {
-    "id": "si-sqlite-366",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-366",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 774"
   },
   {
-    "id": "si-sqlite-367",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-367",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 774"
   },
   {
-    "id": "si-sqlite-368",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-368",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 775"
   },
   {
-    "id": "si-sqlite-369",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-369",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 775"
   },
   {
-    "id": "si-sqlite-370",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-370",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 775"
   },
   {
-    "id": "si-sqlite-371",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-371",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 776"
   },
   {
-    "id": "si-sqlite-372",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-372",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 776"
   },
   {
-    "id": "si-sqlite-373",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-373",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 776"
   },
   {
-    "id": "si-sqlite-374",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-374",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 777"
   },
   {
-    "id": "si-sqlite-375",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-375",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 777"
   },
   {
-    "id": "si-sqlite-376",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-376",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 777"
   },
   {
-    "id": "si-sqlite-377",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-377",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 778"
   },
   {
-    "id": "si-sqlite-378",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-378",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 778"
   },
   {
-    "id": "si-sqlite-379",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-379",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 778"
   },
   {
-    "id": "si-sqlite-380",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-380",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 779"
   },
   {
-    "id": "si-sqlite-381",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-381",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 779"
   },
   {
-    "id": "si-sqlite-382",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-382",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 779"
   },
   {
-    "id": "si-sqlite-383",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-383",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 780"
   },
   {
-    "id": "si-sqlite-384",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-384",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 781"
   },
   {
-    "id": "si-sqlite-385",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-385",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 781"
   },
   {
-    "id": "si-sqlite-386",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-386",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 781"
   },
   {
-    "id": "si-sqlite-387",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-387",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 782"
   },
   {
-    "id": "si-sqlite-388",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-388",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 782"
   },
   {
-    "id": "si-sqlite-389",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-389",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 782"
   },
   {
-    "id": "si-sqlite-390",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-390",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 783"
   },
   {
-    "id": "si-sqlite-391",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-391",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 783"
   },
   {
-    "id": "si-sqlite-392",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-392",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 783"
   },
   {
-    "id": "si-sqlite-393",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-393",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 785"
   },
   {
-    "id": "si-sqlite-394",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-394",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 785"
   },
   {
-    "id": "si-sqlite-395",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-395",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 785"
   },
   {
-    "id": "si-sqlite-396",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-396",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 786"
   },
   {
-    "id": "si-sqlite-397",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-397",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 787"
   },
   {
-    "id": "si-sqlite-398",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-398",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 787"
   },
   {
-    "id": "si-sqlite-399",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-399",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 787"
   },
   {
-    "id": "si-sqlite-400",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-400",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 800"
   },
   {
-    "id": "si-sqlite-401",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-401",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 801"
   },
   {
-    "id": "si-sqlite-402",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-402",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 802"
   },
   {
-    "id": "si-sqlite-403",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-403",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 802"
   },
   {
-    "id": "si-sqlite-404",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-404",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 803"
   },
   {
-    "id": "si-sqlite-405",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-405",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 803"
   },
   {
-    "id": "si-sqlite-406",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-406",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 804"
   },
   {
-    "id": "si-sqlite-407",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-407",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 804"
   },
   {
-    "id": "si-sqlite-408",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-408",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 805"
   },
   {
-    "id": "si-sqlite-409",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-409",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 805"
   },
   {
-    "id": "si-sqlite-410",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-410",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 808"
   },
   {
-    "id": "si-sqlite-411",
-    "subGroupId": "sg-sqlite-6",
+    "id": "si-411",
+    "subGroupId": "sg-6",
+    "mainGroup": "Digital",
+    "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 809"
   },
   {
-    "id": "si-sqlite-412",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-412",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G 783"
   },
   {
-    "id": "si-sqlite-413",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-413",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G 783"
   },
   {
-    "id": "si-sqlite-414",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-414",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G.781"
   },
   {
-    "id": "si-sqlite-415",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-415",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G.781"
   },
   {
-    "id": "si-sqlite-416",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-416",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G.785"
   },
   {
-    "id": "si-sqlite-417",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-417",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G.785"
   },
   {
-    "id": "si-sqlite-418",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-418",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G782"
   },
   {
-    "id": "si-sqlite-419",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-419",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G782"
   },
   {
-    "id": "si-sqlite-420",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-420",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G802"
   },
   {
-    "id": "si-sqlite-421",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-421",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P CG803"
   },
   {
-    "id": "si-sqlite-422",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-422",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P CG804"
   },
   {
-    "id": "si-sqlite-423",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-423",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P CG805"
   },
   {
-    "id": "si-sqlite-424",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-424",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 200"
   },
   {
-    "id": "si-sqlite-425",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-425",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 209"
   },
   {
-    "id": "si-sqlite-426",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-426",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 216"
   },
   {
-    "id": "si-sqlite-427",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-427",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 217"
   },
   {
-    "id": "si-sqlite-428",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-428",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 756"
   },
   {
-    "id": "si-sqlite-429",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-429",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 768"
   },
   {
-    "id": "si-sqlite-430",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-430",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 769"
   },
   {
-    "id": "si-sqlite-431",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-431",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 770"
   },
   {
-    "id": "si-sqlite-432",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-432",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 773"
   },
   {
-    "id": "si-sqlite-433",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-433",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 773"
   },
   {
-    "id": "si-sqlite-434",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-434",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 773"
   },
   {
-    "id": "si-sqlite-435",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-435",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 774"
   },
   {
-    "id": "si-sqlite-436",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-436",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 774"
   },
   {
-    "id": "si-sqlite-437",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-437",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 774"
   },
   {
-    "id": "si-sqlite-438",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-438",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 775"
   },
   {
-    "id": "si-sqlite-439",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-439",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 775"
   },
   {
-    "id": "si-sqlite-440",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-440",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 775"
   },
   {
-    "id": "si-sqlite-441",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-441",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 776"
   },
   {
-    "id": "si-sqlite-442",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-442",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 776"
   },
   {
-    "id": "si-sqlite-443",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-443",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 776"
   },
   {
-    "id": "si-sqlite-444",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-444",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 777"
   },
   {
-    "id": "si-sqlite-445",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-445",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 777"
   },
   {
-    "id": "si-sqlite-446",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-446",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 777"
   },
   {
-    "id": "si-sqlite-447",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-447",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 778"
   },
   {
-    "id": "si-sqlite-448",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-448",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 778"
   },
   {
-    "id": "si-sqlite-449",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-449",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 778"
   },
   {
-    "id": "si-sqlite-450",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-450",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 779"
   },
   {
-    "id": "si-sqlite-451",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-451",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 779"
   },
   {
-    "id": "si-sqlite-452",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-452",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 779"
   },
   {
-    "id": "si-sqlite-453",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-453",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 780"
   },
   {
-    "id": "si-sqlite-454",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-454",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 781"
   },
   {
-    "id": "si-sqlite-455",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-455",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 782"
   },
   {
-    "id": "si-sqlite-456",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-456",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 783"
   },
   {
-    "id": "si-sqlite-457",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-457",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 784"
   },
   {
-    "id": "si-sqlite-458",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-458",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 785"
   },
   {
-    "id": "si-sqlite-459",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-459",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 786"
   },
   {
-    "id": "si-sqlite-460",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-460",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 800"
   },
   {
-    "id": "si-sqlite-461",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-461",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 801"
   },
   {
-    "id": "si-sqlite-462",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-462",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 802"
   },
   {
-    "id": "si-sqlite-463",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-463",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 803"
   },
   {
-    "id": "si-sqlite-464",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-464",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 804"
   },
   {
-    "id": "si-sqlite-465",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-465",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 805"
   },
   {
-    "id": "si-sqlite-466",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-466",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 808"
   },
   {
-    "id": "si-sqlite-467",
-    "subGroupId": "sg-sqlite-7",
+    "id": "si-467",
+    "subGroupId": "sg-7",
+    "mainGroup": "Digital",
+    "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 809"
   },
   {
-    "id": "si-sqlite-468",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-468",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 200"
   },
   {
-    "id": "si-sqlite-469",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-469",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 209"
   },
   {
-    "id": "si-sqlite-470",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-470",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 216"
   },
   {
-    "id": "si-sqlite-471",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-471",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 217"
   },
   {
-    "id": "si-sqlite-472",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-472",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 756"
   },
   {
-    "id": "si-sqlite-473",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-473",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 768"
   },
   {
-    "id": "si-sqlite-474",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-474",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 769"
   },
   {
-    "id": "si-sqlite-475",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-475",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 770"
   },
   {
-    "id": "si-sqlite-476",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-476",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 773"
   },
   {
-    "id": "si-sqlite-477",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-477",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 773"
   },
   {
-    "id": "si-sqlite-478",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-478",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 773"
   },
   {
-    "id": "si-sqlite-479",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-479",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 774"
   },
   {
-    "id": "si-sqlite-480",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-480",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 774"
   },
   {
-    "id": "si-sqlite-481",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-481",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 774"
   },
   {
-    "id": "si-sqlite-482",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-482",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 775"
   },
   {
-    "id": "si-sqlite-483",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-483",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 775"
   },
   {
-    "id": "si-sqlite-484",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-484",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 775"
   },
   {
-    "id": "si-sqlite-485",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-485",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 776"
   },
   {
-    "id": "si-sqlite-486",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-486",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 776"
   },
   {
-    "id": "si-sqlite-487",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-487",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 776"
   },
   {
-    "id": "si-sqlite-488",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-488",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 777"
   },
   {
-    "id": "si-sqlite-489",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-489",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 777"
   },
   {
-    "id": "si-sqlite-490",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-490",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 777"
   },
   {
-    "id": "si-sqlite-491",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-491",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 778"
   },
   {
-    "id": "si-sqlite-492",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-492",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 778"
   },
   {
-    "id": "si-sqlite-493",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-493",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 778"
   },
   {
-    "id": "si-sqlite-494",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-494",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 779"
   },
   {
-    "id": "si-sqlite-495",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-495",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 779"
   },
   {
-    "id": "si-sqlite-496",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-496",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 779"
   },
   {
-    "id": "si-sqlite-497",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-497",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 780"
   },
   {
-    "id": "si-sqlite-498",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-498",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 781"
   },
   {
-    "id": "si-sqlite-499",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-499",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 781"
   },
   {
-    "id": "si-sqlite-500",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-500",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 781"
   },
   {
-    "id": "si-sqlite-501",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-501",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 782"
   },
   {
-    "id": "si-sqlite-502",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-502",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 782"
   },
   {
-    "id": "si-sqlite-503",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-503",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 782"
   },
   {
-    "id": "si-sqlite-504",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-504",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 783"
   },
   {
-    "id": "si-sqlite-505",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-505",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 783"
   },
   {
-    "id": "si-sqlite-506",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-506",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 783"
   },
   {
-    "id": "si-sqlite-507",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-507",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 785"
   },
   {
-    "id": "si-sqlite-508",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-508",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 785"
   },
   {
-    "id": "si-sqlite-509",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-509",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 785"
   },
   {
-    "id": "si-sqlite-510",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-510",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 786"
   },
   {
-    "id": "si-sqlite-511",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-511",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 787"
   },
   {
-    "id": "si-sqlite-512",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-512",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 787"
   },
   {
-    "id": "si-sqlite-513",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-513",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 787"
   },
   {
-    "id": "si-sqlite-514",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-514",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 800"
   },
   {
-    "id": "si-sqlite-515",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-515",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 801"
   },
   {
-    "id": "si-sqlite-516",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-516",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 802"
   },
   {
-    "id": "si-sqlite-517",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-517",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 802"
   },
   {
-    "id": "si-sqlite-518",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-518",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 803"
   },
   {
-    "id": "si-sqlite-519",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-519",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 803"
   },
   {
-    "id": "si-sqlite-520",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-520",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 804"
   },
   {
-    "id": "si-sqlite-521",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-521",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 804"
   },
   {
-    "id": "si-sqlite-522",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-522",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 805"
   },
   {
-    "id": "si-sqlite-523",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-523",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 808"
   },
   {
-    "id": "si-sqlite-524",
-    "subGroupId": "sg-sqlite-8",
+    "id": "si-524",
+    "subGroupId": "sg-8",
+    "mainGroup": "Digital",
+    "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 809"
   },
   {
-    "id": "si-sqlite-525",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-525",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 200"
   },
   {
-    "id": "si-sqlite-526",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-526",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 209"
   },
   {
-    "id": "si-sqlite-527",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-527",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 216"
   },
   {
-    "id": "si-sqlite-528",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-528",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 217"
   },
   {
-    "id": "si-sqlite-529",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-529",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 756"
   },
   {
-    "id": "si-sqlite-530",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-530",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 768"
   },
   {
-    "id": "si-sqlite-531",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-531",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 769"
   },
   {
-    "id": "si-sqlite-532",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-532",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 770"
   },
   {
-    "id": "si-sqlite-533",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-533",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 773"
   },
   {
-    "id": "si-sqlite-534",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-534",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 773"
   },
   {
-    "id": "si-sqlite-535",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-535",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 773"
   },
   {
-    "id": "si-sqlite-536",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-536",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 774"
   },
   {
-    "id": "si-sqlite-537",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-537",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 774"
   },
   {
-    "id": "si-sqlite-538",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-538",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 774"
   },
   {
-    "id": "si-sqlite-539",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-539",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 775"
   },
   {
-    "id": "si-sqlite-540",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-540",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 775"
   },
   {
-    "id": "si-sqlite-541",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-541",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 775"
   },
   {
-    "id": "si-sqlite-542",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-542",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 776"
   },
   {
-    "id": "si-sqlite-543",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-543",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 776"
   },
   {
-    "id": "si-sqlite-544",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-544",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 776"
   },
   {
-    "id": "si-sqlite-545",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-545",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 777"
   },
   {
-    "id": "si-sqlite-546",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-546",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 777"
   },
   {
-    "id": "si-sqlite-547",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-547",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 777"
   },
   {
-    "id": "si-sqlite-548",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-548",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 778"
   },
   {
-    "id": "si-sqlite-549",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-549",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 778"
   },
   {
-    "id": "si-sqlite-550",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-550",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 778"
   },
   {
-    "id": "si-sqlite-551",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-551",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 779"
   },
   {
-    "id": "si-sqlite-552",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-552",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 779"
   },
   {
-    "id": "si-sqlite-553",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-553",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 779"
   },
   {
-    "id": "si-sqlite-554",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-554",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 780"
   },
   {
-    "id": "si-sqlite-555",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-555",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 781"
   },
   {
-    "id": "si-sqlite-556",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-556",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 781"
   },
   {
-    "id": "si-sqlite-557",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-557",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 781"
   },
   {
-    "id": "si-sqlite-558",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-558",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 782"
   },
   {
-    "id": "si-sqlite-559",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-559",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 782"
   },
   {
-    "id": "si-sqlite-560",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-560",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 782"
   },
   {
-    "id": "si-sqlite-561",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-561",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 783"
   },
   {
-    "id": "si-sqlite-562",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-562",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 783"
   },
   {
-    "id": "si-sqlite-563",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-563",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 783"
   },
   {
-    "id": "si-sqlite-564",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-564",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 785"
   },
   {
-    "id": "si-sqlite-565",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-565",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 785"
   },
   {
-    "id": "si-sqlite-566",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-566",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 785"
   },
   {
-    "id": "si-sqlite-567",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-567",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 786"
   },
   {
-    "id": "si-sqlite-568",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-568",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 787"
   },
   {
-    "id": "si-sqlite-569",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-569",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 787"
   },
   {
-    "id": "si-sqlite-570",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-570",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 787"
   },
   {
-    "id": "si-sqlite-571",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-571",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 800"
   },
   {
-    "id": "si-sqlite-572",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-572",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 801"
   },
   {
-    "id": "si-sqlite-573",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-573",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 802"
   },
   {
-    "id": "si-sqlite-574",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-574",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 802"
   },
   {
-    "id": "si-sqlite-575",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-575",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 803"
   },
   {
-    "id": "si-sqlite-576",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-576",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 803"
   },
   {
-    "id": "si-sqlite-577",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-577",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 804"
   },
   {
-    "id": "si-sqlite-578",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-578",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 804"
   },
   {
-    "id": "si-sqlite-579",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-579",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 805"
   },
   {
-    "id": "si-sqlite-580",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-580",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 805"
   },
   {
-    "id": "si-sqlite-581",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-581",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 808"
   },
   {
-    "id": "si-sqlite-582",
-    "subGroupId": "sg-sqlite-9",
+    "id": "si-582",
+    "subGroupId": "sg-9",
+    "mainGroup": "Digital",
+    "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 809"
   },
   {
-    "id": "si-sqlite-583",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-583",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 200"
   },
   {
-    "id": "si-sqlite-584",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-584",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 209"
   },
   {
-    "id": "si-sqlite-585",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-585",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 216"
   },
   {
-    "id": "si-sqlite-586",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-586",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 217"
   },
   {
-    "id": "si-sqlite-587",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-587",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 756"
   },
   {
-    "id": "si-sqlite-588",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-588",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 768"
   },
   {
-    "id": "si-sqlite-589",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-589",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 769"
   },
   {
-    "id": "si-sqlite-590",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-590",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 770"
   },
   {
-    "id": "si-sqlite-591",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-591",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 773"
   },
   {
-    "id": "si-sqlite-592",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-592",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 773"
   },
   {
-    "id": "si-sqlite-593",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-593",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 773"
   },
   {
-    "id": "si-sqlite-594",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-594",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 774"
   },
   {
-    "id": "si-sqlite-595",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-595",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 774"
   },
   {
-    "id": "si-sqlite-596",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-596",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 774"
   },
   {
-    "id": "si-sqlite-597",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-597",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 775"
   },
   {
-    "id": "si-sqlite-598",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-598",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 775"
   },
   {
-    "id": "si-sqlite-599",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-599",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 775"
   },
   {
-    "id": "si-sqlite-600",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-600",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 776"
   },
   {
-    "id": "si-sqlite-601",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-601",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 776"
   },
   {
-    "id": "si-sqlite-602",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-602",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 776"
   },
   {
-    "id": "si-sqlite-603",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-603",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 777"
   },
   {
-    "id": "si-sqlite-604",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-604",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 777"
   },
   {
-    "id": "si-sqlite-605",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-605",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 777"
   },
   {
-    "id": "si-sqlite-606",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-606",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 778"
   },
   {
-    "id": "si-sqlite-607",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-607",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 778"
   },
   {
-    "id": "si-sqlite-608",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-608",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 778"
   },
   {
-    "id": "si-sqlite-609",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-609",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 779"
   },
   {
-    "id": "si-sqlite-610",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-610",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 779"
   },
   {
-    "id": "si-sqlite-611",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-611",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 779"
   },
   {
-    "id": "si-sqlite-612",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-612",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 780"
   },
   {
-    "id": "si-sqlite-613",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-613",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 781"
   },
   {
-    "id": "si-sqlite-614",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-614",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 781"
   },
   {
-    "id": "si-sqlite-615",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-615",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 781"
   },
   {
-    "id": "si-sqlite-616",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-616",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 782"
   },
   {
-    "id": "si-sqlite-617",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-617",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 782"
   },
   {
-    "id": "si-sqlite-618",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-618",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 782"
   },
   {
-    "id": "si-sqlite-619",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-619",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 783"
   },
   {
-    "id": "si-sqlite-620",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-620",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 783"
   },
   {
-    "id": "si-sqlite-621",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-621",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 783"
   },
   {
-    "id": "si-sqlite-622",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-622",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 785"
   },
   {
-    "id": "si-sqlite-623",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-623",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 785"
   },
   {
-    "id": "si-sqlite-624",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-624",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 785"
   },
   {
-    "id": "si-sqlite-625",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-625",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 786"
   },
   {
-    "id": "si-sqlite-626",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-626",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 787"
   },
   {
-    "id": "si-sqlite-627",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-627",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 787"
   },
   {
-    "id": "si-sqlite-628",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-628",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 787"
   },
   {
-    "id": "si-sqlite-629",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-629",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 800"
   },
   {
-    "id": "si-sqlite-630",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-630",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 801"
   },
   {
-    "id": "si-sqlite-631",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-631",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 802"
   },
   {
-    "id": "si-sqlite-632",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-632",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 802"
   },
   {
-    "id": "si-sqlite-633",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-633",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 803"
   },
   {
-    "id": "si-sqlite-634",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-634",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 803"
   },
   {
-    "id": "si-sqlite-635",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-635",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 804"
   },
   {
-    "id": "si-sqlite-636",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-636",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 804"
   },
   {
-    "id": "si-sqlite-637",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-637",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 805"
   },
   {
-    "id": "si-sqlite-638",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-638",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 805"
   },
   {
-    "id": "si-sqlite-639",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-639",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 808"
   },
   {
-    "id": "si-sqlite-640",
-    "subGroupId": "sg-sqlite-19",
+    "id": "si-640",
+    "subGroupId": "sg-19",
+    "mainGroup": "Digital",
+    "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 809"
   },
   {
-    "id": "si-sqlite-641",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-641",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 200"
   },
   {
-    "id": "si-sqlite-642",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-642",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 209"
   },
   {
-    "id": "si-sqlite-643",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-643",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 216"
   },
   {
-    "id": "si-sqlite-644",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-644",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 217"
   },
   {
-    "id": "si-sqlite-645",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-645",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 756"
   },
   {
-    "id": "si-sqlite-646",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-646",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 768"
   },
   {
-    "id": "si-sqlite-647",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-647",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 769"
   },
   {
-    "id": "si-sqlite-648",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-648",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 770"
   },
   {
-    "id": "si-sqlite-649",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-649",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 773"
   },
   {
-    "id": "si-sqlite-650",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-650",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 773"
   },
   {
-    "id": "si-sqlite-651",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-651",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 773"
   },
   {
-    "id": "si-sqlite-652",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-652",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 774"
   },
   {
-    "id": "si-sqlite-653",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-653",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 774"
   },
   {
-    "id": "si-sqlite-654",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-654",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 774"
   },
   {
-    "id": "si-sqlite-655",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-655",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 775"
   },
   {
-    "id": "si-sqlite-656",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-656",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 775"
   },
   {
-    "id": "si-sqlite-657",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-657",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 775"
   },
   {
-    "id": "si-sqlite-658",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-658",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 776"
   },
   {
-    "id": "si-sqlite-659",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-659",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 776"
   },
   {
-    "id": "si-sqlite-660",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-660",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 776"
   },
   {
-    "id": "si-sqlite-661",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-661",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 777"
   },
   {
-    "id": "si-sqlite-662",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-662",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 777"
   },
   {
-    "id": "si-sqlite-663",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-663",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 777"
   },
   {
-    "id": "si-sqlite-664",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-664",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 778"
   },
   {
-    "id": "si-sqlite-665",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-665",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 778"
   },
   {
-    "id": "si-sqlite-666",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-666",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 778"
   },
   {
-    "id": "si-sqlite-667",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-667",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 779"
   },
   {
-    "id": "si-sqlite-668",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-668",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 779"
   },
   {
-    "id": "si-sqlite-669",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-669",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 779"
   },
   {
-    "id": "si-sqlite-670",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-670",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 780"
   },
   {
-    "id": "si-sqlite-671",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-671",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 781"
   },
   {
-    "id": "si-sqlite-672",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-672",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 781"
   },
   {
-    "id": "si-sqlite-673",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-673",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 781"
   },
   {
-    "id": "si-sqlite-674",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-674",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 782"
   },
   {
-    "id": "si-sqlite-675",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-675",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 782"
   },
   {
-    "id": "si-sqlite-676",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-676",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 782"
   },
   {
-    "id": "si-sqlite-677",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-677",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 783"
   },
   {
-    "id": "si-sqlite-678",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-678",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 783"
   },
   {
-    "id": "si-sqlite-679",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-679",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 783"
   },
   {
-    "id": "si-sqlite-680",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-680",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 785"
   },
   {
-    "id": "si-sqlite-681",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-681",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 785"
   },
   {
-    "id": "si-sqlite-682",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-682",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 785"
   },
   {
-    "id": "si-sqlite-683",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-683",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 786"
   },
   {
-    "id": "si-sqlite-684",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-684",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 787"
   },
   {
-    "id": "si-sqlite-685",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-685",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 787"
   },
   {
-    "id": "si-sqlite-686",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-686",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 787"
   },
   {
-    "id": "si-sqlite-687",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-687",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 800"
   },
   {
-    "id": "si-sqlite-688",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-688",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 801"
   },
   {
-    "id": "si-sqlite-689",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-689",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 802"
   },
   {
-    "id": "si-sqlite-690",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-690",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 802"
   },
   {
-    "id": "si-sqlite-691",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-691",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 803"
   },
   {
-    "id": "si-sqlite-692",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-692",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 803"
   },
   {
-    "id": "si-sqlite-693",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-693",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 804"
   },
   {
-    "id": "si-sqlite-694",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-694",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 804"
   },
   {
-    "id": "si-sqlite-695",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-695",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 805"
   },
   {
-    "id": "si-sqlite-696",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-696",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 805"
   },
   {
-    "id": "si-sqlite-697",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-697",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 808"
   },
   {
-    "id": "si-sqlite-698",
-    "subGroupId": "sg-sqlite-20",
+    "id": "si-698",
+    "subGroupId": "sg-20",
+    "mainGroup": "Digital",
+    "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 809"
   }
 ];

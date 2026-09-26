@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { macAudio } from '../utils/macAudio';
-import { Search, Plus, Trash2, Edit2, Check, X, Layers, Tag, Type } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, Check, X, Layers, Tag, Type, RotateCcw } from 'lucide-react';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
 import { GlassInput, GlassSelect } from './common/GlassInput';
@@ -39,45 +39,58 @@ export const SkipItemNameTab: React.FC = () => {
     try { const saved = localStorage.getItem('modern_skip_sub_cols'); return saved ? { ...DEFAULT_SUB_COLS, ...JSON.parse(saved) } : DEFAULT_SUB_COLS; } catch { return DEFAULT_SUB_COLS; }
   });
 
+  const purgeAndLoadPristineBackup = () => {
+    try {
+      localStorage.removeItem('billapp_skip_items');
+      localStorage.removeItem('billapp_skip_sub_groups');
+      localStorage.removeItem('billapp_skip_main_groups');
+      localStorage.removeItem('si_main_groups');
+      localStorage.removeItem('si_sub_groups');
+      localStorage.removeItem('si_items');
+      localStorage.removeItem('si_skip_items');
+    } catch {}
+
+    setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
+    setSubGroups(SQLITE_SKIP_SUB_GROUPS);
+    setSkipItems(SQLITE_SKIP_ITEMS);
+
+    try {
+      localStorage.setItem('billapp_skip_main_groups', JSON.stringify(SQLITE_SKIP_MAIN_GROUPS));
+      localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(SQLITE_SKIP_SUB_GROUPS));
+      localStorage.setItem('billapp_skip_items', JSON.stringify(SQLITE_SKIP_ITEMS));
+      localStorage.setItem('billapp_skip_version_v5', 'true');
+    } catch {}
+
+    if (SQLITE_SKIP_SUB_GROUPS.length > 0) {
+      setSelectedMainGroupId(SQLITE_SKIP_SUB_GROUPS[0].id);
+    }
+    macAudio.playPop();
+  };
+
   useEffect(() => {
     try {
+      const isClean = localStorage.getItem('billapp_skip_version_v5');
+      if (!isClean) {
+        purgeAndLoadPristineBackup();
+        return;
+      }
+
       const savedMain = localStorage.getItem('billapp_skip_main_groups');
       const savedSub = localStorage.getItem('billapp_skip_sub_groups');
       const savedItems = localStorage.getItem('billapp_skip_items');
-      let loadedSubs = SQLITE_SKIP_SUB_GROUPS;
       if (savedMain && savedSub && savedItems) {
-        const parsedItems = JSON.parse(savedItems);
-        if (parsedItems.length < SQLITE_SKIP_ITEMS.length) {
-          setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
-          setSubGroups(SQLITE_SKIP_SUB_GROUPS);
-          setSkipItems(SQLITE_SKIP_ITEMS);
-          localStorage.setItem('billapp_skip_main_groups', JSON.stringify(SQLITE_SKIP_MAIN_GROUPS));
-          localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(SQLITE_SKIP_SUB_GROUPS));
-          localStorage.setItem('billapp_skip_items', JSON.stringify(SQLITE_SKIP_ITEMS));
-        } else {
-          setMainGroups(JSON.parse(savedMain));
-          loadedSubs = JSON.parse(savedSub);
-          setSubGroups(loadedSubs);
-          setSkipItems(parsedItems);
+        setMainGroups(JSON.parse(savedMain));
+        const loadedSubs = JSON.parse(savedSub);
+        setSubGroups(loadedSubs);
+        setSkipItems(JSON.parse(savedItems));
+        if (loadedSubs.length > 0) {
+          setSelectedMainGroupId(prev => prev || loadedSubs[0].id);
         }
       } else {
-        setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
-        setSubGroups(SQLITE_SKIP_SUB_GROUPS);
-        setSkipItems(SQLITE_SKIP_ITEMS);
-        localStorage.setItem('billapp_skip_main_groups', JSON.stringify(SQLITE_SKIP_MAIN_GROUPS));
-        localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(SQLITE_SKIP_SUB_GROUPS));
-        localStorage.setItem('billapp_skip_items', JSON.stringify(SQLITE_SKIP_ITEMS));
-      }
-      if (loadedSubs.length > 0) {
-        setSelectedMainGroupId(prev => prev || loadedSubs[0].id);
+        purgeAndLoadPristineBackup();
       }
     } catch {
-      setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
-      setSubGroups(SQLITE_SKIP_SUB_GROUPS);
-      setSkipItems(SQLITE_SKIP_ITEMS);
-      if (SQLITE_SKIP_SUB_GROUPS.length > 0) {
-        setSelectedMainGroupId(prev => prev || SQLITE_SKIP_SUB_GROUPS[0].id);
-      }
+      purgeAndLoadPristineBackup();
     }
   }, []);
 
@@ -144,7 +157,11 @@ export const SkipItemNameTab: React.FC = () => {
 
   const handleSubKeyDown = (e: React.KeyboardEvent) => {
     if (isMainModalOpen || isSubModalOpen || deleteMain || deleteSub) return;
-    const items = skipItems.filter(si => si.subGroupId === selectedMainGroupId);
+    const curSubGroup = subGroups.find(s => s.id === selectedMainGroupId);
+    const items = skipItems.filter(si => 
+      si.subGroupId === selectedMainGroupId || 
+      (curSubGroup && si.groupName === curSubGroup.groupName && (!si.mainGroup || si.mainGroup === curSubGroup.mainGroup))
+    );
     const idx = items.findIndex(s => s.id === selectedSubGroupId);
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -187,10 +204,20 @@ export const SkipItemNameTab: React.FC = () => {
       {/* Left: Main Groups */}
       <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleMainKeyDown}>
         <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Sub Groups Configuration (Enter to Add)</span>
-          <button className="mac-btn" onClick={() => { setEditingMainId(null); setMainFormData({ id: 'sg-' + Date.now(), mainGroupId: mainGroups[0]?.id || '', groupName: '', sumColumn: 'QTY' }); setIsMainModalOpen(true); macAudio.playClick(); }}>
-            <Plus size={14} /> Add
-          </button>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Sub Groups Configuration ({subGroups.length} Groups)</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              className="mac-btn" 
+              style={{ background: 'rgba(239, 68, 68, 0.18)', borderColor: 'rgba(239, 68, 68, 0.35)', color: '#fca5a5' }} 
+              onClick={purgeAndLoadPristineBackup}
+              title="Purge all old data and reload fresh from BillApp_Backup.json"
+            >
+              <RotateCcw size={13} /> Reset to Backup
+            </button>
+            <button className="mac-btn" onClick={() => { setEditingMainId(null); setMainFormData({ id: 'sg-' + Date.now(), mainGroupId: mainGroups[0]?.id || '', groupName: '', sumColumn: 'QTY' }); setIsMainModalOpen(true); macAudio.playClick(); }}>
+              <Plus size={14} /> Add
+            </button>
+          </div>
         </div>
         <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           <table className="mac-table">
@@ -205,12 +232,12 @@ export const SkipItemNameTab: React.FC = () => {
             </thead>
             <tbody>
               {subGroups.map((sg, idx) => {
-                const parentMain = mainGroups.find(m => m.id === sg.mainGroupId);
-                const itemCount = skipItems.filter(si => si.subGroupId === sg.id).length;
+                const parentMain = mainGroups.find(m => m.id === sg.mainGroupId || m.name === sg.mainGroup);
+                const itemCount = skipItems.filter(si => si.subGroupId === sg.id || (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))).length;
                 return (
                   <tr key={sg.id} className={`mac-table-row ${selectedMainGroupId === sg.id ? 'selected' : ''}`} onClick={() => { macAudio.playClick(); setSelectedMainGroupId(sg.id); }} onDoubleClick={() => { setEditingMainId(sg.id); setMainFormData({ ...sg }); setIsMainModalOpen(true); }}>
                     <td style={{ textAlign: 'center', color: '#64748b' }}>{idx + 1}</td>
-                    <td style={{ fontWeight: 600, color: '#38bdf8' }}>{parentMain?.name || '-'}</td>
+                    <td style={{ fontWeight: 600, color: '#38bdf8' }}>{parentMain?.name || sg.mainGroup || '-'}</td>
                     <td style={{ color: '#f8fafc' }}>{sg.groupName}</td>
                     <td style={{ textAlign: 'center', color: '#a78bfa', fontWeight: 600 }}>{sg.sumColumn}</td>
                     <td style={{ textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{itemCount}</td>
@@ -225,31 +252,44 @@ export const SkipItemNameTab: React.FC = () => {
 
       {/* Right: Items */}
       <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleSubKeyDown}>
-        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>{selectedMainGroupId ? 'Items for Group (Enter to Add)' : 'Select a Group'}</span>
-          {selectedMainGroupId && <button className="mac-btn" onClick={() => { setEditingSubId(null); setSubFormData({ id: 'si-' + Date.now(), subGroupId: selectedMainGroupId, itemPrefix: '' }); setIsSubModalOpen(true); macAudio.playClick(); }}><Plus size={14} /> Add Item</button>}
-        </div>
-        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {selectedMainGroupId ? (
-            <table className="mac-table">
-              <thead>
-                <tr>
-                  <th style={{ width: subColWidths.srNo, textAlign: 'center', position: 'relative' }}>#<div className="th-resizer" onMouseDown={e => startResizeSub('srNo', e)} /></th>
-                  <th style={{ width: subColWidths.itemName, position: 'relative' }}>ITEM NAME / PREFIX<div className="th-resizer" onMouseDown={e => startResizeSub('itemName', e)} /></th>
-                </tr>
-              </thead>
-              <tbody>
-                {skipItems.filter(si => si.subGroupId === selectedMainGroupId).map((si, idx) => (
-                  <tr key={si.id} className={`mac-table-row ${selectedSubGroupId === si.id ? 'selected' : ''}`} onClick={() => { macAudio.playClick(); setSelectedSubGroupId(si.id); }} onDoubleClick={() => { setEditingSubId(si.id); setSubFormData({ ...si }); setIsSubModalOpen(true); }}>
-                    <td style={{ textAlign: 'center', color: '#64748b' }}>{idx + 1}</td>
-                    <td style={{ fontWeight: 600, color: '#f8fafc' }}>{si.itemPrefix}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: '13px' }}>Select a group from the left panel</div>}
-          <div style={{ height: '36px' }} />
-        </div>
+        {(() => {
+          const curSub = subGroups.find(s => s.id === selectedMainGroupId);
+          const currentGroupItems = curSub ? skipItems.filter(si => 
+            si.subGroupId === curSub.id || 
+            (si.groupName === curSub.groupName && (!si.mainGroup || si.mainGroup === curSub.mainGroup))
+          ) : [];
+          return (
+            <>
+              <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                  {curSub ? `${curSub.groupName} (${currentGroupItems.length} Items)` : 'Select a Group'}
+                </span>
+                {curSub && <button className="mac-btn" onClick={() => { setEditingSubId(null); setSubFormData({ id: 'si-' + Date.now(), subGroupId: curSub.id, itemPrefix: '' }); setIsSubModalOpen(true); macAudio.playClick(); }}><Plus size={14} /> Add Item</button>}
+              </div>
+              <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                {curSub ? (
+                  <table className="mac-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: subColWidths.srNo, textAlign: 'center', position: 'relative' }}>#<div className="th-resizer" onMouseDown={e => startResizeSub('srNo', e)} /></th>
+                        <th style={{ width: subColWidths.itemName, position: 'relative' }}>ITEM NAME / PREFIX<div className="th-resizer" onMouseDown={e => startResizeSub('itemName', e)} /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentGroupItems.map((si, idx) => (
+                        <tr key={si.id} className={`mac-table-row ${selectedSubGroupId === si.id ? 'selected' : ''}`} onClick={() => { macAudio.playClick(); setSelectedSubGroupId(si.id); }} onDoubleClick={() => { setEditingSubId(si.id); setSubFormData({ ...si }); setIsSubModalOpen(true); }}>
+                          <td style={{ textAlign: 'center', color: '#64748b' }}>{idx + 1}</td>
+                          <td style={{ fontWeight: 600, color: '#f8fafc' }}>{si.itemPrefix}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: '13px' }}>Select a group from the left panel</div>}
+                <div style={{ height: '36px' }} />
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* MODALS */}
