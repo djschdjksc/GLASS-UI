@@ -333,8 +333,19 @@ export const ControlPanelView: React.FC = () => {
           setEditingGroupId(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
           setEditingGroupId(null);
         }
+        return;
+      }
+
+      // Escape: Cancel selection / edit mode
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingGroupId(null);
+        setSelectedGroupId(null);
+        setGroupToDelete(null);
         return;
       }
 

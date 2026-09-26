@@ -179,8 +179,18 @@ export const BillItemNameTab: React.FC = () => {
           setEditingIdx(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
           setEditingIdx(null);
         }
+        return;
+      }
+
+      // Escape: Cancel selection / edit mode
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingIdx(null);
+        setSelectedIdx(null);
         return;
       }
 

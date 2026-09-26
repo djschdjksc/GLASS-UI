@@ -401,10 +401,12 @@ function AppContent() {
         return;
       }
 
-      // Escape key: SKIP current loaded bill or clear panel to new blank bill
+      // Escape key: SKIP current loaded bill or clear panel to new blank bill (only in F1/HOME)
       if (e.key === 'Escape') {
-        e.preventDefault();
-        escapeClearRef.current();
+        if (activeTab === 'F1' || activeTab === 'HOME') {
+          e.preventDefault();
+          escapeClearRef.current();
+        }
         return;
       }
 
@@ -721,14 +723,7 @@ function AppContent() {
     if (isNoteOpen) { setIsNoteOpen(false); return; }
     if (isJsonOpen) { setIsJsonOpen(false); return; }
 
-    // 3. If in another tab, return to Bill Entry (F1)
-    if (activeTab !== 'F1' && activeTab !== 'HOME') {
-      setActiveTab('F1');
-      showToast('Returned to Bill Entry (F1)', 'info');
-      return;
-    }
-
-    // 4. Check if current bill is already empty
+    // 3. Check if current bill is already empty
     if (isBillEmpty(header, rawItems, finishedItems)) {
       showToast('Bill is already empty / ready for typing', 'info');
       const partyInput = document.querySelector<HTMLInputElement>('[data-np-target="1-2"]');

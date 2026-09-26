@@ -265,9 +265,20 @@ export const SkipItemNameTab: React.FC = () => {
           setEditingItemId(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
           setEditingGroupId(null);
           setEditingItemId(null);
         }
+        return;
+      }
+
+      // Escape: Cancel selection / edit mode
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingGroupId(null);
+        setEditingItemId(null);
+        setSelectedItemId(null);
         return;
       }
 

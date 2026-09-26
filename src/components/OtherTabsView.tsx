@@ -637,8 +637,18 @@ export const OtherTabsView: React.FC<Props> = ({
           setEditingPartyId(null);
         } else if (e.key === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
           setEditingPartyId(null);
         }
+        return;
+      }
+
+      // Escape: Cancel selection / edit mode
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingPartyId(null);
+        setSelectedPartyId(null);
         return;
       }
 
