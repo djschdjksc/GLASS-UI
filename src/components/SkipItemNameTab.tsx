@@ -13,6 +13,9 @@ export const SkipItemNameTab: React.FC = () => {
   const [skipItems, setSkipItems] = useState<SkipItemSeed[]>([]);
   
   const [selectedMainGroupId, setSelectedMainGroupId] = useState<string | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [itemSearch, setItemSearch] = useState('');
 
   const [colWidths, setColWidths] = useState(() => {
@@ -115,9 +118,10 @@ export const SkipItemNameTab: React.FC = () => {
       groupName: 'NEW-GROUP',
       sumColumn: 'QTY'
     };
-    const next = [...subGroups, newSg];
+    const next = [newSg, ...subGroups];
     saveSubGroups(next);
     setSelectedMainGroupId(newId);
+    setEditingGroupId(newId);
   };
 
   const handleDeleteSubGroup = (id: string) => {
@@ -126,6 +130,7 @@ export const SkipItemNameTab: React.FC = () => {
     saveSubGroups(next);
     if (selectedMainGroupId === id) {
       setSelectedMainGroupId(next[0]?.id || null);
+      setEditingGroupId(null);
     }
   };
 
@@ -149,12 +154,18 @@ export const SkipItemNameTab: React.FC = () => {
     };
     const next = [newItem, ...skipItems];
     saveSkipItems(next);
+    setSelectedItemId(newId);
+    setEditingItemId(newId);
   };
 
   const handleDeleteItem = (id: string) => {
     macAudio.playPop();
     const next = skipItems.filter(si => si.id !== id);
     saveSkipItems(next);
+    if (selectedItemId === id) {
+      setSelectedItemId(null);
+      setEditingItemId(null);
+    }
   };
 
   // Bulk paste into Skip Items table
@@ -197,8 +208,8 @@ export const SkipItemNameTab: React.FC = () => {
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    background: 'transparent',
-    border: 'none',
+    background: 'rgba(255, 255, 255, 0.06)',
+    border: '1px solid rgba(56, 189, 248, 0.3)',
     outline: 'none',
     color: '#f8fafc',
     fontSize: '11.5px',
@@ -207,10 +218,19 @@ export const SkipItemNameTab: React.FC = () => {
     borderRadius: '4px'
   };
 
+  const cellTextStyle: React.CSSProperties = {
+    padding: '3px 6px',
+    fontSize: '11.5px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: 'block'
+  };
+
   const selectStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(15, 23, 42, 0.65)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(15, 23, 42, 0.85)',
+    border: '1px solid rgba(56, 189, 248, 0.3)',
     color: '#38bdf8',
     fontSize: '11px',
     fontWeight: 600,
@@ -218,6 +238,46 @@ export const SkipItemNameTab: React.FC = () => {
     padding: '2px 4px',
     outline: 'none'
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+      if (isInput) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          macAudio.playSuccess();
+          setEditingGroupId(null);
+          setEditingItemId(null);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setEditingGroupId(null);
+          setEditingItemId(null);
+        }
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedItemId) {
+          macAudio.playClick();
+          setEditingItemId(selectedItemId);
+        } else if (selectedMainGroupId) {
+          macAudio.playClick();
+          setEditingGroupId(selectedMainGroupId);
+        }
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        if (selectedItemId) {
+          handleDeleteItem(selectedItemId);
+        } else if (selectedMainGroupId) {
+          handleDeleteSubGroup(selectedMainGroupId);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedMainGroupId, editingGroupId, selectedItemId, editingItemId, subGroups, skipItems]);
 
   return (
     <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '10px', height: '100%', minHeight: 0, overflow: 'hidden' }}>
@@ -251,61 +311,83 @@ export const SkipItemNameTab: React.FC = () => {
                 <th style={{ width: colWidths.groupName }}>GROUP NAME</th>
                 <th style={{ width: colWidths.sumCol, textAlign: 'center' }}>SUM COL</th>
                 <th style={{ width: colWidths.items, textAlign: 'center' }}>ITEMS</th>
-                <th style={{ width: colWidths.actions, textAlign: 'center' }}>DEL</th>
+                <th style={{ width: '60px', textAlign: 'center' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
               {subGroups.map((sg, idx) => {
                 const isSelected = selectedMainGroupId === sg.id;
+                const isEditing = editingGroupId === sg.id;
                 const itemCount = skipItems.filter(si => si.subGroupId === sg.id || (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))).length;
                 return (
                   <tr 
                     key={sg.id} 
                     className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                    onClick={() => { macAudio.playClick(); setSelectedMainGroupId(sg.id); }}
+                    onClick={() => { macAudio.playClick(); setSelectedMainGroupId(sg.id); setSelectedItemId(null); }}
+                    onDoubleClick={() => setEditingGroupId(sg.id)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
                       {idx + 1}
                     </td>
 
-                    {/* MAIN GROUP SELECT */}
+                    {/* MAIN GROUP */}
                     <td style={{ padding: '2px' }}>
-                      <select
-                        style={selectStyle}
-                        value={sg.mainGroup}
-                        onChange={e => handleSubGroupChange(sg.id, 'mainGroup', e.target.value)}
-                        onClick={e => e.stopPropagation()}
-                      >
-                        {mainGroups.map(m => (
-                          <option key={m.id} value={m.name} style={{ background: '#0f172a', color: '#f8fafc' }}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
+                      {isEditing ? (
+                        <select
+                          style={selectStyle}
+                          value={sg.mainGroup}
+                          onChange={e => handleSubGroupChange(sg.id, 'mainGroup', e.target.value)}
+                          onClick={e => e.stopPropagation()}
+                          autoFocus
+                        >
+                          {mainGroups.map(m => (
+                            <option key={m.id} value={m.name} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span style={{ ...cellTextStyle, color: '#38bdf8', fontWeight: 600 }}>
+                          {sg.mainGroup}
+                        </span>
+                      )}
                     </td>
 
-                    {/* GROUP NAME INPUT */}
+                    {/* GROUP NAME */}
                     <td style={{ padding: '1px' }}>
-                      <input
-                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
-                        value={sg.groupName}
-                        onChange={e => handleSubGroupChange(sg.id, 'groupName', e.target.value)}
-                        onClick={e => e.stopPropagation()}
-                      />
+                      {isEditing ? (
+                        <input
+                          style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                          value={sg.groupName}
+                          onChange={e => handleSubGroupChange(sg.id, 'groupName', e.target.value)}
+                          onClick={e => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                          {sg.groupName}
+                        </span>
+                      )}
                     </td>
 
-                    {/* SUM COLUMN SELECT */}
+                    {/* SUM COLUMN */}
                     <td style={{ padding: '2px', textAlign: 'center' }}>
-                      <select
-                        style={{ ...selectStyle, color: '#a78bfa', textAlign: 'center' }}
-                        value={sg.sumColumn}
-                        onChange={e => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <option value="QTY" style={{ background: '#0f172a', color: '#f8fafc' }}>QTY</option>
-                        <option value="U CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>U CAP</option>
-                        <option value="L CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>L CAP</option>
-                      </select>
+                      {isEditing ? (
+                        <select
+                          style={{ ...selectStyle, color: '#a78bfa', textAlign: 'center' }}
+                          value={sg.sumColumn}
+                          onChange={e => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <option value="QTY" style={{ background: '#0f172a', color: '#f8fafc' }}>QTY</option>
+                          <option value="U CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>U CAP</option>
+                          <option value="L CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>L CAP</option>
+                        </select>
+                      ) : (
+                        <span style={{ ...cellTextStyle, color: '#a78bfa', fontWeight: 600, textAlign: 'center' }}>
+                          {sg.sumColumn}
+                        </span>
+                      )}
                     </td>
 
                     {/* ITEM COUNT */}
@@ -313,20 +395,23 @@ export const SkipItemNameTab: React.FC = () => {
                       {itemCount}
                     </td>
 
-                    {/* ACTIONS: DELETE */}
+                    {/* ACTION: SAVE BUTTON ONLY WHEN ACTIVE */}
                     <td style={{ textAlign: 'center', padding: '1px' }}>
-                      <button
-                        type="button"
-                        className="mac-btn danger"
-                        style={{ padding: '2px 5px', height: '22px' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSubGroup(sg.id);
-                        }}
-                        title="Delete Group"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {isEditing && (
+                        <button
+                          type="button"
+                          className="mac-btn primary"
+                          style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            macAudio.playSuccess();
+                            setEditingGroupId(null);
+                          }}
+                          title="Save Group Changes"
+                        >
+                          <Check size={12} /> Save
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -381,36 +466,58 @@ export const SkipItemNameTab: React.FC = () => {
                 <tr>
                   <th style={{ width: subColWidths.srNo, textAlign: 'center' }}>#</th>
                   <th style={{ width: subColWidths.itemName }}>ITEM NAME / PREFIX</th>
-                  <th style={{ width: subColWidths.actions, textAlign: 'center' }}>DEL</th>
+                  <th style={{ width: '60px', textAlign: 'center' }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((si, idx) => (
-                  <tr key={si.id} className="mac-table-row">
-                    <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
-                      {idx + 1}
-                    </td>
-                    <td style={{ padding: '1px' }}>
-                      <input
-                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
-                        value={si.itemPrefix}
-                        placeholder="e.g. B.F.P-(A) 770"
-                        onChange={e => handleItemChange(si.id, e.target.value)}
-                      />
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '1px' }}>
-                      <button
-                        type="button"
-                        className="mac-btn danger"
-                        style={{ padding: '2px 5px', height: '22px' }}
-                        onClick={() => handleDeleteItem(si.id)}
-                        title="Delete Item"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredItems.map((si, idx) => {
+                  const isSelectedItem = selectedItemId === si.id;
+                  const isEditingItem = editingItemId === si.id;
+                  return (
+                    <tr 
+                      key={si.id} 
+                      className={`mac-table-row ${isSelectedItem ? 'selected' : ''}`}
+                      onClick={() => { setSelectedItemId(si.id); }}
+                      onDoubleClick={() => setEditingItemId(si.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                        {idx + 1}
+                      </td>
+                      <td style={{ padding: '1px' }}>
+                        {isEditingItem ? (
+                          <input
+                            style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                            value={si.itemPrefix}
+                            onChange={e => handleItemChange(si.id, e.target.value)}
+                            autoFocus
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                            {si.itemPrefix || '—'}
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'center', padding: '1px' }}>
+                        {isEditingItem && (
+                          <button
+                            type="button"
+                            className="mac-btn primary"
+                            style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              macAudio.playSuccess();
+                              setEditingItemId(null);
+                            }}
+                            title="Save Item Changes"
+                          >
+                            <Check size={12} /> Save
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : (

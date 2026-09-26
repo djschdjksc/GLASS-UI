@@ -203,6 +203,7 @@ export const ControlPanelView: React.FC = () => {
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [groupToDelete, setGroupToDelete] = useState<GroupRule | null>(null);
 
   const handleCellChange = (id: string, field: keyof GroupRule, value: any) => {
@@ -232,6 +233,7 @@ export const ControlPanelView: React.FC = () => {
       return next;
     });
     setSelectedGroupId(newGroup.id);
+    setEditingGroupId(newGroup.id);
   };
 
   const handleDeleteGroup = (id: string) => {
@@ -241,7 +243,10 @@ export const ControlPanelView: React.FC = () => {
       try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
       return next;
     });
-    if (selectedGroupId === id) setSelectedGroupId(null);
+    if (selectedGroupId === id) {
+      setSelectedGroupId(null);
+      setEditingGroupId(null);
+    }
   };
 
   const handleGroupPaste = (e: React.ClipboardEvent) => {
@@ -305,8 +310,16 @@ export const ControlPanelView: React.FC = () => {
         return;
       }
 
-      // Ignore if user is typing in search input
+      // If user is typing in an input
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          macAudio.playSuccess();
+          setEditingGroupId(null);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setEditingGroupId(null);
+        }
         return;
       }
 
@@ -370,6 +383,16 @@ export const ControlPanelView: React.FC = () => {
           return;
         }
 
+        // Enter: Start Editing Selected Row
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (selectedGroupId) {
+            macAudio.playClick();
+            setEditingGroupId(selectedGroupId);
+          }
+          return;
+        }
+
         // Delete Key: Trigger Delete Confirmation
         if (e.key === 'Delete') {
           e.preventDefault();
@@ -384,7 +407,7 @@ export const ControlPanelView: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, filteredGroups, selectedGroupId, groups, groupToDelete]);
+  }, [activeTab, filteredGroups, selectedGroupId, editingGroupId, groups, groupToDelete]);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}>
@@ -560,18 +583,19 @@ export const ControlPanelView: React.FC = () => {
                     CHAIN PARENT
                     <div className="th-resizer" onMouseDown={(e) => startColResize('chainParent', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: '45px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    DEL
+                  <th style={{ width: '65px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    ACTION
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredGroups.map((grp, idx) => {
                   const isSelected = selectedGroupId === grp.id;
+                  const isEditing = editingGroupId === grp.id;
                   const cellInputStyle: React.CSSProperties = {
                     width: '100%',
-                    background: 'transparent',
-                    border: 'none',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
                     outline: 'none',
                     color: '#f8fafc',
                     fontSize: '11.5px',
@@ -579,88 +603,133 @@ export const ControlPanelView: React.FC = () => {
                     fontFamily: 'inherit',
                     borderRadius: '4px'
                   };
+                  const cellTextStyle: React.CSSProperties = {
+                    padding: '3px 6px',
+                    display: 'block',
+                    userSelect: 'text',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  };
                   return (
                     <tr
                       key={grp.id}
                       className={`mac-table-row ${isSelected ? 'selected' : ''}`}
                       style={{ height: `${activeRowHeight}px` }}
                       onClick={() => setSelectedGroupId(grp.id)}
+                      onDoubleClick={() => setEditingGroupId(grp.id)}
                     >
                       <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
                         {idx + 1}
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
-                          value={grp.groupName}
-                          onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)}
-                        />
+                        {isEditing ? (
+                          <input
+                            style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                            value={grp.groupName}
+                            onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)}
+                            autoFocus
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, fontWeight: 700, color: '#38bdf8' }}>{grp.groupName}</span>
+                        )}
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          style={{ ...cellInputStyle, fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}
-                          value={grp.groupIndex}
-                          onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)}
-                        />
+                        {isEditing ? (
+                          <input
+                            style={{ ...cellInputStyle, fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}
+                            value={grp.groupIndex}
+                            onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)}
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}>{grp.groupIndex}</span>
+                        )}
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          type="number"
-                          step="any"
-                          style={{ ...cellInputStyle, textAlign: 'right', fontWeight: 600, color: '#34d399' }}
-                          value={grp.weightPerPc}
-                          onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)}
-                        />
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            step="any"
+                            style={{ ...cellInputStyle, textAlign: 'right', fontWeight: 600, color: '#34d399' }}
+                            value={grp.weightPerPc}
+                            onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)}
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: '#34d399' }}>{grp.weightPerPc}</span>
+                        )}
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          type="number"
-                          style={{ ...cellInputStyle, textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}
-                          value={grp.pcsPerBox}
-                          onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)}
-                        />
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            style={{ ...cellInputStyle, textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}
+                            value={grp.pcsPerBox}
+                            onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)}
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}>{grp.pcsPerBox}</span>
+                        )}
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          type="number"
-                          step="any"
-                          style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}
-                          value={grp.multiplication}
-                          onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)}
-                        />
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            step="any"
+                            style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}
+                            value={grp.multiplication}
+                            onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)}
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}>{grp.multiplication}</span>
+                        )}
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          style={{ ...cellInputStyle, color: '#f8fafc', fontWeight: 500 }}
-                          value={grp.realItemName}
-                          onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)}
-                        />
+                        {isEditing ? (
+                          <input
+                            style={{ ...cellInputStyle, color: '#f8fafc', fontWeight: 500 }}
+                            value={grp.realItemName}
+                            onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)}
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, color: '#f8fafc', fontWeight: 500 }}>{grp.realItemName || '-'}</span>
+                        )}
                       </td>
                       <td style={{ textAlign: 'center', padding: '2px' }}>
                         <input
                           type="checkbox"
                           checked={grp.skipEq}
+                          disabled={!isEditing}
                           onChange={e => handleCellChange(grp.id, 'skipEq', e.target.checked)}
-                          style={{ cursor: 'pointer', accentColor: '#f87171' }}
+                          style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#f87171' }}
                         />
                       </td>
                       <td style={{ padding: '1px' }}>
-                        <input
-                          style={{ ...cellInputStyle, color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}
-                          value={grp.chainParent}
-                          onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)}
-                        />
+                        {isEditing ? (
+                          <input
+                            style={{ ...cellInputStyle, color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}
+                            value={grp.chainParent}
+                            onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)}
+                          />
+                        ) : (
+                          <span style={{ ...cellTextStyle, color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}>{grp.chainParent}</span>
+                        )}
                       </td>
                       <td style={{ textAlign: 'center', padding: '1px' }}>
-                        <button
-                          type="button"
-                          className="mac-btn danger"
-                          style={{ padding: '2px 5px', height: '22px' }}
-                          onClick={() => handleDeleteGroup(grp.id)}
-                          title="Delete Group"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        {isEditing ? (
+                          <button
+                            type="button"
+                            className="mac-btn primary"
+                            style={{ padding: '2px 8px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', margin: '0 auto' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              macAudio.playSuccess();
+                              setEditingGroupId(null);
+                            }}
+                            title="Save Changes"
+                          >
+                            <Check size={12} /> Save
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   );

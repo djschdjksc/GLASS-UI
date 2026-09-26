@@ -560,6 +560,8 @@ export const OtherTabsView: React.FC<Props> = ({
     setTimeout(() => setPartyToast(null), 3000);
   };
 
+  const [editingPartyId, setEditingPartyId] = useState<string | null>(null);
+
   // Bill stats per party (bill counts and total turnover)
   const partyBillStats = useMemo(() => {
     const stats: Record<string, { count: number; total: number }> = {};
@@ -575,11 +577,12 @@ export const OtherTabsView: React.FC<Props> = ({
     return stats;
   }, [bills]);
 
-  // Filtered parties across name, phone, station, district, state, pincode, gstin
+  // Filtered parties across name, phone, station, district, state, pincode, gstin - Newest first
   const filteredParties = useMemo(() => {
     const q = partySearchQuery.trim().toLowerCase();
-    if (!q) return parties;
-    return parties.filter(p => {
+    const sorted = [...parties].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    if (!q) return sorted;
+    return sorted.filter(p => {
       return (
         (p.name && p.name.toLowerCase().includes(q)) ||
         (p.phone && p.phone.toLowerCase().includes(q)) ||
@@ -606,6 +609,69 @@ export const OtherTabsView: React.FC<Props> = ({
     }
     return filteredParties[0] || parties[0] || null;
   }, [parties, selectedPartyId, filteredParties]);
+
+  // F5 Keyboard Navigation (Enter to edit/save, Delete key to delete row, Arrow keys to navigate)
+  useEffect(() => {
+    if (activeTab !== 'F5') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          macAudio.playSuccess();
+          setEditingPartyId(null);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setEditingPartyId(null);
+        }
+        return;
+      }
+
+      if (paginatedParties.length === 0) return;
+      const currentIndex = paginatedParties.findIndex(p => p.id === selectedPartyId);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        macAudio.playHover();
+        const nextIdx = currentIndex < paginatedParties.length - 1 ? currentIndex + 1 : currentIndex;
+        setSelectedPartyId(paginatedParties[nextIdx].id);
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        macAudio.playHover();
+        const prevIdx = currentIndex > 0 ? currentIndex - 1 : 0;
+        setSelectedPartyId(paginatedParties[prevIdx].id);
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedPartyId) {
+          macAudio.playClick();
+          setEditingPartyId(selectedPartyId);
+        }
+        return;
+      }
+
+      if (e.key === 'Delete') {
+        e.preventDefault();
+        if (selectedPartyId && currentIndex >= 0) {
+          macAudio.playTrash();
+          const targetId = selectedPartyId;
+          const nextSelected = paginatedParties[currentIndex + 1] || paginatedParties[currentIndex - 1];
+          setSelectedPartyId(nextSelected ? nextSelected.id : null);
+          setEditingPartyId(null);
+          deleteParty(targetId);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, deleteParty]);
 
   const handleStartEditParty = (p: typeof parties[0]) => {
     setPartyForm({
@@ -637,12 +703,13 @@ export const OtherTabsView: React.FC<Props> = ({
       balance: 0,
       limit: 500000,
       gstin: '',
-      updatedAt: Date.now(),
+      updatedAt: Date.now() + 100000,
       synced: false
     };
     await saveParty(newRecord);
+    setPartyCurrentPage(1);
     setSelectedPartyId(newId);
-    showPartyToast('New party row added directly to table');
+    setEditingPartyId(newId);
     macAudio.playSuccess();
   };
 
@@ -1734,8 +1801,8 @@ export const OtherTabsView: React.FC<Props> = ({
                     BALANCE
                     <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
                   </th>
-                  <th style={{ width: '130px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    ACTIONS
+                  <th style={{ width: '65px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    ACTION
                   </th>
                 </tr>
               </thead>
@@ -1751,114 +1818,114 @@ export const OtherTabsView: React.FC<Props> = ({
                       const globalIdx = (partyCurrentPage - 1) * PARTIES_PER_PAGE + idx + 1;
                       const pNameKey = (p.name || '').trim().toLowerCase();
                       const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
+                      const isSelected = selectedPartyId === p.id;
+                      const isEditing = editingPartyId === p.id;
+
+                      const cellInputStyle: React.CSSProperties = {
+                        width: '100%',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: '1px solid rgba(56, 189, 248, 0.4)',
+                        outline: 'none',
+                        color: '#f8fafc',
+                        fontSize: '11px',
+                        padding: '3px 6px',
+                        fontFamily: 'inherit',
+                        borderRadius: '4px'
+                      };
+
+                      const cellTextStyle: React.CSSProperties = {
+                        padding: '3px 6px',
+                        display: 'block',
+                        userSelect: 'text',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      };
 
                       return (
                         <tr
                           key={p.id || idx}
-                          className="mac-table-row"
+                          className={`mac-table-row ${isSelected ? 'selected' : ''}`}
                           style={{ height: `${activeRowHeight}px` }}
+                          onClick={() => setSelectedPartyId(p.id)}
+                          onDoubleClick={() => setEditingPartyId(p.id)}
                         >
                           <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px', position: 'relative' }}>
                             {globalIdx}
                             <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize row height" />
                           </td>
-                          <td style={{ padding: '2px 4px' }}>
-                            <input
-                              type="text"
-                              value={p.name || ''}
-                              onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#38bdf8',
-                                fontWeight: 600,
-                                fontSize: '11px',
-                                outline: 'none'
-                              }}
-                            />
+                          <td style={{ padding: '1px' }}>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={p.name || ''}
+                                onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
+                                style={{ ...cellInputStyle, color: '#38bdf8', fontWeight: 600 }}
+                                autoFocus
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, color: '#38bdf8', fontWeight: 600 }}>{p.name}</span>
+                            )}
                           </td>
-                          <td style={{ padding: '2px 4px' }}>
-                            <input
-                              type="text"
-                              value={p.phone || ''}
-                              onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
-                              placeholder="Phone..."
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#93c5fd',
-                                fontFamily: 'monospace',
-                                fontSize: '11px',
-                                outline: 'none'
-                              }}
-                            />
+                          <td style={{ padding: '1px' }}>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={p.phone || ''}
+                                onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
+                                style={{ ...cellInputStyle, color: '#93c5fd', fontFamily: 'monospace' }}
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, color: '#93c5fd', fontFamily: 'monospace' }}>{p.phone || '-'}</span>
+                            )}
                           </td>
-                          <td style={{ padding: '2px 4px' }}>
-                            <input
-                              type="text"
-                              value={p.station || p.city || ''}
-                              onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
-                              placeholder="Station..."
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#e2e8f0',
-                                fontSize: '11px',
-                                outline: 'none'
-                              }}
-                            />
+                          <td style={{ padding: '1px' }}>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={p.station || p.city || ''}
+                                onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
+                                style={{ ...cellInputStyle, color: '#e2e8f0' }}
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, color: '#e2e8f0' }}>{p.station || p.city || '-'}</span>
+                            )}
                           </td>
-                          <td style={{ padding: '2px 4px' }}>
-                            <input
-                              type="text"
-                              value={p.district || ''}
-                              onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
-                              placeholder="District..."
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#cbd5e1',
-                                fontSize: '11px',
-                                outline: 'none'
-                              }}
-                            />
+                          <td style={{ padding: '1px' }}>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={p.district || ''}
+                                onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
+                                style={{ ...cellInputStyle, color: '#cbd5e1' }}
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, color: '#cbd5e1' }}>{p.district || '-'}</span>
+                            )}
                           </td>
-                          <td style={{ padding: '2px 4px' }}>
-                            <input
-                              type="text"
-                              value={p.state || ''}
-                              onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
-                              placeholder="State..."
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#94a3b8',
-                                fontSize: '11px',
-                                outline: 'none'
-                              }}
-                            />
+                          <td style={{ padding: '1px' }}>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={p.state || ''}
+                                onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
+                                style={{ ...cellInputStyle, color: '#94a3b8' }}
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, color: '#94a3b8' }}>{p.state || '-'}</span>
+                            )}
                           </td>
-                          <td style={{ padding: '2px 4px' }}>
-                            <input
-                              type="text"
-                              value={p.pincode || ''}
-                              onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
-                              placeholder="Pincode..."
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#94a3b8',
-                                fontFamily: 'monospace',
-                                fontSize: '11px',
-                                outline: 'none'
-                              }}
-                            />
+                          <td style={{ padding: '1px' }}>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={p.pincode || ''}
+                                onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
+                                style={{ ...cellInputStyle, color: '#94a3b8', fontFamily: 'monospace' }}
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, color: '#94a3b8', fontFamily: 'monospace' }}>{p.pincode || '-'}</span>
+                            )}
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             {stat.count > 0 ? (
@@ -1869,47 +1936,41 @@ export const OtherTabsView: React.FC<Props> = ({
                               <span style={{ color: '#475569', fontSize: '9.5px' }}>0</span>
                             )}
                           </td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>
-                            <input
-                              type="number"
-                              value={p.balance !== undefined ? p.balance : 0}
-                              onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171',
-                                fontWeight: 600,
-                                fontSize: '11px',
-                                textAlign: 'right',
-                                outline: 'none'
-                              }}
-                            />
-                          </td>
-                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap', padding: '2px 4px' }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  macAudio.playClick();
-                                  onSelectPartyForBill(p.name);
+                          <td style={{ padding: '1px', textAlign: 'right' }}>
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                value={p.balance !== undefined ? p.balance : 0}
+                                onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
+                                style={{
+                                  ...cellInputStyle,
+                                  color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171',
+                                  fontWeight: 600,
+                                  textAlign: 'right'
                                 }}
-                                className="mac-btn primary"
-                                style={{ height: '22px', padding: '0 6px', fontSize: '10px' }}
-                                title="Create/Load Bill in F1"
-                              >
-                                Bill (F1)
-                              </button>
+                              />
+                            ) : (
+                              <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171' }}>
+                                {p.balance !== undefined ? p.balance : 0}
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '1px' }}>
+                            {isEditing ? (
                               <button
                                 type="button"
-                                onClick={() => handleDeletePartyAction(p.id, p.name)}
-                                className="mac-btn danger"
-                                style={{ height: '22px', padding: '0 6px', fontSize: '10px' }}
-                                title="Delete Party"
+                                className="mac-btn primary"
+                                style={{ padding: '2px 8px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', margin: '0 auto' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  macAudio.playSuccess();
+                                  setEditingPartyId(null);
+                                }}
+                                title="Save Changes"
                               >
-                                <Trash2 size={11} />
+                                <Check size={12} /> Save
                               </button>
-                            </div>
+                            ) : null}
                           </td>
                         </tr>
                       );

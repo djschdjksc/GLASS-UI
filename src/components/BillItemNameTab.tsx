@@ -10,6 +10,7 @@ export const BillItemNameTab: React.FC = () => {
   const [maps, setMaps] = useState<BillNameMap[]>([]);
   const [search, setSearch] = useState('');
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   const [colWidths, setColWidths] = useState(() => {
     try {
@@ -62,12 +63,17 @@ export const BillItemNameTab: React.FC = () => {
     const next = [newRow, ...maps];
     saveMaps(next);
     setSelectedIdx(0);
+    setEditingIdx(0);
   };
 
   const handleDeleteRow = (index: number) => {
     macAudio.playPop();
     const next = maps.filter((_, i) => i !== index);
     saveMaps(next);
+    if (selectedIdx === index) {
+      setSelectedIdx(null);
+      setEditingIdx(null);
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -129,8 +135,8 @@ export const BillItemNameTab: React.FC = () => {
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    background: 'transparent',
-    border: 'none',
+    background: 'rgba(255, 255, 255, 0.06)',
+    border: '1px solid rgba(56, 189, 248, 0.3)',
     outline: 'none',
     color: '#f8fafc',
     fontSize: '11.5px',
@@ -138,6 +144,61 @@ export const BillItemNameTab: React.FC = () => {
     fontFamily: 'inherit',
     borderRadius: '4px'
   };
+
+  const cellTextStyle: React.CSSProperties = {
+    padding: '3px 6px',
+    fontSize: '11.5px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: 'block'
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+      if (isInput) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          macAudio.playSuccess();
+          setEditingIdx(null);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setEditingIdx(null);
+        }
+        return;
+      }
+
+      if (filtered.length === 0) return;
+      const currentPos = filtered.findIndex(f => f.originalIndex === selectedIdx);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        macAudio.playHover();
+        const nextPos = currentPos < filtered.length - 1 ? currentPos + 1 : currentPos;
+        setSelectedIdx(filtered[nextPos].originalIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        macAudio.playHover();
+        const prevPos = currentPos > 0 ? currentPos - 1 : 0;
+        setSelectedIdx(filtered[prevPos].originalIndex);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIdx !== null) {
+          macAudio.playClick();
+          setEditingIdx(selectedIdx);
+        }
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        if (selectedIdx !== null) {
+          handleDeleteRow(selectedIdx);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filtered, selectedIdx, editingIdx, maps]);
 
   return (
     <div 
@@ -159,7 +220,7 @@ export const BillItemNameTab: React.FC = () => {
             />
           </div>
           <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            {filtered.length} names • In-Table Fast Edit • Bulk Paste Enabled (Ctrl+V)
+            {filtered.length} names • Press Enter to Edit/Save • Del Key to Delete
           </span>
         </div>
 
@@ -192,19 +253,23 @@ export const BillItemNameTab: React.FC = () => {
               <th style={{ width: colWidths.category, position: 'relative' }}>
                 CATEGORY<div className="th-resizer" onMouseDown={e => startResizeBill('category', e)} />
               </th>
-              <th style={{ width: colWidths.actions, textAlign: 'center', position: 'relative' }}>
-                DEL
+              <th style={{ width: '65px', textAlign: 'center', position: 'relative' }}>
+                ACTION
               </th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(({ item: m, originalIndex }, idx) => {
               const isSelected = selectedIdx === originalIndex;
+              const isEditing = editingIdx === originalIndex;
+
               return (
                 <tr 
                   key={m.id || originalIndex} 
                   className={`mac-table-row ${isSelected ? 'selected' : ''}`}
                   onClick={() => setSelectedIdx(originalIndex)}
+                  onDoubleClick={() => setEditingIdx(originalIndex)}
+                  style={{ cursor: 'pointer' }}
                 >
                   {/* # */}
                   <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
@@ -223,59 +288,84 @@ export const BillItemNameTab: React.FC = () => {
 
                   {/* SHORT CODE */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
-                      value={m.shortCode}
-                      placeholder="e.g. BFP"
-                      onChange={e => handleCellChange(originalIndex, 'shortCode', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                        value={m.shortCode}
+                        onChange={e => handleCellChange(originalIndex, 'shortCode', e.target.value)}
+                        autoFocus
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, fontWeight: 700, color: '#38bdf8' }}>
+                        {m.shortCode || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* PRINT NAME */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
-                      value={m.printName}
-                      placeholder="Full printable invoice name..."
-                      onChange={e => handleCellChange(originalIndex, 'printName', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                        value={m.printName}
+                        onChange={e => handleCellChange(originalIndex, 'printName', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                        {m.printName || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* RATE */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      type="number"
-                      step="any"
-                      style={{ ...cellInputStyle, textAlign: 'center', color: '#34d399', fontWeight: 600 }}
-                      value={m.rate ?? 0}
-                      onChange={e => handleCellChange(originalIndex, 'rate', parseFloat(e.target.value) || 0)}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="any"
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#34d399', fontWeight: 600 }}
+                        value={m.rate ?? 0}
+                        onChange={e => handleCellChange(originalIndex, 'rate', parseFloat(e.target.value) || 0)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#34d399', fontWeight: 600 }}>
+                        ₹{(m.rate ?? 0).toLocaleString('en-IN')}
+                      </span>
+                    )}
                   </td>
 
                   {/* CATEGORY */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, color: '#fbbf24' }}
-                      value={m.category}
-                      placeholder="e.g. Aluminium"
-                      onChange={e => handleCellChange(originalIndex, 'category', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, color: '#fbbf24' }}
+                        value={m.category}
+                        onChange={e => handleCellChange(originalIndex, 'category', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, color: '#fbbf24' }}>
+                        {m.category || '—'}
+                      </span>
+                    )}
                   </td>
 
-                  {/* ACTIONS: DELETE */}
+                  {/* ACTIONS: SAVE BUTTON ONLY WHEN ACTIVE */}
                   <td style={{ textAlign: 'center', padding: '1px' }}>
-                    <button
-                      type="button"
-                      className="mac-btn danger"
-                      style={{ padding: '3px 6px', height: '22px' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteRow(originalIndex);
-                      }}
-                      title="Delete row"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        className="mac-btn primary"
+                        style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          macAudio.playSuccess();
+                          setEditingIdx(null);
+                        }}
+                        title="Save Row Changes"
+                      >
+                        <Check size={12} /> Save
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

@@ -23,6 +23,7 @@ export const ManageConversionsTab: React.FC = () => {
   const [conversions, setConversions] = useState<SqliteControlRow[]>([]);
   const [search, setSearch] = useState('');
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   const [colWidths, setColWidths] = useState(() => {
     try {
@@ -76,12 +77,17 @@ export const ManageConversionsTab: React.FC = () => {
     const next = [newRow, ...conversions];
     saveToStorage(next);
     setSelectedIdx(0);
+    setEditingIdx(0);
   };
 
   const handleDeleteRow = (index: number) => {
     macAudio.playPop();
     const next = conversions.filter((_, i) => i !== index);
     saveToStorage(next);
+    if (selectedIdx === index) {
+      setSelectedIdx(null);
+      setEditingIdx(null);
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -148,8 +154,8 @@ export const ManageConversionsTab: React.FC = () => {
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    background: 'transparent',
-    border: 'none',
+    background: 'rgba(255, 255, 255, 0.06)',
+    border: '1px solid rgba(56, 189, 248, 0.3)',
     outline: 'none',
     color: '#f8fafc',
     fontSize: '11.5px',
@@ -158,6 +164,61 @@ export const ManageConversionsTab: React.FC = () => {
     borderRadius: '4px',
     transition: 'background 0.15s ease, box-shadow 0.15s ease'
   };
+
+  const cellTextStyle: React.CSSProperties = {
+    padding: '3px 6px',
+    fontSize: '11.5px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: 'block'
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+      if (isInput) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          macAudio.playSuccess();
+          setEditingIdx(null);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setEditingIdx(null);
+        }
+        return;
+      }
+
+      if (filtered.length === 0) return;
+      const currentPos = filtered.findIndex(f => f.originalIndex === selectedIdx);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        macAudio.playHover();
+        const nextPos = currentPos < filtered.length - 1 ? currentPos + 1 : currentPos;
+        setSelectedIdx(filtered[nextPos].originalIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        macAudio.playHover();
+        const prevPos = currentPos > 0 ? currentPos - 1 : 0;
+        setSelectedIdx(filtered[prevPos].originalIndex);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIdx !== null) {
+          macAudio.playClick();
+          setEditingIdx(selectedIdx);
+        }
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        if (selectedIdx !== null) {
+          handleDeleteRow(selectedIdx);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filtered, selectedIdx, editingIdx, conversions]);
 
   return (
     <div 
@@ -227,19 +288,24 @@ export const ManageConversionsTab: React.FC = () => {
               <th style={{ width: colWidths.groupName, position: 'relative' }}>
                 GROUP NAME<div className="th-resizer" onMouseDown={e => startColResize('groupName', e)} />
               </th>
-              <th style={{ width: colWidths.actions, textAlign: 'center', position: 'relative' }}>
-                DEL
+              <th style={{ width: '65px', textAlign: 'center', position: 'relative' }}>
+                ACTION
               </th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(({ item: conv, originalIndex }, idx) => {
               const isSelected = selectedIdx === originalIndex;
+              const isEditing = editingIdx === originalIndex;
+              const shortcutDisplay = conv.shortcut.startsWith('__auto_') ? '' : conv.shortcut;
+
               return (
                 <tr 
                   key={originalIndex} 
                   className={`mac-table-row ${isSelected ? 'selected' : ''}`}
                   onClick={() => setSelectedIdx(originalIndex)}
+                  onDoubleClick={() => setEditingIdx(originalIndex)}
+                  style={{ cursor: 'pointer' }}
                 >
                   {/* # */}
                   <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
@@ -248,123 +314,179 @@ export const ManageConversionsTab: React.FC = () => {
 
                   {/* SHORTCUT */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
-                      value={conv.shortcut.startsWith('__auto_') ? '' : conv.shortcut}
-                      placeholder="e.g. 21"
-                      onChange={e => handleCellChange(originalIndex, 'shortcut', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                        value={shortcutDisplay}
+                        onChange={e => handleCellChange(originalIndex, 'shortcut', e.target.value)}
+                        autoFocus
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, fontWeight: 700, color: '#38bdf8' }}>
+                        {shortcutDisplay || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* CONVERSION */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
-                      value={conv.conversion}
-                      placeholder="e.g. C.M"
-                      onChange={e => handleCellChange(originalIndex, 'conversion', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                        value={conv.conversion}
+                        onChange={e => handleCellChange(originalIndex, 'conversion', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f8fafc' }}>
+                        {conv.conversion || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* U CAP */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, color: '#cbd5e1' }}
-                      value={conv.u_cap || ''}
-                      placeholder="e.g. 18 or name"
-                      onChange={e => handleCellChange(originalIndex, 'u_cap', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, color: '#cbd5e1' }}
+                        value={conv.u_cap || ''}
+                        onChange={e => handleCellChange(originalIndex, 'u_cap', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, color: '#cbd5e1' }}>
+                        {conv.u_cap || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* L CAP */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, color: '#cbd5e1' }}
-                      value={conv.l_cap || ''}
-                      placeholder="e.g. 2 or name"
-                      onChange={e => handleCellChange(originalIndex, 'l_cap', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, color: '#cbd5e1' }}
+                        value={conv.l_cap || ''}
+                        onChange={e => handleCellChange(originalIndex, 'l_cap', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, color: '#cbd5e1' }}>
+                        {conv.l_cap || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* MULTIPLICATION */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      type="number"
-                      step="any"
-                      style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa' }}
-                      value={conv.multiplication ?? 1}
-                      onChange={e => handleCellChange(originalIndex, 'multiplication', parseFloat(e.target.value) || 1)}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="any"
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa' }}
+                        value={conv.multiplication ?? 1}
+                        onChange={e => handleCellChange(originalIndex, 'multiplication', parseFloat(e.target.value) || 1)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 600 }}>
+                        {conv.multiplication ?? 1}
+                      </span>
+                    )}
                   </td>
 
                   {/* COLOR */}
                   <td style={{ padding: '1px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                      <input
-                        type="color"
-                        value={conv.color && conv.color.startsWith('#') ? conv.color : '#ffffff'}
-                        onChange={e => handleCellChange(originalIndex, 'color', e.target.value)}
-                        style={{ width: '18px', height: '18px', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}
-                      />
+                      {isEditing ? (
+                        <input
+                          type="color"
+                          value={conv.color && conv.color.startsWith('#') ? conv.color : '#ffffff'}
+                          onChange={e => handleCellChange(originalIndex, 'color', e.target.value)}
+                          style={{ width: '18px', height: '18px', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}
+                        />
+                      ) : (
+                        <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: conv.color || '#fff', border: '1px solid rgba(255,255,255,0.2)' }} />
+                      )}
                     </div>
                   </td>
 
                   {/* BOX SIZE */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      type="number"
-                      step="any"
-                      style={{ ...cellInputStyle, textAlign: 'center', color: '#fbbf24' }}
-                      value={conv.box_size ?? 1}
-                      onChange={e => handleCellChange(originalIndex, 'box_size', parseFloat(e.target.value) || 1)}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="any"
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#fbbf24' }}
+                        value={conv.box_size ?? 1}
+                        onChange={e => handleCellChange(originalIndex, 'box_size', parseFloat(e.target.value) || 1)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#fbbf24' }}>
+                        {conv.box_size ?? 1}
+                      </span>
+                    )}
                   </td>
 
                   {/* WEIGHT PER PCS */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      type="number"
-                      step="any"
-                      style={{ ...cellInputStyle, textAlign: 'center', color: '#f87171' }}
-                      value={conv.weight_per_pcs ?? 0}
-                      onChange={e => handleCellChange(originalIndex, 'weight_per_pcs', parseFloat(e.target.value) || 0)}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="any"
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#f87171' }}
+                        value={conv.weight_per_pcs ?? 0}
+                        onChange={e => handleCellChange(originalIndex, 'weight_per_pcs', parseFloat(e.target.value) || 0)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#f87171' }}>
+                        {conv.weight_per_pcs ?? 0}
+                      </span>
+                    )}
                   </td>
 
                   {/* REAL ITEM NAME */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, color: '#f8fafc' }}
-                      value={conv.real_item_name || ''}
-                      placeholder="Full item name..."
-                      onChange={e => handleCellChange(originalIndex, 'real_item_name', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, color: '#f8fafc' }}
+                        value={conv.real_item_name || ''}
+                        onChange={e => handleCellChange(originalIndex, 'real_item_name', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, color: '#f8fafc' }}>
+                        {conv.real_item_name || '—'}
+                      </span>
+                    )}
                   </td>
 
                   {/* GROUP NAME */}
                   <td style={{ padding: '1px' }}>
-                    <input
-                      style={{ ...cellInputStyle, color: '#34d399', fontWeight: 600 }}
-                      value={conv.group_name || ''}
-                      placeholder="e.g. General"
-                      onChange={e => handleCellChange(originalIndex, 'group_name', e.target.value)}
-                    />
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, color: '#34d399', fontWeight: 600 }}
+                        value={conv.group_name || ''}
+                        onChange={e => handleCellChange(originalIndex, 'group_name', e.target.value)}
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, color: '#34d399', fontWeight: 600 }}>
+                        {conv.group_name || '—'}
+                      </span>
+                    )}
                   </td>
 
-                  {/* ACTIONS: DELETE */}
+                  {/* ACTIONS: SAVE BUTTON ONLY WHEN ACTIVE */}
                   <td style={{ textAlign: 'center', padding: '1px' }}>
-                    <button
-                      type="button"
-                      className="mac-btn danger"
-                      style={{ padding: '3px 6px', height: '22px' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteRow(originalIndex);
-                      }}
-                      title="Delete row"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        className="mac-btn primary"
+                        style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          macAudio.playSuccess();
+                          setEditingIdx(null);
+                        }}
+                        title="Save Row Changes"
+                      >
+                        <Check size={12} /> Save
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
