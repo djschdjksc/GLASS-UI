@@ -44,16 +44,40 @@ export const SkipItemNameTab: React.FC = () => {
       const savedMain = localStorage.getItem('billapp_skip_main_groups');
       const savedSub = localStorage.getItem('billapp_skip_sub_groups');
       const savedItems = localStorage.getItem('billapp_skip_items');
+      let loadedSubs = SQLITE_SKIP_SUB_GROUPS;
       if (savedMain && savedSub && savedItems) {
-        setMainGroups(JSON.parse(savedMain)); setSubGroups(JSON.parse(savedSub)); setSkipItems(JSON.parse(savedItems));
+        const parsedItems = JSON.parse(savedItems);
+        if (parsedItems.length < SQLITE_SKIP_ITEMS.length) {
+          setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
+          setSubGroups(SQLITE_SKIP_SUB_GROUPS);
+          setSkipItems(SQLITE_SKIP_ITEMS);
+          localStorage.setItem('billapp_skip_main_groups', JSON.stringify(SQLITE_SKIP_MAIN_GROUPS));
+          localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(SQLITE_SKIP_SUB_GROUPS));
+          localStorage.setItem('billapp_skip_items', JSON.stringify(SQLITE_SKIP_ITEMS));
+        } else {
+          setMainGroups(JSON.parse(savedMain));
+          loadedSubs = JSON.parse(savedSub);
+          setSubGroups(loadedSubs);
+          setSkipItems(parsedItems);
+        }
       } else {
-        setMainGroups(SQLITE_SKIP_MAIN_GROUPS); setSubGroups(SQLITE_SKIP_SUB_GROUPS); setSkipItems(SQLITE_SKIP_ITEMS);
+        setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
+        setSubGroups(SQLITE_SKIP_SUB_GROUPS);
+        setSkipItems(SQLITE_SKIP_ITEMS);
         localStorage.setItem('billapp_skip_main_groups', JSON.stringify(SQLITE_SKIP_MAIN_GROUPS));
         localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(SQLITE_SKIP_SUB_GROUPS));
         localStorage.setItem('billapp_skip_items', JSON.stringify(SQLITE_SKIP_ITEMS));
       }
+      if (loadedSubs.length > 0) {
+        setSelectedMainGroupId(prev => prev || loadedSubs[0].id);
+      }
     } catch {
-      setMainGroups(SQLITE_SKIP_MAIN_GROUPS); setSubGroups(SQLITE_SKIP_SUB_GROUPS); setSkipItems(SQLITE_SKIP_ITEMS);
+      setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
+      setSubGroups(SQLITE_SKIP_SUB_GROUPS);
+      setSkipItems(SQLITE_SKIP_ITEMS);
+      if (SQLITE_SKIP_SUB_GROUPS.length > 0) {
+        setSelectedMainGroupId(prev => prev || SQLITE_SKIP_SUB_GROUPS[0].id);
+      }
     }
   }, []);
 
