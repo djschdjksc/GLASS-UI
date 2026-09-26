@@ -1,0 +1,135 @@
+/* ========================================================================= */
+/* ANT DESIGN GLASS MORPHISM OVERRIDES                                       */
+/* Makes antd components match our frosted glass dark UI                      */
+/* ========================================================================= */
+
+/* Glass backdrop on all antd popups/dropdowns */
+.ant-select-dropdown,
+.ant-picker-dropdown,
+.ant-dropdown,
+.ant-popover-inner,
+.ant-tooltip-inner {
+  backdrop-filter: blur(20px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0.5px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Inputs glow on focus */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Search input special glass styling */
+.ant-input-search .ant-input-affix-wrapper,
+.ant-input-search .ant-input {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ant-input-search .ant-input-affix-wrapper:hover,
+.ant-input-search .ant-input:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+}
+
+.ant-input-search .ant-input-search-button {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  border: none !important;
+  border-radius: 0 12px 12px 0 !important;
+}
+
+/* Select glass styling */
+.ant-select-selector {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ant-select:hover .ant-select-selector {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* DatePicker glass styling */
+.ant-picker {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ant-picker:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.ant-picker-panel-container {
+  background: rgba(13, 21, 38, 0.98) !important;
+  backdrop-filter: blur(20px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6) !important;
+}
+
+.ant-picker-cell-in-view .ant-picker-cell-inner {
+  color: #f8fafc;
+}
+
+.ant-picker-header button {
+  color: #94a3b8 !important;
+}
+
+.ant-picker-header button:hover {
+  color: #38bdf8 !important;
+}
+
+/* Tag glass effect */
+.ant-tag {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Switch custom */
+.ant-switch {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.ant-switch-checked {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+}
+
+/* Scrollbar inside antd dropdowns */
+.ant-select-dropdown .rc-virtual-list-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Placeholder colors */
+.ant-input::placeholder,
+.ant-picker-input input::placeholder,
+.ant-select-selection-placeholder {
+  color: #475569 !important;
+}
+
+/* Input prefix/suffix icon colors */
+.ant-input-prefix,
+.ant-input-suffix {
+  color: #64748b !important;
+  transition: color 0.3s ease;
+}
+
+.ant-input-affix-wrapper-focused .ant-input-prefix,
+.ant-input-affix-wrapper-focused .ant-input-suffix {
+  color: #38bdf8 !important;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5));
+}

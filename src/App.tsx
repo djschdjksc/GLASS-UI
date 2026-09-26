@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ConfigProvider, theme as antdTheme } from 'antd';
+import { glassAntdTheme } from './theme/glassAntdTheme';
+import './theme/antdGlassOverrides.css';
 import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
 import type { BillHeader, RawItem, FinishedItem, EnterDirection } from './types';
@@ -2189,11 +2192,13 @@ export default function App() {
   }
 
   return (
-    <DatabaseProvider>
-      <SettingsProvider>
-        <AppContent />
-      </SettingsProvider>
-    </DatabaseProvider>
+    <ConfigProvider theme={{ ...glassAntdTheme, algorithm: antdTheme.darkAlgorithm }}>
+      <DatabaseProvider>
+        <SettingsProvider>
+          <AppContent />
+        </SettingsProvider>
+      </DatabaseProvider>
+    </ConfigProvider>
   );
 }
 

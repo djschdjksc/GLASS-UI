@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.6.1",
     "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^2.0.57",
     "@types/canvas-confetti": "^1.9.0",
+    "antd": "^5.24.6",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
     "lucide-react": "^1.47.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
