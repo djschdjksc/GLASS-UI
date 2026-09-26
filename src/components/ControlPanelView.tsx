@@ -291,11 +291,6 @@ export const ControlPanelView: React.FC = () => {
   // Global Keyboard Navigation (Up/Down, Ctrl+Up/Ctrl+Down Shifting, Enter Edit, Delete Key)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // If modal or delete dialog is open, handle esc
-      if (isModalOpen) {
-        if (e.key === 'Escape') closeModal();
-        return;
-      }
       if (groupToDelete) {
         if (e.key === 'Escape') setGroupToDelete(null);
         if (e.key === 'Enter') {
@@ -375,15 +370,6 @@ export const ControlPanelView: React.FC = () => {
           return;
         }
 
-        // Enter: Open Edit Modal on Selected Row
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (currentIndex >= 0) {
-            openEditModal(filteredGroups[currentIndex]);
-          }
-          return;
-        }
-
         // Delete Key: Trigger Delete Confirmation
         if (e.key === 'Delete') {
           e.preventDefault();
@@ -398,7 +384,7 @@ export const ControlPanelView: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, filteredGroups, selectedGroupId, groups, isModalOpen, groupToDelete]);
+  }, [activeTab, filteredGroups, selectedGroupId, groups, groupToDelete]);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}>
