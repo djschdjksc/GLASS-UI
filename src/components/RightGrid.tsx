@@ -48,6 +48,7 @@ interface Props {
   isActiveTable?: boolean;
   onActivateTable?: () => void;
   onLoadOldPrice?: () => void;
+  onActiveRowChange?: (item: FinishedItem | null) => void;
 }
 
 const DEFAULT_RIGHT_COLS = {
@@ -79,7 +80,8 @@ export const RightGrid: React.FC<Props> = ({
   onSetRowHeight,
   isActiveTable = false,
   onActivateTable,
-  onLoadOldPrice
+  onLoadOldPrice,
+  onActiveRowChange
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -207,6 +209,16 @@ export const RightGrid: React.FC<Props> = ({
       return sortOrder === 'asc' ? numA - numB : numB - numA;
     });
   }
+
+  // Notify parent component when active row changes (for instantaneous Left Table highlight)
+  useEffect(() => {
+    if (activeCell && activeCell.r >= 0 && activeCell.r < filteredItems.length) {
+      const activeItem = filteredItems[activeCell.r];
+      onActiveRowChange?.(activeItem || null);
+    } else {
+      onActiveRowChange?.(null);
+    }
+  }, [activeCell, filteredItems, onActiveRowChange]);
 
   const totalQty = items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
   const grandTotal = items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);

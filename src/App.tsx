@@ -1080,6 +1080,16 @@ function AppContent() {
   const groupRawItemsForSummary = useCallback((rawList: RawItem[], dynCols: { field: string; label: string }[]) => {
     const itemSummary: { [mouldName: string]: number } = {};
     const groupSummary: { [groupName: string]: number } = {};
+    const sourceMap: { [mouldOrGroupName: string]: { rowId: string; rowIndex: number; field: string; qty: number }[] } = {};
+
+    const recordSource = (mouldName: string, rowId: string, rowIndex: number, field: string, qty: number) => {
+      if (!mouldName || qty <= 0) return;
+      if (!sourceMap[mouldName]) sourceMap[mouldName] = [];
+      sourceMap[mouldName].push({ rowId, rowIndex, field, qty });
+      if (!sourceMap[mouldName].some(c => c.rowId === rowId && c.field === 'name')) {
+        sourceMap[mouldName].push({ rowId, rowIndex, field: 'name', qty });
+      }
+    };
 
     // 1. Active conversions from Manage Conversions (localStorage or fallback SQLite control panel)
     let activeConversions: any[] = SQLITE_CONTROL_CONVERSIONS;
@@ -1116,7 +1126,7 @@ function AppContent() {
 
     const sortedSkipItems = [...skipItems].sort((a: any, b: any) => ((b.itemPrefix || '').length - (a.itemPrefix || '').length));
 
-    rawList.forEach(it => {
+    rawList.forEach((it, rIdx) => {
       const name = (it.name || '').trim();
       if (!name) return;
 
@@ -1195,6 +1205,7 @@ function AppContent() {
             if (qty10 > 0) {
               const key10 = hasDefinedSize ? formatMouldWithSize(baseName, definedSize) : baseName;
               itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+              recordSource(key10, it.id, rIdx, 'qty', qty10);
             }
             if (dynCols && dynCols.length > 0) {
               dynCols.forEach(col => {
@@ -1203,16 +1214,19 @@ function AppContent() {
                   const size = extractSizeFromColLabel(col.label || col.field);
                   const keyCol = formatMouldWithSize(baseName, size);
                   itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+                  recordSource(keyCol, it.id, rIdx, col.field, colQty);
                 }
               });
             }
           } else if (sumCol === 'U CAP') {
             if (uCap > 0) {
               groupSummary[baseName] = (groupSummary[baseName] || 0) + uCap;
+              recordSource(baseName, it.id, rIdx, 'uCap', uCap);
             }
           } else if (sumCol === 'L CAP') {
             if (lCap > 0) {
               groupSummary[baseName] = (groupSummary[baseName] || 0) + lCap;
+              recordSource(baseName, it.id, rIdx, 'lCap', lCap);
             }
           }
         }
@@ -1225,6 +1239,7 @@ function AppContent() {
         if (qty10 > 0) {
           const key10 = hasDefinedSize ? formatMouldWithSize(baseMould, definedSize) : baseMould;
           itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+          recordSource(key10, it.id, rIdx, 'qty', qty10);
         }
 
         if (dynCols && dynCols.length > 0) {
@@ -1234,22 +1249,18 @@ function AppContent() {
               const size = extractSizeFromColLabel(col.label || col.field);
               const keyCol = formatMouldWithSize(baseMould, size);
               itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+              recordSource(keyCol, it.id, rIdx, col.field, colQty);
             }
           });
         }
       }
 
       // 5. U CAP & L CAP SUMMING: Exact logic as main.py lines 8164-8169
-      // In main.py:
-      // if matched_conversion:
-      //     if u_group and u_group not in ['0', '0.0', 'None']:
-      //         dict_groups[u_group] += ucap_val
-      //     if l_group and l_group not in ['0', '0.0', 'None']:
-      //         dict_groups[l_group] += lcap_val
       if (uCap > 0) {
         const targetU = uGroup || (matchedConv ? '' : 'Fluted Jointer');
         if (targetU) {
           groupSummary[targetU] = (groupSummary[targetU] || 0) + uCap;
+          recordSource(targetU, it.id, rIdx, 'uCap', uCap);
         }
       }
 
@@ -1257,17 +1268,64 @@ function AppContent() {
         const targetL = lGroup || (matchedConv ? '' : 'Jointer');
         if (targetL) {
           groupSummary[targetL] = (groupSummary[targetL] || 0) + lCap;
+          recordSource(targetL, it.id, rIdx, 'lCap', lCap);
         }
       }
     });
 
-    return { itemSummary, groupSummary };
+    return { itemSummary, groupSummary, sourceMap };
   }, []);
+
+  // Summary Mapping Cache & Highlight State
+  const [summarySourceMap, setSummarySourceMap] = useState<Record<string, { rowId: string; rowIndex: number; field: string; qty: number }[]>>({});
+  const [activeRightMould, setActiveRightMould] = useState<string | null>(null);
+
+  // Automatically keep summary mapping cache fresh whenever rawItems or dynamicCols change
+  useEffect(() => {
+    const { sourceMap } = groupRawItemsForSummary(rawItems, dynamicCols);
+    setSummarySourceMap(sourceMap);
+  }, [rawItems, dynamicCols, groupRawItemsForSummary]);
+
+  // High-performance O(1) sets for instant Left Grid highlighting
+  const highlightedSourceCells = useMemo(() => {
+    if (!activeRightMould) return new Set<string>();
+    const trimmed = activeRightMould.trim().toLowerCase();
+    const set = new Set<string>();
+
+    for (const [mKey, contributions] of Object.entries(summarySourceMap)) {
+      if (mKey.trim().toLowerCase() === trimmed) {
+        contributions.forEach(c => {
+          set.add(`${c.rowId}:${c.field}`);
+          set.add(`${c.rowIndex}:${c.field}`);
+        });
+        break;
+      }
+    }
+    return set;
+  }, [activeRightMould, summarySourceMap]);
+
+  const highlightedSourceRows = useMemo(() => {
+    if (!activeRightMould) return new Set<string>();
+    const trimmed = activeRightMould.trim().toLowerCase();
+    const set = new Set<string>();
+
+    for (const [mKey, contributions] of Object.entries(summarySourceMap)) {
+      if (mKey.trim().toLowerCase() === trimmed) {
+        contributions.forEach(c => {
+          set.add(c.rowId);
+          set.add(String(c.rowIndex));
+        });
+        break;
+      }
+    }
+    return set;
+  }, [activeRightMould, summarySourceMap]);
 
   // Left Panel -> Right Panel Summary Calculation Engine (Ctrl+G)
   // Groups quantities accurately. Does NOT inject default rates automatically (rates stay 0 unless user typed/loaded)
   const calculateRightGridFromLeft = useCallback(() => {
-    const { itemSummary, groupSummary } = groupRawItemsForSummary(rawItems, dynamicCols);
+    const { itemSummary, groupSummary, sourceMap } = groupRawItemsForSummary(rawItems, dynamicCols);
+    setSummarySourceMap(sourceMap);
 
     const totalCalculated = Object.keys(itemSummary).length + Object.keys(groupSummary).length;
     if (totalCalculated === 0) {
@@ -1424,7 +1482,8 @@ function AppContent() {
       workingMoulds = finishedItems.map(f => ({ ...f }));
     } else {
       // Build moulds from rawItems
-      const { itemSummary, groupSummary } = groupRawItemsForSummary(rawItems, dynamicCols);
+      const { itemSummary, groupSummary, sourceMap } = groupRawItemsForSummary(rawItems, dynamicCols);
+      setSummarySourceMap(sourceMap);
       let idCounter = 1;
 
       const sortedItemEntries = Object.entries(itemSummary).sort(([nameA], [nameB]) => {
@@ -1747,6 +1806,8 @@ function AppContent() {
                         setEnterDirection(dir);
                         showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
+                      highlightedCells={highlightedSourceCells}
+                      highlightedRowIds={highlightedSourceRows}
                     />
                   </div>
 
@@ -1782,6 +1843,7 @@ function AppContent() {
                         setEnterDirection(dir);
                         showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
+                      onActiveRowChange={(item) => setActiveRightMould(item?.mould ? item.mould.trim() : null)}
                     />
                   </div>
                 </div>

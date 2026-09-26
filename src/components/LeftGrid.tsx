@@ -54,6 +54,8 @@ interface Props {
   hasPartyCodeCol?: boolean;
   onTogglePartyCodeCol?: (enabled: boolean) => void;
   onLoadOldPrice?: () => void;
+  highlightedCells?: Set<string>;
+  highlightedRowIds?: Set<string>;
 }
 
 const DEFAULT_LEFT_COLS = {
@@ -91,7 +93,9 @@ export const LeftGrid: React.FC<Props> = ({
   onSetDynamicCols,
   hasPartyCodeCol: propsHasPartyCodeCol,
   onTogglePartyCodeCol,
-  onLoadOldPrice
+  onLoadOldPrice,
+  highlightedCells,
+  highlightedRowIds
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -1416,11 +1420,18 @@ export const LeftGrid: React.FC<Props> = ({
             {filteredItems.map((item, rIdx) => {
               const isRowSelected = isActiveTable && selectedRows.includes(rIdx);
               const isRowActive = isActiveTable && activeCell?.r === rIdx;
+              const isRowSourceHighlighted = Boolean(
+                highlightedRowIds && (highlightedRowIds.has(item.id) || highlightedRowIds.has(String(rIdx)))
+              );
 
               return (
                 <tr 
                   key={item.id} 
-                  className={(isRowSelected ? 'row-selected ' : '') + (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')}
+                  className={
+                    (isRowSelected ? 'row-selected ' : '') + 
+                    (dragOverRowIndex === rIdx ? 'drag-over-active ' : '') +
+                    (isRowSourceHighlighted ? 'summary-row-highlight ' : '')
+                  }
                   onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                 >
                   {/* Row Index */}
@@ -1433,7 +1444,8 @@ export const LeftGrid: React.FC<Props> = ({
                       cursor: 'pointer', 
                       userSelect: 'none',
                       position: 'relative',
-                      padding: 0
+                      padding: 0,
+                      borderLeft: isRowSourceHighlighted ? '3px solid #38bdf8' : undefined
                     }}
                     className={(isRowActive ? 'row-header-active ' : '') + (isRowSelected ? 'row-header-selected ' : '') + 'row-header-draggable'}
                     draggable
@@ -1482,34 +1494,45 @@ export const LeftGrid: React.FC<Props> = ({
                   </td>
 
                   {/* Col 0: ITEM NAME */}
-                  <td 
-                    style={{ width: `${colWidths.name}px`, height: `${rowHeight}px`, padding: 0 }}
-                    className={((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + ((isActiveTable && selectedCellKeys.has(rIdx + '-0')) ? 'cell-selected' : '')}
-                  >
-                    <input
-                      id={'left-cell-' + rIdx + '-0'}
-                      type="text"
-                      className="excel-cell-input"
-                      value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.name || '')}
-                      onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
-                      onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
-                      onPaste={(e) => handleInputPaste(rIdx, 0, e)}
-                      onFocus={() => {
-                        onActivateTable?.();
-                        setActiveCell({ r: rIdx, c: 0 });
-                        setAnchorCell({ r: rIdx, c: 0 });
-                        setSelectedCellKeys(new Set([`${rIdx}-0`]));
-                        setSelectedCol(null);
-                        setSelectedRows([]);
-                      }}
-                      onChange={(e) => {
-                        const rawVal = e.target.value;
-                        setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
-                      }}
-                      onBlur={() => commitCell(rIdx, 0, 'name')}
-                      onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
-                    />
-                  </td>
+                  {(() => {
+                    const isNameHighlighted = Boolean(
+                      highlightedCells && (highlightedCells.has(`${item.id}:name`) || highlightedCells.has(`${rIdx}:name`))
+                    );
+                    return (
+                      <td 
+                        style={{ width: `${colWidths.name}px`, height: `${rowHeight}px`, padding: 0 }}
+                        className={
+                          ((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + 
+                          ((isActiveTable && selectedCellKeys.has(rIdx + '-0')) ? 'cell-selected ' : '') +
+                          (isNameHighlighted ? 'summary-source-highlight ' : '')
+                        }
+                      >
+                        <input
+                          id={'left-cell-' + rIdx + '-0'}
+                          type="text"
+                          className="excel-cell-input"
+                          value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.name || '')}
+                          onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
+                          onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
+                          onPaste={(e) => handleInputPaste(rIdx, 0, e)}
+                          onFocus={() => {
+                            onActivateTable?.();
+                            setActiveCell({ r: rIdx, c: 0 });
+                            setAnchorCell({ r: rIdx, c: 0 });
+                            setSelectedCellKeys(new Set([`${rIdx}-0`]));
+                            setSelectedCol(null);
+                            setSelectedRows([]);
+                          }}
+                          onChange={(e) => {
+                            const rawVal = e.target.value;
+                            setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
+                          }}
+                          onBlur={() => commitCell(rIdx, 0, 'name')}
+                          onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
+                        />
+                      </td>
+                    );
+                  })()}
 
                   {/* Col 1 (Optional): PARTY CODE */}
                   {hasPartyCodeCol && (
@@ -1552,12 +1575,19 @@ export const LeftGrid: React.FC<Props> = ({
                     const displayVal = cellDrafts[draftKey] !== undefined 
                       ? cellDrafts[draftKey] 
                       : (cellVal === 0 || !cellVal ? '' : cellVal);
+                    const isColHighlighted = Boolean(
+                      highlightedCells && (highlightedCells.has(`${item.id}:${sc.field}`) || highlightedCells.has(`${rIdx}:${sc.field}`))
+                    );
 
                     return (
                       <td 
                         key={sc.field}
                         style={{ width: `${width}px`, height: `${rowHeight}px`, padding: 0 }}
-                        className={((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + ((isActiveTable && selectedCellKeys.has(draftKey)) ? 'cell-selected' : '')}
+                        className={
+                          ((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + 
+                          ((isActiveTable && selectedCellKeys.has(draftKey)) ? 'cell-selected ' : '') +
+                          (isColHighlighted ? 'summary-source-highlight ' : '')
+                        }
                       >
                         <input
                           id={'left-cell-' + rIdx + '-' + cIdx}
@@ -1593,10 +1623,17 @@ export const LeftGrid: React.FC<Props> = ({
                   {(() => {
                     const cIdx = (hasPartyCodeCol ? 2 : 1) + allSizeCols.length;
                     const draftKey = `${rIdx}-${cIdx}`;
+                    const isUHighlighted = Boolean(
+                      highlightedCells && (highlightedCells.has(`${item.id}:uCap`) || highlightedCells.has(`${rIdx}:uCap`))
+                    );
                     return (
                       <td 
                         style={{ width: `${colWidths.uCap}px`, height: `${rowHeight}px`, padding: 0 }}
-                        className={((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + ((isActiveTable && selectedCellKeys.has(draftKey)) ? 'cell-selected' : '')}
+                        className={
+                          ((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + 
+                          ((isActiveTable && selectedCellKeys.has(draftKey)) ? 'cell-selected ' : '') +
+                          (isUHighlighted ? 'summary-source-highlight ' : '')
+                        }
                       >
                         <input
                           id={'left-cell-' + rIdx + '-' + cIdx}
@@ -1632,10 +1669,17 @@ export const LeftGrid: React.FC<Props> = ({
                   {(() => {
                     const cIdx = (hasPartyCodeCol ? 3 : 2) + allSizeCols.length;
                     const draftKey = `${rIdx}-${cIdx}`;
+                    const isLHighlighted = Boolean(
+                      highlightedCells && (highlightedCells.has(`${item.id}:lCap`) || highlightedCells.has(`${rIdx}:lCap`))
+                    );
                     return (
                       <td 
                         style={{ width: `${colWidths.lCap}px`, height: `${rowHeight}px`, padding: 0 }}
-                        className={((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + ((isActiveTable && selectedCellKeys.has(draftKey)) ? 'cell-selected' : '')}
+                        className={
+                          ((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + 
+                          ((isActiveTable && selectedCellKeys.has(draftKey)) ? 'cell-selected ' : '') +
+                          (isLHighlighted ? 'summary-source-highlight ' : '')
+                        }
                       >
                         <input
                           id={'left-cell-' + rIdx + '-' + cIdx}
