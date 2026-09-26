@@ -3,6 +3,7 @@ import { ConfigProvider, theme as antdTheme } from 'antd';
 import { glassAntdTheme } from './theme/glassAntdTheme';
 import './theme/antdGlassOverrides.css';
 import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
+import { SQLITE_CONTROL_CONVERSIONS } from './data/sqliteControlPanel';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
 import type { BillHeader, RawItem, FinishedItem, EnterDirection } from './types';
 import { AppleHeader } from './components/AppleHeader';
@@ -1075,11 +1076,32 @@ function AppContent() {
   };
 
   // Helper to group raw items into mould and cap totals (shared by Ctrl+G and Load Old Price)
+  // EXACT LOGIC from F:\SUMMARY\BillApp\main.py lines 8088-8170
   const groupRawItemsForSummary = useCallback((rawList: RawItem[], dynCols: { field: string; label: string }[]) => {
     const itemSummary: { [mouldName: string]: number } = {};
     const groupSummary: { [groupName: string]: number } = {};
 
-    // Load Skip Items from localStorage or use Seed
+    // 1. Active conversions from Manage Conversions (localStorage or fallback SQLite control panel)
+    let activeConversions: any[] = SQLITE_CONTROL_CONVERSIONS;
+    try {
+      const saved = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          activeConversions = parsed;
+        }
+      }
+    } catch {}
+
+    // Sort by conversion string length (longest first), exactly matching main.py line 8099:
+    // control_data_sorted = sorted(control_data, key=lambda x: len(str(x[1])), reverse=True)
+    const sortedConversions = [...activeConversions].sort((a: any, b: any) => {
+      const lenB = String(b.conversion || '').trim().length;
+      const lenA = String(a.conversion || '').trim().length;
+      return lenB - lenA;
+    });
+
+    // 2. Load Skip Items from localStorage or use Seed
     let skipMainGroups = SQLITE_SKIP_MAIN_GROUPS;
     let skipSubGroups = SQLITE_SKIP_SUB_GROUPS;
     let skipItems = SQLITE_SKIP_ITEMS;
@@ -1092,7 +1114,6 @@ function AppContent() {
       }
     } catch {}
 
-    const sortedShortcuts = [...SQLITE_SHORTCUTS].sort((a: any, b: any) => ((b.shortcut || '').length - (a.shortcut || '').length));
     const sortedSkipItems = [...skipItems].sort((a: any, b: any) => ((b.itemPrefix || '').length - (a.itemPrefix || '').length));
 
     rawList.forEach(it => {
@@ -1104,13 +1125,48 @@ function AppContent() {
       const lCap = Number(it.lCap) || 0;
       const nameLower = name.toLowerCase();
 
-      // --- NEW SKIP ITEM LOGIC ---
-      // Check if item name starts with any skip item prefix
+      // Find matching conversion (longest conversion first)
+      let matchedConv = '';
+      let uGroup = '';
+      let lGroup = '';
+
+      for (const sc of sortedConversions) {
+        const conv = String(sc.conversion || '').trim();
+        const code = String(sc.shortcut || '').trim();
+        const convLower = conv.toLowerCase();
+        const codeLower = code.toLowerCase();
+
+        const matchByConv = conv && (
+          nameLower === convLower ||
+          nameLower.startsWith(convLower + ' ') ||
+          nameLower.startsWith(convLower + '-') ||
+          nameLower.startsWith(convLower)
+        );
+
+        const matchByCode = code && (
+          nameLower === codeLower ||
+          nameLower.startsWith(codeLower + ' ') ||
+          (nameLower.startsWith(codeLower) && name.length > code.length)
+        );
+
+        if (matchByConv || matchByCode) {
+          matchedConv = conv;
+          const rawU = String(sc.u_cap !== undefined ? sc.u_cap : (sc.uCap || '')).trim();
+          const rawL = String(sc.l_cap !== undefined ? sc.l_cap : (sc.lCap || '')).trim();
+          uGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawU.toLowerCase())) ? rawU : '';
+          lGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawL.toLowerCase())) ? rawL : '';
+          break;
+        }
+      }
+
+      // 3. Check Skip Items (for special sub-group QTY summing)
+      let isSkipQty = false;
       const matchedSkipItem = sortedSkipItems.find((si: any) => {
         const pfx = (si.itemPrefix || '').toLowerCase().trim();
         if (!pfx) return false;
         return nameLower === pfx || nameLower.startsWith(pfx + ' ') || nameLower.startsWith(pfx + '-') || nameLower.startsWith(pfx + '/');
       });
+
       if (matchedSkipItem) {
         const subGrp = skipSubGroups.find((sg: any) => 
           sg.id === matchedSkipItem.subGroupId || 
@@ -1119,10 +1175,10 @@ function AppContent() {
         );
         if (subGrp) {
           const sumCol = subGrp.sumColumn || 'QTY';
-          // User Requirement: Use GROUP NAME (subGrp.groupName) instead of MAIN GROUP name in right panel!
           const baseName = subGrp.groupName || subGrp.id;
 
           if (sumCol === 'QTY') {
+            isSkipQty = true;
             if (qty10 > 0) {
               const key10 = formatMouldWithSize(baseName, 10);
               itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
@@ -1146,59 +1202,49 @@ function AppContent() {
               groupSummary[baseName] = (groupSummary[baseName] || 0) + lCap;
             }
           }
-          return; // Skip normal conversion logic!
-        }
-      }
-      // --- END SKIP ITEM LOGIC ---
-
-      let matchedConv = '';
-      let uGroup = '';
-      let lGroup = '';
-
-      for (const sc of sortedShortcuts as any[]) {
-        const conv = (sc.conversion || '').toLowerCase().trim();
-        const code = (sc.shortcut || '').toLowerCase().trim();
-        if (conv && (nameLower === conv || nameLower.startsWith(conv + ' '))) {
-          matchedConv = sc.conversion;
-          uGroup = (sc.u_cap || '').trim();
-          lGroup = (sc.l_cap || '').trim();
-          break;
-        } else if (code && (nameLower === code || nameLower.startsWith(code + ' '))) {
-          matchedConv = sc.conversion;
-          uGroup = (sc.u_cap || '').trim();
-          lGroup = (sc.l_cap || '').trim();
-          break;
         }
       }
 
-      const baseMould = matchedConv || name;
+      // 4. Normal Item QTY summing (when not overridden by skip sub-group)
+      if (!isSkipQty) {
+        const baseMould = matchedConv || (name.includes(' ') ? name.split(' ')[0] : name);
 
-      // 1. Base 10 FT column
-      if (qty10 > 0) {
-        const key10 = formatMouldWithSize(baseMould, 10);
-        itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+        if (qty10 > 0) {
+          const key10 = formatMouldWithSize(baseMould, 10);
+          itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+        }
+
+        if (dynCols && dynCols.length > 0) {
+          dynCols.forEach(col => {
+            const colQty = Number((it as any)[col.field]) || 0;
+            if (colQty > 0) {
+              const size = extractSizeFromColLabel(col.label || col.field);
+              const keyCol = formatMouldWithSize(baseMould, size);
+              itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+            }
+          });
+        }
       }
 
-      // 2. Dynamic Size columns (12 FT, 9.5 FT, etc.)
-      if (dynCols && dynCols.length > 0) {
-        dynCols.forEach(col => {
-          const colQty = Number((it as any)[col.field]) || 0;
-          if (colQty > 0) {
-            const size = extractSizeFromColLabel(col.label || col.field);
-            const keyCol = formatMouldWithSize(baseMould, size);
-            itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
-          }
-        });
-      }
-
+      // 5. U CAP & L CAP SUMMING: Exact logic as main.py lines 8164-8169
+      // In main.py:
+      // if matched_conversion:
+      //     if u_group and u_group not in ['0', '0.0', 'None']:
+      //         dict_groups[u_group] += ucap_val
+      //     if l_group and l_group not in ['0', '0.0', 'None']:
+      //         dict_groups[l_group] += lcap_val
       if (uCap > 0) {
-        const capName = (uGroup && uGroup !== '0' && uGroup !== '0.0' && uGroup !== 'None') ? uGroup : 'Fluted Jointer';
-        groupSummary[capName] = (groupSummary[capName] || 0) + uCap;
+        const targetU = uGroup || (matchedConv ? '' : 'Fluted Jointer');
+        if (targetU) {
+          groupSummary[targetU] = (groupSummary[targetU] || 0) + uCap;
+        }
       }
 
       if (lCap > 0) {
-        const capName = (lGroup && lGroup !== '0' && lGroup !== '0.0' && lGroup !== 'None') ? lGroup : 'Jointer';
-        groupSummary[capName] = (groupSummary[capName] || 0) + lCap;
+        const targetL = lGroup || (matchedConv ? '' : 'Jointer');
+        if (targetL) {
+          groupSummary[targetL] = (groupSummary[targetL] || 0) + lCap;
+        }
       }
     });
 
