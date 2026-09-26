@@ -31,7 +31,12 @@ import {
   Copy,
   ChevronLeft,
   ChevronRight,
-  Hash
+  Hash,
+  RotateCcw,
+  ShoppingCart,
+  Truck,
+  ShoppingBag,
+  History
 } from 'lucide-react';
 
 interface Props {
@@ -213,30 +218,79 @@ export const OtherTabsView: React.FC<Props> = ({
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  // 4 Sub-Tabs for Bill History: SALE, SALE RETURN, ORDER, PURCHASE
+  const [historySubTab, setHistorySubTab] = useState<'SALE' | 'SALE_RETURN' | 'ORDER' | 'PURCHASE'>('SALE');
+
   // Search query for invoices in F2 tab
   const [billSearchQuery, setBillSearchQuery] = useState('');
 
+  const matchesHistoryCategory = (b: BillRecord, cat: 'SALE' | 'SALE_RETURN' | 'ORDER' | 'PURCHASE'): boolean => {
+    const doc = (b.docType || '').toUpperCase().trim();
+    const type = (b.typeSelection || '').toUpperCase().trim();
+
+    if (cat === 'SALE_RETURN') {
+      return doc.includes('RETURN') || doc.includes('CREDIT') || type.includes('RETURN');
+    }
+    if (cat === 'ORDER') {
+      return doc.includes('ORDER') || doc.includes('QUOTATION') || type.includes('ORDER');
+    }
+    if (cat === 'PURCHASE') {
+      return doc.includes('PURCHASE') || doc.includes('INWARD') || type.includes('PURCHASE');
+    }
+    // SALE: Default for regular sale bills
+    return !doc.includes('RETURN') && !doc.includes('CREDIT') &&
+           !doc.includes('ORDER') && !doc.includes('QUOTATION') &&
+           !doc.includes('PURCHASE') && !doc.includes('INWARD') &&
+           !type.includes('RETURN') && !type.includes('ORDER') && !type.includes('PURCHASE');
+  };
+
+  // Counts for each of the 4 categories
+  const categoryCounts = useMemo(() => {
+    let sale = 0, saleReturn = 0, order = 0, purchase = 0;
+    bills.forEach(b => {
+      if (matchesHistoryCategory(b, 'SALE_RETURN')) saleReturn++;
+      else if (matchesHistoryCategory(b, 'ORDER')) order++;
+      else if (matchesHistoryCategory(b, 'PURCHASE')) purchase++;
+      else sale++;
+    });
+    return { SALE: sale, SALE_RETURN: saleReturn, ORDER: order, PURCHASE: purchase };
+  }, [bills]);
+
+  // Bills filtered by active sub-tab category
+  const categoryBills = useMemo(() => {
+    return bills.filter(b => matchesHistoryCategory(b, historySubTab));
+  }, [bills, historySubTab]);
+
   const filteredBills = useMemo(() => {
     const rawQ = billSearchQuery.trim();
-    if (!rawQ) return bills;
+    if (!rawQ) return categoryBills;
     const cleanNum = rawQ.replace(/^(bill|slip|#)\s*/i, '').trim();
     const qLower = cleanNum.toLowerCase();
-    return bills.filter(b => 
+    return categoryBills.filter(b => 
       b.token === cleanNum ||
       b.token.toLowerCase().includes(qLower) ||
       b.party.toLowerCase().includes(rawQ.toLowerCase()) ||
       b.date.includes(rawQ)
     );
-  }, [bills, billSearchQuery]);
+  }, [categoryBills, billSearchQuery]);
 
   // Selected Bill Id tracking
   const [selectedBillId, setSelectedBillId] = useState<string>('');
-  const selectedBill = (selectedBillId ? filteredBills.find(b => b.id === selectedBillId) : null) || filteredBills[0] || bills[0] || {
+
+  useEffect(() => {
+    if (categoryBills.length > 0) {
+      setSelectedBillId(categoryBills[0].id);
+    } else {
+      setSelectedBillId('');
+    }
+  }, [historySubTab, categoryBills]);
+
+  const selectedBill = (selectedBillId ? filteredBills.find(b => b.id === selectedBillId) : null) || filteredBills[0] || categoryBills[0] || {
     id: 'empty',
     token: '0',
-    date: '2026-09-18',
-    party: 'No Invoices',
-    docType: 'SALE BILL',
+    date: new Date().toISOString().split('T')[0],
+    party: `No ${historySubTab.replace('_', ' ')} Invoices`,
+    docType: historySubTab === 'SALE_RETURN' ? 'RETURN' : historySubTab === 'ORDER' ? 'ORDER' : historySubTab === 'PURCHASE' ? 'PURCHASE' : 'SALE BILL',
     vehicle: '-',
     typeSelection: 'WHOLESALE',
     total: 0,
@@ -358,6 +412,17 @@ export const OtherTabsView: React.FC<Props> = ({
       }
 
       if (activeTab === 'F2') {
+        // Quick Category Switch via Alt+1, Alt+2, Alt+3, Alt+4
+        if (e.altKey && (e.key === '1' || e.key === '2' || e.key === '3' || e.key === '4')) {
+          e.preventDefault();
+          macAudio.playClick();
+          if (e.key === '1') setHistorySubTab('SALE');
+          else if (e.key === '2') setHistorySubTab('SALE_RETURN');
+          else if (e.key === '3') setHistorySubTab('ORDER');
+          else if (e.key === '4') setHistorySubTab('PURCHASE');
+          return;
+        }
+
         // Arrow Navigation between Columns (Left / Right)
         if (e.key === 'ArrowRight') {
           e.preventDefault();
@@ -859,45 +924,126 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* TAB F2: BILL HISTORY (Apple 3-Panel Layout with Full Arrow Key Navigation) */}
       {/* ========================================================================= */}
       {activeTab === 'F2' && (
-        <div style={{ flex: 1, display: 'flex', gap: '8px', height: '100%', minHeight: 0 }}>
-          {/* PANEL 1: Bill List / Navigator (Left 26%) */}
-          <div 
-            className="glass-panel" 
-            style={{ 
-              width: '26%', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              borderRadius: '8px', 
-              padding: '6px',
-              minHeight: 0,
-              border: f2FocusArea === 'bills' ? '1px solid rgba(56, 189, 248, 0.4)' : undefined
-            }}
-            onClick={() => setF2FocusArea('bills')}
-          >
-            <div style={{ 
-              fontSize: '11px', 
-              fontWeight: 700, 
-              color: '#f8fafc', 
-              letterSpacing: '0.06em', 
-              padding: '4px 6px 6px 6px', 
-              borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <span>SAVED INVOICES</span>
-              <span style={{ color: '#38bdf8', fontSize: '10px' }}>{filteredBills.length} BILLS</span>
-            </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', minHeight: 0 }}>
+          {/* Sub-tabs bar: SALE, SALE RETURN, ORDER, PURCHASE */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '5px 8px',
+            background: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(16px)',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            flexShrink: 0
+          }}>
+            {(
+              [
+                { id: 'SALE', label: 'SALE', shortcut: 'Alt+1', icon: ShoppingBag, count: categoryCounts.SALE, color: '#38bdf8' },
+                { id: 'SALE_RETURN', label: 'SALE RETURN', shortcut: 'Alt+2', icon: RotateCcw, count: categoryCounts.SALE_RETURN, color: '#f87171' },
+                { id: 'ORDER', label: 'ORDER', shortcut: 'Alt+3', icon: ShoppingCart, count: categoryCounts.ORDER, color: '#fbbf24' },
+                { id: 'PURCHASE', label: 'PURCHASE', shortcut: 'Alt+4', icon: Truck, count: categoryCounts.PURCHASE, color: '#34d399' }
+              ] as const
+            ).map(tab => {
+              const IconComp = tab.icon;
+              const isActive = historySubTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    macAudio.playClick();
+                    setHistorySubTab(tab.id);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '5px 14px',
+                    borderRadius: '6px',
+                    border: isActive ? `1px solid ${tab.color}` : '1px solid rgba(255, 255, 255, 0.08)',
+                    background: isActive ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                    boxShadow: isActive ? `0 0 12px ${tab.color}33` : 'none',
+                    color: isActive ? '#ffffff' : '#94a3b8',
+                    fontSize: '11px',
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    userSelect: 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+                      e.currentTarget.style.color = '#ffffff';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                      e.currentTarget.style.color = '#94a3b8';
+                    }
+                  }}
+                >
+                  <IconComp size={13} style={{ color: isActive ? tab.color : '#94a3b8' }} />
+                  <span>{tab.label}</span>
+                  <span style={{
+                    fontSize: '9px',
+                    padding: '1px 5px',
+                    borderRadius: '999px',
+                    background: isActive ? `${tab.color}26` : 'rgba(255, 255, 255, 0.06)',
+                    color: isActive ? tab.color : '#94a3b8',
+                    fontWeight: 700,
+                    marginLeft: '2px'
+                  }}>
+                    {tab.count}
+                  </span>
+                  <span style={{ fontSize: '9px', opacity: 0.6, marginLeft: '2px', color: '#cbd5e1' }}>
+                    ({tab.shortcut})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-            {/* Quick Bill Search Filter Input */}
-            <div style={{ padding: '6px 4px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Search size={12} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
-                <input
-                  type="text"
-                  placeholder="Search Bill # or Party..."
-                  value={billSearchQuery}
-                  onChange={e => setBillSearchQuery(e.target.value)}
+          {/* 3-Panel Layout Container */}
+          <div style={{ flex: 1, display: 'flex', gap: '8px', minHeight: 0 }}>
+            {/* PANEL 1: Bill List / Navigator (Left 26%) */}
+            <div 
+              className="glass-panel" 
+              style={{ 
+                width: '26%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                borderRadius: '8px', 
+                padding: '6px',
+                minHeight: 0,
+                border: f2FocusArea === 'bills' ? '1px solid rgba(56, 189, 248, 0.4)' : undefined
+              }}
+              onClick={() => setF2FocusArea('bills')}
+            >
+              <div style={{ 
+                fontSize: '11px', 
+                fontWeight: 700, 
+                color: '#f8fafc', 
+                letterSpacing: '0.06em', 
+                padding: '4px 6px 6px 6px', 
+                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <span>{historySubTab.replace('_', ' ')} INVOICES</span>
+                <span style={{ color: '#38bdf8', fontSize: '10px' }}>{filteredBills.length} RECORDS</span>
+              </div>
+
+              {/* Quick Bill Search Filter Input */}
+              <div style={{ padding: '6px 4px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Search size={12} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    placeholder={`Search ${historySubTab.replace('_', ' ')} Bill # or Party...`}
+                    value={billSearchQuery}
+                    onChange={e => setBillSearchQuery(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -934,81 +1080,98 @@ export const OtherTabsView: React.FC<Props> = ({
                 onMouseLeave={handleBillsMouseLeave}
                 style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', scrollBehavior: 'smooth' }}
               >
-              {filteredBills.map((b, idx) => {
-                const isSelected = selectedBill.id === b.id;
-                return (
-                  <div
-                    key={b.id}
-                    ref={el => { billItemRefs.current[idx] = el; }}
-                    onClick={() => {
-                      macAudio.playClick();
-                      setSelectedBillId(b.id);
-                      setF2FocusArea('bills');
-                    }}
-                    onMouseEnter={() => {
-                      macAudio.playHover();
-                      setSelectedBillId(b.id);
-                      setF2FocusArea('bills');
-                    }}
-                    onDoubleClick={() => {
-                      if (onLoadBillToEditor) onLoadBillToEditor(b);
-                    }}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      background: isSelected 
-                        ? 'rgba(0, 122, 255, 0.22)' 
-                        : 'rgba(255, 255, 255, 0.02)',
-                      border: isSelected 
-                        ? '1px solid rgba(56, 189, 248, 0.45)' 
-                        : '1px solid rgba(255, 255, 255, 0.04)',
-                      boxShadow: isSelected 
-                        ? '0 2px 10px rgba(0, 122, 255, 0.25), inset 2px 0 0 #007aff' 
-                        : 'none',
-                      transition: 'all 0.12s ease'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-                      <span style={{ 
-                        fontSize: '11px', 
-                        fontWeight: 800, 
-                        color: isSelected ? '#ffffff' : '#38bdf8' 
-                      }}>
-                        #{b.token}
-                      </span>
-                      <span style={{ fontSize: '10px', color: '#e2e8f0' }}>{b.date}</span>
-                    </div>
+              {filteredBills.length === 0 ? (
+                <div style={{
+                  padding: '36px 16px',
+                  textAlign: 'center',
+                  color: '#64748b',
+                  fontSize: '11px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}>
+                  <History size={28} style={{ opacity: 0.3 }} />
+                  <span>No {historySubTab.replace('_', ' ')} records found</span>
+                </div>
+              ) : (
+                filteredBills.map((b, idx) => {
+                  const isSelected = selectedBill.id === b.id;
+                  return (
+                    <div
+                      key={b.id}
+                      ref={el => { billItemRefs.current[idx] = el; }}
+                      onClick={() => {
+                        macAudio.playClick();
+                        setSelectedBillId(b.id);
+                        setF2FocusArea('bills');
+                      }}
+                      onMouseEnter={() => {
+                        macAudio.playHover();
+                        setSelectedBillId(b.id);
+                        setF2FocusArea('bills');
+                      }}
+                      onDoubleClick={() => {
+                        if (onLoadBillToEditor) onLoadBillToEditor(b);
+                      }}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        background: isSelected 
+                          ? 'rgba(0, 122, 255, 0.22)' 
+                          : 'rgba(255, 255, 255, 0.02)',
+                        border: isSelected 
+                          ? '1px solid rgba(56, 189, 248, 0.45)' 
+                          : '1px solid rgba(255, 255, 255, 0.04)',
+                        boxShadow: isSelected 
+                          ? '0 2px 10px rgba(0, 122, 255, 0.25), inset 2px 0 0 #007aff' 
+                          : 'none',
+                        transition: 'all 0.12s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: 800, 
+                          color: isSelected ? '#ffffff' : '#38bdf8' 
+                        }}>
+                          #{b.token}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#e2e8f0' }}>{b.date}</span>
+                      </div>
 
-                    <div style={{ 
-                      fontSize: '12px', 
-                      fontWeight: 600, 
-                      color: isSelected ? '#ffffff' : '#f1f5f9',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>
-                      {b.party}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-                      <span style={{
-                        fontSize: '9px',
-                        fontWeight: 700,
-                        padding: '1px 5px',
-                        borderRadius: '3px',
-                        background: b.docType === 'SALE BILL' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(52, 211, 153, 0.15)',
-                        color: b.docType === 'SALE BILL' ? '#38bdf8' : '#34d399'
+                      <div style={{ 
+                        fontSize: '12px', 
+                        fontWeight: 600, 
+                        color: isSelected ? '#ffffff' : '#f1f5f9',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
                       }}>
-                        {b.docType}
-                      </span>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
-                        ₹{b.total.toLocaleString('en-IN')}
-                      </span>
+                        {b.party}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                        <span style={{
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          padding: '1px 5px',
+                          borderRadius: '3px',
+                          background: b.docType === 'SALE BILL' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                          color: b.docType === 'SALE BILL' ? '#38bdf8' : '#34d399'
+                        }}>
+                          {b.docType}
+                        </span>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
+                          ₹{b.total.toLocaleString('en-IN')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
               </div>
               <div className="bottom-gradient" />
             </div>
@@ -1350,6 +1513,7 @@ export const OtherTabsView: React.FC<Props> = ({
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* ========================================================================= */}
