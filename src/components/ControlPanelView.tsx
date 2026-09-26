@@ -315,7 +315,7 @@ export const ControlPanelView: React.FC = () => {
         if (e.key === 'Enter') {
           e.preventDefault();
           macAudio.playSuccess();
-          setEditingGroupId(null);
+          handleAddNewGroup();
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingGroupId(null);
@@ -383,8 +383,15 @@ export const ControlPanelView: React.FC = () => {
           return;
         }
 
-        // Enter: Start Editing Selected Row
-        if (e.key === 'Enter') {
+        // Enter / Insert: Insert New Row at Top
+        if (e.key === 'Enter' || e.key === 'Insert') {
+          e.preventDefault();
+          handleAddNewGroup();
+          return;
+        }
+
+        // F2: Edit Selected Row
+        if (e.key === 'F2') {
           e.preventDefault();
           if (selectedGroupId) {
             macAudio.playClick();

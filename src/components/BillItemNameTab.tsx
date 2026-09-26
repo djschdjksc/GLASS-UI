@@ -161,7 +161,7 @@ export const BillItemNameTab: React.FC = () => {
         if (e.key === 'Enter') {
           e.preventDefault();
           macAudio.playSuccess();
-          setEditingIdx(null);
+          handleAddNewRow();
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingIdx(null);
@@ -182,7 +182,10 @@ export const BillItemNameTab: React.FC = () => {
         macAudio.playHover();
         const prevPos = currentPos > 0 ? currentPos - 1 : 0;
         setSelectedIdx(filtered[prevPos].originalIndex);
-      } else if (e.key === 'Enter') {
+      } else if (e.key === 'Enter' || e.key === 'Insert') {
+        e.preventDefault();
+        handleAddNewRow();
+      } else if (e.key === 'F2') {
         e.preventDefault();
         if (selectedIdx !== null) {
           macAudio.playClick();

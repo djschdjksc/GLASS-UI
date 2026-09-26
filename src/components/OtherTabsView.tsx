@@ -619,7 +619,7 @@ export const OtherTabsView: React.FC<Props> = ({
         if (e.key === 'Enter') {
           e.preventDefault();
           macAudio.playSuccess();
-          setEditingPartyId(null);
+          handleStartNewParty();
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingPartyId(null);
@@ -646,7 +646,13 @@ export const OtherTabsView: React.FC<Props> = ({
         return;
       }
 
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.key === 'Insert') {
+        e.preventDefault();
+        handleStartNewParty();
+        return;
+      }
+
+      if (e.key === 'F2') {
         e.preventDefault();
         if (selectedPartyId) {
           macAudio.playClick();

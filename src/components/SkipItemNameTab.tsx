@@ -246,8 +246,11 @@ export const SkipItemNameTab: React.FC = () => {
         if (e.key === 'Enter') {
           e.preventDefault();
           macAudio.playSuccess();
-          setEditingGroupId(null);
-          setEditingItemId(null);
+          if (editingItemId) {
+            handleAddItem();
+          } else {
+            handleAddSubGroup();
+          }
         } else if (e.key === 'Escape') {
           e.preventDefault();
           setEditingGroupId(null);
@@ -256,7 +259,14 @@ export const SkipItemNameTab: React.FC = () => {
         return;
       }
 
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.key === 'Insert') {
+        e.preventDefault();
+        if (selectedItemId) {
+          handleAddItem();
+        } else {
+          handleAddSubGroup();
+        }
+      } else if (e.key === 'F2') {
         e.preventDefault();
         if (selectedItemId) {
           macAudio.playClick();
