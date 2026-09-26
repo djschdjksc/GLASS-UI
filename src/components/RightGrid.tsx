@@ -1,4 +1,3 @@
-import { SQLITE_SHORTCUTS } from '../data/sqliteData';
 import React, { useState, useEffect, useRef } from 'react';
 import type { FinishedItem, EnterDirection } from '../types';
 import { TableSettingsDropdown } from './TableSettingsDropdown';
@@ -290,45 +289,7 @@ export const RightGrid: React.FC<Props> = ({
       return;
     }
 
-    let finalName = rawVal.trim();
-    const valLower = rawVal.toLowerCase().trim();
-
-    // 0. Check if already fully expanded conversion name
-    let isFullConversion = false;
-    for (const sc of SQLITE_SHORTCUTS as any[]) {
-      const conv = (sc.conversion || '').toLowerCase().trim();
-      if (conv && (valLower === conv || valLower.startsWith(conv + ' '))) {
-        isFullConversion = true;
-        break;
-      }
-    }
-
-    // 1. Auto-Convert Mode
-    if (!isFullConversion && autoConvert && rawVal.trim()) {
-      const sortedShortcuts = [...SQLITE_SHORTCUTS].sort((a: any, b: any) => ((b.shortcut || '').length - (a.shortcut || '').length));
-      for (const sc of sortedShortcuts as any[]) {
-        const scCode = (sc.shortcut || '').toLowerCase().trim();
-        if (scCode && (valLower === scCode || valLower.startsWith(scCode + ' ') || (valLower.startsWith(scCode) && rawVal.length > scCode.length))) {
-          const remaining = rawVal.trim().slice(scCode.length).trim();
-          finalName = remaining ? `${sc.conversion} ${remaining}` : sc.conversion;
-          break;
-        }
-      }
-    }
-
-    // 2. Auto-Item Mode
-    if (!isFullConversion && autoItem && rowIndex > 0 && (/^\d+$/.test(rawVal.trim()) || rawVal.trim().length <= 3)) {
-      const prevItem = filteredItems[rowIndex - 1];
-      if (prevItem && prevItem.mould) {
-        const parts = prevItem.mould.trim().split(' ');
-        if (parts.length > 1) {
-          const prefix = parts.slice(0, -1).join(' ');
-          finalName = `${prefix} ${rawVal.trim()}`;
-        } else {
-          finalName = `${prevItem.mould.trim()} ${rawVal.trim()}`;
-        }
-      }
-    }
+    const finalName = rawVal.trim();
 
     if (finalName !== item.mould) onUpdateItem(item.id, 'mould', finalName);
     setCellDrafts(prev => {
