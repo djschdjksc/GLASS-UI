@@ -26,6 +26,7 @@ import { localDb } from './services/db/localDb';
 import type { BillRecord } from './services/db/schema';
 import { loadMediaFromDB } from './services/mediaStorage';
 import { LoginPanel } from './components/LoginPanel';
+import { SpaceLoader } from './components/common/SpaceLoader';
 import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
 
 const playTapSound = () => {
@@ -2182,10 +2183,20 @@ function AppContent() {
 export default function App() {
   // Set to true temporarily to bypass login panel during development
   const [isAuthenticated, setIsAuthenticated] = React.useState(true);
+  const [isAppLoading, setIsAppLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsAppLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
   };
+
+  if (isAppLoading) {
+    return <SpaceLoader text="Loading System..." />;
+  }
 
   if (!isAuthenticated) {
     return <LoginPanel onLogin={handleLogin} />;
@@ -2200,7 +2211,4 @@ export default function App() {
       </DatabaseProvider>
     </ConfigProvider>
   );
-}
-
-
- 
+}
