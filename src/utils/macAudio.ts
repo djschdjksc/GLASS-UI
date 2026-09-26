@@ -154,6 +154,11 @@ class MacSoundEngine {
       osc.stop(now + 0.13);
     } catch {}
   }
+
+  // 5. Play tactile pop sound
+  public playPop() {
+    this.playClick();
+  }
 }
 
 export const macAudio = new MacSoundEngine();
