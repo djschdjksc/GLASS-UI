@@ -622,52 +622,69 @@ export const OtherTabsView: React.FC<Props> = ({
     setIsEditingParty(true);
   };
 
-  const handleStartNewParty = () => {
-    setPartyForm({
-      id: '',
-      name: '',
+  const handleStartNewParty = async () => {
+    const newId = `P-${Date.now()}`;
+    const newRecord = {
+      id: newId,
+      name: 'NEW PARTY',
       phone: '',
       station: '',
       district: '',
       state: '',
       pincode: '',
-      gstin: '',
-      balance: 0
-    });
-    setIsEditingParty(true);
-  };
-
-  const handleSavePartyForm = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const cleanName = partyForm.name.trim();
-    if (!cleanName) {
-      showPartyToast('Please enter party name');
-      return;
-    }
-
-    const partyId = partyForm.id ? partyForm.id : `P-${Date.now()}`;
-    const newRecord = {
-      id: partyId,
-      name: cleanName,
-      phone: partyForm.phone.trim(),
-      station: partyForm.station.trim(),
-      district: partyForm.district.trim(),
-      state: partyForm.state.trim(),
-      pincode: partyForm.pincode.trim(),
-      city: partyForm.station.trim() || partyForm.district.trim(),
-      contact: partyForm.district.trim() || partyForm.phone.trim(),
-      balance: Number(partyForm.balance) || 0,
+      city: '',
+      contact: '',
+      balance: 0,
       limit: 500000,
-      gstin: partyForm.gstin.trim(),
+      gstin: '',
       updatedAt: Date.now(),
       synced: false
     };
-
     await saveParty(newRecord);
-    setSelectedPartyId(partyId);
-    setIsEditingParty(false);
-    showPartyToast(`Party "${cleanName}" saved successfully`);
+    setSelectedPartyId(newId);
+    showPartyToast('New party row added directly to table');
     macAudio.playSuccess();
+  };
+
+  const handleInlinePartyChange = async (party: any, field: string, value: any) => {
+    const updated = {
+      ...party,
+      [field]: value,
+      updatedAt: Date.now()
+    };
+    await saveParty(updated);
+  };
+
+  const handleBulkPartyPaste = async (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData('text');
+    if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
+
+    e.preventDefault();
+    macAudio.playSuccess();
+    const lines = text.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
+    for (let i = 0; i < lines.length; i++) {
+      const cols = lines[i].split('\t').map(c => c.trim());
+      const name = cols[0];
+      if (!name) continue;
+      const rec = {
+        id: `P-${Date.now()}-${i}`,
+        name,
+        phone: cols[1] || '',
+        station: cols[2] || '',
+        district: cols[3] || '',
+        state: cols[4] || '',
+        pincode: cols[5] || '',
+        gstin: cols[6] || '',
+        balance: cols[7] ? parseFloat(cols[7]) || 0 : 0,
+        city: cols[2] || cols[3] || '',
+        contact: cols[1] || '',
+        limit: 500000,
+        updatedAt: Date.now(),
+        synced: false
+      };
+      await saveParty(rec);
+    }
+    showPartyToast(`Imported ${lines.length} parties in bulk`);
   };
 
   const handleDeletePartyAction = async (id: string, name: string) => {
@@ -1587,188 +1604,261 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* TAB F5: PARTY DIRECTORY & BALANCES */}
       {/* ========================================================================= */}
       {activeTab === 'F5' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.9fr 1.1fr', gap: '8px', minHeight: 0 }}>
-          {/* Party Directory Left Pane */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRadius: '8px', padding: '6px', overflow: 'hidden' }}>
-            {/* Search & Action Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', padding: '2px 4px' }}>
-              <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-                <Search size={14} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
-                <input
-                  type="text"
-                  placeholder="Search 1,800+ parties by Name, Phone, Station, District, State, Pincode..."
-                  value={partySearchQuery}
-                  onChange={(e) => {
-                    setPartySearchQuery(e.target.value);
+        <div
+          className="glass-panel"
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, borderRadius: '8px', padding: '6px', overflow: 'hidden' }}
+          onPaste={handleBulkPartyPaste}
+        >
+          {/* Search & Action Bar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', padding: '2px 4px' }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+              <Search size={14} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Search parties by Name, Phone, Station, District, State, Pincode... (Direct in-table editing)"
+                value={partySearchQuery}
+                onChange={(e) => {
+                  setPartySearchQuery(e.target.value);
+                  setPartyCurrentPage(1);
+                }}
+                className="mac-input"
+                style={{ width: '100%', height: '28px', paddingLeft: '28px', paddingRight: partySearchQuery ? '26px' : '8px', fontSize: '11px' }}
+              />
+              {partySearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartySearchQuery('');
                     setPartyCurrentPage(1);
                   }}
-                  className="mac-input"
-                  style={{ width: '100%', height: '28px', paddingLeft: '28px', paddingRight: partySearchQuery ? '26px' : '8px', fontSize: '11px' }}
-                />
-                {partySearchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPartySearchQuery('');
-                      setPartyCurrentPage(1);
-                    }}
-                    style={{ position: 'absolute', right: '6px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-
-              {/* Total counter badge */}
-              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '4px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
-                {filteredParties.length === parties.length
-                  ? `${parties.length.toLocaleString('en-IN')} Parties`
-                  : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
-              </div>
-
-              {/* Pagination controls */}
-              {totalPartyPages > 1 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  <button
-                    type="button"
-                    disabled={partyCurrentPage <= 1}
-                    onClick={() => setPartyCurrentPage(p => Math.max(1, p - 1))}
-                    className="mac-btn secondary"
-                    style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage <= 1 ? 0.4 : 1 }}
-                    title="Previous Page"
-                  >
-                    <ChevronLeft size={13} />
-                  </button>
-                  <span style={{ fontSize: '10px', color: '#cbd5e1', padding: '0 4px', whiteSpace: 'nowrap' }}>
-                    {partyCurrentPage}/{totalPartyPages}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={partyCurrentPage >= totalPartyPages}
-                    onClick={() => setPartyCurrentPage(p => Math.min(totalPartyPages, p + 1))}
-                    className="mac-btn secondary"
-                    style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage >= totalPartyPages ? 0.4 : 1 }}
-                    title="Next Page"
-                  >
-                    <ChevronRight size={13} />
-                  </button>
-                </div>
+                  style={{ position: 'absolute', right: '6px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <X size={13} />
+                </button>
               )}
-
-              {/* New Party Button */}
-              <button
-                type="button"
-                className="mac-btn primary"
-                style={{ height: '26px', padding: '0 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
-                onClick={() => {
-                  macAudio.playClick();
-                  handleStartNewParty();
-                }}
-              >
-                <Plus size={13} /> Add Party
-              </button>
             </div>
 
-            {/* Table Area */}
-            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '4px' }}>
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
-                  <tr>
-                    <th style={{ width: `${tableCols.f5Parties.index}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      #
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
-                      PARTY NAME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.phone}px`, position: 'relative', userSelect: 'none' }}>
-                      PHONE NUMBER
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
-                      STATION
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.district}px`, position: 'relative', userSelect: 'none' }}>
-                      DISTRICT
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.state}px`, position: 'relative', userSelect: 'none' }}>
-                      STATE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.pincode}px`, position: 'relative', userSelect: 'none' }}>
-                      PINCODE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.bills}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      BILLS
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      BALANCE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
-                    </th>
-                  </tr>
-                </thead>
+            {/* Total counter badge */}
+            <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '4px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+              {filteredParties.length === parties.length
+                ? `${parties.length.toLocaleString('en-IN')} Parties`
+                : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
+            </div>
+
+            {/* Bulk paste badge */}
+            <div style={{ fontSize: '10px', color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(167,139,250,0.2)', whiteSpace: 'nowrap' }}>
+              📋 Paste Excel Data (Ctrl+V) directly into table
+            </div>
+
+            {/* Pagination controls */}
+            {totalPartyPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <button
+                  type="button"
+                  disabled={partyCurrentPage <= 1}
+                  onClick={() => setPartyCurrentPage(p => Math.max(1, p - 1))}
+                  className="mac-btn secondary"
+                  style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage <= 1 ? 0.4 : 1 }}
+                  title="Previous Page"
+                >
+                  <ChevronLeft size={13} />
+                </button>
+                <span style={{ fontSize: '10px', color: '#cbd5e1', padding: '0 4px', whiteSpace: 'nowrap' }}>
+                  {partyCurrentPage}/{totalPartyPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={partyCurrentPage >= totalPartyPages}
+                  onClick={() => setPartyCurrentPage(p => Math.min(totalPartyPages, p + 1))}
+                  className="mac-btn secondary"
+                  style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage >= totalPartyPages ? 0.4 : 1 }}
+                  title="Next Page"
+                >
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+            )}
+
+            {/* New Party Button */}
+            <button
+              type="button"
+              className="mac-btn primary"
+              style={{ height: '26px', padding: '0 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
+              onClick={() => {
+                macAudio.playClick();
+                handleStartNewParty();
+              }}
+            >
+              <Plus size={13} /> Add Party Row
+            </button>
+          </div>
+
+          {/* Table Area */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '4px' }}>
+            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
+                <tr>
+                  <th style={{ width: `${tableCols.f5Parties.index}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    #
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
+                    PARTY NAME
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.phone}px`, position: 'relative', userSelect: 'none' }}>
+                    PHONE NUMBER
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
+                    STATION
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.district}px`, position: 'relative', userSelect: 'none' }}>
+                    DISTRICT
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.state}px`, position: 'relative', userSelect: 'none' }}>
+                    STATE
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.pincode}px`, position: 'relative', userSelect: 'none' }}>
+                    PINCODE
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.bills}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    BILLS
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
+                    BALANCE
+                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
+                  </th>
+                  <th style={{ width: '130px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    ACTIONS
+                  </th>
+                </tr>
+              </thead>
                 <tbody>
                   {paginatedParties.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8', fontSize: '12px' }}>
-                        No parties match "{partySearchQuery}". Try a different search term or click "Add Party".
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8', fontSize: '12px' }}>
+                        No parties match "{partySearchQuery}". Click "Add Party Row" or paste Excel rows (Ctrl+V).
                       </td>
                     </tr>
                   ) : (
                     paginatedParties.map((p, idx) => {
-                      const isSelected = selectedParty?.id === p.id;
                       const globalIdx = (partyCurrentPage - 1) * PARTIES_PER_PAGE + idx + 1;
                       const pNameKey = (p.name || '').trim().toLowerCase();
                       const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
-                      const phoneClean = (p.phone || '').trim();
 
                       return (
                         <tr
                           key={p.id || idx}
-                          className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                          style={{ height: `${activeRowHeight}px`, cursor: 'pointer' }}
-                          onMouseEnter={() => macAudio.playHover()}
-                          onClick={() => {
-                            macAudio.playClick();
-                            setSelectedPartyId(p.id);
-                          }}
+                          className="mac-table-row"
+                          style={{ height: `${activeRowHeight}px` }}
                         >
                           <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px', position: 'relative' }}>
                             {globalIdx}
                             <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize row height" />
                           </td>
-                          <td style={{ fontWeight: 600, color: isSelected ? '#38bdf8' : '#f8fafc' }}>
-                            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                            {p.gstin && (
-                              <div style={{ fontSize: '9px', color: '#94a3b8', fontFamily: 'monospace' }}>GSTIN: {p.gstin}</div>
-                            )}
+                          <td style={{ padding: '2px 4px' }}>
+                            <input
+                              type="text"
+                              value={p.name || ''}
+                              onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#38bdf8',
+                                fontWeight: 600,
+                                fontSize: '11px',
+                                outline: 'none'
+                              }}
+                            />
                           </td>
-                          <td style={{ color: phoneClean ? '#38bdf8' : '#64748b' }}>
-                            {phoneClean ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Phone size={10} style={{ opacity: 0.7 }} />
-                                <span style={{ fontFamily: 'monospace', fontSize: '10.5px' }}>{phoneClean}</span>
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: '10px', opacity: 0.4 }}>—</span>
-                            )}
+                          <td style={{ padding: '2px 4px' }}>
+                            <input
+                              type="text"
+                              value={p.phone || ''}
+                              onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
+                              placeholder="Phone..."
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#93c5fd',
+                                fontFamily: 'monospace',
+                                fontSize: '11px',
+                                outline: 'none'
+                              }}
+                            />
                           </td>
-                          <td style={{ color: '#e2e8f0', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.station || p.city || '—'}
+                          <td style={{ padding: '2px 4px' }}>
+                            <input
+                              type="text"
+                              value={p.station || p.city || ''}
+                              onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
+                              placeholder="Station..."
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#e2e8f0',
+                                fontSize: '11px',
+                                outline: 'none'
+                              }}
+                            />
                           </td>
-                          <td style={{ color: '#cbd5e1', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.district || '—'}
+                          <td style={{ padding: '2px 4px' }}>
+                            <input
+                              type="text"
+                              value={p.district || ''}
+                              onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
+                              placeholder="District..."
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#cbd5e1',
+                                fontSize: '11px',
+                                outline: 'none'
+                              }}
+                            />
                           </td>
-                          <td style={{ color: '#94a3b8', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.state || '—'}
+                          <td style={{ padding: '2px 4px' }}>
+                            <input
+                              type="text"
+                              value={p.state || ''}
+                              onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
+                              placeholder="State..."
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#94a3b8',
+                                fontSize: '11px',
+                                outline: 'none'
+                              }}
+                            />
                           </td>
-                          <td style={{ color: '#94a3b8', fontSize: '10.5px', fontFamily: 'monospace' }}>
-                            {p.pincode || '—'}
+                          <td style={{ padding: '2px 4px' }}>
+                            <input
+                              type="text"
+                              value={p.pincode || ''}
+                              onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
+                              placeholder="Pincode..."
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#94a3b8',
+                                fontFamily: 'monospace',
+                                fontSize: '11px',
+                                outline: 'none'
+                              }}
+                            />
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             {stat.count > 0 ? (
@@ -1779,8 +1869,47 @@ export const OtherTabsView: React.FC<Props> = ({
                               <span style={{ color: '#475569', fontSize: '9.5px' }}>0</span>
                             )}
                           </td>
-                          <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '11px', color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171' }}>
-                            ₹{Math.abs(p.balance || 0).toLocaleString('en-IN')} {(p.balance || 0) >= 0 ? 'Dr' : 'Cr'}
+                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>
+                            <input
+                              type="number"
+                              value={p.balance !== undefined ? p.balance : 0}
+                              onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171',
+                                fontWeight: 600,
+                                fontSize: '11px',
+                                textAlign: 'right',
+                                outline: 'none'
+                              }}
+                            />
+                          </td>
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap', padding: '2px 4px' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  macAudio.playClick();
+                                  onSelectPartyForBill(p.name);
+                                }}
+                                className="mac-btn primary"
+                                style={{ height: '22px', padding: '0 6px', fontSize: '10px' }}
+                                title="Create/Load Bill in F1"
+                              >
+                                Bill (F1)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePartyAction(p.id, p.name)}
+                                className="mac-btn danger"
+                                style={{ height: '22px', padding: '0 6px', fontSize: '10px' }}
+                                title="Delete Party"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -1791,300 +1920,9 @@ export const OtherTabsView: React.FC<Props> = ({
             </div>
 
             {/* Bottom Status strip */}
-            <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#64748b', padding: '2px 4px' }}>
-              <span>Showing {paginatedParties.length} of {filteredParties.length} filtered (Total 1,800+ from SQLite Database)</span>
-              <span>Click any party to inspect, create bills in F1, or edit contact info</span>
-            </div>
-          </div>
-
-          {/* Right Pane: Party Details Card & Actions */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', borderRadius: '8px', minHeight: 0, overflow: 'auto' }}>
-            {selectedParty ? (
-              <>
-                {/* Header Profile Banner */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontWeight: 800,
-                      fontSize: '16px',
-                      boxShadow: '0 4px 12px rgba(2,132,199,0.3)',
-                      flexShrink: 0
-                    }}
-                  >
-                    {selectedParty.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc', wordBreak: 'break-word', lineHeight: 1.3 }}>
-                      {selectedParty.name}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '9.5px', background: 'rgba(255,255,255,0.08)', color: '#94a3b8', padding: '1px 5px', borderRadius: '3px' }}>
-                        ID: {selectedParty.id}
-                      </span>
-                      {selectedParty.gstin ? (
-                        <span style={{ fontSize: '9.5px', background: 'rgba(52,211,153,0.12)', color: '#34d399', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace' }}>
-                          GSTIN: {selectedParty.gstin}
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: '9.5px', color: '#64748b' }}>Unregistered GST</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Primary Action Button: Start Bill for this Party (F1) */}
-                <button
-                  type="button"
-                  className="mac-btn primary"
-                  style={{
-                    width: '100%',
-                    height: '34px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    background: 'linear-gradient(135deg, #0284c7 0%, #059669 100%)',
-                    boxShadow: '0 4px 14px rgba(2,132,199,0.25)',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    macAudio.playSuccess();
-                    if (onSelectPartyForBill) {
-                      onSelectPartyForBill(selectedParty.name);
-                    }
-                  }}
-                >
-                  <FileText size={15} /> Start New Bill for this Party (F1)
-                </button>
-
-                {/* Toast message if present */}
-                {partyToast && (
-                  <div style={{ background: 'rgba(56,189,248,0.2)', border: '1px solid #0284c7', color: '#e0f2fe', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Check size={13} style={{ color: '#38bdf8' }} /> {partyToast}
-                  </div>
-                )}
-
-                {/* Key Party Stats & Info Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  {/* Phone Box */}
-                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ fontSize: '9.5px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <Phone size={10} style={{ color: '#38bdf8' }} /> Contact Phone
-                    </div>
-                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: selectedParty.phone ? '#38bdf8' : '#64748b', fontFamily: 'monospace' }}>
-                      {selectedParty.phone || 'No phone recorded'}
-                    </div>
-                  </div>
-
-                  {/* Station / City Box */}
-                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ fontSize: '9.5px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <MapPin size={10} style={{ color: '#f472b6' }} /> Station / City
-                    </div>
-                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {selectedParty.station || selectedParty.city || '—'}
-                    </div>
-                  </div>
-
-                  {/* District & State */}
-                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ fontSize: '9.5px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <Building size={10} style={{ color: '#a78bfa' }} /> District / State
-                    </div>
-                    <div style={{ fontSize: '11px', fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {[selectedParty.district, selectedParty.state].filter(Boolean).join(', ') || '—'}
-                    </div>
-                  </div>
-
-                  {/* Invoices Count & Total */}
-                  {(() => {
-                    const stat = partyBillStats[(selectedParty.name || '').trim().toLowerCase()] || { count: 0, total: 0 };
-                    return (
-                      <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ fontSize: '9.5px', color: '#94a3b8', marginBottom: '2px' }}>
-                          Invoices in Database
-                        </div>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: stat.count > 0 ? '#34d399' : '#64748b' }}>
-                          {stat.count} bills (₹{Math.round(stat.total).toLocaleString('en-IN')})
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* Edit / Add Party Form Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: isEditingParty ? '#38bdf8' : '#f472b6', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {isEditingParty ? (partyForm.id ? <><Edit3 size={12} /> Edit Party Details</> : <><UserPlus size={12} /> Add New Party</>) : 'Party Actions & Details'}
-                  </span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button
-                      type="button"
-                      className="mac-btn secondary"
-                      style={{ height: '24px', padding: '0 8px', fontSize: '10px' }}
-                      onClick={() => {
-                        macAudio.playClick();
-                        handleStartEditParty(selectedParty);
-                      }}
-                    >
-                      <Edit3 size={11} /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="mac-btn secondary"
-                      style={{ height: '24px', padding: '0 8px', fontSize: '10px', color: '#f87171' }}
-                      onClick={() => {
-                        handleDeletePartyAction(selectedParty.id, selectedParty.name);
-                      }}
-                    >
-                      <Trash2 size={11} /> Delete
-                    </button>
-                  </div>
-                </div>
-
-                {/* Form fields (shown when isEditingParty is true, or always accessible) */}
-                {isEditingParty ? (
-                  <form onSubmit={handleSavePartyForm} style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px' }}>
-                    <div>
-                      <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Party Legal Name *</label>
-                      <input
-                        type="text"
-                        value={partyForm.name}
-                        onChange={(e) => setPartyForm(f => ({ ...f, name: e.target.value }))}
-                        placeholder="e.g. Apex Industrial Corporation"
-                        className="mac-input"
-                        style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        required
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '6px' }}>
-                      <div>
-                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Phone / Mobile Number *</label>
-                        <input
-                          type="text"
-                          value={partyForm.phone}
-                          onChange={(e) => setPartyForm(f => ({ ...f, phone: e.target.value }))}
-                          placeholder="+91 9876543210"
-                          className="mac-input"
-                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Station / City</label>
-                        <input
-                          type="text"
-                          value={partyForm.station}
-                          onChange={(e) => setPartyForm(f => ({ ...f, station: e.target.value }))}
-                          placeholder="e.g. Surat, Jaipur"
-                          className="mac-input"
-                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                      <div>
-                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>District</label>
-                        <input
-                          type="text"
-                          value={partyForm.district}
-                          onChange={(e) => setPartyForm(f => ({ ...f, district: e.target.value }))}
-                          placeholder="District"
-                          className="mac-input"
-                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>State</label>
-                        <input
-                          type="text"
-                          value={partyForm.state}
-                          onChange={(e) => setPartyForm(f => ({ ...f, state: e.target.value }))}
-                          placeholder="State"
-                          className="mac-input"
-                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                      <div>
-                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Pincode</label>
-                        <input
-                          type="text"
-                          value={partyForm.pincode}
-                          onChange={(e) => setPartyForm(f => ({ ...f, pincode: e.target.value }))}
-                          placeholder="395002"
-                          className="mac-input"
-                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>GSTIN</label>
-                        <input
-                          type="text"
-                          value={partyForm.gstin}
-                          onChange={(e) => setPartyForm(f => ({ ...f, gstin: e.target.value }))}
-                          placeholder="24ABCDE1234F1Z5"
-                          className="mac-input"
-                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                      <button
-                        type="submit"
-                        className="mac-btn primary"
-                        style={{ flex: 1, height: '28px', fontSize: '11px' }}
-                      >
-                        <Check size={12} /> Save Party Record
-                      </button>
-                      <button
-                        type="button"
-                        className="mac-btn secondary"
-                        style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}
-                        onClick={() => setIsEditingParty(false)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Full Address:</span>
-                      <span style={{ color: '#e2e8f0', textAlign: 'right' }}>
-                        {[selectedParty.station, selectedParty.district, selectedParty.state, selectedParty.pincode].filter(Boolean).join(', ') || 'No address specified'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Current Balance:</span>
-                      <span style={{ fontWeight: 600, color: (selectedParty.balance || 0) >= 0 ? '#34d399' : '#f87171' }}>
-                        ₹{Math.abs(selectedParty.balance || 0).toLocaleString('en-IN')} {(selectedParty.balance || 0) >= 0 ? 'Dr (Receivable)' : 'Cr (Payable)'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-                Select a party from the table to view details.
-              </div>
-            )}
+          <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#64748b', padding: '2px 4px' }}>
+            <span>Showing {paginatedParties.length} of {filteredParties.length} filtered ({parties.length.toLocaleString('en-IN')} total in Database) • All cell changes auto-save immediately</span>
+            <span style={{ color: '#38bdf8' }}>💡 Tip: Copy columns from Excel and press Ctrl+V anywhere to bulk import!</span>
           </div>
         </div>
       )}

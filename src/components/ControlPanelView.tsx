@@ -203,28 +203,21 @@ export const ControlPanelView: React.FC = () => {
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  // Modal Form State (Apple macOS Animated Dialog)
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [groupToDelete, setGroupToDelete] = useState<GroupRule | null>(null);
 
-  // Form Fields
-  const [formData, setFormData] = useState<Omit<GroupRule, 'id'>>({
-    groupName: '',
-    groupIndex: '',
-    weightPerPc: 1.0,
-    pcsPerBox: 1,
-    multiplication: 1.0,
-    realItemName: '',
-    skipEq: false,
-    chainParent: 'NONE'
-  });
+  const handleCellChange = (id: string, field: keyof GroupRule, value: any) => {
+    setGroups(prev => {
+      const next = prev.map(g => g.id === id ? { ...g, [field]: value } : g);
+      try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
-  const openAddModal = () => {
+  const handleAddNewGroup = () => {
     macAudio.playClick();
-    setEditingGroupId(null);
-    setFormData({
-      groupName: '',
+    const newGroup: GroupRule = {
+      id: `grp-${Date.now()}`,
+      groupName: 'NEW GROUP',
       groupIndex: `G-${101 + groups.length}`,
       weightPerPc: 1.0,
       pcsPerBox: 1,
@@ -232,55 +225,54 @@ export const ControlPanelView: React.FC = () => {
       realItemName: '',
       skipEq: false,
       chainParent: 'NONE'
+    };
+    setGroups(prev => {
+      const next = [newGroup, ...prev];
+      try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
+      return next;
     });
-    setIsModalOpen(true);
+    setSelectedGroupId(newGroup.id);
   };
 
-  const openEditModal = (grp: GroupRule) => {
-    macAudio.playClick();
-    setEditingGroupId(grp.id);
-    setFormData({
-      groupName: grp.groupName,
-      groupIndex: grp.groupIndex,
-      weightPerPc: grp.weightPerPc,
-      pcsPerBox: grp.pcsPerBox,
-      multiplication: grp.multiplication,
-      realItemName: grp.realItemName,
-      skipEq: grp.skipEq,
-      chainParent: grp.chainParent
+  const handleDeleteGroup = (id: string) => {
+    macAudio.playPop();
+    setGroups(prev => {
+      const next = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
+      return next;
     });
-    setIsModalOpen(true);
+    if (selectedGroupId === id) setSelectedGroupId(null);
   };
 
-  const closeModal = () => {
-    macAudio.playClick();
-    setIsModalOpen(false);
-    setEditingGroupId(null);
-  };
+  const handleGroupPaste = (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData('text');
+    if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
 
-  const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.groupName.trim() || !formData.groupIndex.trim()) {
-      macAudio.playBeep();
-      return;
-    }
-
-    if (editingGroupId) {
-      setGroups(prev =>
-        prev.map(g => (g.id === editingGroupId ? { ...g, ...formData } : g))
-      );
-    } else {
-      const newGroup: GroupRule = {
-        id: `grp-${Date.now()}`,
-        ...formData
-      };
-      setGroups(prev => [newGroup, ...prev]);
-      setSelectedGroupId(newGroup.id);
-    }
-
     macAudio.playSuccess();
-    setIsModalOpen(false);
-    setEditingGroupId(null);
+    const lines = text.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
+    const parsedRows: GroupRule[] = lines.map((line, idx) => {
+      const cols = line.split('\t').map(c => c.trim());
+      return {
+        id: `grp-${Date.now() + idx}`,
+        groupName: cols[0] || 'GROUP',
+        groupIndex: cols[1] || `G-${100 + idx}`,
+        weightPerPc: cols[2] ? parseFloat(cols[2]) || 0 : 0,
+        pcsPerBox: cols[3] ? parseInt(cols[3], 10) || 1 : 1,
+        multiplication: cols[4] ? parseFloat(cols[4]) || 1 : 1,
+        realItemName: cols[5] || '',
+        skipEq: cols[6] ? cols[6].toLowerCase() === 'true' || cols[6].toLowerCase() === 'yes' : false,
+        chainParent: cols[7] || 'NONE'
+      };
+    });
+
+    if (parsedRows.length > 0) {
+      setGroups(prev => {
+        const next = [...parsedRows, ...prev];
+        try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
   };
 
   // Active Groups list
@@ -513,7 +505,7 @@ export const ControlPanelView: React.FC = () => {
         {activeTab === 'MANAGE_GROUPS' && (
           <button
             type="button"
-            onClick={openAddModal}
+            onClick={handleAddNewGroup}
             onMouseEnter={() => macAudio.playHover()}
             className="mac-btn primary"
             style={{
@@ -536,8 +528,12 @@ export const ControlPanelView: React.FC = () => {
       {/* TAB 1: MANAGE GROUPS                                                      */}
       {/* ========================================================================= */}
       {activeTab === 'MANAGE_GROUPS' && (
-        <div className="tab-content-anim" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, gap: '8px' }}>
-          {/* GROUPS DATA TABLE (EXACT 8 COLUMNS - NO EXTRA ACTIONS COLUMN) */}
+        <div 
+          className="tab-content-anim" 
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, gap: '8px' }}
+          onPaste={handleGroupPaste}
+        >
+          {/* GROUPS DATA TABLE */}
           <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '6px' }}>
             <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -578,59 +574,107 @@ export const ControlPanelView: React.FC = () => {
                     CHAIN PARENT
                     <div className="th-resizer" onMouseDown={(e) => startColResize('chainParent', e)} title="Drag to resize column" />
                   </th>
+                  <th style={{ width: '45px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    DEL
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredGroups.map((grp) => {
+                {filteredGroups.map((grp, idx) => {
                   const isSelected = selectedGroupId === grp.id;
+                  const cellInputStyle: React.CSSProperties = {
+                    width: '100%',
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    color: '#f8fafc',
+                    fontSize: '11.5px',
+                    padding: '3px 6px',
+                    fontFamily: 'inherit',
+                    borderRadius: '4px'
+                  };
                   return (
                     <tr
                       key={grp.id}
-                      ref={el => { rowRefs.current[grp.id] = el; }}
                       className={`mac-table-row ${isSelected ? 'selected' : ''}`}
                       style={{ height: `${activeRowHeight}px` }}
-                      onMouseEnter={() => macAudio.playHover()}
-                      onClick={() => {
-                        macAudio.playClick();
-                        setSelectedGroupId(grp.id);
-                      }}
-                      onDoubleClick={() => openEditModal(grp)}
+                      onClick={() => setSelectedGroupId(grp.id)}
                     >
-                      <td style={{ fontWeight: 700, color: '#38bdf8', position: 'relative' }}>
-                        {grp.groupName}
-                        <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
+                      <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                        {idx + 1}
                       </td>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}>
-                        {grp.groupIndex}
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          style={{ ...cellInputStyle, fontWeight: 700, color: '#38bdf8' }}
+                          value={grp.groupName}
+                          onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)}
+                        />
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 600, color: '#34d399' }}>
-                        {grp.weightPerPc.toFixed(2)} kg
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          style={{ ...cellInputStyle, fontFamily: 'monospace', fontWeight: 600, color: '#fbbf24' }}
+                          value={grp.groupIndex}
+                          onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)}
+                        />
                       </td>
-                      <td style={{ textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}>
-                        {grp.pcsPerBox} pcs
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          type="number"
+                          step="any"
+                          style={{ ...cellInputStyle, textAlign: 'right', fontWeight: 600, color: '#34d399' }}
+                          value={grp.weightPerPc}
+                          onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)}
+                        />
                       </td>
-                      <td style={{ textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}>
-                        {grp.multiplication.toFixed(2)}x
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          type="number"
+                          style={{ ...cellInputStyle, textAlign: 'center', color: '#e2e8f0', fontWeight: 600 }}
+                          value={grp.pcsPerBox}
+                          onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)}
+                        />
                       </td>
-                      <td style={{ color: '#f8fafc', fontWeight: 500 }}>
-                        {grp.realItemName}
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          type="number"
+                          step="any"
+                          style={{ ...cellInputStyle, textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}
+                          value={grp.multiplication}
+                          onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)}
+                        />
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontWeight: 700,
-                            padding: '2px 7px',
-                            borderRadius: '4px',
-                            background: grp.skipEq ? 'rgba(248, 113, 113, 0.2)' : 'rgba(52, 211, 153, 0.2)',
-                            color: grp.skipEq ? '#f87171' : '#34d399'
-                          }}
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          style={{ ...cellInputStyle, color: '#f8fafc', fontWeight: 500 }}
+                          value={grp.realItemName}
+                          onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ textAlign: 'center', padding: '2px' }}>
+                        <input
+                          type="checkbox"
+                          checked={grp.skipEq}
+                          onChange={e => handleCellChange(grp.id, 'skipEq', e.target.checked)}
+                          style={{ cursor: 'pointer', accentColor: '#f87171' }}
+                        />
+                      </td>
+                      <td style={{ padding: '1px' }}>
+                        <input
+                          style={{ ...cellInputStyle, color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}
+                          value={grp.chainParent}
+                          onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ textAlign: 'center', padding: '1px' }}>
+                        <button
+                          type="button"
+                          className="mac-btn danger"
+                          style={{ padding: '2px 5px', height: '22px' }}
+                          onClick={() => handleDeleteGroup(grp.id)}
+                          title="Delete Group"
                         >
-                          {grp.skipEq ? 'YES' : 'NO'}
-                        </span>
-                      </td>
-                      <td style={{ color: grp.chainParent === 'NONE' ? '#64748b' : '#38bdf8', fontFamily: 'monospace' }}>
-                        {grp.chainParent}
+                          <Trash2 size={12} />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -669,167 +713,7 @@ export const ControlPanelView: React.FC = () => {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* APPLE MACOS ANIMATED MODAL FORM (TRIGGERED VIA "+ ADD GROUP" OR "ENTER") */}
-      {/* ========================================================================= */}
-      {isModalOpen && (
-        <div className="mac-modal-backdrop" onClick={closeModal}>
-          <div
-            className="mac-modal-card glass-panel"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '580px',
-              maxWidth: '94vw',
-              borderRadius: '12px',
-              padding: '18px 22px',
-              background: 'linear-gradient(135deg, rgba(13, 21, 38, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 24px rgba(56, 189, 248, 0.15)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}
-          >
-            {/* Modal Title Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'rgba(56, 189, 248, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(56, 189, 248, 0.4)' }}>
-                  <Layers size={15} color="#38bdf8" />
-                </div>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.04em' }}>
-                  {editingGroupId ? 'EDIT GROUP CONFIGURATION' : 'ADD NEW GROUP CONFIGURATION'}
-                </span>
-              </div>
 
-              <button
-                type="button"
-                onClick={closeModal}
-                className="mac-btn"
-                style={{ width: '26px', height: '26px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <X size={13} color="#94a3b8" />
-              </button>
-            </div>
-
-            {/* Modal Form with Notched Border Headers & Icons */}
-            <form onSubmit={handleSaveForm} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Row 1: Group Name & Group Index */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '12px' }}>
-                {/* 1. Group Name */}
-                <GlassInput
-                  label="GROUP NAME *"
-                  value={formData.groupName}
-                  onChange={(e) => setFormData({ ...formData, groupName: e.target.value.toUpperCase() })}
-                  icon={Layers}
-                  required
-                  inputStyle={{ fontWeight: 700, color: '#38bdf8' }}
-                />
-
-                {/* 2. Group Index */}
-                <GlassInput
-                  label="GROUP INDEX *"
-                  value={formData.groupIndex}
-                  onChange={(e) => setFormData({ ...formData, groupIndex: e.target.value.toUpperCase() })}
-                  icon={Hash}
-                  required
-                  inputStyle={{ fontFamily: 'monospace', fontWeight: 700, color: '#fbbf24' }}
-                />
-              </div>
-
-              {/* Row 2: Weight/PC, Pcs Per Box, Multiplication */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1.1fr', gap: '12px' }}>
-                {/* 3. Weight / PC */}
-                <GlassInput
-                  label="WEIGHT / PC (KGS) *"
-                  type="number"
-                  step="0.01"
-                  required
-                  value={formData.weightPerPc}
-                  onChange={(e) => setFormData({ ...formData, weightPerPc: parseFloat(e.target.value) || 0 })}
-                  icon={Scale}
-                  inputStyle={{ color: '#34d399', fontWeight: 700 }}
-                />
-
-                {/* 4. Pcs Per Box */}
-                <GlassInput
-                  label="PCS PER BOX *"
-                  type="number"
-                  required
-                  value={formData.pcsPerBox}
-                  onChange={(e) => setFormData({ ...formData, pcsPerBox: parseInt(e.target.value) || 1 })}
-                  icon={Package}
-                  inputStyle={{ fontWeight: 600, color: '#ffffff' }}
-                />
-
-                {/* 5. Multiplication */}
-                <GlassInput
-                  label="MULTIPLICATION *"
-                  type="number"
-                  step="0.05"
-                  required
-                  value={formData.multiplication}
-                  onChange={(e) => setFormData({ ...formData, multiplication: parseFloat(e.target.value) || 1.0 })}
-                  icon={Percent}
-                  inputStyle={{ color: '#a78bfa', fontWeight: 700 }}
-                />
-              </div>
-
-              {/* Row 3: Real Item Name */}
-              <GlassInput
-                label="REAL ITEM NAME *"
-                value={formData.realItemName}
-                onChange={(e) => setFormData({ ...formData, realItemName: e.target.value })}
-                icon={FileText}
-                required
-                inputStyle={{ color: '#f8fafc', fontWeight: 500 }}
-              />
-
-              {/* Row 4: Skip Eq & Chain Parent */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '12px' }}>
-                {/* 7. Skip Equation */}
-                <GlassSelect
-                  label="SKIP EQUATION (SKIP EQ)"
-                  value={formData.skipEq ? 'YES' : 'NO'}
-                  onChange={(e) => setFormData({ ...formData, skipEq: e.target.value === 'YES' })}
-                  icon={Filter}
-                >
-                  <option value="NO">NO</option>
-                  <option value="YES">YES</option>
-                </GlassSelect>
-
-                {/* 8. Chain Parent */}
-                <GlassInput
-                  label="CHAIN PARENT"
-                  value={formData.chainParent}
-                  onChange={(e) => setFormData({ ...formData, chainParent: e.target.value.toUpperCase() })}
-                  icon={GitBranch}
-                  inputStyle={{ fontFamily: 'monospace', color: formData.chainParent === 'NONE' ? '#64748b' : '#38bdf8' }}
-                />
-              </div>
-
-              {/* Actions Ribbon */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '14px' }}>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="mac-btn"
-                  style={{ padding: '6px 14px', fontSize: '11.5px', fontWeight: 600 }}
-                >
-                  Cancel (Esc)
-                </button>
-                <button
-                  type="submit"
-                  className="mac-btn primary"
-                  style={{ padding: '6px 18px', fontSize: '11.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Check size={14} />
-                  <span>{editingGroupId ? 'Update Group' : 'Save Group'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* DELETE CONFIRMATION DIALOG (TRIGGERED VIA "DELETE" KEY) */}

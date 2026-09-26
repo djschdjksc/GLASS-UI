@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { macAudio } from '../utils/macAudio';
-import { Search, Plus, Trash2, Edit2, Check, X, Layers, Tag, Type, RotateCcw } from 'lucide-react';
+import { Search, Plus, Trash2, Check, Layers, Tag, Type, RotateCcw, ClipboardPaste } from 'lucide-react';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
-import { GlassInput, GlassSelect } from './common/GlassInput';
 
-const DEFAULT_MAIN_COLS = { srNo: 40, mainGroup: 130, groupName: 200, sumCol: 80, items: 60 };
-const DEFAULT_SUB_COLS = { srNo: 40, itemName: 300 };
+const DEFAULT_MAIN_COLS = { srNo: 35, mainGroup: 140, groupName: 200, sumCol: 85, items: 50, actions: 40 };
+const DEFAULT_SUB_COLS = { srNo: 40, itemName: 320, actions: 40 };
 
 export const SkipItemNameTab: React.FC = () => {
   const [mainGroups, setMainGroups] = useState<SkipMainGroupSeed[]>([]);
@@ -14,23 +13,7 @@ export const SkipItemNameTab: React.FC = () => {
   const [skipItems, setSkipItems] = useState<SkipItemSeed[]>([]);
   
   const [selectedMainGroupId, setSelectedMainGroupId] = useState<string | null>(null);
-  const [selectedSubGroupId, setSelectedSubGroupId] = useState<string | null>(null);
-
-  // Modals
-  const [isMainModalOpen, setIsMainModalOpen] = useState(false);
-  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
-  const [editingMainId, setEditingMainId] = useState<string | null>(null);
-  const [editingSubId, setEditingSubId] = useState<string | null>(null);
-  
-  const [mainFormData, setMainFormData] = useState<{ id: string; mainGroupId: string; groupName: string; sumColumn: 'QTY' | 'U CAP' | 'L CAP' }>({
-    id: '', mainGroupId: '', groupName: '', sumColumn: 'QTY'
-  });
-  const [subFormData, setSubFormData] = useState<{ id: string; subGroupId: string; itemPrefix: string }>({
-    id: '', subGroupId: '', itemPrefix: ''
-  });
-
-  const [deleteMain, setDeleteMain] = useState<SkipSubGroupSeed | null>(null);
-  const [deleteSub, setDeleteSub] = useState<SkipItemSeed | null>(null);
+  const [itemSearch, setItemSearch] = useState('');
 
   const [colWidths, setColWidths] = useState(() => {
     try { const saved = localStorage.getItem('modern_skip_cols'); return saved ? { ...DEFAULT_MAIN_COLS, ...JSON.parse(saved) } : DEFAULT_MAIN_COLS; } catch { return DEFAULT_MAIN_COLS; }
@@ -95,116 +78,155 @@ export const SkipItemNameTab: React.FC = () => {
   }, []);
 
   const saveSubGroups = (data: SkipSubGroupSeed[]) => {
-    setSubGroups(data); localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(data));
+    setSubGroups(data);
+    try { localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(data)); } catch {}
   };
+
   const saveSkipItems = (data: SkipItemSeed[]) => {
-    setSkipItems(data); localStorage.setItem('billapp_skip_items', JSON.stringify(data));
+    setSkipItems(data);
+    try { localStorage.setItem('billapp_skip_items', JSON.stringify(data)); } catch {}
   };
 
-  const startResizeMain = (colKey: keyof typeof DEFAULT_MAIN_COLS, e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    const startX = e.clientX; const startW = colWidths[colKey] || 100;
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      setColWidths((prev:any) => {
-        const next = { ...prev, [colKey]: Math.max(40, startW + (moveEvent.clientX - startX)) };
-        try { localStorage.setItem('modern_skip_cols', JSON.stringify(next)); } catch {}
+  // SubGroup inline edits
+  const handleSubGroupChange = (id: string, field: keyof SkipSubGroupSeed, value: any) => {
+    const updated = subGroups.map(sg => {
+      if (sg.id === id) {
+        const next = { ...sg, [field]: value };
+        if (field === 'mainGroup') {
+          const mg = mainGroups.find(m => m.name === value || m.id === value);
+          if (mg) next.mainGroupId = mg.id;
+        }
         return next;
-      });
-    };
-    const handleMouseUp = () => { document.body.style.cursor = ''; document.body.style.userSelect = 'text'; window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-    document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const startResizeSub = (colKey: keyof typeof DEFAULT_SUB_COLS, e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    const startX = e.clientX; const startW = subColWidths[colKey] || 100;
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      setSubColWidths((prev:any) => {
-        const next = { ...prev, [colKey]: Math.max(40, startW + (moveEvent.clientX - startX)) };
-        try { localStorage.setItem('modern_skip_sub_cols', JSON.stringify(next)); } catch {}
-        return next;
-      });
-    };
-    const handleMouseUp = () => { document.body.style.cursor = ''; document.body.style.userSelect = 'text'; window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-    document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleMainKeyDown = (e: React.KeyboardEvent) => {
-    if (isMainModalOpen || isSubModalOpen || deleteMain || deleteSub) return;
-    const idx = subGroups.findIndex(s => s.id === selectedMainGroupId);
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (idx < subGroups.length - 1) setSelectedMainGroupId(subGroups[idx + 1].id);
-      else if (subGroups.length > 0) setSelectedMainGroupId(subGroups[0].id);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (idx > 0) setSelectedMainGroupId(subGroups[idx - 1].id);
-      else if (subGroups.length > 0) setSelectedMainGroupId(subGroups[subGroups.length - 1].id);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedMainGroupId) {
-        const item = subGroups.find(s => s.id === selectedMainGroupId);
-        if (item) { setEditingMainId(item.id); setMainFormData({ ...item }); setIsMainModalOpen(true); macAudio.playClick(); }
-      } else {
-        setEditingMainId(null); setMainFormData({ id: 'sg-' + Date.now(), mainGroupId: mainGroups[0]?.id || '', groupName: '', sumColumn: 'QTY' }); setIsMainModalOpen(true); macAudio.playClick();
       }
-    } else if (e.key === 'Delete' && selectedMainGroupId) {
-      e.preventDefault();
-      const item = subGroups.find(s => s.id === selectedMainGroupId);
-      if (item) { setDeleteMain(item); macAudio.playPop(); }
+      return sg;
+    });
+    saveSubGroups(updated);
+  };
+
+  const handleAddSubGroup = () => {
+    macAudio.playClick();
+    const newId = 'sg-' + Date.now();
+    const defaultMg = mainGroups[0]?.name || 'General';
+    const defaultMgId = mainGroups[0]?.id || 'mg-1';
+    const newSg: SkipSubGroupSeed = {
+      id: newId,
+      mainGroupId: defaultMgId,
+      mainGroup: defaultMg,
+      groupName: 'NEW-GROUP',
+      sumColumn: 'QTY'
+    };
+    const next = [...subGroups, newSg];
+    saveSubGroups(next);
+    setSelectedMainGroupId(newId);
+  };
+
+  const handleDeleteSubGroup = (id: string) => {
+    macAudio.playPop();
+    const next = subGroups.filter(sg => sg.id !== id);
+    saveSubGroups(next);
+    if (selectedMainGroupId === id) {
+      setSelectedMainGroupId(next[0]?.id || null);
     }
   };
 
-  const handleSubKeyDown = (e: React.KeyboardEvent) => {
-    if (isMainModalOpen || isSubModalOpen || deleteMain || deleteSub) return;
-    const curSubGroup = subGroups.find(s => s.id === selectedMainGroupId);
-    const items = skipItems.filter(si => 
-      si.subGroupId === selectedMainGroupId || 
-      (curSubGroup && si.groupName === curSubGroup.groupName && (!si.mainGroup || si.mainGroup === curSubGroup.mainGroup))
-    );
-    const idx = items.findIndex(s => s.id === selectedSubGroupId);
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (idx < items.length - 1) setSelectedSubGroupId(items[idx + 1].id);
-      else if (items.length > 0) setSelectedSubGroupId(items[0].id);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (idx > 0) setSelectedSubGroupId(items[idx - 1].id);
-      else if (items.length > 0) setSelectedSubGroupId(items[items.length - 1].id);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedSubGroupId) {
-        const item = items.find(s => s.id === selectedSubGroupId);
-        if (item) { setEditingSubId(item.id); setSubFormData({ ...item }); setIsSubModalOpen(true); macAudio.playClick(); }
-      } else if (selectedMainGroupId) {
-        setEditingSubId(null); setSubFormData({ id: 'si-' + Date.now(), subGroupId: selectedMainGroupId, itemPrefix: '' }); setIsSubModalOpen(true); macAudio.playClick();
-      }
-    } else if (e.key === 'Delete' && selectedSubGroupId) {
-      e.preventDefault();
-      const item = items.find(s => s.id === selectedSubGroupId);
-      if (item) { setDeleteSub(item); macAudio.playPop(); }
+  // SkipItem inline edits
+  const handleItemChange = (id: string, newPrefix: string) => {
+    const updated = skipItems.map(si => si.id === id ? { ...si, itemPrefix: newPrefix } : si);
+    saveSkipItems(updated);
+  };
+
+  const handleAddItem = () => {
+    if (!selectedMainGroupId) return;
+    macAudio.playClick();
+    const curSub = subGroups.find(s => s.id === selectedMainGroupId);
+    const newId = 'si-' + Date.now();
+    const newItem: SkipItemSeed = {
+      id: newId,
+      subGroupId: selectedMainGroupId,
+      mainGroup: curSub?.mainGroup || '',
+      groupName: curSub?.groupName || '',
+      itemPrefix: ''
+    };
+    const next = [newItem, ...skipItems];
+    saveSkipItems(next);
+  };
+
+  const handleDeleteItem = (id: string) => {
+    macAudio.playPop();
+    const next = skipItems.filter(si => si.id !== id);
+    saveSkipItems(next);
+  };
+
+  // Bulk paste into Skip Items table
+  const handleItemPaste = (e: React.ClipboardEvent) => {
+    if (!selectedMainGroupId) return;
+    const text = e.clipboardData.getData('text');
+    if (!text || (!text.includes('\n') && !text.includes('\t'))) return;
+
+    e.preventDefault();
+    macAudio.playSuccess();
+    const curSub = subGroups.find(s => s.id === selectedMainGroupId);
+    const lines = text.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    const newItems: SkipItemSeed[] = lines.map((line, idx) => {
+      const pfx = line.split('\t')[0].trim();
+      return {
+        id: 'si-' + (Date.now() + idx),
+        subGroupId: selectedMainGroupId,
+        mainGroup: curSub?.mainGroup || '',
+        groupName: curSub?.groupName || '',
+        itemPrefix: pfx
+      };
+    });
+
+    if (newItems.length > 0) {
+      const next = [...newItems, ...skipItems];
+      saveSkipItems(next);
     }
   };
 
-  const handleMainSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); macAudio.playClick();
-    if (editingMainId) saveSubGroups(subGroups.map(sg => sg.id === editingMainId ? { ...mainFormData } : sg));
-    else saveSubGroups([...subGroups, { ...mainFormData }]);
-    setIsMainModalOpen(false);
+  const curSub = subGroups.find(s => s.id === selectedMainGroupId);
+  const itemsForSelectedGroup = curSub ? skipItems.filter(si => 
+    si.subGroupId === curSub.id || 
+    (si.groupName === curSub.groupName && (!si.mainGroup || si.mainGroup === curSub.mainGroup))
+  ) : [];
+
+  const filteredItems = itemsForSelectedGroup.filter(si =>
+    si.itemPrefix.toLowerCase().includes(itemSearch.toLowerCase())
+  );
+
+  const cellInputStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    color: '#f8fafc',
+    fontSize: '11.5px',
+    padding: '3px 6px',
+    fontFamily: 'inherit',
+    borderRadius: '4px'
   };
-  const handleSubSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); macAudio.playClick();
-    if (editingSubId) saveSkipItems(skipItems.map(si => si.id === editingSubId ? { ...subFormData } : si));
-    else saveSkipItems([...skipItems, { ...subFormData }]);
-    setIsSubModalOpen(false);
+
+  const selectStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'rgba(15, 23, 42, 0.65)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#38bdf8',
+    fontSize: '11px',
+    fontWeight: 600,
+    borderRadius: '4px',
+    padding: '2px 4px',
+    outline: 'none'
   };
 
   return (
-    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', height: '100%', minHeight: 0, overflow: 'hidden' }}>
-      {/* Left: Main Groups */}
-      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleMainKeyDown}>
-        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Sub Groups Configuration ({subGroups.length} Groups)</span>
+    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '10px', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+      {/* Left: Sub Groups Configuration Table */}
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+            Sub Groups Configuration ({subGroups.length} Groups)
+          </span>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
               className="mac-btn" 
@@ -214,33 +236,98 @@ export const SkipItemNameTab: React.FC = () => {
             >
               <RotateCcw size={13} /> Reset to Backup
             </button>
-            <button className="mac-btn" onClick={() => { setEditingMainId(null); setMainFormData({ id: 'sg-' + Date.now(), mainGroupId: mainGroups[0]?.id || '', groupName: '', sumColumn: 'QTY' }); setIsMainModalOpen(true); macAudio.playClick(); }}>
-              <Plus size={14} /> Add
+            <button className="mac-btn primary" onClick={handleAddSubGroup}>
+              <Plus size={14} /> Add Group
             </button>
           </div>
         </div>
+
         <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           <table className="mac-table">
             <thead>
               <tr>
-                <th style={{ width: colWidths.srNo, textAlign: 'center', position: 'relative' }}>#<div className="th-resizer" onMouseDown={e => startResizeMain('srNo', e)} /></th>
-                <th style={{ width: colWidths.mainGroup, position: 'relative' }}>MAIN GROUP<div className="th-resizer" onMouseDown={e => startResizeMain('mainGroup', e)} /></th>
-                <th style={{ width: colWidths.groupName, position: 'relative' }}>GROUP NAME<div className="th-resizer" onMouseDown={e => startResizeMain('groupName', e)} /></th>
-                <th style={{ width: colWidths.sumCol, textAlign: 'center', position: 'relative' }}>SUM COL<div className="th-resizer" onMouseDown={e => startResizeMain('sumCol', e)} /></th>
-                <th style={{ width: colWidths.items, textAlign: 'center', position: 'relative' }}>ITEMS<div className="th-resizer" onMouseDown={e => startResizeMain('items', e)} /></th>
+                <th style={{ width: colWidths.srNo, textAlign: 'center' }}>#</th>
+                <th style={{ width: colWidths.mainGroup }}>MAIN GROUP</th>
+                <th style={{ width: colWidths.groupName }}>GROUP NAME</th>
+                <th style={{ width: colWidths.sumCol, textAlign: 'center' }}>SUM COL</th>
+                <th style={{ width: colWidths.items, textAlign: 'center' }}>ITEMS</th>
+                <th style={{ width: colWidths.actions, textAlign: 'center' }}>DEL</th>
               </tr>
             </thead>
             <tbody>
               {subGroups.map((sg, idx) => {
-                const parentMain = mainGroups.find(m => m.id === sg.mainGroupId || m.name === sg.mainGroup);
+                const isSelected = selectedMainGroupId === sg.id;
                 const itemCount = skipItems.filter(si => si.subGroupId === sg.id || (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))).length;
                 return (
-                  <tr key={sg.id} className={`mac-table-row ${selectedMainGroupId === sg.id ? 'selected' : ''}`} onClick={() => { macAudio.playClick(); setSelectedMainGroupId(sg.id); }} onDoubleClick={() => { setEditingMainId(sg.id); setMainFormData({ ...sg }); setIsMainModalOpen(true); }}>
-                    <td style={{ textAlign: 'center', color: '#64748b' }}>{idx + 1}</td>
-                    <td style={{ fontWeight: 600, color: '#38bdf8' }}>{parentMain?.name || sg.mainGroup || '-'}</td>
-                    <td style={{ color: '#f8fafc' }}>{sg.groupName}</td>
-                    <td style={{ textAlign: 'center', color: '#a78bfa', fontWeight: 600 }}>{sg.sumColumn}</td>
-                    <td style={{ textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{itemCount}</td>
+                  <tr 
+                    key={sg.id} 
+                    className={`mac-table-row ${isSelected ? 'selected' : ''}`}
+                    onClick={() => { macAudio.playClick(); setSelectedMainGroupId(sg.id); }}
+                  >
+                    <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                      {idx + 1}
+                    </td>
+
+                    {/* MAIN GROUP SELECT */}
+                    <td style={{ padding: '2px' }}>
+                      <select
+                        style={selectStyle}
+                        value={sg.mainGroup}
+                        onChange={e => handleSubGroupChange(sg.id, 'mainGroup', e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        {mainGroups.map(m => (
+                          <option key={m.id} value={m.name} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+
+                    {/* GROUP NAME INPUT */}
+                    <td style={{ padding: '1px' }}>
+                      <input
+                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                        value={sg.groupName}
+                        onChange={e => handleSubGroupChange(sg.id, 'groupName', e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                      />
+                    </td>
+
+                    {/* SUM COLUMN SELECT */}
+                    <td style={{ padding: '2px', textAlign: 'center' }}>
+                      <select
+                        style={{ ...selectStyle, color: '#a78bfa', textAlign: 'center' }}
+                        value={sg.sumColumn}
+                        onChange={e => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <option value="QTY" style={{ background: '#0f172a', color: '#f8fafc' }}>QTY</option>
+                        <option value="U CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>U CAP</option>
+                        <option value="L CAP" style={{ background: '#0f172a', color: '#f8fafc' }}>L CAP</option>
+                      </select>
+                    </td>
+
+                    {/* ITEM COUNT */}
+                    <td style={{ textAlign: 'center', color: '#34d399', fontWeight: 700, fontSize: '11px' }}>
+                      {itemCount}
+                    </td>
+
+                    {/* ACTIONS: DELETE */}
+                    <td style={{ textAlign: 'center', padding: '1px' }}>
+                      <button
+                        type="button"
+                        className="mac-btn danger"
+                        style={{ padding: '2px 5px', height: '22px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSubGroup(sg.id);
+                        }}
+                        title="Delete Group"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -250,138 +337,90 @@ export const SkipItemNameTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Right: Items */}
-      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleSubKeyDown}>
-        {(() => {
-          const curSub = subGroups.find(s => s.id === selectedMainGroupId);
-          const currentGroupItems = curSub ? skipItems.filter(si => 
-            si.subGroupId === curSub.id || 
-            (si.groupName === curSub.groupName && (!si.mainGroup || si.mainGroup === curSub.mainGroup))
-          ) : [];
-          return (
-            <>
-              <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
-                  {curSub ? `${curSub.groupName} (${currentGroupItems.length} Items)` : 'Select a Group'}
-                </span>
-                {curSub && <button className="mac-btn" onClick={() => { setEditingSubId(null); setSubFormData({ id: 'si-' + Date.now(), subGroupId: curSub.id, itemPrefix: '' }); setIsSubModalOpen(true); macAudio.playClick(); }}><Plus size={14} /> Add Item</button>}
-              </div>
-              <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-                {curSub ? (
-                  <table className="mac-table">
-                    <thead>
-                      <tr>
-                        <th style={{ width: subColWidths.srNo, textAlign: 'center', position: 'relative' }}>#<div className="th-resizer" onMouseDown={e => startResizeSub('srNo', e)} /></th>
-                        <th style={{ width: subColWidths.itemName, position: 'relative' }}>ITEM NAME / PREFIX<div className="th-resizer" onMouseDown={e => startResizeSub('itemName', e)} /></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentGroupItems.map((si, idx) => (
-                        <tr key={si.id} className={`mac-table-row ${selectedSubGroupId === si.id ? 'selected' : ''}`} onClick={() => { macAudio.playClick(); setSelectedSubGroupId(si.id); }} onDoubleClick={() => { setEditingSubId(si.id); setSubFormData({ ...si }); setIsSubModalOpen(true); }}>
-                          <td style={{ textAlign: 'center', color: '#64748b' }}>{idx + 1}</td>
-                          <td style={{ fontWeight: 600, color: '#f8fafc' }}>{si.itemPrefix}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: '13px' }}>Select a group from the left panel</div>}
-                <div style={{ height: '36px' }} />
-              </div>
-            </>
-          );
-        })()}
+      {/* Right: Skip Items In-Table Editor */}
+      <div 
+        className="glass-panel" 
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }}
+        onPaste={handleItemPaste}
+      >
+        <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+              {curSub ? `${curSub.groupName} (${itemsForSelectedGroup.length} Items)` : 'Select a Group'}
+            </span>
+            {curSub && (
+              <input
+                type="text"
+                placeholder="Filter prefix..."
+                value={itemSearch}
+                onChange={e => setItemSearch(e.target.value)}
+                style={{
+                  background: 'rgba(0,0,0,0.3)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  fontSize: '11px',
+                  color: '#f8fafc',
+                  outline: 'none',
+                  width: '120px'
+                }}
+              />
+            )}
+          </div>
+          {curSub && (
+            <button className="mac-btn primary" onClick={handleAddItem} title="Add Row or Paste (Ctrl+V) from Excel">
+              <Plus size={14} /> Add Item
+            </button>
+          )}
+        </div>
+
+        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {curSub ? (
+            <table className="mac-table">
+              <thead>
+                <tr>
+                  <th style={{ width: subColWidths.srNo, textAlign: 'center' }}>#</th>
+                  <th style={{ width: subColWidths.itemName }}>ITEM NAME / PREFIX</th>
+                  <th style={{ width: subColWidths.actions, textAlign: 'center' }}>DEL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((si, idx) => (
+                  <tr key={si.id} className="mac-table-row">
+                    <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                      {idx + 1}
+                    </td>
+                    <td style={{ padding: '1px' }}>
+                      <input
+                        style={{ ...cellInputStyle, fontWeight: 600, color: '#f8fafc' }}
+                        value={si.itemPrefix}
+                        placeholder="e.g. B.F.P-(A) 770"
+                        onChange={e => handleItemChange(si.id, e.target.value)}
+                      />
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '1px' }}>
+                      <button
+                        type="button"
+                        className="mac-btn danger"
+                        style={{ padding: '2px 5px', height: '22px' }}
+                        onClick={() => handleDeleteItem(si.id)}
+                        title="Delete Item"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: '13px' }}>
+              Select a group from the left panel
+            </div>
+          )}
+          <div style={{ height: '36px' }} />
+        </div>
       </div>
-
-      {/* MODALS */}
-      {isMainModalOpen && (
-        <div className="mac-modal-backdrop" onClick={() => setIsMainModalOpen(false)}>
-          <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '94vw', borderRadius: '12px', padding: '18px 22px', background: 'linear-gradient(135deg, rgba(13, 21, 38, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%)', border: '1px solid rgba(56, 189, 248, 0.35)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}><Layers size={15} color="#38bdf8" /><div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>{editingMainId ? 'EDIT GROUP' : 'NEW GROUP'}</div></div>
-            <form onSubmit={handleMainSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <GlassSelect
-                label="MAIN GROUP"
-                value={mainFormData.mainGroupId}
-                onChange={e => setMainFormData({...mainFormData, mainGroupId: e.target.value})}
-                icon={Tag}
-              >
-                {mainGroups.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </GlassSelect>
-              <GlassInput
-                label="GROUP NAME *"
-                value={mainFormData.groupName}
-                onChange={e => setMainFormData({...mainFormData, groupName: e.target.value})}
-                icon={Layers}
-                required
-                inputStyle={{ fontWeight: 700 }}
-              />
-              <GlassSelect
-                label="SUM COLUMN"
-                value={mainFormData.sumColumn}
-                onChange={e => setMainFormData({...mainFormData, sumColumn: e.target.value as any})}
-                icon={Type}
-              >
-                <option value="QTY">QTY</option>
-                <option value="U CAP">U CAP</option>
-                <option value="L CAP">L CAP</option>
-              </GlassSelect>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
-                <button type="button" onClick={() => setIsMainModalOpen(false)} className="mac-btn">Cancel</button>
-                <button type="submit" className="mac-btn primary"><Check size={14} /> {editingMainId ? 'Update' : 'Save'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {isSubModalOpen && (
-        <div className="mac-modal-backdrop" onClick={() => setIsSubModalOpen(false)}>
-          <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '94vw', borderRadius: '12px', padding: '18px 22px', background: 'linear-gradient(135deg, rgba(13, 21, 38, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%)', border: '1px solid rgba(56, 189, 248, 0.35)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}><Type size={15} color="#38bdf8" /><div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>{editingSubId ? 'EDIT ITEM' : 'NEW ITEM'}</div></div>
-            <form onSubmit={handleSubSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <GlassInput
-                label="ITEM PREFIX / NAME *"
-                value={subFormData.itemPrefix}
-                onChange={e => setSubFormData({...subFormData, itemPrefix: e.target.value})}
-                icon={Type}
-                required
-                inputStyle={{ fontWeight: 700 }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
-                <button type="button" onClick={() => setIsSubModalOpen(false)} className="mac-btn">Cancel</button>
-                <button type="submit" className="mac-btn primary"><Check size={14} /> {editingSubId ? 'Update' : 'Save'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {deleteMain && (
-        <div className="mac-modal-backdrop" onClick={() => setDeleteMain(null)}>
-          <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '380px', maxWidth: '90vw', borderRadius: '12px', padding: '18px 20px', background: 'linear-gradient(135deg, rgba(20, 10, 15, 0.96) 0%, rgba(10, 5, 10, 0.98) 100%)', border: '1px solid rgba(248, 113, 113, 0.4)', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(248, 113, 113, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} color="#f87171" /></div>
-              <div><div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Delete Group?</div><div style={{ fontSize: '11px', color: '#94a3b8' }}>Group: <strong style={{ color: '#f87171' }}>{deleteMain.groupName}</strong></div></div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
-              <button type="button" onClick={() => setDeleteMain(null)} className="mac-btn">Cancel (Esc)</button>
-              <button type="button" onClick={() => { saveSubGroups(subGroups.filter(s => s.id !== deleteMain.id)); setDeleteMain(null); macAudio.playClick(); }} className="mac-btn danger" autoFocus>Yes, Delete (Enter)</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deleteSub && (
-        <div className="mac-modal-backdrop" onClick={() => setDeleteSub(null)}>
-          <div className="mac-modal-card glass-panel" onClick={e => e.stopPropagation()} style={{ width: '380px', maxWidth: '90vw', borderRadius: '12px', padding: '18px 20px', background: 'linear-gradient(135deg, rgba(20, 10, 15, 0.96) 0%, rgba(10, 5, 10, 0.98) 100%)', border: '1px solid rgba(248, 113, 113, 0.4)', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(248, 113, 113, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} color="#f87171" /></div>
-              <div><div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Delete Item?</div><div style={{ fontSize: '11px', color: '#94a3b8' }}>Item: <strong style={{ color: '#f87171' }}>{deleteSub.itemPrefix}</strong></div></div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
-              <button type="button" onClick={() => setDeleteSub(null)} className="mac-btn">Cancel (Esc)</button>
-              <button type="button" onClick={() => { saveSkipItems(skipItems.filter(s => s.id !== deleteSub.id)); setDeleteSub(null); macAudio.playClick(); }} className="mac-btn danger" autoFocus>Yes, Delete (Enter)</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
