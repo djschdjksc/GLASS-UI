@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Segmented, Slider, Switch, Tag, Button, Input, InputNumber, Tooltip } from 'antd';
 import { macAudio } from '../utils/macAudio';
 import { useDatabase } from '../context/DatabaseContext';
 import {
@@ -151,47 +152,58 @@ interface LuxuryToggleProps {
 }
 
 const LuxuryToggle: React.FC<LuxuryToggleProps> = ({ checked, onChange, title, desc, badge }) => (
-  <label
-    className="luxury-toggle-label"
-    onClick={(e) => {
-      e.preventDefault();
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '10px 14px',
+      background: 'rgba(15, 23, 42, 0.55)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: '12px',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      transition: 'all 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+      cursor: 'pointer'
+    }}
+    onClick={() => {
       onChange(!checked);
       macAudio.playClick();
     }}
   >
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#f8fafc' }}>{title}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, paddingRight: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc' }}>{title}</span>
         {badge && (
-          <span
+          <Tag
+            color="cyan"
             style={{
               fontSize: '9px',
-              padding: '1px 5px',
+              fontWeight: 800,
+              margin: 0,
+              padding: '0 6px',
               borderRadius: '4px',
+              border: 'none',
               background: 'rgba(56, 189, 248, 0.15)',
-              color: '#38bdf8',
-              fontWeight: 800
+              color: '#38bdf8'
             }}
           >
             {badge}
-          </span>
+          </Tag>
         )}
       </div>
-      {desc && <span style={{ fontSize: '10px', color: '#94a3b8', lineHeight: 1.25 }}>{desc}</span>}
+      {desc && <span style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: 1.3 }}>{desc}</span>}
     </div>
-    <input type="checkbox" className="luxury-toggle-input" checked={checked} readOnly />
-    <div className="luxury-toggle-switch" aria-hidden="true">
-      <div className="luxury-toggle-handle">
-        <svg className="luxury-toggle-icon luxury-icon-cross" viewBox="0 0 24 24">
-          <line x1={18} y1={6} x2={6} y2={18} />
-          <line x1={6} y1={6} x2={18} y2={18} />
-        </svg>
-        <svg className="luxury-toggle-icon luxury-icon-check" viewBox="0 0 24 24">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      </div>
+    <div onClick={(e) => e.stopPropagation()}>
+      <Switch
+        checked={checked}
+        onChange={(val) => {
+          onChange(val);
+          macAudio.playClick();
+        }}
+      />
     </div>
-  </label>
+  </div>
 );
 
 export const SettingsTabView: React.FC<Props> = ({
@@ -421,56 +433,22 @@ export const SettingsTabView: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* 5 Clean Glass Pills */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(15, 23, 42, 0.6)',
-            padding: '3px',
-            borderRadius: '999px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            gap: '2px'
-          }}
-        >
-          {[
-            { id: 'THEME', label: 'Theme & Background', icon: <Palette size={12} /> },
-            { id: 'SHORTCUTS', label: 'Shortcuts & NumPad', icon: <Keyboard size={12} /> },
-            { id: 'BACKUP', label: 'Backup & Restore', icon: <Database size={12} /> },
-            { id: 'GENERAL', label: 'General Preferences', icon: <SlidersHorizontal size={12} /> },
-            { id: 'BARCODE', label: 'Barcode Designer', icon: <Barcode size={12} /> }
-          ].map(tab => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  macAudio.playClick();
-                  setActiveTab(tab.id as SettingsMainTab);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '5px 12px',
-                  borderRadius: '999px',
-                  fontSize: '11px',
-                  fontWeight: isActive ? 700 : 600,
-                  cursor: 'pointer',
-                  border: 'none',
-                  outline: 'none',
-                  transition: 'all 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
-                  background: isActive ? 'linear-gradient(135deg, #0284c7, #2563eb)' : 'transparent',
-                  color: isActive ? '#ffffff' : '#94a3b8',
-                  boxShadow: isActive ? '0 2px 10px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)' : 'none'
-                }}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        {/* Ant Design Glass Segmented Navigation */}
+        <div style={{ maxWidth: '850px' }}>
+          <Segmented
+            value={activeTab}
+            onChange={(val) => {
+              macAudio.playClick();
+              setActiveTab(val as SettingsMainTab);
+            }}
+            options={[
+              { value: 'THEME', label: 'Theme & Background', icon: <Palette size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
+              { value: 'SHORTCUTS', label: 'Shortcuts & NumPad', icon: <Keyboard size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
+              { value: 'BACKUP', label: 'Backup & Restore', icon: <Database size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
+              { value: 'GENERAL', label: 'General Preferences', icon: <SlidersHorizontal size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
+              { value: 'BARCODE', label: 'Barcode Designer', icon: <Barcode size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> }
+            ]}
+          />
         </div>
       </div>
 
@@ -501,80 +479,19 @@ export const SettingsTabView: React.FC<Props> = ({
                 </span>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  background: 'rgba(0, 0, 0, 0.4)',
-                  padding: '3px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  gap: '3px'
+              <Segmented
+                value={bgType}
+                onChange={(val) => {
+                  onChangeBgType(val as 'color' | 'image' | 'video');
+                  macAudio.playClick();
+                  onShowToast?.(`Active: ${val.toUpperCase()} Mode`, 'info');
                 }}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChangeBgType('color');
-                    macAudio.playClick();
-                    onShowToast('Active: Solid Color Background Mode', 'info');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '10.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: bgType === 'color' ? '#38bdf8' : 'transparent',
-                    color: bgType === 'color' ? '#090d16' : '#94a3b8',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Solid Color
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChangeBgType('image');
-                    macAudio.playClick();
-                    onShowToast('Active: Wallpaper Image Mode', 'info');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '10.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: bgType === 'image' ? '#38bdf8' : 'transparent',
-                    color: bgType === 'image' ? '#090d16' : '#94a3b8',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Wallpaper
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChangeBgType('video');
-                    macAudio.playClick();
-                    onShowToast('Active: Motion Video Background Mode', 'info');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '10.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: bgType === 'video' ? '#38bdf8' : 'transparent',
-                    color: bgType === 'video' ? '#090d16' : '#94a3b8',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Motion Video 🎬
-                </button>
-              </div>
+                options={[
+                  { label: 'Solid Color', value: 'color' },
+                  { label: 'Wallpaper', value: 'image' },
+                  { label: 'Motion Video 🎬', value: 'video' }
+                ]}
+              />
             </div>
 
             {/* Solid Background Color Palettes */}
@@ -943,47 +860,21 @@ export const SettingsTabView: React.FC<Props> = ({
                     Available: /custom_video.mp4
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
+                <div>
+                  <Input.Search
                     value={manualVideoPath}
                     onChange={(e) => setManualVideoPath(e.target.value)}
                     placeholder="/custom_video.mp4 or video web URL"
-                    style={{
-                      flex: 1,
-                      background: 'rgba(15, 23, 42, 0.7)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '6px',
-                      color: '#f8fafc',
-                      fontSize: '11px',
-                      padding: '6px 10px',
-                      fontFamily: 'monospace'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (manualVideoPath.trim()) {
-                        onSelectBgVideo(manualVideoPath.trim());
+                    enterButton="Play Video 🎬"
+                    onSearch={(val) => {
+                      if (val.trim()) {
+                        onSelectBgVideo(val.trim());
                         onChangeBgType('video');
                         macAudio.playSuccess();
-                        onShowToast?.(`Playing video from "${manualVideoPath}"`, 'success');
+                        onShowToast?.(`Playing video from "${val}"`, 'success');
                       }
                     }}
-                    style={{
-                      background: 'linear-gradient(135deg, #0284c7, #2563eb)',
-                      border: '1px solid rgba(56, 189, 248, 0.5)',
-                      color: '#ffffff',
-                      borderRadius: '6px',
-                      padding: '6px 14px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)'
-                    }}
-                  >
-                    Play Video 🎬
-                  </button>
+                  />
                 </div>
               </div>
             </div>
@@ -1009,52 +900,49 @@ export const SettingsTabView: React.FC<Props> = ({
             </div>
 
             {/* Slider 1: Blur */}
-            <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1' }}>Background Glass Blur</span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{blurAmount}px</span>
+            <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>Background Glass Blur</span>
+                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{blurAmount}px</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="40"
+              <Slider
+                min={0}
+                max={40}
                 value={blurAmount}
-                onChange={(e) => onChangeBlur(Number(e.target.value))}
-                style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
+                onChange={onChangeBlur}
+                tooltip={{ formatter: val => `${val}px` }}
               />
             </div>
 
             {/* Slider 2: Glass Tint Opacity */}
-            <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1' }}>Glass Panel Opacity</span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{Math.round(glassOpacity * 100)}%</span>
+            <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>Glass Panel Opacity</span>
+                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{Math.round(glassOpacity * 100)}%</span>
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="0.9"
-                step="0.05"
-                value={glassOpacity}
-                onChange={(e) => onChangeGlassOpacity(Number(e.target.value))}
-                style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
+              <Slider
+                min={10}
+                max={90}
+                step={5}
+                value={Math.round(glassOpacity * 100)}
+                onChange={(val) => onChangeGlassOpacity(val / 100)}
+                tooltip={{ formatter: val => `${val}%` }}
               />
             </div>
 
             {/* Slider 3: Dark Vignette Overlay */}
-            <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1' }}>Dark Dimming Overlay</span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{Math.round(overlayOpacity * 100)}%</span>
+            <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>Dark Dimming Overlay</span>
+                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>{Math.round(overlayOpacity * 100)}%</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="0.8"
-                step="0.05"
-                value={overlayOpacity}
-                onChange={(e) => onChangeOpacity(Number(e.target.value))}
-                style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
+              <Slider
+                min={0}
+                max={90}
+                step={5}
+                value={Math.round(overlayOpacity * 100)}
+                onChange={(val) => onChangeOpacity(val / 100)}
+                tooltip={{ formatter: val => `${val}%` }}
               />
             </div>
 
@@ -1447,27 +1335,21 @@ export const SettingsTabView: React.FC<Props> = ({
                   Download entire offline database snapshot
                 </span>
               </div>
-              <button
-                type="button"
+              <Button
+                type="primary"
+                icon={<Download size={14} />}
                 onClick={handleExportBackup}
                 style={{
-                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                  color: '#090d16',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 14px',
-                  fontSize: '11px',
+                  height: '34px',
                   fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
+                  fontSize: '11.5px',
+                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                  border: 'none',
                   boxShadow: '0 2px 10px rgba(56, 189, 248, 0.4)'
                 }}
               >
-                <Download size={13} />
                 Download JSON Backup
-              </button>
+              </Button>
             </div>
 
             {/* Checklist of what to include using LuxuryToggle */}
@@ -1530,14 +1412,16 @@ export const SettingsTabView: React.FC<Props> = ({
               <span style={{ fontSize: '10px', color: '#fcd34d', display: 'block', marginBottom: '8px' }}>
                 Import Settings & Skips from old BillApp_Backup.json (Desktop)
               </span>
-              <button
-                type="button"
+              <Button
+                type="primary"
+                icon={<Database size={14} />}
                 onClick={() => {
                   import('../data/BillApp_Backup.json').then(legacy => {
                     const data = legacy.default || legacy;
                     let count = 0;
                     
                     if (data.control_panel && data.control_panel.length > 0) {
+                       localStorage.setItem('billapp_conversions', JSON.stringify(data.control_panel));
                        const convRules = data.control_panel.map((c: any, i: number) => ({
                           id: 'conv-' + Date.now() + i,
                           shortcut: c.shortcut || '',
@@ -1554,6 +1438,7 @@ export const SettingsTabView: React.FC<Props> = ({
                           subGroupId: s.group_name || 'leg-sg',
                           itemPrefix: s.item_prefix || ''
                        }));
+                       localStorage.setItem('billapp_skip_items', JSON.stringify(si));
                        localStorage.setItem('si_skip_items', JSON.stringify(si));
                        count++;
                     }
@@ -1562,43 +1447,39 @@ export const SettingsTabView: React.FC<Props> = ({
                           id: s.group_name || ('leg-sg-' + i),
                           mainGroupId: s.main_group || 'leg-mg',
                           groupName: s.group_name || '',
-                          sumColumn: 'QTY'
+                          sumColumn: s.sum_column || 'QTY'
                        }));
+                       localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(sg));
                        localStorage.setItem('si_sub_groups', JSON.stringify(sg));
                     }
                     if (data.main_groups && data.main_groups.length > 0) {
                        const mg = data.main_groups.map((m: any, i: number) => ({
-                          id: m.main_group || ('leg-mg-' + i),
-                          name: m.main_group || ''
+                          id: (typeof m === 'string' ? m : m.main_group) || ('leg-mg-' + i),
+                          name: (typeof m === 'string' ? m : m.main_group) || ''
                        }));
+                       localStorage.setItem('billapp_skip_main_groups', JSON.stringify(mg));
                        localStorage.setItem('si_main_groups', JSON.stringify(mg));
                     }
 
-                    alert('Legacy Backup Imported Successfully! ' + count + ' sections loaded. Please close and re-open Settings/Control Panel.');
+                    alert('Legacy Backup Imported Successfully! ' + count + ' sections loaded into Control Panel and Settings.');
                   }).catch(e => {
                     console.error(e);
                     alert('Could not load BillApp_Backup.json from src/data/');
                   });
                 }}
                 style={{
+                  width: '100%',
+                  height: '34px',
+                  fontWeight: 800,
+                  fontSize: '11.5px',
                   background: 'linear-gradient(135deg, #d97706, #fbbf24)',
                   color: '#090d16',
                   border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  width: '100%',
-                  justifyContent: 'center'
+                  boxShadow: '0 2px 10px rgba(251, 191, 36, 0.4)'
                 }}
               >
-                <Database size={13} />
                 Load BillApp_Backup.json
-              </button>
+              </Button>
             </div>
             <div>
               <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '2px' }}>
@@ -1609,43 +1490,17 @@ export const SettingsTabView: React.FC<Props> = ({
               </span>
             </div>
 
-            {/* Restore Mode Switch */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc' }}>Restore Conflict Policy</span>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button
-                  type="button"
-                  onClick={() => setRestoreMode('merge')}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: restoreMode === 'merge' ? '#38bdf8' : 'transparent',
-                    color: restoreMode === 'merge' ? '#090d16' : '#94a3b8'
-                  }}
-                >
-                  Merge Existing
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRestoreMode('overwrite')}
-                  style={{
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: restoreMode === 'overwrite' ? '#ef4444' : 'transparent',
-                    color: restoreMode === 'overwrite' ? '#ffffff' : '#94a3b8'
-                  }}
-                >
-                  Clean Overwrite
-                </button>
-              </div>
+            {/* Restore Mode Switch with Ant Design Segmented */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#f8fafc' }}>Restore Conflict Policy</span>
+              <Segmented
+                value={restoreMode}
+                onChange={(val) => setRestoreMode(val as 'merge' | 'overwrite')}
+                options={[
+                  { label: 'Merge Existing', value: 'merge' },
+                  { label: 'Clean Overwrite', value: 'overwrite' }
+                ]}
+              />
             </div>
 
             {/* Upload Dropzone */}
@@ -1819,76 +1674,43 @@ export const SettingsTabView: React.FC<Props> = ({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#cbd5e1' }}>Invoice Voucher Prefix</span>
-              <input
-                type="text"
+              <Input
                 value={slipPrefix}
                 onChange={(e) => {
                   setSlipPrefix(e.target.value);
                   localStorage.setItem('modern_setting_slip_prefix', e.target.value);
                 }}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.7)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  color: '#ffffff',
-                  fontSize: '11px',
-                  fontWeight: 700
-                }}
+                prefix={<FileText size={13} style={{ color: '#38bdf8' }} />}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#cbd5e1' }}>Printed Slip Header Title</span>
-              <input
-                type="text"
+              <Input
                 value={slipHeaderTitle}
                 onChange={(e) => {
                   setSlipHeaderTitle(e.target.value);
                   localStorage.setItem('modern_setting_slip_title', e.target.value);
                 }}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.7)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  color: '#ffffff',
-                  fontSize: '11px',
-                  fontWeight: 700
-                }}
+                prefix={<Printer size={13} style={{ color: '#38bdf8' }} />}
               />
             </div>
 
             {/* LAN Mode */}
             <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '8px' }}>
                 LAN SERVER / MULTI-USER SYNC
               </span>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                {[
-                  { id: 'server', label: 'Host Server' },
-                  { id: 'client', label: 'Client Node' },
-                  { id: 'standalone', label: 'Standalone' }
-                ].map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setServerMode(m.id as any)}
-                    style={{
-                      padding: '6px',
-                      borderRadius: '6px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: 'none',
-                      background: serverMode === m.id ? '#38bdf8' : 'rgba(15, 23, 42, 0.6)',
-                      color: serverMode === m.id ? '#090d16' : '#94a3b8'
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
+              <Segmented
+                block
+                value={serverMode}
+                onChange={(val) => setServerMode(val as any)}
+                options={[
+                  { id: 'server', label: 'Host Server', value: 'server' },
+                  { id: 'client', label: 'Client Node', value: 'client' },
+                  { id: 'standalone', label: 'Standalone', value: 'standalone' }
+                ]}
+              />
             </div>
           </div>
         </div>
@@ -1918,42 +1740,28 @@ export const SettingsTabView: React.FC<Props> = ({
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div>
-                <span style={{ fontSize: '10px', color: '#cbd5e1', fontWeight: 700 }}>Label Width (mm)</span>
-                <input
-                  type="number"
+                <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Label Width (mm)</span>
+                <InputNumber
+                  min={10}
+                  max={200}
                   value={labelWidthMm}
-                  onChange={(e) => setLabelWidthMm(Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(15, 23, 42, 0.7)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '6px',
-                    padding: '5px 8px',
-                    color: '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: 700
-                  }}
+                  onChange={(val) => setLabelWidthMm(val || 50)}
+                  addonAfter="mm"
+                  style={{ width: '100%' }}
                 />
               </div>
 
               <div>
-                <span style={{ fontSize: '10px', color: '#cbd5e1', fontWeight: 700 }}>Label Height (mm)</span>
-                <input
-                  type="number"
+                <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Label Height (mm)</span>
+                <InputNumber
+                  min={10}
+                  max={200}
                   value={labelHeightMm}
-                  onChange={(e) => setLabelHeightMm(Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(15, 23, 42, 0.7)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '6px',
-                    padding: '5px 8px',
-                    color: '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: 700
-                  }}
+                  onChange={(val) => setLabelHeightMm(val || 30)}
+                  addonAfter="mm"
+                  style={{ width: '100%' }}
                 />
               </div>
             </div>
