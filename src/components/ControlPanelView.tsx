@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ManageConversionsTab } from './ManageConversionsTab';
+import { SkipItemNameTab } from './SkipItemNameTab';
+import { BillItemNameTab } from './BillItemNameTab';
 import { macAudio } from '../utils/macAudio';
 import { useSettings } from '../context/SettingsContext';
 import {
@@ -92,13 +95,14 @@ const DEFAULT_GROUPS: GroupRule[] = [
 ];
 
 const DEFAULT_CTRL_COLS = {
-  groupName: 150,
+  srNo: 35,
+  groupName: 180,
   groupIndex: 120,
-  weightPerPc: 140,
-  pcsPerBox: 120,
-  multiplication: 130,
+  weightPerPc: 80,
+  pcsPerBox: 70,
+  multiplication: 70,
   realItemName: 260,
-  skipEq: 100,
+  skipEq: 60,
   chainParent: 150
 };
 
@@ -418,47 +422,93 @@ export const ControlPanelView: React.FC = () => {
           borderRadius: '8px'
         }}
       >
-        {/* Clean Cube Tab Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {(
-            [
-              { key: 'MANAGE_GROUPS', label: 'MANAGE GROUPS', icon: Layers },
-              { key: 'SKIP_ITEM_NAME', label: 'SKIP ITEM NAME', icon: Shuffle },
-              { key: 'BILL_ITEM_NAME', label: 'BILL ITEM NAME', icon: Tag },
-              { key: 'MANAGE_CONVERSIONS', label: 'MANAGE CONVERSIONS', icon: SlidersHorizontal }
-            ] as const
-          ).map(tab => {
-            const isActive = activeTab === tab.key;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                className={`mac-btn ${isActive ? 'primary' : ''}`}
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.03em',
-                  padding: '5px 14px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-                onClick={() => {
-                  macAudio.playClick();
-                  setActiveTab(tab.key);
-                }}
-                onMouseEnter={() => macAudio.playHover()}
-              >
-                <Icon size={13} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+                  {/* Animated iOS Tab Buttons */}
+          <div style={{ position: 'relative', flex: 1, display: 'flex' }}>
+            <style>{`
+              .cc-ios-tabs__control {
+                position: relative;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                align-items: center;
+                width: 600px;
+                padding: 5px;
+                border-radius: 999px;
+                background: rgba(0, 0, 0, 0.4);
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 2px 8px rgba(0, 0, 0, 0.2);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+              }
+              .cc-ios-tabs__thumb {
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                width: calc(25% - 4px);
+                height: calc(100% - 10px);
+                border-radius: 999px;
+                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 20px rgba(14, 165, 233, 0.2);
+                transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+                will-change: transform;
+              }
+              .cc-ios-tabs__item {
+                position: relative;
+                z-index: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                height: 32px;
+                border-radius: 999px;
+                color: #94a3b8;
+                font-size: 11.5px;
+                font-weight: 700;
+                line-height: 1;
+                cursor: pointer;
+                user-select: none;
+                transition: color 260ms ease;
+              }
+              .cc-ios-tabs__item:hover { color: #f8fafc; }
+              .cc-ios-tabs__item.active { color: #ffffff; }
+            `}</style>
+            
+            <div className="cc-ios-tabs__control">
+              <div 
+                className="cc-ios-tabs__thumb" 
+                style={{ 
+                  transform: `translateX(${
+                    activeTab === 'MANAGE_GROUPS' ? 0 : 
+                    activeTab === 'SKIP_ITEM_NAME' ? 100 : 
+                    activeTab === 'BILL_ITEM_NAME' ? 200 : 
+                    300
+                  }%)` 
+                }} 
+              />
+              {(
+                [
+                  { key: 'MANAGE_GROUPS', label: 'MANAGE GROUPS', icon: Layers },
+                  { key: 'SKIP_ITEM_NAME', label: 'SKIP ITEM', icon: Shuffle },
+                  { key: 'BILL_ITEM_NAME', label: 'BILL ITEM', icon: Tag },
+                  { key: 'MANAGE_CONVERSIONS', label: 'CONVERSIONS', icon: SlidersHorizontal }
+                ] as const
+              ).map(tab => {
+                const isActive = activeTab === tab.key;
+                const Icon = tab.icon;
+                return (
+                  <div
+                    key={tab.key}
+                    onClick={() => { macAudio.playClick(); setActiveTab(tab.key); }}
+                    onMouseEnter={() => macAudio.playHover()}
+                    className={`cc-ios-tabs__item ${isActive ? 'active' : ''}`}
+                  >
+                    <Icon size={14} />
+                    <span>{tab.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-        {/* Right Action: + ADD GROUP for Manage Groups tab */}
+          {/* Right Action: + ADD GROUP for Manage Groups tab */}
         {activeTab === 'MANAGE_GROUPS' && (
           <button
             type="button"
@@ -491,6 +541,10 @@ export const ControlPanelView: React.FC = () => {
             <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
+                  <th style={{ width: `${colWidths.srNo}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                    #
+                    <div className="th-resizer" onMouseDown={(e) => startColResize('srNo', e)} title="Drag to resize column" />
+                  </th>
                   <th style={{ width: `${colWidths.groupName}px`, position: 'relative', userSelect: 'none' }}>
                     GROUP NAME
                     <div className="th-resizer" onMouseDown={(e) => startColResize('groupName', e)} title="Drag to resize column" />
@@ -589,38 +643,17 @@ export const ControlPanelView: React.FC = () => {
       {/* ========================================================================= */}
       {/* TAB 2: SKIP ITEM NAME */}
       {/* ========================================================================= */}
-      {activeTab === 'SKIP_ITEM_NAME' && (
-        <div className="tab-content-anim glass-panel" style={{ flex: 1, padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#38bdf8' }}>SKIP ITEM NAME REGISTRY</div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-            Configure specific prefixes and items to skip equation yield during calculation.
-          </div>
-        </div>
-      )}
+      {activeTab === 'SKIP_ITEM_NAME' && <SkipItemNameTab />}
 
       {/* ========================================================================= */}
       {/* TAB 3: BILL ITEM NAME */}
       {/* ========================================================================= */}
-      {activeTab === 'BILL_ITEM_NAME' && (
-        <div className="tab-content-anim glass-panel" style={{ flex: 1, padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#34d399' }}>BILL ITEM NAME MAPPING</div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-            Map internal shorthand codes directly into invoice printing descriptions.
-          </div>
-        </div>
-      )}
+      {activeTab === 'BILL_ITEM_NAME' && <BillItemNameTab />}
 
       {/* ========================================================================= */}
       {/* TAB 4: MANAGE CONVERSIONS */}
       {/* ========================================================================= */}
-      {activeTab === 'MANAGE_CONVERSIONS' && (
-        <div className="tab-content-anim glass-panel" style={{ flex: 1, padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#a78bfa' }}>MANAGE CONVERSIONS & MULTIPLIERS</div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-            Multiplication ratios, cap ratios and standard weights for automated conversion.
-          </div>
-        </div>
-      )}
+      {activeTab === 'MANAGE_CONVERSIONS' && <ManageConversionsTab />}
 
       {/* ========================================================================= */}
       {/* APPLE MACOS ANIMATED MODAL FORM (TRIGGERED VIA "+ ADD GROUP" OR "ENTER") */}

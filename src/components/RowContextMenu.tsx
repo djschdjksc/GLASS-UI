@@ -53,7 +53,7 @@ export const RowContextMenu: React.FC<Props> = ({
     <div
       ref={menuRef}
       style={{
-        position: 'fixed',
+        position: 'fixed', animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards", transformOrigin: "top center", backdropFilter: "blur(60px) saturate(200%)", background: "rgba(10, 15, 25, 0.98)",
         left: `${safeX}px`,
         top: `${safeY}px`,
         width: `${menuWidth}px`,

@@ -1,15 +1,28 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.body.innerHTML = '<div style="color:white; background:red; padding:20px; font-family:monospace; min-height:100vh;">' + 
+          '<h1>Global Error</h1>' + 
+          '<p>' + e.message + '</p>' + 
+          '<p>' + e.filename + ':' + e.lineno + '</p>' +
+          '<pre>' + (e.error ? e.error.stack : '') + '</pre>' + 
+          '</div>';
+      });
+    </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern Summary App • Apple macOS Pro Edition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>body { background-color: #e3e3e3; margin: 0; }</style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="https://cdn.spline.design/@splinetool/viewer@2.0.57/build/spline-viewer.js"></script>
   </body>
 </html>

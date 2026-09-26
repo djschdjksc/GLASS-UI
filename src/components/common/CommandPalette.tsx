@@ -70,9 +70,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       }
     });
 
-    // 2. Invoices matching query
-    bills.slice(0, 15).forEach(b => {
-      if (!q || b.token.toLowerCase().includes(q) || b.party.toLowerCase().includes(q) || b.date.includes(q)) {
+    // 2. Invoices matching query (search across all bills in database)
+    const cleanNum = q.replace(/^(bill|slip|#)\s*/i, '').trim();
+    bills
+      .filter(b => 
+        !q || 
+        b.token === cleanNum || 
+        b.token.toLowerCase().includes(q) || 
+        b.party.toLowerCase().includes(q) || 
+        b.date.includes(q)
+      )
+      .slice(0, 25)
+      .forEach(b => {
         list.push({
           id: `bill-${b.id}`,
           title: `Invoice #${b.token} — ${b.party}`,
@@ -81,12 +90,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           icon: <FileText size={14} color="#a78bfa" />,
           action: () => {
             if (onLoadBill) onLoadBill(b);
-            onNavigateTab('F2');
+            onNavigateTab('F1');
             onClose();
           }
         });
-      }
-    });
+      });
 
     // 3. Parties matching query
     parties.slice(0, 10).forEach(p => {
@@ -159,7 +167,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   return (
     <div
       style={{
-        position: 'fixed',
+        position: 'fixed', animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards", transformOrigin: "top center", backdropFilter: "blur(60px) saturate(200%)", background: "rgba(10, 15, 25, 0.98)",
         inset: 0,
         background: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(16px)',

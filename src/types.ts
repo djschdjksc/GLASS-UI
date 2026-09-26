@@ -10,10 +10,12 @@ export interface BillHeader {
 export interface RawItem {
   id: string;
   name: string;
+  partyCode?: string;
   qty: number;
   uCap: number;
   lCap: number;
   selected?: boolean;
+  [key: string]: any; // Allow dynamic columns like qty_12, qty_15
 }
 
 export interface FinishedItem {

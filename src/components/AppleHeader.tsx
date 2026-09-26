@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import type { BillHeader } from '../types';
 import { AppleTrafficLights } from './AppleTrafficLights';
 import { Plus, Check, ChevronDown, Calendar } from 'lucide-react';
+import { SQLITE_PARTIES } from '../data/sqliteData';
 
 interface Props {
   header: BillHeader;
   onChange: (updated: Partial<BillHeader>) => void;
   onCloseApp: () => void;
   onAddNewParty: (name: string) => void;
+  onSkipBill?: () => void;
+  onSaveBill?: () => void;
 }
 
 const COMMON_PARTIES = [
@@ -21,19 +24,32 @@ const COMMON_PARTIES = [
   'Supertech Electro India Ltd'
 ];
 
+const REAL_PARTIES: string[] = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
+  ? Array.from(new Set(SQLITE_PARTIES.map((p: any) => p.party_name).filter(Boolean)))
+  : COMMON_PARTIES;
+
 const DOC_TYPES = ['SALE BILL', 'PURCHASE BILL', 'TAX INVOICE', 'ESTIMATE', 'CHALLAN'];
 const TYPE_SELECTIONS = ['RETAIL', 'WHOLESALE', 'JOB WORK', 'INTER-STATE', 'EXPORT'];
 
-export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onAddNewParty }) => {
+export const AppleHeader: React.FC<Props> = ({ 
+  header, 
+  onChange, 
+  onCloseApp, 
+  onAddNewParty, 
+  onSkipBill,
+  onSaveBill 
+}) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
-  const [partyList, setPartyList] = useState<string[]>(COMMON_PARTIES);
+  const [partyList, setPartyList] = useState<string[]>(REAL_PARTIES);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
 
+  const partyNameStr = (header?.partyName || '').trim();
   const filteredParties = partyList.filter(p => 
-    p.toLowerCase().includes(header.partyName.toLowerCase())
+    (p || '').toLowerCase().includes(partyNameStr.toLowerCase())
   );
 
   const handleQuickAdd = () => {
-    const entered = header.partyName.trim();
+    const entered = partyNameStr;
     if (entered && !partyList.includes(entered)) {
       setPartyList(prev => [entered, ...prev]);
       onAddNewParty(entered);
@@ -43,8 +59,11 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
 
   return (
     <div 
+      data-np-zone="1"
       className="glass-panel" 
       style={{ 
+        position: 'relative',
+        zIndex: 9999,
         padding: '10px 16px', 
         marginBottom: '10px',
         display: 'flex',
@@ -59,6 +78,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
         {/* Document Type Dropdown */}
         <div style={{ position: 'relative', width: '130px' }}>
           <select
+            data-np-target="1-1"
             className="apple-select"
             style={{ width: '100%', paddingRight: '22px', fontWeight: 600, color: '#38bdf8' }}
             value={header.docType}
@@ -77,17 +97,36 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
         <div style={{ position: 'relative', flex: 1.5, display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <input
+              data-np-target="1-2"
               type="text"
               className="apple-input"
               placeholder="Search or Enter Party..."
               value={header.partyName}
               onFocus={() => setShowPartySuggestions(true)}
               onBlur={() => setTimeout(() => setShowPartySuggestions(false), 240)}
-              onChange={(e) => onChange({ partyName: e.target.value })}
+              onChange={(e) => {
+                onChange({ partyName: e.target.value });
+                setFocusedIndex(-1);
+              }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'ArrowDown') {
                   e.preventDefault();
-                  handleQuickAdd();
+                  if (!showPartySuggestions) setShowPartySuggestions(true);
+                  setFocusedIndex(prev => Math.min(prev + 1, filteredParties.length - 1));
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setFocusedIndex(prev => Math.max(prev - 1, 0));
+                } else if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (showPartySuggestions && focusedIndex >= 0 && focusedIndex < filteredParties.length) {
+                    onChange({ partyName: filteredParties[focusedIndex] });
+                    setShowPartySuggestions(false);
+                  } else {
+                    handleQuickAdd();
+                  }
+                } else if (e.key === 'Escape' && showPartySuggestions) {
+                  e.stopPropagation();
+                  setShowPartySuggestions(false);
                 }
               }}
               style={{ width: '100%', fontWeight: 500 }}
@@ -95,6 +134,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
 
             {showPartySuggestions && (
               <div 
+                className="ant-dropdown-anim"
                 style={{
                   position: 'absolute',
                   top: '100%',
@@ -111,7 +151,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
                   overflowY: 'auto'
                 }}
               >
-                {filteredParties.map((party) => (
+                {filteredParties.map((party, idx) => (
                   <div
                     key={party}
                     onClick={() => {
@@ -125,10 +165,11 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
                       borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      background: focusedIndex === idx ? 'rgba(0, 113, 227, 0.4)' : 'transparent'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.25)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    onMouseEnter={() => setFocusedIndex(idx)}
+                    
                   >
                     <span>{party}</span>
                     {header.partyName === party && <Check size={12} color="#34c759" />}
@@ -136,7 +177,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
                 ))}
 
                 {/* If Party Not Found or Typed New */}
-                {header.partyName.trim() && !filteredParties.includes(header.partyName.trim()) && (
+                {partyNameStr && !filteredParties.includes(partyNameStr) && (
                   <div
                     onClick={handleQuickAdd}
                     style={{
@@ -154,7 +195,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
                     onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.15)'}
                   >
                     <Plus size={13} />
-                    <span>Add "{header.partyName.trim()}" as New Party</span>
+                    <span>Add "{partyNameStr}" as New Party</span>
                   </div>
                 )}
               </div>
@@ -177,6 +218,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
         {/* Type Selection Dropdown */}
         <div style={{ position: 'relative', width: '110px' }}>
           <select
+            data-np-target="1-3"
             className="apple-select"
             style={{ width: '100%', paddingRight: '20px' }}
             value={header.typeSelection}
@@ -194,6 +236,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
         {/* Vehicle No Input */}
         <div style={{ width: '130px' }}>
           <input
+            data-np-target="1-4"
             type="text"
             className="apple-input"
             placeholder="Vehicle No..."
@@ -206,6 +249,7 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
         {/* Polished Apple Date Picker */}
         <div style={{ position: 'relative', width: '135px' }}>
           <input
+            data-np-target="1-5"
             type="date"
             className="apple-input"
             value={header.date}
@@ -233,8 +277,15 @@ export const AppleHeader: React.FC<Props> = ({ header, onChange, onCloseApp, onA
       </div>
 
       {/* Red Token Badge */}
-      <div className="apple-token-badge">
-        <span>#{header.tokenNo}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div 
+          data-np-target="1-6"
+          className="apple-token-badge"
+          tabIndex={0}
+          title="Token Number"
+        >
+          <span>#{header.tokenNo}</span>
+        </div>
       </div>
     </div>
   );

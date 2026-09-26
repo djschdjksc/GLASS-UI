@@ -15099,7 +15099,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5500,
+    "total": 9950.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15119,11 +15119,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-528",
-        "mould": "Standard Casting Lot #528",
-        "qty": 2,
-        "price": 1450,
-        "total": 5500
+        "id": "m-4074",
+        "mould": "B.F.P",
+        "qty": 10.0,
+        "price": 320.0,
+        "total": 3200.0
+      },
+      {
+        "id": "m-4075",
+        "mould": "S.L",
+        "qty": 34.0,
+        "price": 170.0,
+        "total": 5780.0
+      },
+      {
+        "id": "m-4076",
+        "mould": "Fluted Jointer",
+        "qty": 2.0,
+        "price": 60.0,
+        "total": 120.0
+      },
+      {
+        "id": "m-4077",
+        "mould": "Jointer",
+        "qty": 17.0,
+        "price": 50.0,
+        "total": 850.0
       }
     ]
   },
@@ -15135,7 +15156,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 7750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15169,11 +15190,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-527",
-        "mould": "Standard Casting Lot #527",
-        "qty": 4,
-        "price": 1450,
-        "total": 7750
+        "id": "m-4071",
+        "mould": "C.M",
+        "qty": 43.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4072",
+        "mould": "S.L",
+        "qty": 19.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4073",
+        "mould": "Jointer",
+        "qty": 22.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -15185,7 +15220,7 @@ export const SQLITE_BILLS = [
     "docType": "RETURN",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15196,15 +15231,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-526",
-        "mould": "Standard Casting Lot #526",
-        "qty": 1,
-        "price": 1450,
-        "total": 10000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-525",
@@ -15214,7 +15241,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 153750,
+    "total": 284820.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15276,11 +15303,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-525",
-        "mould": "Standard Casting Lot #525",
-        "qty": 8,
-        "price": 1450,
-        "total": 153750
+        "id": "m-4041",
+        "mould": "B.F.P-(G)",
+        "qty": 460.0,
+        "price": 260.0,
+        "total": 119600.0
+      },
+      {
+        "id": "m-4042",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 370.0,
+        "price": 270.0,
+        "total": 99900.0
+      },
+      {
+        "id": "m-4043",
+        "mould": "H.O",
+        "qty": 400.0,
+        "price": 125.0,
+        "total": 50000.0
+      },
+      {
+        "id": "m-4044",
+        "mould": "Fluted Jointer",
+        "qty": 300.0,
+        "price": 38.0,
+        "total": 11400.0
+      },
+      {
+        "id": "m-4045",
+        "mould": "Jointer",
+        "qty": 140.0,
+        "price": 28.0,
+        "total": 3920.0
       }
     ]
   },
@@ -15292,7 +15347,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5000,
+    "total": 6500.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15319,11 +15374,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-524",
-        "mould": "Standard Casting Lot #524",
-        "qty": 3,
-        "price": 1450,
-        "total": 5000
+        "id": "m-4022",
+        "mould": "H.O",
+        "qty": 15.0,
+        "price": 150.0,
+        "total": 2250.0
+      },
+      {
+        "id": "m-4023",
+        "mould": "S.L",
+        "qty": 15.0,
+        "price": 170.0,
+        "total": 2550.0
+      },
+      {
+        "id": "m-4024",
+        "mould": "PERAMETER",
+        "qty": 10.0,
+        "price": 80.0,
+        "total": 800.0
+      },
+      {
+        "id": "m-4025",
+        "mould": "Jointer",
+        "qty": 18.0,
+        "price": 50.0,
+        "total": 900.0
       }
     ]
   },
@@ -15335,7 +15411,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 128750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15411,11 +15487,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-523",
-        "mould": "Standard Casting Lot #523",
-        "qty": 10,
-        "price": 1450,
-        "total": 128750
+        "id": "m-4016",
+        "mould": "B.F.P",
+        "qty": 230.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4017",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4018",
+        "mould": "C.M",
+        "qty": 650.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4019",
+        "mould": "S.L",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4020",
+        "mould": "Fluted Jointer",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4021",
+        "mould": "Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -15427,7 +15538,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 720.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15440,11 +15551,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-522",
-        "mould": "Standard Casting Lot #522",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-4009",
+        "mould": "B.F.P-(A)",
+        "qty": 2.0,
+        "price": 360.0,
+        "total": 720.0
       }
     ]
   },
@@ -15456,7 +15567,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 640.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15469,11 +15580,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-521",
-        "mould": "Standard Casting Lot #521",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-4006",
+        "mould": "S.L",
+        "qty": 2.0,
+        "price": 170.0,
+        "total": 340.0
+      },
+      {
+        "id": "m-4007",
+        "mould": "Jointer",
+        "qty": 6.0,
+        "price": 50.0,
+        "total": 300.0
       }
     ]
   },
@@ -15485,7 +15603,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 8625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15517,15 +15635,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-520",
-        "mould": "Standard Casting Lot #520",
-        "qty": 4,
-        "price": 1450,
-        "total": 8625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-519",
@@ -15535,7 +15645,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 37500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15553,15 +15663,7 @@ export const SQLITE_BILLS = [
         "lCap": 20.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-519",
-        "mould": "Standard Casting Lot #519",
-        "qty": 2,
-        "price": 1450,
-        "total": 37500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-518",
@@ -15571,7 +15673,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 9500,
+    "total": 24600.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15591,11 +15693,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-518",
-        "mould": "Standard Casting Lot #518",
-        "qty": 2,
-        "price": 1450,
-        "total": 9500
+        "id": "m-3968",
+        "mould": "B.F.P",
+        "qty": 76.0,
+        "price": 300.0,
+        "total": 22800.0
+      },
+      {
+        "id": "m-3969",
+        "mould": "Fluted Jointer",
+        "qty": 25.0,
+        "price": 60.0,
+        "total": 1500.0
+      },
+      {
+        "id": "m-3970",
+        "mould": "Jointer",
+        "qty": 6.0,
+        "price": 50.0,
+        "total": 300.0
       }
     ]
   },
@@ -15607,7 +15723,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 633625,
+    "total": 1426542.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15760,11 +15876,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-517",
-        "mould": "Standard Casting Lot #517",
-        "qty": 21,
-        "price": 1450,
-        "total": 633625
+        "id": "m-4061",
+        "mould": "F.P.G",
+        "qty": 1460.0,
+        "price": 245.0,
+        "total": 357700.0
+      },
+      {
+        "id": "m-4062",
+        "mould": "S.P",
+        "qty": 1650.0,
+        "price": 260.0,
+        "total": 429000.0
+      },
+      {
+        "id": "m-4063",
+        "mould": "Fluted Jointer",
+        "qty": 2023.0,
+        "price": 38.0,
+        "total": 76874.0
+      },
+      {
+        "id": "m-4064",
+        "mould": "Jointer",
+        "qty": 1649.0,
+        "price": 27.0,
+        "total": 44523.0
+      },
+      {
+        "id": "m-4065",
+        "mould": "F.P.G-(Digital)",
+        "qty": 699.0,
+        "price": 255.0,
+        "total": 178245.0
+      },
+      {
+        "id": "m-4066",
+        "mould": "S.P-(Digital)",
+        "qty": 1260.0,
+        "price": 270.0,
+        "total": 340200.0
       }
     ]
   },
@@ -15776,7 +15927,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 112500,
+    "total": 152560.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15866,11 +16017,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-516",
-        "mould": "Standard Casting Lot #516",
-        "qty": 12,
-        "price": 1450,
-        "total": 112500
+        "id": "m-3945",
+        "mould": "B.F.P",
+        "qty": 30.0,
+        "price": 250.0,
+        "total": 7500.0
+      },
+      {
+        "id": "m-3946",
+        "mould": "C.M",
+        "qty": 870.0,
+        "price": 155.0,
+        "total": 134850.0
+      },
+      {
+        "id": "m-3947",
+        "mould": "Fluted Jointer",
+        "qty": 20.0,
+        "price": 38.0,
+        "total": 760.0
+      },
+      {
+        "id": "m-3948",
+        "mould": "Jointer",
+        "qty": 350.0,
+        "price": 27.0,
+        "total": 9450.0
       }
     ]
   },
@@ -15882,7 +16054,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 3050.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15895,11 +16067,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-515",
-        "mould": "Standard Casting Lot #515",
-        "qty": 1,
-        "price": 1450,
-        "total": 875
+        "id": "m-3921",
+        "mould": "B.F.P-(G)",
+        "qty": 7.0,
+        "price": 390.0,
+        "total": 2730.0
+      },
+      {
+        "id": "m-3922",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 80.0,
+        "total": 320.0
       }
     ]
   },
@@ -15911,7 +16090,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 131250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15938,11 +16117,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-514",
-        "mould": "Standard Casting Lot #514",
-        "qty": 3,
-        "price": 1450,
-        "total": 131250
+        "id": "m-3918",
+        "mould": "C.M",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3919",
+        "mould": "S.L",
+        "qty": 750.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3920",
+        "mould": "Jointer",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -15954,7 +16147,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1000,
+    "total": 1430.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15967,11 +16160,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-513",
-        "mould": "Standard Casting Lot #513",
-        "qty": 1,
-        "price": 1450,
-        "total": 1000
+        "id": "m-3914",
+        "mould": "S.L",
+        "qty": 8.0,
+        "price": 160.0,
+        "total": 1280.0
+      },
+      {
+        "id": "m-3915",
+        "mould": "Jointer",
+        "qty": 3.0,
+        "price": 50.0,
+        "total": 150.0
       }
     ]
   },
@@ -15983,7 +16183,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 11250,
+    "total": 16350.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -15996,11 +16196,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-512",
-        "mould": "Standard Casting Lot #512",
-        "qty": 1,
-        "price": 1450,
-        "total": 11250
+        "id": "m-3916",
+        "mould": "C.M",
+        "qty": 90.0,
+        "price": 170.0,
+        "total": 15300.0
+      },
+      {
+        "id": "m-3917",
+        "mould": "Jointer",
+        "qty": 30.0,
+        "price": 35.0,
+        "total": 1050.0
       }
     ]
   },
@@ -16012,7 +16219,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 148750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16151,11 +16358,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-511",
-        "mould": "Standard Casting Lot #511",
-        "qty": 19,
-        "price": 1450,
-        "total": 148750
+        "id": "m-3855",
+        "mould": "B.F.P-(G)",
+        "qty": 210.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3856",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3857",
+        "mould": "S.P",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3858",
+        "mould": "C.M",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3859",
+        "mould": "H.O",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3860",
+        "mould": "S.L",
+        "qty": 260.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3861",
+        "mould": "T.G",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3862",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3863",
+        "mould": "Jointer",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -16167,7 +16430,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5000,
+    "total": 9570.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16180,11 +16443,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-510",
-        "mould": "Standard Casting Lot #510",
-        "qty": 1,
-        "price": 1450,
-        "total": 5000
+        "id": "m-3828",
+        "mould": "C.M",
+        "qty": 40.0,
+        "price": 210.0,
+        "total": 8400.0
+      },
+      {
+        "id": "m-3829",
+        "mould": "Jointer",
+        "qty": 18.0,
+        "price": 65.0,
+        "total": 1170.0
       }
     ]
   },
@@ -16196,7 +16466,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 503750,
+    "total": 875810.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16412,11 +16682,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-509",
-        "mould": "Standard Casting Lot #509",
-        "qty": 30,
-        "price": 1450,
-        "total": 503750
+        "id": "m-3932",
+        "mould": "B.F.P",
+        "qty": 970.0,
+        "price": 240.0,
+        "total": 232800.0
+      },
+      {
+        "id": "m-3933",
+        "mould": "B.F.P-(G)",
+        "qty": 1050.0,
+        "price": 270.0,
+        "total": 283500.0
+      },
+      {
+        "id": "m-3934",
+        "mould": "C.M",
+        "qty": 650.0,
+        "price": 155.0,
+        "total": 100750.0
+      },
+      {
+        "id": "m-3935",
+        "mould": "H.O",
+        "qty": 700.0,
+        "price": 120.0,
+        "total": 84000.0
+      },
+      {
+        "id": "m-3936",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 130.0,
+        "total": 78000.0
+      },
+      {
+        "id": "m-3937",
+        "mould": "U.V",
+        "qty": 10.0,
+        "price": 1050.0,
+        "total": 10500.0
+      },
+      {
+        "id": "m-3938",
+        "mould": "UVD",
+        "qty": 50.0,
+        "price": 1050.0,
+        "total": 52500.0
+      },
+      {
+        "id": "m-3939",
+        "mould": "Fluted Jointer",
+        "qty": 520.0,
+        "price": 40.0,
+        "total": 20800.0
+      },
+      {
+        "id": "m-3940",
+        "mould": "Jointer",
+        "qty": 480.0,
+        "price": 27.0,
+        "total": 12960.0
       }
     ]
   },
@@ -16428,18 +16754,67 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1888860.0,
     "status": "PAID",
-    "rawItems": [
+    "rawItems": [],
+    "finishedItems": [
       {
-        "id": "1",
-        "name": "Aluminium Ingot 6063 Primary",
-        "qty": 100,
-        "uCap": 85,
-        "lCap": 75
+        "id": "m-3810",
+        "mould": "CM",
+        "qty": 7200.0,
+        "price": 150.0,
+        "total": 1080000.0
+      },
+      {
+        "id": "m-3811",
+        "mould": "B.F.P-(A)-(Digital)",
+        "qty": 400.0,
+        "price": 260.0,
+        "total": 104000.0
+      },
+      {
+        "id": "m-3812",
+        "mould": "B.F.P-(G)",
+        "qty": 500.0,
+        "price": 250.0,
+        "total": 125000.0
+      },
+      {
+        "id": "m-3813",
+        "mould": "B.F.P",
+        "qty": 1000.0,
+        "price": 225.0,
+        "total": 225000.0
+      },
+      {
+        "id": "m-3814",
+        "mould": "H.O",
+        "qty": 300.0,
+        "price": 115.0,
+        "total": 34500.0
+      },
+      {
+        "id": "m-3815",
+        "mould": "T.G",
+        "qty": 1200.0,
+        "price": 135.0,
+        "total": 162000.0
+      },
+      {
+        "id": "m-3816",
+        "mould": "Jointer",
+        "qty": 4980.0,
+        "price": 26.0,
+        "total": 129480.0
+      },
+      {
+        "id": "m-3817",
+        "mould": "Fluted Jointer",
+        "qty": 760.0,
+        "price": 38.0,
+        "total": 28880.0
       }
-    ],
-    "finishedItems": []
+    ]
   },
   {
     "id": "B-507",
@@ -16449,7 +16824,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 847500,
+    "total": 1305925.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16679,11 +17054,88 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-507",
-        "mould": "Standard Casting Lot #507",
-        "qty": 32,
-        "price": 1450,
-        "total": 847500
+        "id": "m-3982",
+        "mould": "B.F.P-(Digital)",
+        "qty": 130.0,
+        "price": 235.0,
+        "total": 30550.0
+      },
+      {
+        "id": "m-3983",
+        "mould": "B.F.P",
+        "qty": 1000.0,
+        "price": 225.0,
+        "total": 225000.0
+      },
+      {
+        "id": "m-3984",
+        "mould": "B.F.P-(G)",
+        "qty": 400.0,
+        "price": 250.0,
+        "total": 100000.0
+      },
+      {
+        "id": "m-3985",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 200.0,
+        "price": 260.0,
+        "total": 52000.0
+      },
+      {
+        "id": "m-3986",
+        "mould": "S.P",
+        "qty": 280.0,
+        "price": 265.0,
+        "total": 74200.0
+      },
+      {
+        "id": "m-3987",
+        "mould": "C.M",
+        "qty": 2550.0,
+        "price": 150.0,
+        "total": 382500.0
+      },
+      {
+        "id": "m-3988",
+        "mould": "H.O",
+        "qty": 800.0,
+        "price": 120.0,
+        "total": 96000.0
+      },
+      {
+        "id": "m-3989",
+        "mould": "S.L",
+        "qty": 1090.0,
+        "price": 130.0,
+        "total": 141700.0
+      },
+      {
+        "id": "m-3990",
+        "mould": "T.G",
+        "qty": 300.0,
+        "price": 135.0,
+        "total": 40500.0
+      },
+      {
+        "id": "m-3991",
+        "mould": "UVD",
+        "qty": 30.0,
+        "price": 1075.0,
+        "total": 32250.0
+      },
+      {
+        "id": "m-3992",
+        "mould": "Fluted Jointer",
+        "qty": 1179.0,
+        "price": 35.0,
+        "total": 41265.0
+      },
+      {
+        "id": "m-3993",
+        "mould": "Jointer",
+        "qty": 3460.0,
+        "price": 26.0,
+        "total": 89960.0
       }
     ]
   },
@@ -16695,7 +17147,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1250,
+    "total": 2400.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16715,11 +17167,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-506",
-        "mould": "Standard Casting Lot #506",
-        "qty": 2,
-        "price": 1450,
-        "total": 1250
+        "id": "m-3796",
+        "mould": "C.M",
+        "qty": 10.0,
+        "price": 190.0,
+        "total": 1900.0
+      },
+      {
+        "id": "m-3797",
+        "mould": "Jointer",
+        "qty": 10.0,
+        "price": 50.0,
+        "total": 500.0
       }
     ]
   },
@@ -16742,15 +17201,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-505",
-        "mould": "Standard Casting Lot #505",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-504",
@@ -16760,7 +17211,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 37500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16778,15 +17229,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-504",
-        "mould": "Standard Casting Lot #504",
-        "qty": 2,
-        "price": 1450,
-        "total": 37500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-503",
@@ -16796,7 +17239,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16807,15 +17250,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-503",
-        "mould": "Standard Casting Lot #503",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-502",
@@ -16825,7 +17260,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 73750,
+    "total": 98325.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -16915,11 +17350,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-502",
-        "mould": "Standard Casting Lot #502",
-        "qty": 12,
-        "price": 1450,
-        "total": 73750
+        "id": "m-3785",
+        "mould": "B.F.P",
+        "qty": 70.0,
+        "price": 250.0,
+        "total": 17500.0
+      },
+      {
+        "id": "m-3786",
+        "mould": "H.O",
+        "qty": 20.0,
+        "price": 130.0,
+        "total": 2600.0
+      },
+      {
+        "id": "m-3787",
+        "mould": "S.L",
+        "qty": 500.0,
+        "price": 140.0,
+        "total": 70000.0
+      },
+      {
+        "id": "m-3788",
+        "mould": "Jointer",
+        "qty": 235.0,
+        "price": 35.0,
+        "total": 8225.0
       }
     ]
   },
@@ -16931,7 +17387,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 115000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17000,11 +17456,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-501",
-        "mould": "Standard Casting Lot #501",
-        "qty": 9,
-        "price": 1450,
-        "total": 115000
+        "id": "m-3742",
+        "mould": "B.F.P",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3743",
+        "mould": "B.F.P-(G)",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3744",
+        "mould": "C.M",
+        "qty": 560.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3745",
+        "mould": "Fluted Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3746",
+        "mould": "Jointer",
+        "qty": 530.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -17016,7 +17500,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 400.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17029,11 +17513,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-500",
-        "mould": "Standard Casting Lot #500",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-3730",
+        "mould": "Jointer",
+        "qty": 8.0,
+        "price": 50.0,
+        "total": 400.0
       }
     ]
   },
@@ -17045,7 +17529,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1325125,
+    "total": 1888860.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17576,11 +18060,60 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-499",
-        "mould": "Standard Casting Lot #499",
-        "qty": 75,
-        "price": 1450,
-        "total": 1325125
+        "id": "m-3896",
+        "mould": "B.F.P",
+        "qty": 998.0,
+        "price": 225.0,
+        "total": 224550.0
+      },
+      {
+        "id": "m-3897",
+        "mould": "B.F.P-(G)",
+        "qty": 500.0,
+        "price": 250.0,
+        "total": 125000.0
+      },
+      {
+        "id": "m-3898",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 400.0,
+        "price": 260.0,
+        "total": 104000.0
+      },
+      {
+        "id": "m-3899",
+        "mould": "C.M",
+        "qty": 7203.0,
+        "price": 150.0,
+        "total": 1080450.0
+      },
+      {
+        "id": "m-3900",
+        "mould": "H.O",
+        "qty": 300.0,
+        "price": 115.0,
+        "total": 34500.0
+      },
+      {
+        "id": "m-3901",
+        "mould": "T.G",
+        "qty": 1200.0,
+        "price": 135.0,
+        "total": 162000.0
+      },
+      {
+        "id": "m-3902",
+        "mould": "Fluted Jointer",
+        "qty": 760.0,
+        "price": 38.0,
+        "total": 28880.0
+      },
+      {
+        "id": "m-3903",
+        "mould": "Jointer",
+        "qty": 4980.0,
+        "price": 26.0,
+        "total": 129480.0
       }
     ]
   },
@@ -17592,7 +18125,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 51250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17633,11 +18166,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-498",
-        "mould": "Standard Casting Lot #498",
-        "qty": 5,
-        "price": 1450,
-        "total": 51250
+        "id": "m-3719",
+        "mould": "B.F.P-(G)",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3720",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3721",
+        "mould": "L.U",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3722",
+        "mould": "Fluted Jointer",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3723",
+        "mould": "Jointer",
+        "qty": 180.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -17649,7 +18210,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6875,
+    "total": 7700.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17676,11 +18237,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-497",
-        "mould": "Standard Casting Lot #497",
-        "qty": 3,
-        "price": 1450,
-        "total": 6875
+        "id": "m-3675",
+        "mould": "H.O",
+        "qty": 15.0,
+        "price": 150.0,
+        "total": 2250.0
+      },
+      {
+        "id": "m-3676",
+        "mould": "S.L",
+        "qty": 15.0,
+        "price": 170.0,
+        "total": 2550.0
+      },
+      {
+        "id": "m-3677",
+        "mould": "PERAMETER",
+        "qty": 25.0,
+        "price": 80.0,
+        "total": 2000.0
+      },
+      {
+        "id": "m-3678",
+        "mould": "Jointer",
+        "qty": 18.0,
+        "price": 50.0,
+        "total": 900.0
       }
     ]
   },
@@ -17692,7 +18274,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 625,
+    "total": 1400.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17705,11 +18287,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-496",
-        "mould": "Standard Casting Lot #496",
-        "qty": 1,
-        "price": 1450,
-        "total": 625
+        "id": "m-3674",
+        "mould": "F.P",
+        "qty": 5.0,
+        "price": 280.0,
+        "total": 1400.0
       }
     ]
   },
@@ -17721,7 +18303,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 543750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17860,11 +18442,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-495",
-        "mould": "Standard Casting Lot #495",
-        "qty": 19,
-        "price": 1450,
-        "total": 543750
+        "id": "m-4078",
+        "mould": "B.F.P-(G)",
+        "qty": 900.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4079",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4080",
+        "mould": "S.L",
+        "qty": 2000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4081",
+        "mould": "T.G",
+        "qty": 1300.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -17876,7 +18479,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17889,11 +18492,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-494",
-        "mould": "Standard Casting Lot #494",
-        "qty": 1,
-        "price": 1450,
-        "total": 1500
+        "id": "m-3672",
+        "mould": "B.F.P",
+        "qty": 12.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3673",
+        "mould": "Fluted Jointer",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -17905,7 +18515,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1125,
+    "total": 1530.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -17925,11 +18535,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-493",
-        "mould": "Standard Casting Lot #493",
-        "qty": 2,
-        "price": 1450,
-        "total": 1125
+        "id": "m-3655",
+        "mould": "S.L",
+        "qty": 9.0,
+        "price": 170.0,
+        "total": 1530.0
       }
     ]
   },
@@ -17941,7 +18551,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 600000,
+    "total": 1022260.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18087,11 +18697,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-492",
-        "mould": "Standard Casting Lot #492",
-        "qty": 20,
-        "price": 1450,
-        "total": 600000
+        "id": "m-3789",
+        "mould": "S.P",
+        "qty": 1550.0,
+        "price": 250.5,
+        "total": 388275.0
+      },
+      {
+        "id": "m-3790",
+        "mould": "C.M",
+        "qty": 3000.0,
+        "price": 150.0,
+        "total": 450000.0
+      },
+      {
+        "id": "m-3791",
+        "mould": "Fluted Jointer",
+        "qty": 840.0,
+        "price": 38.0,
+        "total": 31920.0
+      },
+      {
+        "id": "m-3792",
+        "mould": "Jointer",
+        "qty": 3220.0,
+        "price": 27.0,
+        "total": 86940.0
+      },
+      {
+        "id": "m-3793",
+        "mould": "S.P-(Digital)",
+        "qty": 250.0,
+        "price": 260.5,
+        "total": 65125.0
       }
     ]
   },
@@ -18103,7 +18741,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 751500,
+    "total": 1413306.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18326,11 +18964,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-491",
-        "mould": "Standard Casting Lot #491",
-        "qty": 31,
-        "price": 1450,
-        "total": 751500
+        "id": "m-3767",
+        "mould": "B.F.P-(G)",
+        "qty": 420.0,
+        "price": 265.0,
+        "total": 111300.0
+      },
+      {
+        "id": "m-3768",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 600.0,
+        "price": 270.0,
+        "total": 162000.0
+      },
+      {
+        "id": "m-3769",
+        "mould": "S.P",
+        "qty": 1112.0,
+        "price": 250.0,
+        "total": 278000.0
+      },
+      {
+        "id": "m-3770",
+        "mould": "C.M",
+        "qty": 3170.0,
+        "price": 152.0,
+        "total": 481840.0
+      },
+      {
+        "id": "m-3771",
+        "mould": "C.M-(Digital)",
+        "qty": 310.0,
+        "price": 160.0,
+        "total": 49600.0
+      },
+      {
+        "id": "m-3772",
+        "mould": "U.V",
+        "qty": 15.0,
+        "price": 1000.0,
+        "total": 15000.0
+      },
+      {
+        "id": "m-3773",
+        "mould": "UVD",
+        "qty": 25.0,
+        "price": 1000.0,
+        "total": 25000.0
+      },
+      {
+        "id": "m-3774",
+        "mould": "Fluted Jointer",
+        "qty": 977.0,
+        "price": 38.0,
+        "total": 37126.0
+      },
+      {
+        "id": "m-3775",
+        "mould": "Jointer",
+        "qty": 5920.0,
+        "price": 27.0,
+        "total": 159840.0
+      },
+      {
+        "id": "m-3776",
+        "mould": "S.P-(Digital)",
+        "qty": 360.0,
+        "price": 260.0,
+        "total": 93600.0
       }
     ]
   },
@@ -18342,7 +19043,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 501250,
+    "total": 854810.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18544,11 +19245,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-490",
-        "mould": "Standard Casting Lot #490",
-        "qty": 28,
-        "price": 1450,
-        "total": 501250
+        "id": "m-3617",
+        "mould": "B.F.P",
+        "qty": 970.0,
+        "price": 240.0,
+        "total": 232800.0
+      },
+      {
+        "id": "m-3618",
+        "mould": "B.F.P-(G)",
+        "qty": 1050.0,
+        "price": 270.0,
+        "total": 283500.0
+      },
+      {
+        "id": "m-3619",
+        "mould": "C.M",
+        "qty": 650.0,
+        "price": 155.0,
+        "total": 100750.0
+      },
+      {
+        "id": "m-3620",
+        "mould": "H.O",
+        "qty": 700.0,
+        "price": 120.0,
+        "total": 84000.0
+      },
+      {
+        "id": "m-3621",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 130.0,
+        "total": 78000.0
+      },
+      {
+        "id": "m-3622",
+        "mould": "U.V",
+        "qty": 10.0,
+        "price": 1050.0,
+        "total": 10500.0
+      },
+      {
+        "id": "m-3623",
+        "mould": "UVD",
+        "qty": 30.0,
+        "price": 1050.0,
+        "total": 31500.0
+      },
+      {
+        "id": "m-3624",
+        "mould": "Fluted Jointer",
+        "qty": 520.0,
+        "price": 40.0,
+        "total": 20800.0
+      },
+      {
+        "id": "m-3625",
+        "mould": "Jointer",
+        "qty": 480.0,
+        "price": 27.0,
+        "total": 12960.0
       }
     ]
   },
@@ -18560,7 +19317,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 181250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18636,11 +19393,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-489",
-        "mould": "Standard Casting Lot #489",
-        "qty": 10,
-        "price": 1450,
-        "total": 181250
+        "id": "m-3578",
+        "mould": "C.M",
+        "qty": 1450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3579",
+        "mould": "Jointer",
+        "qty": 1280.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -18652,7 +19416,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 81250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18707,11 +19471,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-488",
-        "mould": "Standard Casting Lot #488",
-        "qty": 7,
-        "price": 1450,
-        "total": 81250
+        "id": "m-3573",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3574",
+        "mould": "H.O",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3575",
+        "mould": "Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -18723,7 +19501,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1000,
+    "total": 2120.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18743,11 +19521,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-487",
-        "mould": "Standard Casting Lot #487",
-        "qty": 2,
-        "price": 1450,
-        "total": 1000
+        "id": "m-3571",
+        "mould": "C.M",
+        "qty": 8.0,
+        "price": 190.0,
+        "total": 1520.0
+      },
+      {
+        "id": "m-3572",
+        "mould": "Jointer",
+        "qty": 12.0,
+        "price": 50.0,
+        "total": 600.0
       }
     ]
   },
@@ -18759,7 +19544,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18777,15 +19562,7 @@ export const SQLITE_BILLS = [
         "lCap": 14.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-486",
-        "mould": "Standard Casting Lot #486",
-        "qty": 2,
-        "price": 1450,
-        "total": 5250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-485",
@@ -18795,7 +19572,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 131875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -18911,15 +19688,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-485",
-        "mould": "Standard Casting Lot #485",
-        "qty": 16,
-        "price": 1450,
-        "total": 131875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-484",
@@ -18929,7 +19698,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 841250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19082,11 +19851,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-484",
-        "mould": "Standard Casting Lot #484",
-        "qty": 21,
-        "price": 1450,
-        "total": 841250
+        "id": "m-3645",
+        "mould": "B.F.P",
+        "qty": 760.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3646",
+        "mould": "B.F.P-(G)",
+        "qty": 5490.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3647",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 480.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3648",
+        "mould": "Fluted Jointer",
+        "qty": 1818.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3649",
+        "mould": "Jointer",
+        "qty": 760.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19098,7 +19895,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 131125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19174,11 +19971,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-483",
-        "mould": "Standard Casting Lot #483",
-        "qty": 10,
-        "price": 1450,
-        "total": 131125
+        "id": "m-3565",
+        "mould": "B.F.P",
+        "qty": 199.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3566",
+        "mould": "B.F.P-(G)",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3567",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3568",
+        "mould": "S.L",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3569",
+        "mould": "Fluted Jointer",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3570",
+        "mould": "Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19190,7 +20022,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 15875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19245,11 +20077,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-482",
-        "mould": "Standard Casting Lot #482",
-        "qty": 7,
-        "price": 1450,
-        "total": 15875
+        "id": "m-3529",
+        "mould": "C.M",
+        "qty": 42.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3530",
+        "mould": "H.O",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3531",
+        "mould": "S.L",
+        "qty": 55.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3532",
+        "mould": "Jointer",
+        "qty": 62.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19261,7 +20114,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19281,11 +20134,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-481",
-        "mould": "Standard Casting Lot #481",
-        "qty": 2,
-        "price": 1450,
-        "total": 1875
+        "id": "m-3533",
+        "mould": "C.M",
+        "qty": 13.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3534",
+        "mould": "ELFY",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3535",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19297,7 +20164,7 @@ export const SQLITE_BILLS = [
     "docType": "RETURN",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 675000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19443,11 +20310,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-480",
-        "mould": "Standard Casting Lot #480",
-        "qty": 20,
-        "price": 1450,
-        "total": 675000
+        "id": "m-3555",
+        "mould": "B.F.P",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3556",
+        "mould": "B.F.P-(G)",
+        "qty": 3800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3557",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3558",
+        "mould": "Fluted Jointer",
+        "qty": 2080.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3559",
+        "mould": "Jointer",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19459,7 +20354,7 @@ export const SQLITE_BILLS = [
     "docType": "RETURN",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 0,
+    "total": 800.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19472,11 +20367,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-479",
-        "mould": "Standard Casting Lot #479",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-3515",
+        "mould": "Jointer",
+        "qty": 16.0,
+        "price": 50.0,
+        "total": 800.0
       }
     ]
   },
@@ -19488,7 +20383,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 250,
+    "total": 820.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19501,11 +20396,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-478",
-        "mould": "Standard Casting Lot #478",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-3511",
+        "mould": "B.F.P",
+        "qty": 2.0,
+        "price": 350.0,
+        "total": 700.0
+      },
+      {
+        "id": "m-3512",
+        "mould": "Fluted Jointer",
+        "qty": 2.0,
+        "price": 60.0,
+        "total": 120.0
       }
     ]
   },
@@ -19517,7 +20419,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1875,
+    "total": 3550.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19530,11 +20432,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-477",
-        "mould": "Standard Casting Lot #477",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
+        "id": "m-3513",
+        "mould": "S.L",
+        "qty": 15.0,
+        "price": 170.0,
+        "total": 2550.0
+      },
+      {
+        "id": "m-3514",
+        "mould": "Jointer",
+        "qty": 20.0,
+        "price": 50.0,
+        "total": 1000.0
       }
     ]
   },
@@ -19546,7 +20455,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 75000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19587,11 +20496,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-476",
-        "mould": "Standard Casting Lot #476",
-        "qty": 5,
-        "price": 1450,
-        "total": 75000
+        "id": "m-3505",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3506",
+        "mould": "S.L",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3507",
+        "mould": "T.G",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3508",
+        "mould": "Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19603,7 +20533,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 122500,
+    "total": 204285.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19665,11 +20595,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-475",
-        "mould": "Standard Casting Lot #475",
-        "qty": 8,
-        "price": 1450,
-        "total": 122500
+        "id": "m-3542",
+        "mould": "B.F.P-(G)",
+        "qty": 200.0,
+        "price": 265.0,
+        "total": 53000.0
+      },
+      {
+        "id": "m-3543",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 200.0,
+        "price": 275.0,
+        "total": 55000.0
+      },
+      {
+        "id": "m-3544",
+        "mould": "C.M",
+        "qty": 330.0,
+        "price": 152.5,
+        "total": 50325.0
+      },
+      {
+        "id": "m-3545",
+        "mould": "S.L",
+        "qty": 250.0,
+        "price": 130.0,
+        "total": 32500.0
+      },
+      {
+        "id": "m-3546",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 40.0,
+        "total": 3200.0
+      },
+      {
+        "id": "m-3547",
+        "mould": "Jointer",
+        "qty": 380.0,
+        "price": 27.0,
+        "total": 10260.0
       }
     ]
   },
@@ -19681,7 +20646,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 50000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19701,11 +20666,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-474",
-        "mould": "Standard Casting Lot #474",
-        "qty": 2,
-        "price": 1450,
-        "total": 50000
+        "id": "m-3477",
+        "mould": "C.M",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3478",
+        "mould": "Jointer",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19717,7 +20689,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19728,15 +20700,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-473",
-        "mould": "Standard Casting Lot #473",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-472",
@@ -19746,7 +20710,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 64750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19934,11 +20898,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-472",
-        "mould": "Standard Casting Lot #472",
-        "qty": 26,
-        "price": 1450,
-        "total": 64750
+        "id": "m-3491",
+        "mould": "B.F.P-(G)",
+        "qty": 90.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3492",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3493",
+        "mould": "F.P",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3494",
+        "mould": "H.O",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3495",
+        "mould": "S.L",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3496",
+        "mould": "L.A",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3497",
+        "mould": "U.V",
+        "qty": 16.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3498",
+        "mould": "UVD",
+        "qty": 12.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3499",
+        "mould": "Fluted Jointer",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3500",
+        "mould": "Jointer",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -19950,7 +20977,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 11625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -19984,11 +21011,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-471",
-        "mould": "Standard Casting Lot #471",
-        "qty": 4,
-        "price": 1450,
-        "total": 11625
+        "id": "m-3404",
+        "mould": "T.G",
+        "qty": 70.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3405",
+        "mould": "UVD",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3406",
+        "mould": "PERAMETER",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3407",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -20000,7 +21048,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 102000,
+    "total": 159830.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20132,11 +21180,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-470",
-        "mould": "Standard Casting Lot #470",
-        "qty": 18,
-        "price": 1450,
-        "total": 102000
+        "id": "m-3415",
+        "mould": "B.F.P-(G)",
+        "qty": 150.0,
+        "price": 280.0,
+        "total": 42000.0
+      },
+      {
+        "id": "m-3416",
+        "mould": "C.M",
+        "qty": 400.0,
+        "price": 155.0,
+        "total": 62000.0
+      },
+      {
+        "id": "m-3417",
+        "mould": "H.O",
+        "qty": 150.0,
+        "price": 125.0,
+        "total": 18750.0
+      },
+      {
+        "id": "m-3418",
+        "mould": "S.L",
+        "qty": 100.0,
+        "price": 135.0,
+        "total": 13500.0
+      },
+      {
+        "id": "m-3419",
+        "mould": "U.V",
+        "qty": 6.0,
+        "price": 1100.0,
+        "total": 6600.0
+      },
+      {
+        "id": "m-3420",
+        "mould": "UVD",
+        "qty": 10.0,
+        "price": 1250.0,
+        "total": 12500.0
+      },
+      {
+        "id": "m-3421",
+        "mould": "Jointer",
+        "qty": 160.0,
+        "price": 28.0,
+        "total": 4480.0
       }
     ]
   },
@@ -20148,7 +21238,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 59500,
+    "total": 97190.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20287,11 +21377,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-469",
-        "mould": "Standard Casting Lot #469",
-        "qty": 19,
-        "price": 1450,
-        "total": 59500
+        "id": "m-3422",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 160.0,
+        "total": 32000.0
+      },
+      {
+        "id": "m-3423",
+        "mould": "C.M-(Digital)",
+        "qty": 180.0,
+        "price": 170.0,
+        "total": 30600.0
+      },
+      {
+        "id": "m-3424",
+        "mould": "S.L",
+        "qty": 90.0,
+        "price": 140.0,
+        "total": 12600.0
+      },
+      {
+        "id": "m-3425",
+        "mould": "UVD",
+        "qty": 6.0,
+        "price": 1200.0,
+        "total": 7200.0
+      },
+      {
+        "id": "m-3426",
+        "mould": "Jointer",
+        "qty": 510.0,
+        "price": 29.0,
+        "total": 14790.0
       }
     ]
   },
@@ -20303,7 +21421,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 286250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20470,11 +21588,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-468",
-        "mould": "Standard Casting Lot #468",
-        "qty": 23,
-        "price": 1450,
-        "total": 286250
+        "id": "m-3355",
+        "mould": "B.F.P",
+        "qty": 470.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3356",
+        "mould": "B.F.P-(G)",
+        "qty": 620.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3357",
+        "mould": "C.M",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3358",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3359",
+        "mould": "L.U",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3360",
+        "mould": "Fluted Jointer",
+        "qty": 760.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3361",
+        "mould": "Jointer",
+        "qty": 1720.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -20486,7 +21646,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 7000,
+    "total": 20190.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20520,11 +21680,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-467",
-        "mould": "Standard Casting Lot #467",
-        "qty": 4,
-        "price": 1450,
-        "total": 7000
+        "id": "m-3362",
+        "mould": "B.F.P-(G)",
+        "qty": 50.0,
+        "price": 350.0,
+        "total": 17500.0
+      },
+      {
+        "id": "m-3363",
+        "mould": "C.M",
+        "qty": 6.0,
+        "price": 190.0,
+        "total": 1140.0
+      },
+      {
+        "id": "m-3364",
+        "mould": "Fluted Jointer",
+        "qty": 20.0,
+        "price": 60.0,
+        "total": 1200.0
+      },
+      {
+        "id": "m-3365",
+        "mould": "Jointer",
+        "qty": 7.0,
+        "price": 50.0,
+        "total": 350.0
       }
     ]
   },
@@ -20536,7 +21717,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 160000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20689,11 +21870,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-466",
-        "mould": "Standard Casting Lot #466",
-        "qty": 21,
-        "price": 1450,
-        "total": 160000
+        "id": "m-3337",
+        "mould": "B.F.P",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3338",
+        "mould": "B.F.P-(G)",
+        "qty": 310.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3339",
+        "mould": "B.F.P-(G)-(Digital-or-Golden)",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3340",
+        "mould": "C.M",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3341",
+        "mould": "S.L",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3342",
+        "mould": "Fluted Jointer",
+        "qty": 180.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3343",
+        "mould": "Jointer",
+        "qty": 560.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -20705,7 +21928,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 51250,
+    "total": 55950.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20746,11 +21969,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-465",
-        "mould": "Standard Casting Lot #465",
-        "qty": 5,
-        "price": 1450,
-        "total": 51250
+        "id": "m-3334",
+        "mould": "H.O",
+        "qty": 150.0,
+        "price": 125.0,
+        "total": 18750.0
+      },
+      {
+        "id": "m-3335",
+        "mould": "S.L",
+        "qty": 260.0,
+        "price": 135.0,
+        "total": 35100.0
+      },
+      {
+        "id": "m-3336",
+        "mould": "Jointer",
+        "qty": 75.0,
+        "price": 28.0,
+        "total": 2100.0
       }
     ]
   },
@@ -20762,7 +21999,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18750,
+    "total": 49300.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20782,11 +22019,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-464",
-        "mould": "Standard Casting Lot #464",
-        "qty": 2,
-        "price": 1450,
-        "total": 18750
+        "id": "m-3325",
+        "mould": "B.F.P",
+        "qty": 150.0,
+        "price": 270.0,
+        "total": 40500.0
+      },
+      {
+        "id": "m-3326",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 40.0,
+        "total": 6400.0
+      },
+      {
+        "id": "m-3327",
+        "mould": "Jointer",
+        "qty": 80.0,
+        "price": 30.0,
+        "total": 2400.0
       }
     ]
   },
@@ -20798,7 +22049,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 11625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20832,11 +22083,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-463",
-        "mould": "Standard Casting Lot #463",
-        "qty": 4,
-        "price": 1450,
-        "total": 11625
+        "id": "m-3310",
+        "mould": "C.M",
+        "qty": 54.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3311",
+        "mould": "S.L",
+        "qty": 21.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3312",
+        "mould": "PERAMETER",
+        "qty": 18.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3313",
+        "mould": "Jointer",
+        "qty": 29.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -20887,15 +22159,7 @@ export const SQLITE_BILLS = [
         "lCap": 80.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-462",
-        "mould": "Standard Casting Lot #462",
-        "qty": 5,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-461",
@@ -20905,7 +22169,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 1520.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -20918,11 +22182,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-461",
-        "mould": "Standard Casting Lot #461",
-        "qty": 1,
-        "price": 1450,
-        "total": 500
+        "id": "m-3288",
+        "mould": "B.F.P-(G)",
+        "qty": 4.0,
+        "price": 380.0,
+        "total": 1520.0
       }
     ]
   },
@@ -20934,7 +22198,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 433125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21080,11 +22344,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-460",
-        "mould": "Standard Casting Lot #460",
-        "qty": 20,
-        "price": 1450,
-        "total": 433125
+        "id": "m-3304",
+        "mould": "B.F.P-(G)",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3305",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 690.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3306",
+        "mould": "S.P",
+        "qty": 1525.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3307",
+        "mould": "C.M",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3308",
+        "mould": "Fluted Jointer",
+        "qty": 2311.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3309",
+        "mould": "Jointer",
+        "qty": 2880.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21096,7 +22395,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 2100.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21109,11 +22408,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-459",
-        "mould": "Standard Casting Lot #459",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
+        "id": "m-3273",
+        "mould": "L.U",
+        "qty": 6.0,
+        "price": 350.0,
+        "total": 2100.0
       }
     ]
   },
@@ -21125,7 +22424,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 70.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21138,11 +22437,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-458",
-        "mould": "Standard Casting Lot #458",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-3271",
+        "mould": "Jointer",
+        "qty": 1.0,
+        "price": 70.0,
+        "total": 70.0
       }
     ]
   },
@@ -21154,7 +22453,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2750,
+    "total": 7700.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21167,11 +22466,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-457",
-        "mould": "Standard Casting Lot #457",
-        "qty": 1,
-        "price": 1450,
-        "total": 2750
+        "id": "m-3272",
+        "mould": "L.U",
+        "qty": 22.0,
+        "price": 350.0,
+        "total": 7700.0
       }
     ]
   },
@@ -21183,7 +22482,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 62500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21231,11 +22530,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-456",
-        "mould": "Standard Casting Lot #456",
-        "qty": 6,
-        "price": 1450,
-        "total": 62500
+        "id": "m-3264",
+        "mould": "B.F.P-(G)",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3265",
+        "mould": "C.M",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3266",
+        "mould": "S.L",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3267",
+        "mould": "L.U",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3268",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3269",
+        "mould": "Jointer",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21247,7 +22581,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 378250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21316,11 +22650,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-455",
-        "mould": "Standard Casting Lot #455",
-        "qty": 9,
-        "price": 1450,
-        "total": 378250
+        "id": "m-3376",
+        "mould": "B.F.P-(G)",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3377",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 1016.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3378",
+        "mould": "S.P",
+        "qty": 1510.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3379",
+        "mould": "Fluted Jointer",
+        "qty": 1460.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3380",
+        "mould": "Jointer",
+        "qty": 1443.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21332,7 +22694,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 162500,
+    "total": 210470.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21401,11 +22763,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-454",
-        "mould": "Standard Casting Lot #454",
-        "qty": 9,
-        "price": 1450,
-        "total": 162500
+        "id": "m-3274",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 250.0,
+        "total": 50000.0
+      },
+      {
+        "id": "m-3275",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 155.0,
+        "total": 31000.0
+      },
+      {
+        "id": "m-3276",
+        "mould": "S.L",
+        "qty": 750.0,
+        "price": 130.0,
+        "total": 97500.0
+      },
+      {
+        "id": "m-3277",
+        "mould": "H.O",
+        "qty": 150.0,
+        "price": 125.0,
+        "total": 18750.0
+      },
+      {
+        "id": "m-3278",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 37.0,
+        "total": 2960.0
+      },
+      {
+        "id": "m-3279",
+        "mould": "Jointer",
+        "qty": 380.0,
+        "price": 27.0,
+        "total": 10260.0
       }
     ]
   },
@@ -21417,7 +22814,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21430,11 +22827,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-453",
-        "mould": "Standard Casting Lot #453",
-        "qty": 1,
-        "price": 1450,
-        "total": 1625
+        "id": "m-3257",
+        "mould": "B.F.P",
+        "qty": 13.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21446,7 +22843,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21480,11 +22877,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-452",
-        "mould": "Standard Casting Lot #452",
-        "qty": 4,
-        "price": 1450,
-        "total": 1250
+        "id": "m-3214",
+        "mould": "U.V",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3215",
+        "mould": "F.P",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3216",
+        "mould": "ELFY",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3217",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3218",
+        "mould": "Fluted Jointer",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21496,7 +22921,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 11000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21528,15 +22953,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-451",
-        "mould": "Standard Casting Lot #451",
-        "qty": 4,
-        "price": 1450,
-        "total": 11000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-450",
@@ -21546,7 +22963,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 240.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21559,11 +22976,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-450",
-        "mould": "Standard Casting Lot #450",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-3203",
+        "mould": "Fluted Jointer",
+        "qty": 4.0,
+        "price": 60.0,
+        "total": 240.0
       }
     ]
   },
@@ -21575,7 +22992,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6250,
+    "total": 9300.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21588,11 +23005,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-449",
-        "mould": "Standard Casting Lot #449",
-        "qty": 1,
-        "price": 1450,
-        "total": 6250
+        "id": "m-3188",
+        "mould": "S.L",
+        "qty": 50.0,
+        "price": 160.0,
+        "total": 8000.0
+      },
+      {
+        "id": "m-3189",
+        "mould": "Jointer",
+        "qty": 26.0,
+        "price": 50.0,
+        "total": 1300.0
       }
     ]
   },
@@ -21604,7 +23028,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 387750,
+    "total": 868440.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21729,11 +23153,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-448",
-        "mould": "Standard Casting Lot #448",
-        "qty": 17,
-        "price": 1450,
-        "total": 387750
+        "id": "m-3183",
+        "mould": "B.F.P-(G)",
+        "qty": 1358.0,
+        "price": 270.0,
+        "total": 366660.0
+      },
+      {
+        "id": "m-3184",
+        "mould": "S.P",
+        "qty": 1374.0,
+        "price": 250.0,
+        "total": 343500.0
+      },
+      {
+        "id": "m-3185",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 370.0,
+        "price": 280.0,
+        "total": 103600.0
+      },
+      {
+        "id": "m-3186",
+        "mould": "Fluted Jointer",
+        "qty": 700.0,
+        "price": 38.0,
+        "total": 26600.0
+      },
+      {
+        "id": "m-3187",
+        "mould": "Jointer",
+        "qty": 1040.0,
+        "price": 27.0,
+        "total": 28080.0
       }
     ]
   },
@@ -21745,7 +23197,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21765,11 +23217,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-447",
-        "mould": "Standard Casting Lot #447",
-        "qty": 2,
-        "price": 1450,
-        "total": 6125
+        "id": "m-3170",
+        "mould": "C.M",
+        "qty": 37.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3171",
+        "mould": "B.F.P-(G)",
+        "qty": 12.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3172",
+        "mould": "Jointer",
+        "qty": 22.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21781,7 +23247,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21792,15 +23258,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-446",
-        "mould": "Standard Casting Lot #446",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-445",
@@ -21810,7 +23268,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 93750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21851,11 +23309,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-445",
-        "mould": "Standard Casting Lot #445",
-        "qty": 5,
-        "price": 1450,
-        "total": 93750
+        "id": "m-3145",
+        "mould": "C.M",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3146",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3147",
+        "mould": "B.F.P",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3148",
+        "mould": "Jointer",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3149",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3150",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21867,7 +23360,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 212500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21929,11 +23422,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-444",
-        "mould": "Standard Casting Lot #444",
-        "qty": 8,
-        "price": 1450,
-        "total": 212500
+        "id": "m-3143",
+        "mould": "C.M",
+        "qty": 1700.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3144",
+        "mould": "Jointer",
+        "qty": 560.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21945,7 +23445,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 15500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -21972,11 +23472,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-443",
-        "mould": "Standard Casting Lot #443",
-        "qty": 3,
-        "price": 1450,
-        "total": 15500
+        "id": "m-3134",
+        "mould": "C.M",
+        "qty": 62.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3135",
+        "mould": "B.F.P-(G)",
+        "qty": 37.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3136",
+        "mould": "B.F.P",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3137",
+        "mould": "Jointer",
+        "qty": 43.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3138",
+        "mould": "Fluted Jointer",
+        "qty": 27.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -21988,7 +23516,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6500,
+    "total": 12216.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22008,11 +23536,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-442",
-        "mould": "Standard Casting Lot #442",
-        "qty": 2,
-        "price": 1450,
-        "total": 6500
+        "id": "m-3139",
+        "mould": "C.M (Digital)",
+        "qty": 52.0,
+        "price": 210.0,
+        "total": 10920.0
+      },
+      {
+        "id": "m-3140",
+        "mould": "Jointer",
+        "qty": 18.0,
+        "price": 72.0,
+        "total": 1296.0
       }
     ]
   },
@@ -22024,7 +23559,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18250,
+    "total": 30310.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22079,11 +23614,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-441",
-        "mould": "Standard Casting Lot #441",
-        "qty": 7,
-        "price": 1450,
-        "total": 18250
+        "id": "m-3190",
+        "mould": "S.L",
+        "qty": 49.0,
+        "price": 170.0,
+        "total": 8330.0
+      },
+      {
+        "id": "m-3191",
+        "mould": "C.M",
+        "qty": 97.0,
+        "price": 190.0,
+        "total": 18430.0
+      },
+      {
+        "id": "m-3192",
+        "mould": "Jointer",
+        "qty": 71.0,
+        "price": 50.0,
+        "total": 3550.0
       }
     ]
   },
@@ -22095,7 +23644,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 625,
+    "total": 1200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22108,11 +23657,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-440",
-        "mould": "Standard Casting Lot #440",
-        "qty": 1,
-        "price": 1450,
-        "total": 625
+        "id": "m-3106",
+        "mould": "S.L",
+        "qty": 5.0,
+        "price": 160.0,
+        "total": 800.0
+      },
+      {
+        "id": "m-3107",
+        "mould": "Jointer",
+        "qty": 8.0,
+        "price": 50.0,
+        "total": 400.0
       }
     ]
   },
@@ -22124,7 +23680,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 3850.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22137,11 +23693,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-439",
-        "mould": "Standard Casting Lot #439",
-        "qty": 1,
-        "price": 1450,
-        "total": 2500
+        "id": "m-3088",
+        "mould": "C.M",
+        "qty": 20.0,
+        "price": 180.0,
+        "total": 3600.0
+      },
+      {
+        "id": "m-3089",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 50.0,
+        "total": 250.0
       }
     ]
   },
@@ -22153,7 +23716,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22164,15 +23727,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-438",
-        "mould": "Standard Casting Lot #438",
-        "qty": 1,
-        "price": 1450,
-        "total": 500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-437",
@@ -22182,7 +23737,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22193,15 +23748,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-437",
-        "mould": "Standard Casting Lot #437",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-436",
@@ -22211,7 +23758,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22222,15 +23769,7 @@ export const SQLITE_BILLS = [
         "lCap": 4.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-436",
-        "mould": "Standard Casting Lot #436",
-        "qty": 1,
-        "price": 1450,
-        "total": 3750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-435",
@@ -22240,7 +23779,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 418750,
+    "total": 785815.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22428,11 +23967,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-435",
-        "mould": "Standard Casting Lot #435",
-        "qty": 26,
-        "price": 1450,
-        "total": 418750
+        "id": "m-3204",
+        "mould": "C.M",
+        "qty": 1650.0,
+        "price": 157.5,
+        "total": 259875.0
+      },
+      {
+        "id": "m-3205",
+        "mould": "F.P.G",
+        "qty": 180.0,
+        "price": 245.0,
+        "total": 44100.0
+      },
+      {
+        "id": "m-3206",
+        "mould": "S.P",
+        "qty": 320.0,
+        "price": 270.0,
+        "total": 86400.0
+      },
+      {
+        "id": "m-3207",
+        "mould": "Jointer",
+        "qty": 1920.0,
+        "price": 28.0,
+        "total": 53760.0
+      },
+      {
+        "id": "m-3208",
+        "mould": "Fluted Jointer",
+        "qty": 1140.0,
+        "price": 37.0,
+        "total": 42180.0
+      },
+      {
+        "id": "m-3209",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 750.0,
+        "price": 280.0,
+        "total": 210000.0
+      },
+      {
+        "id": "m-3210",
+        "mould": "S.P (Digital)",
+        "qty": 200.0,
+        "price": 280.0,
+        "total": 56000.0
+      },
+      {
+        "id": "m-3211",
+        "mould": "C.M (Digital)",
+        "qty": 200.0,
+        "price": 167.5,
+        "total": 33500.0
+      },
+      {
+        "id": "m-3212",
+        "mould": "FPG 733 EXTRA",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3213",
+        "mould": "CM 206 EXTRA",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -22444,7 +24046,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22492,11 +24094,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-434",
-        "mould": "Standard Casting Lot #434",
-        "qty": 6,
-        "price": 1450,
-        "total": 125000
+        "id": "m-3057",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3058",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3059",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3060",
+        "mould": "Fluted Jointer",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3061",
+        "mould": "Jointer",
+        "qty": 840.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -22508,7 +24138,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 950.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22521,11 +24151,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-433",
-        "mould": "Standard Casting Lot #433",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-3062",
+        "mould": "Jointer",
+        "qty": 19.0,
+        "price": 50.0,
+        "total": 950.0
       }
     ]
   },
@@ -22537,7 +24167,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6125,
+    "total": 7840.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22557,11 +24187,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-432",
-        "mould": "Standard Casting Lot #432",
-        "qty": 2,
-        "price": 1450,
-        "total": 6125
+        "id": "m-2940",
+        "mould": "S.L",
+        "qty": 49.0,
+        "price": 160.0,
+        "total": 7840.0
       }
     ]
   },
@@ -22573,7 +24203,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 660.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22586,11 +24216,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-431",
-        "mould": "Standard Casting Lot #431",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
+        "id": "m-2917",
+        "mould": "C.M",
+        "qty": 3.0,
+        "price": 220.0,
+        "total": 660.0
       }
     ]
   },
@@ -22602,7 +24232,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22613,15 +24243,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-430",
-        "mould": "Standard Casting Lot #430",
-        "qty": 1,
-        "price": 1450,
-        "total": 1750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-429",
@@ -22631,7 +24253,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 291250,
+    "total": 432000.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22784,11 +24406,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-429",
-        "mould": "Standard Casting Lot #429",
-        "qty": 21,
-        "price": 1450,
-        "total": 291250
+        "id": "m-2927",
+        "mould": "C.M",
+        "qty": 2200.0,
+        "price": 160.0,
+        "total": 352000.0
+      },
+      {
+        "id": "m-2928",
+        "mould": "B.F.P",
+        "qty": 130.0,
+        "price": 240.0,
+        "total": 31200.0
+      },
+      {
+        "id": "m-2929",
+        "mould": "Jointer",
+        "qty": 1400.0,
+        "price": 28.0,
+        "total": 39200.0
+      },
+      {
+        "id": "m-2930",
+        "mould": "Fluted Jointer",
+        "qty": 240.0,
+        "price": 40.0,
+        "total": 9600.0
       }
     ]
   },
@@ -22800,7 +24443,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 28125,
+    "total": 51795.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -22834,11 +24477,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-428",
-        "mould": "Standard Casting Lot #428",
-        "qty": 4,
-        "price": 1450,
-        "total": 28125
+        "id": "m-3042",
+        "mould": "S.L",
+        "qty": 60.0,
+        "price": 160.0,
+        "total": 9600.0
+      },
+      {
+        "id": "m-3043",
+        "mould": "C.M",
+        "qty": 125.0,
+        "price": 185.0,
+        "total": 23125.0
+      },
+      {
+        "id": "m-3044",
+        "mould": "B.F.P",
+        "qty": 40.0,
+        "price": 320.0,
+        "total": 12800.0
+      },
+      {
+        "id": "m-3045",
+        "mould": "Jointer",
+        "qty": 111.0,
+        "price": 50.0,
+        "total": 5550.0
+      },
+      {
+        "id": "m-3046",
+        "mould": "Fluted Jointer",
+        "qty": 12.0,
+        "price": 60.0,
+        "total": 720.0
       }
     ]
   },
@@ -22850,7 +24521,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 173125,
+    "total": 275310.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23122,11 +24793,137 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-427",
-        "mould": "Standard Casting Lot #427",
-        "qty": 38,
-        "price": 1450,
-        "total": 173125
+        "id": "m-3238",
+        "mould": "B.F.P",
+        "qty": 150.0,
+        "price": 260.0,
+        "total": 39000.0
+      },
+      {
+        "id": "m-3239",
+        "mould": "B.F.P-(G)",
+        "qty": 80.0,
+        "price": 300.0,
+        "total": 24000.0
+      },
+      {
+        "id": "m-3240",
+        "mould": "B.F.P-(G)-(Digital)",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3241",
+        "mould": "F.P",
+        "qty": 200.0,
+        "price": 250.0,
+        "total": 50000.0
+      },
+      {
+        "id": "m-3242",
+        "mould": "F.P.G",
+        "qty": 50.0,
+        "price": 270.0,
+        "total": 13500.0
+      },
+      {
+        "id": "m-3243",
+        "mould": "F.P.G-(Digital)",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3244",
+        "mould": "C.M",
+        "qty": 60.0,
+        "price": 180.0,
+        "total": 10800.0
+      },
+      {
+        "id": "m-3245",
+        "mould": "S.L",
+        "qty": 250.0,
+        "price": 160.0,
+        "total": 40000.0
+      },
+      {
+        "id": "m-3246",
+        "mould": "H.O",
+        "qty": 200.0,
+        "price": 150.0,
+        "total": 30000.0
+      },
+      {
+        "id": "m-3247",
+        "mould": "L.U",
+        "qty": 30.0,
+        "price": 300.0,
+        "total": 9000.0
+      },
+      {
+        "id": "m-3248",
+        "mould": "UVD",
+        "qty": 11.0,
+        "price": 1300.0,
+        "total": 14300.0
+      },
+      {
+        "id": "m-3249",
+        "mould": "PERAMETER",
+        "qty": 200.0,
+        "price": 75.0,
+        "total": 15000.0
+      },
+      {
+        "id": "m-3250",
+        "mould": "CLIP",
+        "qty": 10.0,
+        "price": 300.0,
+        "total": 3000.0
+      },
+      {
+        "id": "m-3251",
+        "mould": "ELFY",
+        "qty": 30.0,
+        "price": 50.0,
+        "total": 1500.0
+      },
+      {
+        "id": "m-3252",
+        "mould": "GATTI",
+        "qty": 10.0,
+        "price": 250.0,
+        "total": 2500.0
+      },
+      {
+        "id": "m-3253",
+        "mould": "RAJA",
+        "qty": 30.0,
+        "price": 50.0,
+        "total": 1500.0
+      },
+      {
+        "id": "m-3254",
+        "mould": "SILICON",
+        "qty": 24.0,
+        "price": 125.0,
+        "total": 3000.0
+      },
+      {
+        "id": "m-3255",
+        "mould": "Fluted Jointer",
+        "qty": 220.0,
+        "price": 43.0,
+        "total": 9460.0
+      },
+      {
+        "id": "m-3256",
+        "mould": "Jointer",
+        "qty": 250.0,
+        "price": 35.0,
+        "total": 8750.0
       }
     ]
   },
@@ -23138,7 +24935,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 360.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23151,11 +24948,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-426",
-        "mould": "Standard Casting Lot #426",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-2803",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 72.0,
+        "total": 360.0
       }
     ]
   },
@@ -23167,7 +24964,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 53125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23201,11 +24998,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-425",
-        "mould": "Standard Casting Lot #425",
-        "qty": 4,
-        "price": 1450,
-        "total": 53125
+        "id": "m-2792",
+        "mould": "S.L",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2793",
+        "mould": "B.F.P",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2794",
+        "mould": "L.U",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2795",
+        "mould": "U.V",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2796",
+        "mould": "Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -23217,7 +25042,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5875,
+    "total": 7860.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23244,11 +25069,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-424",
-        "mould": "Standard Casting Lot #424",
-        "qty": 3,
-        "price": 1450,
-        "total": 5875
+        "id": "m-2775",
+        "mould": "S.L",
+        "qty": 27.0,
+        "price": 180.0,
+        "total": 4860.0
+      },
+      {
+        "id": "m-2776",
+        "mould": "PERAMETER",
+        "qty": 20.0,
+        "price": 90.0,
+        "total": 1800.0
+      },
+      {
+        "id": "m-2777",
+        "mould": "Jointer",
+        "qty": 15.0,
+        "price": 80.0,
+        "total": 1200.0
       }
     ]
   },
@@ -23260,7 +25099,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 115000,
+    "total": 179977.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23343,11 +25182,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-423",
-        "mould": "Standard Casting Lot #423",
-        "qty": 11,
-        "price": 1450,
-        "total": 115000
+        "id": "m-2797",
+        "mould": "C.M",
+        "qty": 440.0,
+        "price": 155.0,
+        "total": 68200.0
+      },
+      {
+        "id": "m-2798",
+        "mould": "B.F.P-(G)",
+        "qty": 120.0,
+        "price": 270.0,
+        "total": 32400.0
+      },
+      {
+        "id": "m-2799",
+        "mould": "B.F.P",
+        "qty": 110.0,
+        "price": 250.0,
+        "total": 27500.0
+      },
+      {
+        "id": "m-2800",
+        "mould": "Jointer",
+        "qty": 281.0,
+        "price": 27.0,
+        "total": 7587.0
+      },
+      {
+        "id": "m-2801",
+        "mould": "C.M (Digital)",
+        "qty": 250.0,
+        "price": 165.0,
+        "total": 41250.0
+      },
+      {
+        "id": "m-2802",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 38.0,
+        "total": 3040.0
       }
     ]
   },
@@ -23359,7 +25233,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 112500,
+    "total": 245200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23414,11 +25288,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-422",
-        "mould": "Standard Casting Lot #422",
-        "qty": 7,
-        "price": 1450,
-        "total": 112500
+        "id": "m-2753",
+        "mould": "B.F.P-(G)",
+        "qty": 400.0,
+        "price": 275.0,
+        "total": 110000.0
+      },
+      {
+        "id": "m-2754",
+        "mould": "F.P.G",
+        "qty": 200.0,
+        "price": 240.0,
+        "total": 48000.0
+      },
+      {
+        "id": "m-2755",
+        "mould": "F.P",
+        "qty": 200.0,
+        "price": 230.0,
+        "total": 46000.0
+      },
+      {
+        "id": "m-2756",
+        "mould": "Jointer",
+        "qty": 540.0,
+        "price": 30.0,
+        "total": 16200.0
+      },
+      {
+        "id": "m-2757",
+        "mould": "F.P.G (Digital)",
+        "qty": 100.0,
+        "price": 250.0,
+        "total": 25000.0
       }
     ]
   },
@@ -23430,7 +25332,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1000,
+    "total": 4200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23450,11 +25352,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-421",
-        "mould": "Standard Casting Lot #421",
-        "qty": 2,
-        "price": 1450,
-        "total": 1000
+        "id": "m-2784",
+        "mould": "B.F.P",
+        "qty": 8.0,
+        "price": 450.0,
+        "total": 3600.0
+      },
+      {
+        "id": "m-2785",
+        "mould": "Fluted Jointer",
+        "qty": 6.0,
+        "price": 100.0,
+        "total": 600.0
       }
     ]
   },
@@ -23466,7 +25375,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 35000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23549,11 +25458,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-420",
-        "mould": "Standard Casting Lot #420",
-        "qty": 11,
-        "price": 1450,
-        "total": 35000
+        "id": "m-2745",
+        "mould": "C.M",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2746",
+        "mould": "Jointer",
+        "qty": 540.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -23565,7 +25481,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 14125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23592,11 +25508,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-419",
-        "mould": "Standard Casting Lot #419",
-        "qty": 3,
-        "price": 1450,
-        "total": 14125
+        "id": "m-2739",
+        "mould": "C.M",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2740",
+        "mould": "S.L",
+        "qty": 53.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2741",
+        "mould": "PERAMETER",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2742",
+        "mould": "Jointer",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -23608,7 +25545,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 124375,
+    "total": 280930.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23810,11 +25747,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-418",
-        "mould": "Standard Casting Lot #418",
-        "qty": 28,
-        "price": 1450,
-        "total": 124375
+        "id": "m-2918",
+        "mould": "B.F.P-(G)",
+        "qty": 370.0,
+        "price": 290.0,
+        "total": 107300.0
+      },
+      {
+        "id": "m-2919",
+        "mould": "L.U",
+        "qty": 150.0,
+        "price": 250.0,
+        "total": 37500.0
+      },
+      {
+        "id": "m-2920",
+        "mould": "UVD",
+        "qty": 11.0,
+        "price": 1200.0,
+        "total": 13200.0
+      },
+      {
+        "id": "m-2921",
+        "mould": "S.L",
+        "qty": 60.0,
+        "price": 130.0,
+        "total": 7800.0
+      },
+      {
+        "id": "m-2922",
+        "mould": "PERAMETER",
+        "qty": 50.0,
+        "price": 75.0,
+        "total": 3750.0
+      },
+      {
+        "id": "m-2923",
+        "mould": "PETI-BOND",
+        "qty": 24.0,
+        "price": 130.0,
+        "total": 3120.0
+      },
+      {
+        "id": "m-2924",
+        "mould": "Fluted Jointer",
+        "qty": 135.0,
+        "price": 45.0,
+        "total": 6075.0
+      },
+      {
+        "id": "m-2925",
+        "mould": "Jointer",
+        "qty": 91.0,
+        "price": 35.0,
+        "total": 3185.0
+      },
+      {
+        "id": "m-2926",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 330.0,
+        "price": 300.0,
+        "total": 99000.0
       }
     ]
   },
@@ -23826,7 +25819,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 912500,
+    "total": 1924220.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -23986,11 +25979,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-417",
-        "mould": "Standard Casting Lot #417",
-        "qty": 22,
-        "price": 1450,
-        "total": 912500
+        "id": "m-2638",
+        "mould": "B.F.P-(G)",
+        "qty": 4800.0,
+        "price": 245.0,
+        "total": 1176000.0
+      },
+      {
+        "id": "m-2639",
+        "mould": "B.F.P",
+        "qty": 800.0,
+        "price": 220.0,
+        "total": 176000.0
+      },
+      {
+        "id": "m-2640",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 1700.0,
+        "price": 255.0,
+        "total": 433500.0
+      },
+      {
+        "id": "m-2641",
+        "mould": "Fluted Jointer",
+        "qty": 2940.0,
+        "price": 38.0,
+        "total": 111720.0
+      },
+      {
+        "id": "m-2642",
+        "mould": "Jointer",
+        "qty": 1000.0,
+        "price": 27.0,
+        "total": 27000.0
       }
     ]
   },
@@ -24002,7 +26023,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 12500,
+    "total": 27200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24022,11 +26043,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-416",
-        "mould": "Standard Casting Lot #416",
-        "qty": 2,
-        "price": 1450,
-        "total": 12500
+        "id": "m-2636",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 260.0,
+        "total": 26000.0
+      },
+      {
+        "id": "m-2637",
+        "mould": "Jointer",
+        "qty": 40.0,
+        "price": 30.0,
+        "total": 1200.0
       }
     ]
   },
@@ -24038,7 +26066,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 9375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24063,15 +26091,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-415",
-        "mould": "Standard Casting Lot #415",
-        "qty": 3,
-        "price": 1450,
-        "total": 9375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-414",
@@ -24081,7 +26101,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 23125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24099,15 +26119,7 @@ export const SQLITE_BILLS = [
         "lCap": 1.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-414",
-        "mould": "Standard Casting Lot #414",
-        "qty": 2,
-        "price": 1450,
-        "total": 23125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-413",
@@ -24117,7 +26129,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 113750,
+    "total": 142050.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24165,11 +26177,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-413",
-        "mould": "Standard Casting Lot #413",
-        "qty": 6,
-        "price": 1450,
-        "total": 113750
+        "id": "m-2630",
+        "mould": "C.M",
+        "qty": 550.0,
+        "price": 155.0,
+        "total": 85250.0
+      },
+      {
+        "id": "m-2631",
+        "mould": "H.O",
+        "qty": 200.0,
+        "price": 125.0,
+        "total": 25000.0
+      },
+      {
+        "id": "m-2632",
+        "mould": "S.L",
+        "qty": 160.0,
+        "price": 135.0,
+        "total": 21600.0
+      },
+      {
+        "id": "m-2633",
+        "mould": "Jointer",
+        "qty": 340.0,
+        "price": 30.0,
+        "total": 10200.0
       }
     ]
   },
@@ -24181,7 +26214,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 21000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24201,11 +26234,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-412",
-        "mould": "Standard Casting Lot #412",
-        "qty": 2,
-        "price": 1450,
-        "total": 21000
+        "id": "m-2626",
+        "mould": "B.F.P",
+        "qty": 62.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2627",
+        "mould": "C.M",
+        "qty": 106.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2628",
+        "mould": "Fluted Jointer",
+        "qty": 24.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2629",
+        "mould": "Jointer",
+        "qty": 52.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -24217,7 +26271,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24230,11 +26284,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-411",
-        "mould": "Standard Casting Lot #411",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
+        "id": "m-2625",
+        "mould": "S.L",
+        "qty": 1.0,
+        "price": 200.0,
+        "total": 200.0
       }
     ]
   },
@@ -24246,7 +26300,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 80.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24259,11 +26313,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-410",
-        "mould": "Standard Casting Lot #410",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-2623",
+        "mould": "Jointer",
+        "qty": 1.0,
+        "price": 80.0,
+        "total": 80.0
       }
     ]
   },
@@ -24275,7 +26329,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 1110.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24288,11 +26342,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-409",
-        "mould": "Standard Casting Lot #409",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
+        "id": "m-2622",
+        "mould": "C.M",
+        "qty": 6.0,
+        "price": 185.0,
+        "total": 1110.0
       }
     ]
   },
@@ -24304,7 +26358,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 172500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24464,11 +26518,60 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-408",
-        "mould": "Standard Casting Lot #408",
-        "qty": 22,
-        "price": 1450,
-        "total": 172500
+        "id": "m-2614",
+        "mould": "B.F.P",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2615",
+        "mould": "B.F.P-(G)",
+        "qty": 310.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2616",
+        "mould": "S.L",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2617",
+        "mould": "C.M",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2618",
+        "mould": "Fluted Jointer",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2619",
+        "mould": "Jointer",
+        "qty": 520.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2620",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 40.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2621",
+        "mould": "C.M (Digital)",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -24480,7 +26583,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2625,
+    "total": 13940.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24507,11 +26610,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-407",
-        "mould": "Standard Casting Lot #407",
-        "qty": 3,
-        "price": 1450,
-        "total": 2625
+        "id": "m-2602",
+        "mould": "UVD",
+        "qty": 1.0,
+        "price": 1800.0,
+        "total": 1800.0
+      },
+      {
+        "id": "m-2603",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 20.0,
+        "price": 390.0,
+        "total": 7800.0
+      },
+      {
+        "id": "m-2604",
+        "mould": "Fluted Jointer",
+        "qty": 50.0,
+        "price": 70.0,
+        "total": 3500.0
+      },
+      {
+        "id": "m-2605",
+        "mould": "Jointer",
+        "qty": 12.0,
+        "price": 70.0,
+        "total": 840.0
       }
     ]
   },
@@ -24541,15 +26665,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-406",
-        "mould": "Standard Casting Lot #406",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-405",
@@ -24559,7 +26675,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24591,15 +26707,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-405",
-        "mould": "Standard Casting Lot #405",
-        "qty": 4,
-        "price": 1450,
-        "total": 5750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-404",
@@ -24620,15 +26728,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-404",
-        "mould": "Standard Casting Lot #404",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-403",
@@ -24638,7 +26738,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24649,15 +26749,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-403",
-        "mould": "Standard Casting Lot #403",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-402",
@@ -24667,7 +26759,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24678,15 +26770,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-402",
-        "mould": "Standard Casting Lot #402",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-401",
@@ -24696,7 +26780,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "1766",
     "typeSelection": "Select Type",
-    "total": 140000,
+    "total": 203410.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24779,11 +26863,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-401",
-        "mould": "Standard Casting Lot #401",
-        "qty": 11,
-        "price": 1450,
-        "total": 140000
+        "id": "m-2592",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 230.0,
+        "total": 46000.0
+      },
+      {
+        "id": "m-2593",
+        "mould": "C.M",
+        "qty": 700.0,
+        "price": 152.5,
+        "total": 106750.0
+      },
+      {
+        "id": "m-2594",
+        "mould": "S.L",
+        "qty": 100.0,
+        "price": 135.0,
+        "total": 13500.0
+      },
+      {
+        "id": "m-2595",
+        "mould": "T.G",
+        "qty": 120.0,
+        "price": 135.0,
+        "total": 16200.0
+      },
+      {
+        "id": "m-2596",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 40.0,
+        "total": 6400.0
+      },
+      {
+        "id": "m-2597",
+        "mould": "Jointer",
+        "qty": 520.0,
+        "price": 28.0,
+        "total": 14560.0
       }
     ]
   },
@@ -24795,7 +26914,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24827,15 +26946,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-400",
-        "mould": "Standard Casting Lot #400",
-        "qty": 4,
-        "price": 1450,
-        "total": 2125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-399",
@@ -24845,7 +26956,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24856,15 +26967,7 @@ export const SQLITE_BILLS = [
         "lCap": 1.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-399",
-        "mould": "Standard Casting Lot #399",
-        "qty": 1,
-        "price": 1450,
-        "total": 2500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-398",
@@ -24874,7 +26977,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 7500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24892,15 +26995,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-398",
-        "mould": "Standard Casting Lot #398",
-        "qty": 2,
-        "price": 1450,
-        "total": 7500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-397",
@@ -24910,7 +27005,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24928,15 +27023,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-397",
-        "mould": "Standard Casting Lot #397",
-        "qty": 2,
-        "price": 1450,
-        "total": 4750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-396",
@@ -24946,7 +27033,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -24992,15 +27079,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-396",
-        "mould": "Standard Casting Lot #396",
-        "qty": 6,
-        "price": 1450,
-        "total": 18625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-395",
@@ -25010,7 +27089,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 40125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25070,15 +27149,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-395",
-        "mould": "Standard Casting Lot #395",
-        "qty": 8,
-        "price": 1450,
-        "total": 40125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-394",
@@ -25088,7 +27159,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25099,15 +27170,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-394",
-        "mould": "Standard Casting Lot #394",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-393",
@@ -25117,7 +27180,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 462500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25228,11 +27291,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-393",
-        "mould": "Standard Casting Lot #393",
-        "qty": 15,
-        "price": 1450,
-        "total": 462500
+        "id": "m-2545",
+        "mould": "C.M",
+        "qty": 1900.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2546",
+        "mould": "T.G",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2547",
+        "mould": "C.M (Digital)",
+        "qty": 1700.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2548",
+        "mould": "Jointer",
+        "qty": 1800.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -25244,7 +27328,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 193750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25376,11 +27460,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-392",
-        "mould": "Standard Casting Lot #392",
-        "qty": 18,
-        "price": 1450,
-        "total": 193750
+        "id": "m-2563",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2564",
+        "mould": "S.L",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2565",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2566",
+        "mould": "B.F.P",
+        "qty": 460.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2567",
+        "mould": "B.F.P-(G)",
+        "qty": 260.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2568",
+        "mould": "UVD",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2569",
+        "mould": "Jointer",
+        "qty": 1960.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -25392,7 +27518,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 610125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25461,11 +27587,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-391",
-        "mould": "Standard Casting Lot #391",
-        "qty": 9,
-        "price": 1450,
-        "total": 610125
+        "id": "m-2574",
+        "mould": "T.G",
+        "qty": 1485.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2575",
+        "mould": "H.O",
+        "qty": 2588.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2576",
+        "mould": "Jointer",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2577",
+        "mould": "T.G (Digital)",
+        "qty": 808.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -25477,7 +27624,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25488,15 +27635,7 @@ export const SQLITE_BILLS = [
         "lCap": 25.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-390",
-        "mould": "Standard Casting Lot #390",
-        "qty": 1,
-        "price": 1450,
-        "total": 10500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-389",
@@ -25506,7 +27645,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1625,
+    "total": 3620.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25526,11 +27665,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-389",
-        "mould": "Standard Casting Lot #389",
-        "qty": 2,
-        "price": 1450,
-        "total": 1625
+        "id": "m-2488",
+        "mould": "S.L",
+        "qty": 10.0,
+        "price": 170.0,
+        "total": 1700.0
+      },
+      {
+        "id": "m-2489",
+        "mould": "B.F.P-(G)",
+        "qty": 3.0,
+        "price": 350.0,
+        "total": 1050.0
+      },
+      {
+        "id": "m-2490",
+        "mould": "Jointer",
+        "qty": 3.0,
+        "price": 50.0,
+        "total": 150.0
+      },
+      {
+        "id": "m-2491",
+        "mould": "Fluted Jointer",
+        "qty": 12.0,
+        "price": 60.0,
+        "total": 720.0
       }
     ]
   },
@@ -25542,7 +27702,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25553,15 +27713,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-388",
-        "mould": "Standard Casting Lot #388",
-        "qty": 1,
-        "price": 1450,
-        "total": 6250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-387",
@@ -25571,7 +27723,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1375,
+    "total": 2530.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25591,11 +27743,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-387",
-        "mould": "Standard Casting Lot #387",
-        "qty": 2,
-        "price": 1450,
-        "total": 1375
+        "id": "m-2469",
+        "mould": "TG",
+        "qty": 6.0,
+        "price": 180.0,
+        "total": 1080.0
+      },
+      {
+        "id": "m-2470",
+        "mould": "TG",
+        "qty": 5.0,
+        "price": 200.0,
+        "total": 1000.0
+      },
+      {
+        "id": "m-2471",
+        "mould": "U",
+        "qty": 9.0,
+        "price": 50.0,
+        "total": 450.0
       }
     ]
   },
@@ -25607,7 +27773,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 612500,
+    "total": 890040.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -25837,11 +28003,60 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-386",
-        "mould": "Standard Casting Lot #386",
-        "qty": 32,
-        "price": 1450,
-        "total": 612500
+        "id": "m-2472",
+        "mould": "C.M",
+        "qty": 1200.0,
+        "price": 150.0,
+        "total": 180000.0
+      },
+      {
+        "id": "m-2473",
+        "mould": "B.F.P-(G)",
+        "qty": 900.0,
+        "price": 250.0,
+        "total": 225000.0
+      },
+      {
+        "id": "m-2474",
+        "mould": "H.O",
+        "qty": 800.0,
+        "price": 120.0,
+        "total": 96000.0
+      },
+      {
+        "id": "m-2475",
+        "mould": "S.L",
+        "qty": 1000.0,
+        "price": 130.0,
+        "total": 130000.0
+      },
+      {
+        "id": "m-2476",
+        "mould": "Jointer",
+        "qty": 2160.0,
+        "price": 27.0,
+        "total": 58320.0
+      },
+      {
+        "id": "m-2477",
+        "mould": "C.M (Digital)",
+        "qty": 800.0,
+        "price": 160.0,
+        "total": 128000.0
+      },
+      {
+        "id": "m-2478",
+        "mould": "Fluted Jointer",
+        "qty": 560.0,
+        "price": 37.0,
+        "total": 20720.0
+      },
+      {
+        "id": "m-2479",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 200.0,
+        "price": 260.0,
+        "total": 52000.0
       }
     ]
   },
@@ -25864,15 +28079,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-385",
-        "mould": "Standard Casting Lot #385",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-384",
@@ -25882,7 +28089,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "3",
     "typeSelection": "3",
-    "total": 147500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26042,11 +28249,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-384",
-        "mould": "Standard Casting Lot #384",
-        "qty": 22,
-        "price": 1450,
-        "total": 147500
+        "id": "m-2441",
+        "mould": "C.M",
+        "qty": 910.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2442",
+        "mould": "S.L",
+        "qty": 180.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2443",
+        "mould": "B.F.P",
+        "qty": 90.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2444",
+        "mould": "Jointer",
+        "qty": 1100.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -26058,7 +28286,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 1330.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26071,11 +28299,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-383",
-        "mould": "Standard Casting Lot #383",
-        "qty": 1,
-        "price": 1450,
-        "total": 500
+        "id": "m-2435",
+        "mould": "B.F.P",
+        "qty": 4.0,
+        "price": 320.0,
+        "total": 1280.0
+      },
+      {
+        "id": "m-2436",
+        "mould": "Jointer",
+        "qty": 1.0,
+        "price": 50.0,
+        "total": 50.0
       }
     ]
   },
@@ -26087,7 +28322,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1124625,
+    "total": 1501075.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26310,11 +28545,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-382",
-        "mould": "Standard Casting Lot #382",
-        "qty": 31,
-        "price": 1450,
-        "total": 1124625
+        "id": "m-2556",
+        "mould": "C.M",
+        "qty": 1850.0,
+        "price": 155.0,
+        "total": 286750.0
+      },
+      {
+        "id": "m-2557",
+        "mould": "T.G",
+        "qty": 5074.0,
+        "price": 135.0,
+        "total": 684990.0
+      },
+      {
+        "id": "m-2558",
+        "mould": "H.O",
+        "qty": 500.0,
+        "price": 125.0,
+        "total": 62500.0
+      },
+      {
+        "id": "m-2559",
+        "mould": "L.A",
+        "qty": 150.0,
+        "price": 230.0,
+        "total": 34500.0
+      },
+      {
+        "id": "m-2560",
+        "mould": "C.M (Digital)",
+        "qty": 380.0,
+        "price": 165.0,
+        "total": 62700.0
+      },
+      {
+        "id": "m-2561",
+        "mould": "Jointer",
+        "qty": 8400.0,
+        "price": 26.0,
+        "total": 218400.0
+      },
+      {
+        "id": "m-2562",
+        "mould": "T.G (Digital)",
+        "qty": 1043.0,
+        "price": 145.0,
+        "total": 151235.0
       }
     ]
   },
@@ -26409,10 +28686,17 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-381",
-        "mould": "Standard Casting Lot #381",
-        "qty": 11,
-        "price": 1450,
+        "id": "m-2403",
+        "mould": "Jointer",
+        "qty": 1720.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2404",
+        "mould": "Fluted Jointer",
+        "qty": 400.0,
+        "price": 0,
         "total": 0
       }
     ]
@@ -26425,7 +28709,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26443,15 +28727,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-380",
-        "mould": "Standard Casting Lot #380",
-        "qty": 2,
-        "price": 1450,
-        "total": 5250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-379",
@@ -26461,7 +28737,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 229500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26593,11 +28869,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-379",
-        "mould": "Standard Casting Lot #379",
-        "qty": 18,
-        "price": 1450,
-        "total": 229500
+        "id": "m-2390",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2391",
+        "mould": "B.F.P",
+        "qty": 615.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2392",
+        "mould": "U.V",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2393",
+        "mould": "C.M (Digital)",
+        "qty": 650.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2394",
+        "mould": "Jointer",
+        "qty": 760.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2395",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2396",
+        "mould": "S.L (Digital)",
+        "qty": 361.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -26609,7 +28927,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 93750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26685,11 +29003,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-378",
-        "mould": "Standard Casting Lot #378",
-        "qty": 10,
-        "price": 1450,
-        "total": 93750
+        "id": "m-2368",
+        "mould": "T.G",
+        "qty": 160.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2369",
+        "mould": "C.M",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2370",
+        "mould": "S.L",
+        "qty": 210.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2371",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -26701,7 +29040,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26756,11 +29095,60 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-377",
-        "mould": "Standard Casting Lot #377",
-        "qty": 7,
-        "price": 1450,
-        "total": 4875
+        "id": "m-2379",
+        "mould": "UVD",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2380",
+        "mould": "L.U",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2381",
+        "mould": "SILICON",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2382",
+        "mould": "ELFY",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2383",
+        "mould": "GOLDEN-TAPE",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2384",
+        "mould": "CLIP",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2385",
+        "mould": "BATTEN",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2386",
+        "mould": "Jointer",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -26772,7 +29160,7 @@ export const SQLITE_BILLS = [
     "docType": "ORDER",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18125,
+    "total": 26200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26785,11 +29173,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-376",
-        "mould": "Standard Casting Lot #376",
-        "qty": 1,
-        "price": 1450,
-        "total": 18125
+        "id": "m-2343",
+        "mould": "S.L",
+        "qty": 145.0,
+        "price": 160.0,
+        "total": 23200.0
+      },
+      {
+        "id": "m-2344",
+        "mould": "Jointer",
+        "qty": 60.0,
+        "price": 50.0,
+        "total": 3000.0
       }
     ]
   },
@@ -26801,7 +29196,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 750.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26814,11 +29209,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-375",
-        "mould": "Standard Casting Lot #375",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-2342",
+        "mould": "Jointer",
+        "qty": 15.0,
+        "price": 50.0,
+        "total": 750.0
       }
     ]
   },
@@ -26830,7 +29225,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10000,
+    "total": 16400.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26843,11 +29238,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-374",
-        "mould": "Standard Casting Lot #374",
-        "qty": 1,
-        "price": 1450,
-        "total": 10000
+        "id": "m-2321",
+        "mould": "C.M",
+        "qty": 80.0,
+        "price": 170.0,
+        "total": 13600.0
+      },
+      {
+        "id": "m-2322",
+        "mould": "Jointer",
+        "qty": 80.0,
+        "price": 35.0,
+        "total": 2800.0
       }
     ]
   },
@@ -26859,7 +29261,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 625,
+    "total": 1285.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -26879,11 +29281,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-373",
-        "mould": "Standard Casting Lot #373",
-        "qty": 2,
-        "price": 1450,
-        "total": 625
+        "id": "m-2313",
+        "mould": "C.M",
+        "qty": 5.0,
+        "price": 185.0,
+        "total": 925.0
+      },
+      {
+        "id": "m-2314",
+        "mould": "Jointer",
+        "qty": 8.0,
+        "price": 45.0,
+        "total": 360.0
       }
     ]
   },
@@ -26895,7 +29304,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 70500,
+    "total": 90525.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27006,11 +29415,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-372",
-        "mould": "Standard Casting Lot #372",
-        "qty": 15,
-        "price": 1450,
-        "total": 70500
+        "id": "m-2323",
+        "mould": "C.M",
+        "qty": 250.0,
+        "price": 160.0,
+        "total": 40000.0
+      },
+      {
+        "id": "m-2324",
+        "mould": "H.O",
+        "qty": 50.0,
+        "price": 130.0,
+        "total": 6500.0
+      },
+      {
+        "id": "m-2325",
+        "mould": "S.L",
+        "qty": 70.0,
+        "price": 135.0,
+        "total": 9450.0
+      },
+      {
+        "id": "m-2326",
+        "mould": "T.G",
+        "qty": 70.0,
+        "price": 140.0,
+        "total": 9800.0
+      },
+      {
+        "id": "m-2327",
+        "mould": "B.F.P",
+        "qty": 20.0,
+        "price": 280.0,
+        "total": 5600.0
+      },
+      {
+        "id": "m-2328",
+        "mould": "PERAMETER",
+        "qty": 100.0,
+        "price": 75.0,
+        "total": 7500.0
+      },
+      {
+        "id": "m-2329",
+        "mould": "UVD",
+        "qty": 4.0,
+        "price": 1250.0,
+        "total": 5000.0
+      },
+      {
+        "id": "m-2330",
+        "mould": "Jointer",
+        "qty": 165.0,
+        "price": 35.0,
+        "total": 5775.0
+      },
+      {
+        "id": "m-2331",
+        "mould": "Fluted Jointer",
+        "qty": 20.0,
+        "price": 45.0,
+        "total": 900.0
       }
     ]
   },
@@ -27022,7 +29487,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 582875,
+    "total": 1192015.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27084,11 +29549,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-371",
-        "mould": "Standard Casting Lot #371",
-        "qty": 8,
-        "price": 1450,
-        "total": 582875
+        "id": "m-2414",
+        "mould": "S.P",
+        "qty": 4112.0,
+        "price": 245.0,
+        "total": 1007440.0
+      },
+      {
+        "id": "m-2415",
+        "mould": "Fluted Jointer",
+        "qty": 1340.0,
+        "price": 37.0,
+        "total": 49580.0
+      },
+      {
+        "id": "m-2416",
+        "mould": "S.P (Digital)",
+        "qty": 551.0,
+        "price": 245.0,
+        "total": 134995.0
       }
     ]
   },
@@ -27100,7 +29579,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27111,15 +29590,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-370",
-        "mould": "Standard Casting Lot #370",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-369",
@@ -27129,7 +29600,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 9250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27161,15 +29632,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-369",
-        "mould": "Standard Casting Lot #369",
-        "qty": 4,
-        "price": 1450,
-        "total": 9250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-368",
@@ -27179,7 +29642,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 193125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27220,11 +29683,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-368",
-        "mould": "Standard Casting Lot #368",
-        "qty": 5,
-        "price": 1450,
-        "total": 193125
+        "id": "m-2265",
+        "mould": "C.M",
+        "qty": 1545.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2266",
+        "mould": "Jointer",
+        "qty": 640.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -27236,7 +29706,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 710.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27249,11 +29719,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-367",
-        "mould": "Standard Casting Lot #367",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-2261",
+        "mould": "L.U",
+        "qty": 2.0,
+        "price": 300.0,
+        "total": 600.0
+      },
+      {
+        "id": "m-2262",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 55.0,
+        "total": 110.0
       }
     ]
   },
@@ -27265,7 +29742,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27283,15 +29760,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-366",
-        "mould": "Standard Casting Lot #366",
-        "qty": 2,
-        "price": 1450,
-        "total": 4000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-365",
@@ -27301,7 +29770,7 @@ export const SQLITE_BILLS = [
     "docType": "ORDER",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 68625,
+    "total": 104220.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27412,11 +29881,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-365",
-        "mould": "Standard Casting Lot #365",
-        "qty": 15,
-        "price": 1450,
-        "total": 68625
+        "id": "m-2267",
+        "mould": "C.M",
+        "qty": 330.0,
+        "price": 160.0,
+        "total": 52800.0
+      },
+      {
+        "id": "m-2268",
+        "mould": "S.L",
+        "qty": 109.0,
+        "price": 130.0,
+        "total": 14170.0
+      },
+      {
+        "id": "m-2269",
+        "mould": "H.O",
+        "qty": 40.0,
+        "price": 125.0,
+        "total": 5000.0
+      },
+      {
+        "id": "m-2270",
+        "mould": "B.F.P-(G)",
+        "qty": 70.0,
+        "price": 275.0,
+        "total": 19250.0
+      },
+      {
+        "id": "m-2271",
+        "mould": "Jointer",
+        "qty": 220.0,
+        "price": 28.0,
+        "total": 6160.0
+      },
+      {
+        "id": "m-2272",
+        "mould": "Fluted Jointer",
+        "qty": 180.0,
+        "price": 38.0,
+        "total": 6840.0
       }
     ]
   },
@@ -27428,7 +29932,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1500,
+    "total": 3320.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27455,11 +29959,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-364",
-        "mould": "Standard Casting Lot #364",
-        "qty": 3,
-        "price": 1450,
-        "total": 1500
+        "id": "m-2221",
+        "mould": "S.L",
+        "qty": 12.0,
+        "price": 180.0,
+        "total": 2160.0
+      },
+      {
+        "id": "m-2222",
+        "mould": "Jointer",
+        "qty": 10.0,
+        "price": 60.0,
+        "total": 600.0
+      },
+      {
+        "id": "m-2223",
+        "mould": "Fluted Jointer",
+        "qty": 8.0,
+        "price": 70.0,
+        "total": 560.0
       }
     ]
   },
@@ -27471,7 +29989,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 5740.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27491,11 +30009,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-363",
-        "mould": "Standard Casting Lot #363",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
+        "id": "m-2219",
+        "mould": "Fluted Jointer",
+        "qty": 60.0,
+        "price": 70.0,
+        "total": 4200.0
+      },
+      {
+        "id": "m-2220",
+        "mould": "Jointer",
+        "qty": 22.0,
+        "price": 70.0,
+        "total": 1540.0
       }
     ]
   },
@@ -27507,7 +30032,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27518,15 +30043,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-362",
-        "mould": "Standard Casting Lot #362",
-        "qty": 1,
-        "price": 1450,
-        "total": 10000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-361",
@@ -27536,7 +30053,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27554,15 +30071,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-361",
-        "mould": "Standard Casting Lot #361",
-        "qty": 2,
-        "price": 1450,
-        "total": 875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-360",
@@ -27572,7 +30081,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 152500,
+    "total": 224145.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27676,11 +30185,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-360",
-        "mould": "Standard Casting Lot #360",
-        "qty": 14,
-        "price": 1450,
-        "total": 152500
+        "id": "m-2234",
+        "mould": "C.M",
+        "qty": 700.0,
+        "price": 155.0,
+        "total": 108500.0
+      },
+      {
+        "id": "m-2235",
+        "mould": "C.M (Digital)",
+        "qty": 160.0,
+        "price": 165.0,
+        "total": 26400.0
+      },
+      {
+        "id": "m-2236",
+        "mould": "H.O",
+        "qty": 120.0,
+        "price": 120.0,
+        "total": 14400.0
+      },
+      {
+        "id": "m-2237",
+        "mould": "B.F.P",
+        "qty": 180.0,
+        "price": 250.0,
+        "total": 45000.0
+      },
+      {
+        "id": "m-2238",
+        "mould": "B.F.P (Digital)",
+        "qty": 60.0,
+        "price": 260.0,
+        "total": 15600.0
+      },
+      {
+        "id": "m-2239",
+        "mould": "Jointer",
+        "qty": 415.0,
+        "price": 27.0,
+        "total": 11205.0
+      },
+      {
+        "id": "m-2240",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 38.0,
+        "total": 3040.0
       }
     ]
   },
@@ -27692,7 +30243,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 158125,
+    "total": 269880.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27803,11 +30354,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-359",
-        "mould": "Standard Casting Lot #359",
-        "qty": 15,
-        "price": 1450,
-        "total": 158125
+        "id": "m-2291",
+        "mould": "H.O",
+        "qty": 300.0,
+        "price": 120.0,
+        "total": 36000.0
+      },
+      {
+        "id": "m-2292",
+        "mould": "S.L",
+        "qty": 200.0,
+        "price": 125.0,
+        "total": 25000.0
+      },
+      {
+        "id": "m-2293",
+        "mould": "C.M",
+        "qty": 300.0,
+        "price": 155.0,
+        "total": 46500.0
+      },
+      {
+        "id": "m-2294",
+        "mould": "B.F.P-(G)",
+        "qty": 360.0,
+        "price": 270.0,
+        "total": 97200.0
+      },
+      {
+        "id": "m-2295",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 80.0,
+        "price": 280.0,
+        "total": 22400.0
+      },
+      {
+        "id": "m-2296",
+        "mould": "U.V",
+        "qty": 8.0,
+        "price": 980.0,
+        "total": 7840.0
+      },
+      {
+        "id": "m-2297",
+        "mould": "UVD",
+        "qty": 17.0,
+        "price": 1100.0,
+        "total": 18700.0
+      },
+      {
+        "id": "m-2298",
+        "mould": "Jointer",
+        "qty": 320.0,
+        "price": 27.0,
+        "total": 8640.0
+      },
+      {
+        "id": "m-2299",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 38.0,
+        "total": 7600.0
       }
     ]
   },
@@ -27830,15 +30437,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-358",
-        "mould": "Standard Casting Lot #358",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-357",
@@ -27848,7 +30447,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 65000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -27938,11 +30537,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-357",
-        "mould": "Standard Casting Lot #357",
-        "qty": 12,
-        "price": 1450,
-        "total": 65000
+        "id": "m-2166",
+        "mould": "S.L",
+        "qty": 270.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2167",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2168",
+        "mould": "L.U",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2169",
+        "mould": "Jointer",
+        "qty": 490.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2170",
+        "mould": "Fluted Jointer",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -27954,7 +30581,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 156250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28037,11 +30664,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-356",
-        "mould": "Standard Casting Lot #356",
-        "qty": 11,
-        "price": 1450,
-        "total": 156250
+        "id": "m-2146",
+        "mould": "S.L",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2147",
+        "mould": "C.M",
+        "qty": 750.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2148",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2149",
+        "mould": "Jointer",
+        "qty": 480.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2150",
+        "mould": "Fluted Jointer",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -28053,7 +30708,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28071,15 +30726,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-355",
-        "mould": "Standard Casting Lot #355",
-        "qty": 2,
-        "price": 1450,
-        "total": 6375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-354",
@@ -28089,7 +30736,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28100,15 +30747,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-354",
-        "mould": "Standard Casting Lot #354",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-353",
@@ -28118,7 +30757,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 8125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28145,11 +30784,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-353",
-        "mould": "Standard Casting Lot #353",
-        "qty": 3,
-        "price": 1450,
-        "total": 8125
+        "id": "m-2142",
+        "mould": "H.O",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2143",
+        "mould": "B.F.P",
+        "qty": 45.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2144",
+        "mould": "Jointer",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2145",
+        "mould": "Fluted Jointer",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -28161,7 +30821,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 900.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28188,11 +30848,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-352",
-        "mould": "Standard Casting Lot #352",
-        "qty": 3,
-        "price": 1450,
-        "total": 500
+        "id": "m-2139",
+        "mould": "S.L",
+        "qty": 2.0,
+        "price": 160.0,
+        "total": 320.0
+      },
+      {
+        "id": "m-2140",
+        "mould": "C.M",
+        "qty": 2.0,
+        "price": 190.0,
+        "total": 380.0
+      },
+      {
+        "id": "m-2141",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 50.0,
+        "total": 200.0
       }
     ]
   },
@@ -28204,7 +30878,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 518750,
+    "total": 1148581.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28343,11 +31017,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-351",
-        "mould": "Standard Casting Lot #351",
-        "qty": 19,
-        "price": 1450,
-        "total": 518750
+        "id": "m-2200",
+        "mould": "S.P",
+        "qty": 500.0,
+        "price": 250.0,
+        "total": 125000.0
+      },
+      {
+        "id": "m-2201",
+        "mould": "S.P (Digital)",
+        "qty": 2300.0,
+        "price": 260.0,
+        "total": 598000.0
+      },
+      {
+        "id": "m-2202",
+        "mould": "B.F.P",
+        "qty": 400.0,
+        "price": 240.0,
+        "total": 96000.0
+      },
+      {
+        "id": "m-2203",
+        "mould": "C.M",
+        "qty": 950.0,
+        "price": 155.0,
+        "total": 147250.0
+      },
+      {
+        "id": "m-2204",
+        "mould": "Fluted Jointer",
+        "qty": 1800.0,
+        "price": 36.0,
+        "total": 64800.0
+      },
+      {
+        "id": "m-2205",
+        "mould": "Jointer",
+        "qty": 4353.0,
+        "price": 27.0,
+        "total": 117531.0
       }
     ]
   },
@@ -28359,7 +31068,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28372,11 +31081,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-350",
-        "mould": "Standard Casting Lot #350",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-2123",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 50.0,
+        "total": 200.0
       }
     ]
   },
@@ -28399,15 +31108,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-349",
-        "mould": "Standard Casting Lot #349",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-348",
@@ -28417,7 +31118,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28428,15 +31129,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-348",
-        "mould": "Standard Casting Lot #348",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-347",
@@ -28446,7 +31139,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 12625,
+    "total": 22620.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28473,11 +31166,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-347",
-        "mould": "Standard Casting Lot #347",
-        "qty": 3,
-        "price": 1450,
-        "total": 12625
+        "id": "m-2118",
+        "mould": "C.M",
+        "qty": 90.0,
+        "price": 220.0,
+        "total": 19800.0
+      },
+      {
+        "id": "m-2119",
+        "mould": "PERAMETER",
+        "qty": 6.0,
+        "price": 100.0,
+        "total": 600.0
+      },
+      {
+        "id": "m-2120",
+        "mould": "ELFY",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
+      },
+      {
+        "id": "m-2121",
+        "mould": "Jointer",
+        "qty": 24.0,
+        "price": 80.0,
+        "total": 1920.0
       }
     ]
   },
@@ -28489,7 +31203,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 625,
+    "total": 1270.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28502,11 +31216,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-346",
-        "mould": "Standard Casting Lot #346",
-        "qty": 1,
-        "price": 1450,
-        "total": 625
+        "id": "m-2116",
+        "mould": "C.M",
+        "qty": 5.0,
+        "price": 210.0,
+        "total": 1050.0
+      },
+      {
+        "id": "m-2117",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 55.0,
+        "total": 220.0
       }
     ]
   },
@@ -28518,7 +31239,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 22250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28566,11 +31287,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-345",
-        "mould": "Standard Casting Lot #345",
-        "qty": 6,
-        "price": 1450,
-        "total": 22250
+        "id": "m-2089",
+        "mould": "B.F.P",
+        "qty": 38.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2090",
+        "mould": "S.L",
+        "qty": 19.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2091",
+        "mould": "C.M",
+        "qty": 121.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2092",
+        "mould": "Fluted Jointer",
+        "qty": 35.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2093",
+        "mould": "Jointer",
+        "qty": 55.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -28582,7 +31331,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28593,15 +31342,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-344",
-        "mould": "Standard Casting Lot #344",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-343",
@@ -28611,7 +31352,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 281625,
+    "total": 595600.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -28792,11 +31533,81 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-343",
-        "mould": "Standard Casting Lot #343",
-        "qty": 25,
-        "price": 1450,
-        "total": 281625
+        "id": "m-2105",
+        "mould": "H.O",
+        "qty": 250.0,
+        "price": 130.0,
+        "total": 32500.0
+      },
+      {
+        "id": "m-2106",
+        "mould": "S.L",
+        "qty": 100.0,
+        "price": 140.0,
+        "total": 14000.0
+      },
+      {
+        "id": "m-2107",
+        "mould": "C.M",
+        "qty": 650.0,
+        "price": 160.0,
+        "total": 104000.0
+      },
+      {
+        "id": "m-2108",
+        "mould": "B.F.P",
+        "qty": 328.0,
+        "price": 250.0,
+        "total": 82000.0
+      },
+      {
+        "id": "m-2109",
+        "mould": "B.F.P-(G)",
+        "qty": 635.0,
+        "price": 280.0,
+        "total": 177800.0
+      },
+      {
+        "id": "m-2110",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 150.0,
+        "price": 290.0,
+        "total": 43500.0
+      },
+      {
+        "id": "m-2111",
+        "mould": "L.U",
+        "qty": 100.0,
+        "price": 250.0,
+        "total": 25000.0
+      },
+      {
+        "id": "m-2112",
+        "mould": "U.V",
+        "qty": 20.0,
+        "price": 1000.0,
+        "total": 20000.0
+      },
+      {
+        "id": "m-2113",
+        "mould": "UVD",
+        "qty": 20.0,
+        "price": 1250.0,
+        "total": 25000.0
+      },
+      {
+        "id": "m-2114",
+        "mould": "Jointer",
+        "qty": 1780.0,
+        "price": 30.0,
+        "total": 53400.0
+      },
+      {
+        "id": "m-2115",
+        "mould": "Fluted Jointer",
+        "qty": 460.0,
+        "price": 40.0,
+        "total": 18400.0
       }
     ]
   },
@@ -28808,7 +31619,7 @@ export const SQLITE_BILLS = [
     "docType": "ORDER",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 679625,
+    "total": 1234980.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29031,11 +31842,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-342",
-        "mould": "Standard Casting Lot #342",
-        "qty": 31,
-        "price": 1450,
-        "total": 679625
+        "id": "m-3108",
+        "mould": "C.M",
+        "qty": 1590.0,
+        "price": 150.0,
+        "total": 238500.0
+      },
+      {
+        "id": "m-3109",
+        "mould": "F.P.G",
+        "qty": 728.0,
+        "price": 230.0,
+        "total": 167440.0
+      },
+      {
+        "id": "m-3110",
+        "mould": "S.P",
+        "qty": 1663.0,
+        "price": 245.0,
+        "total": 407435.0
+      },
+      {
+        "id": "m-3111",
+        "mould": "C.M (Digital)",
+        "qty": 210.0,
+        "price": 155.0,
+        "total": 32550.0
+      },
+      {
+        "id": "m-3112",
+        "mould": "Jointer",
+        "qty": 1640.0,
+        "price": 26.0,
+        "total": 42640.0
+      },
+      {
+        "id": "m-3113",
+        "mould": "F.P.G (Digital)",
+        "qty": 579.0,
+        "price": 240.0,
+        "total": 138960.0
+      },
+      {
+        "id": "m-3114",
+        "mould": "F.P.G (Digital)(Golden)",
+        "qty": 138.0,
+        "price": 280.0,
+        "total": 38640.0
+      },
+      {
+        "id": "m-3115",
+        "mould": "Fluted Jointer",
+        "qty": 880.0,
+        "price": 34.0,
+        "total": 29920.0
+      },
+      {
+        "id": "m-3116",
+        "mould": "Fluted Jointer (Golden)",
+        "qty": 80.0,
+        "price": 50.0,
+        "total": 4000.0
+      },
+      {
+        "id": "m-3117",
+        "mould": "S.P (Digital)",
+        "qty": 529.0,
+        "price": 255.0,
+        "total": 134895.0
       }
     ]
   },
@@ -29047,7 +31921,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 162500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29137,11 +32011,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-341",
-        "mould": "Standard Casting Lot #341",
-        "qty": 12,
-        "price": 1450,
-        "total": 162500
+        "id": "m-2039",
+        "mould": "H.O",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2040",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2041",
+        "mould": "S.L",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2042",
+        "mould": "Jointer",
+        "qty": 720.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2043",
+        "mould": "Fluted Jointer",
+        "qty": 40.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -29153,7 +32055,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 20000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29192,15 +32094,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-340",
-        "mould": "Standard Casting Lot #340",
-        "qty": 5,
-        "price": 1450,
-        "total": 20000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-339",
@@ -29210,7 +32104,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 203750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29265,11 +32159,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-339",
-        "mould": "Standard Casting Lot #339",
-        "qty": 7,
-        "price": 1450,
-        "total": 203750
+        "id": "m-2037",
+        "mould": "C.M",
+        "qty": 1630.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2038",
+        "mould": "Jointer",
+        "qty": 560.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -29281,7 +32182,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29301,11 +32202,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-338",
-        "mould": "Standard Casting Lot #338",
-        "qty": 2,
-        "price": 1450,
-        "total": 6750
+        "id": "m-2035",
+        "mould": "C.M",
+        "qty": 54.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2036",
+        "mould": "Jointer",
+        "qty": 32.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -29317,7 +32225,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29328,15 +32236,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-337",
-        "mould": "Standard Casting Lot #337",
-        "qty": 1,
-        "price": 1450,
-        "total": 3500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-336",
@@ -29346,7 +32246,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 128750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29443,11 +32343,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-336",
-        "mould": "Standard Casting Lot #336",
-        "qty": 13,
-        "price": 1450,
-        "total": 128750
+        "id": "m-1964",
+        "mould": "B.F.P-(G)",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1965",
+        "mould": "B.F.P",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1966",
+        "mould": "L.U",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1967",
+        "mould": "Fluted Jointer",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1968",
+        "mould": "Jointer",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -29459,7 +32387,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 740.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29472,11 +32400,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-335",
-        "mould": "Standard Casting Lot #335",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
+        "id": "m-1962",
+        "mould": "C.M",
+        "qty": 3.0,
+        "price": 210.0,
+        "total": 630.0
+      },
+      {
+        "id": "m-1963",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 55.0,
+        "total": 110.0
       }
     ]
   },
@@ -29488,7 +32423,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1000.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29515,11 +32450,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-334",
-        "mould": "Standard Casting Lot #334",
-        "qty": 3,
-        "price": 1450,
-        "total": 0
+        "id": "m-1961",
+        "mould": "Jointer",
+        "qty": 20.0,
+        "price": 50.0,
+        "total": 1000.0
       }
     ]
   },
@@ -29531,7 +32466,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 650.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29544,11 +32479,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-333",
-        "mould": "Standard Casting Lot #333",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
+        "id": "m-1959",
+        "mould": "B.F.P",
+        "qty": 1.0,
+        "price": 350.0,
+        "total": 350.0
+      },
+      {
+        "id": "m-1960",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
       }
     ]
   },
@@ -29560,7 +32502,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29578,15 +32520,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-332",
-        "mould": "Standard Casting Lot #332",
-        "qty": 2,
-        "price": 1450,
-        "total": 750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-331",
@@ -29596,7 +32530,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2250,
+    "total": 6000.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29616,11 +32550,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-331",
-        "mould": "Standard Casting Lot #331",
-        "qty": 2,
-        "price": 1450,
-        "total": 2250
+        "id": "m-1957",
+        "mould": "B.F.P",
+        "qty": 10.0,
+        "price": 320.0,
+        "total": 3200.0
+      },
+      {
+        "id": "m-1958",
+        "mould": "B.F.P-(G)",
+        "qty": 8.0,
+        "price": 350.0,
+        "total": 2800.0
       }
     ]
   },
@@ -29632,7 +32573,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 143750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29694,11 +32635,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-330",
-        "mould": "Standard Casting Lot #330",
-        "qty": 8,
-        "price": 1450,
-        "total": 143750
+        "id": "m-1954",
+        "mould": "S.L",
+        "qty": 950.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1955",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1956",
+        "mould": "Jointer",
+        "qty": 720.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -29710,7 +32665,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 187500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -29751,11 +32706,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-329",
-        "mould": "Standard Casting Lot #329",
-        "qty": 5,
-        "price": 1450,
-        "total": 187500
+        "id": "m-1952",
+        "mould": "C.M",
+        "qty": 1500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1953",
+        "mould": "Jointer",
+        "qty": 840.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -29767,7 +32729,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 669625,
+    "total": 1178340.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30018,11 +32980,88 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-328",
-        "mould": "Standard Casting Lot #328",
-        "qty": 35,
-        "price": 1450,
-        "total": 669625
+        "id": "m-2023",
+        "mould": "C.M",
+        "qty": 2110.0,
+        "price": 157.5,
+        "total": 332325.0
+      },
+      {
+        "id": "m-2024",
+        "mould": "C.M (Digital)",
+        "qty": 200.0,
+        "price": 167.5,
+        "total": 33500.0
+      },
+      {
+        "id": "m-2025",
+        "mould": "H.O",
+        "qty": 150.0,
+        "price": 130.0,
+        "total": 19500.0
+      },
+      {
+        "id": "m-2026",
+        "mould": "T.G",
+        "qty": 100.0,
+        "price": 140.0,
+        "total": 14000.0
+      },
+      {
+        "id": "m-2027",
+        "mould": "B.F.P-(G)",
+        "qty": 1140.0,
+        "price": 270.0,
+        "total": 307800.0
+      },
+      {
+        "id": "m-2028",
+        "mould": "B.F.P-(G) (Digital)",
+        "qty": 400.0,
+        "price": 280.0,
+        "total": 112000.0
+      },
+      {
+        "id": "m-2029",
+        "mould": "F.P.G",
+        "qty": 507.0,
+        "price": 245.0,
+        "total": 124215.0
+      },
+      {
+        "id": "m-2030",
+        "mould": "F.P",
+        "qty": 250.0,
+        "price": 230.0,
+        "total": 57500.0
+      },
+      {
+        "id": "m-2031",
+        "mould": "S.P",
+        "qty": 300.0,
+        "price": 270.0,
+        "total": 81000.0
+      },
+      {
+        "id": "m-2032",
+        "mould": "S.P (Digtal)",
+        "qty": 200.0,
+        "price": 280.0,
+        "total": 56000.0
+      },
+      {
+        "id": "m-2033",
+        "mould": "Jointer",
+        "qty": 865.0,
+        "price": 28.0,
+        "total": 24220.0
+      },
+      {
+        "id": "m-2034",
+        "mould": "Fluted Jointer",
+        "qty": 440.0,
+        "price": 37.0,
+        "total": 16280.0
       }
     ]
   },
@@ -30034,7 +33073,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 75000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30150,15 +33189,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-327",
-        "mould": "Standard Casting Lot #327",
-        "qty": 16,
-        "price": 1450,
-        "total": 75000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-326",
@@ -30168,7 +33199,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 275000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30216,11 +33247,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-326",
-        "mould": "Standard Casting Lot #326",
-        "qty": 6,
-        "price": 1450,
-        "total": 275000
+        "id": "m-1921",
+        "mould": "C.M",
+        "qty": 1600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1922",
+        "mould": "H.O",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1923",
+        "mould": "Jointer",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -30232,7 +33277,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30243,15 +33288,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-325",
-        "mould": "Standard Casting Lot #325",
-        "qty": 1,
-        "price": 1450,
-        "total": 875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-324",
@@ -30261,7 +33298,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30272,15 +33309,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-324",
-        "mould": "Standard Casting Lot #324",
-        "qty": 1,
-        "price": 1450,
-        "total": 2500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-323",
@@ -30301,15 +33330,7 @@ export const SQLITE_BILLS = [
         "lCap": 1.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-323",
-        "mould": "Standard Casting Lot #323",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-322",
@@ -30319,7 +33340,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 223750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30423,11 +33444,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-322",
-        "mould": "Standard Casting Lot #322",
-        "qty": 14,
-        "price": 1450,
-        "total": 223750
+        "id": "m-1893",
+        "mould": "C.M",
+        "qty": 1500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1894",
+        "mould": "B.F.P",
+        "qty": 160.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1895",
+        "mould": "B.F.P-(G)",
+        "qty": 130.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1896",
+        "mould": "Jointer",
+        "qty": 560.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -30439,7 +33481,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30450,15 +33492,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-321",
-        "mould": "Standard Casting Lot #321",
-        "qty": 1,
-        "price": 1450,
-        "total": 875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-320",
@@ -30468,7 +33502,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30479,15 +33513,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-320",
-        "mould": "Standard Casting Lot #320",
-        "qty": 1,
-        "price": 1450,
-        "total": 875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-319",
@@ -30497,7 +33523,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 761625,
+    "total": 1651915.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30622,11 +33648,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-319",
-        "mould": "Standard Casting Lot #319",
-        "qty": 17,
-        "price": 1450,
-        "total": 761625
+        "id": "m-1912",
+        "mould": "B.F.P",
+        "qty": 1150.0,
+        "price": 265.0,
+        "total": 304750.0
+      },
+      {
+        "id": "m-1913",
+        "mould": "B.F.P-(G)",
+        "qty": 2833.0,
+        "price": 295.0,
+        "total": 835735.0
+      },
+      {
+        "id": "m-1914",
+        "mould": "B.F.P-(G) DIGITAL",
+        "qty": 550.0,
+        "price": 305.0,
+        "total": 167750.0
+      },
+      {
+        "id": "m-1915",
+        "mould": "B.F.P-(B)",
+        "qty": 60.0,
+        "price": 265.0,
+        "total": 15900.0
+      },
+      {
+        "id": "m-1916",
+        "mould": "T.G",
+        "qty": 590.0,
+        "price": 155.0,
+        "total": 91450.0
+      },
+      {
+        "id": "m-1917",
+        "mould": "H.O",
+        "qty": 650.0,
+        "price": 145.0,
+        "total": 94250.0
+      },
+      {
+        "id": "m-1918",
+        "mould": "UVD",
+        "qty": 20.0,
+        "price": 1300.0,
+        "total": 26000.0
+      },
+      {
+        "id": "m-1919",
+        "mould": "SILICON",
+        "qty": 240.0,
+        "price": 105.0,
+        "total": 25200.0
+      },
+      {
+        "id": "m-1920",
+        "mould": "Fluted Jointer",
+        "qty": 2840.0,
+        "price": 32.0,
+        "total": 90880.0
       }
     ]
   },
@@ -30638,7 +33720,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30656,15 +33738,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-318",
-        "mould": "Standard Casting Lot #318",
-        "qty": 2,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-317",
@@ -30674,7 +33748,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 187500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -30834,11 +33908,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-317",
-        "mould": "Standard Casting Lot #317",
-        "qty": 22,
-        "price": 1450,
-        "total": 187500
+        "id": "m-1883",
+        "mould": "C.M",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1884",
+        "mould": "S.L",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1885",
+        "mould": "L.U",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1886",
+        "mould": "B.F.P",
+        "qty": 350.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1887",
+        "mould": "Jointer",
+        "qty": 2480.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1888",
+        "mould": "Fluted Jointer",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -30850,7 +33959,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1900000,
+    "total": 2241600.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31080,11 +34189,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-316",
-        "mould": "Standard Casting Lot #316",
-        "qty": 32,
-        "price": 1450,
-        "total": 1900000
+        "id": "m-1865",
+        "mould": "C.M",
+        "qty": 2100.0,
+        "price": 155.0,
+        "total": 325500.0
+      },
+      {
+        "id": "m-1866",
+        "mould": "C.M (Digital)",
+        "qty": 600.0,
+        "price": 165.0,
+        "total": 99000.0
+      },
+      {
+        "id": "m-1867",
+        "mould": "T.G",
+        "qty": 10500.0,
+        "price": 135.0,
+        "total": 1417500.0
+      },
+      {
+        "id": "m-1868",
+        "mould": "T.G (Digital)",
+        "qty": 1000.0,
+        "price": 145.0,
+        "total": 145000.0
+      },
+      {
+        "id": "m-1869",
+        "mould": "H.O",
+        "qty": 1000.0,
+        "price": 125.0,
+        "total": 125000.0
+      },
+      {
+        "id": "m-1870",
+        "mould": "Jointer",
+        "qty": 4800.0,
+        "price": 27.0,
+        "total": 129600.0
       }
     ]
   },
@@ -31096,7 +34240,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1625,
+    "total": 5300.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31109,11 +34253,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-315",
-        "mould": "Standard Casting Lot #315",
-        "qty": 1,
-        "price": 1450,
-        "total": 1625
+        "id": "m-1850",
+        "mould": "B.F.P",
+        "qty": 13.0,
+        "price": 380.0,
+        "total": 4940.0
+      },
+      {
+        "id": "m-1851",
+        "mould": "Fluted Jointer",
+        "qty": 1.0,
+        "price": 60.0,
+        "total": 60.0
+      },
+      {
+        "id": "m-1852",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
       }
     ]
   },
@@ -31125,7 +34283,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1125,
+    "total": 3270.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31152,11 +34310,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-314",
-        "mould": "Standard Casting Lot #314",
-        "qty": 3,
-        "price": 1450,
-        "total": 1125
+        "id": "m-1848",
+        "mould": "B.F.P",
+        "qty": 9.0,
+        "price": 330.0,
+        "total": 2970.0
+      },
+      {
+        "id": "m-1849",
+        "mould": "Fluted Jointer",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
       }
     ]
   },
@@ -31168,7 +34333,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 83625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31216,11 +34381,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-313",
-        "mould": "Standard Casting Lot #313",
-        "qty": 6,
-        "price": 1450,
-        "total": 83625
+        "id": "m-1842",
+        "mould": "C.M",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1843",
+        "mould": "PERAMETER",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1844",
+        "mould": "RAJA",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1845",
+        "mould": "GATTI",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1846",
+        "mould": "BLACK",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1847",
+        "mould": "Jointer",
+        "qty": 210.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -31232,7 +34432,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31257,15 +34457,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-312",
-        "mould": "Standard Casting Lot #312",
-        "qty": 3,
-        "price": 1450,
-        "total": 18875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-311",
@@ -31275,7 +34467,7 @@ export const SQLITE_BILLS = [
     "docType": "RETURN",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 550.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31288,11 +34480,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-311",
-        "mould": "Standard Casting Lot #311",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-1841",
+        "mould": "Jointer",
+        "qty": 11.0,
+        "price": 50.0,
+        "total": 550.0
       }
     ]
   },
@@ -31304,7 +34496,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 5250.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31338,11 +34530,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-310",
-        "mould": "Standard Casting Lot #310",
-        "qty": 4,
-        "price": 1450,
-        "total": 2500
+        "id": "m-1839",
+        "mould": "S.L",
+        "qty": 20.0,
+        "price": 170.0,
+        "total": 3400.0
+      },
+      {
+        "id": "m-1840",
+        "mould": "Jointer",
+        "qty": 37.0,
+        "price": 50.0,
+        "total": 1850.0
       }
     ]
   },
@@ -31354,7 +34553,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 749125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31542,11 +34741,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-309",
-        "mould": "Standard Casting Lot #309",
-        "qty": 26,
-        "price": 1450,
-        "total": 749125
+        "id": "m-1833",
+        "mould": "F.P.G",
+        "qty": 2622.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1834",
+        "mould": "S.P",
+        "qty": 1709.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1835",
+        "mould": "C.M",
+        "qty": 1530.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1836",
+        "mould": "L.U",
+        "qty": 132.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1837",
+        "mould": "Fluted Jointer",
+        "qty": 1300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1838",
+        "mould": "Jointer",
+        "qty": 302.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -31558,7 +34792,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31569,15 +34803,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-308",
-        "mould": "Standard Casting Lot #308",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-307",
@@ -31587,7 +34813,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31628,11 +34854,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-307",
-        "mould": "Standard Casting Lot #307",
-        "qty": 5,
-        "price": 1450,
-        "total": 4625
+        "id": "m-1828",
+        "mould": "UVD",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1829",
+        "mould": "B.F.P",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1830",
+        "mould": "B.F.P-(G)",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1831",
+        "mould": "Jointer",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1832",
+        "mould": "Fluted Jointer",
+        "qty": 43.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -31644,7 +34898,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 8750,
+    "total": 11900.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31671,11 +34925,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-306",
-        "mould": "Standard Casting Lot #306",
-        "qty": 3,
-        "price": 1450,
-        "total": 8750
+        "id": "m-1822",
+        "mould": "H.O",
+        "qty": 70.0,
+        "price": 140.0,
+        "total": 9800.0
+      },
+      {
+        "id": "m-1823",
+        "mould": "Jointer",
+        "qty": 42.0,
+        "price": 50.0,
+        "total": 2100.0
       }
     ]
   },
@@ -31687,7 +34948,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 121250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31805,11 +35066,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-305",
-        "mould": "Standard Casting Lot #305",
-        "qty": 16,
-        "price": 1450,
-        "total": 121250
+        "id": "m-1815",
+        "mould": "B.F.P",
+        "qty": 770.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1816",
+        "mould": "L.U",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1817",
+        "mould": "L.A",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1818",
+        "mould": "Fluted Jointer",
+        "qty": 480.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1819",
+        "mould": "Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -31821,7 +35110,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 65000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31890,11 +35179,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-304",
-        "mould": "Standard Casting Lot #304",
-        "qty": 9,
-        "price": 1450,
-        "total": 65000
+        "id": "m-1811",
+        "mould": "B.F.P-(G)",
+        "qty": 380.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1812",
+        "mould": "B.F.P",
+        "qty": 140.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1813",
+        "mould": "Fluted Jointer",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1814",
+        "mould": "Jointer",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -31906,7 +35216,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 212500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31959,15 +35269,7 @@ export const SQLITE_BILLS = [
         "lCap": 40.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-303",
-        "mould": "Standard Casting Lot #303",
-        "qty": 7,
-        "price": 1450,
-        "total": 212500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-302",
@@ -31977,7 +35279,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 180.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -31990,11 +35292,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-302",
-        "mould": "Standard Casting Lot #302",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-1806",
+        "mould": "Fluted Jointer",
+        "qty": 3.0,
+        "price": 60.0,
+        "total": 180.0
       }
     ]
   },
@@ -32006,7 +35308,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32017,15 +35319,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-301",
-        "mould": "Standard Casting Lot #301",
-        "qty": 1,
-        "price": 1450,
-        "total": 3750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-300",
@@ -32035,7 +35329,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32046,15 +35340,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-300",
-        "mould": "Standard Casting Lot #300",
-        "qty": 1,
-        "price": 1450,
-        "total": 2500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-299",
@@ -32064,7 +35350,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 1200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32077,11 +35363,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-299",
-        "mould": "Standard Casting Lot #299",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
+        "id": "m-1804",
+        "mould": "B.F.P",
+        "qty": 3.0,
+        "price": 320.0,
+        "total": 960.0
+      },
+      {
+        "id": "m-1805",
+        "mould": "Fluted Jointer",
+        "qty": 4.0,
+        "price": 60.0,
+        "total": 240.0
       }
     ]
   },
@@ -32093,7 +35386,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32111,15 +35404,7 @@ export const SQLITE_BILLS = [
         "lCap": 5.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-298",
-        "mould": "Standard Casting Lot #298",
-        "qty": 2,
-        "price": 1450,
-        "total": 250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-297",
@@ -32129,7 +35414,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32177,11 +35462,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-297",
-        "mould": "Standard Casting Lot #297",
-        "qty": 6,
-        "price": 1450,
-        "total": 4500
+        "id": "m-1792",
+        "mould": "B.F.P-(G)",
+        "qty": 18.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1793",
+        "mould": "SILICON",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1794",
+        "mould": "UVD",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1795",
+        "mould": "U.V",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1796",
+        "mould": "Fluted Jointer",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1797",
+        "mould": "Jointer",
+        "qty": 11.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -32193,7 +35513,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32211,15 +35531,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-296",
-        "mould": "Standard Casting Lot #296",
-        "qty": 2,
-        "price": 1450,
-        "total": 2000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-295",
@@ -32229,7 +35541,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32289,15 +35601,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-295",
-        "mould": "Standard Casting Lot #295",
-        "qty": 8,
-        "price": 1450,
-        "total": 3875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-294",
@@ -32307,7 +35611,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 643750,
+    "total": 1321750.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32404,11 +35708,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-294",
-        "mould": "Standard Casting Lot #294",
-        "qty": 13,
-        "price": 1450,
-        "total": 643750
+        "id": "m-1772",
+        "mould": "B.F.P-(G)",
+        "qty": 2300.0,
+        "price": 260.0,
+        "total": 598000.0
+      },
+      {
+        "id": "m-1773",
+        "mould": "B.F.P-(G) (Digital",
+        "qty": 1950.0,
+        "price": 265.0,
+        "total": 516750.0
+      },
+      {
+        "id": "m-1774",
+        "mould": "B.F.P",
+        "qty": 900.0,
+        "price": 230.0,
+        "total": 207000.0
       }
     ]
   },
@@ -32420,7 +35738,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32431,15 +35749,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-293",
-        "mould": "Standard Casting Lot #293",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-292",
@@ -32449,7 +35759,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 1140.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32462,11 +35772,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-292",
-        "mould": "Standard Casting Lot #292",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
+        "id": "m-1751",
+        "mould": "B.F.P-(G)",
+        "qty": 3.0,
+        "price": 380.0,
+        "total": 1140.0
       }
     ]
   },
@@ -32478,7 +35788,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 9375,
+    "total": 22170.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32505,11 +35815,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-291",
-        "mould": "Standard Casting Lot #291",
-        "qty": 3,
-        "price": 1450,
-        "total": 9375
+        "id": "m-1768",
+        "mould": "B.F.P",
+        "qty": 61.0,
+        "price": 300.0,
+        "total": 18300.0
+      },
+      {
+        "id": "m-1769",
+        "mould": "S.L",
+        "qty": 14.0,
+        "price": 160.0,
+        "total": 2240.0
+      },
+      {
+        "id": "m-1770",
+        "mould": "Fluted Jointer",
+        "qty": 23.0,
+        "price": 60.0,
+        "total": 1380.0
+      },
+      {
+        "id": "m-1771",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 50.0,
+        "total": 250.0
       }
     ]
   },
@@ -32521,7 +35852,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 557500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32688,11 +36019,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-290",
-        "mould": "Standard Casting Lot #290",
-        "qty": 23,
-        "price": 1450,
-        "total": 557500
+        "id": "m-1799",
+        "mould": "S.P",
+        "qty": 2400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1800",
+        "mould": "C.M",
+        "qty": 2000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1801",
+        "mould": "UVD",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1802",
+        "mould": "Fluted Jointer",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1803",
+        "mould": "Jointer",
+        "qty": 1920.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -32704,18 +36063,60 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1066440.0,
     "status": "PAID",
-    "rawItems": [
+    "rawItems": [],
+    "finishedItems": [
       {
-        "id": "1",
-        "name": "Aluminium Ingot 6063 Primary",
-        "qty": 100,
-        "uCap": 85,
-        "lCap": 75
+        "id": "m-1719",
+        "mould": "SP (digital)",
+        "qty": 960.0,
+        "price": 260.0,
+        "total": 249600.0
+      },
+      {
+        "id": "m-1720",
+        "mould": "SP (regular)",
+        "qty": 1440.0,
+        "price": 250.0,
+        "total": 360000.0
+      },
+      {
+        "id": "m-1721",
+        "mould": "CM (digital)",
+        "qty": 400.0,
+        "price": 163.0,
+        "total": 65200.0
+      },
+      {
+        "id": "m-1722",
+        "mould": "CM (regular)",
+        "qty": 1600.0,
+        "price": 153.0,
+        "total": 244800.0
+      },
+      {
+        "id": "m-1723",
+        "mould": "UV (digital)",
+        "qty": 60.0,
+        "price": 1000.0,
+        "total": 60000.0
+      },
+      {
+        "id": "m-1724",
+        "mould": "Fluted Jointer",
+        "qty": 1000.0,
+        "price": 35.0,
+        "total": 35000.0
+      },
+      {
+        "id": "m-1725",
+        "mould": "Jointer",
+        "qty": 1920.0,
+        "price": 27.0,
+        "total": 51840.0
       }
-    ],
-    "finishedItems": []
+    ]
   },
   {
     "id": "B-288",
@@ -32725,7 +36126,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32736,15 +36137,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-288",
-        "mould": "Standard Casting Lot #288",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-287",
@@ -32754,7 +36147,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32781,11 +36174,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-287",
-        "mould": "Standard Casting Lot #287",
-        "qty": 3,
-        "price": 1450,
-        "total": 1250
+        "id": "m-1686",
+        "mould": "B.F.P-(G)",
+        "qty": 8.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1687",
+        "mould": "BATTEN",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1688",
+        "mould": "ELFY",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1689",
+        "mould": "Fluted Jointer",
+        "qty": 8.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -32797,7 +36211,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 89375,
+    "total": 153750.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -32894,11 +36308,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-286",
-        "mould": "Standard Casting Lot #286",
-        "qty": 13,
-        "price": 1450,
-        "total": 89375
+        "id": "m-1781",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 250.0,
+        "total": 50000.0
+      },
+      {
+        "id": "m-1782",
+        "mould": "S.L",
+        "qty": 500.0,
+        "price": 125.0,
+        "total": 62500.0
+      },
+      {
+        "id": "m-1783",
+        "mould": "UVD",
+        "qty": 10.0,
+        "price": 1200.0,
+        "total": 12000.0
+      },
+      {
+        "id": "m-1784",
+        "mould": "U.V",
+        "qty": 5.0,
+        "price": 1050.0,
+        "total": 5250.0
+      },
+      {
+        "id": "m-1785",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 38.0,
+        "total": 6080.0
+      },
+      {
+        "id": "m-1786",
+        "mould": "Jointer",
+        "qty": 640.0,
+        "price": 28.0,
+        "total": 17920.0
       }
     ]
   },
@@ -32910,7 +36359,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 158750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33049,11 +36498,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-285",
-        "mould": "Standard Casting Lot #285",
-        "qty": 19,
-        "price": 1450,
-        "total": 158750
+        "id": "m-1677",
+        "mould": "C.M",
+        "qty": 730.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1678",
+        "mould": "S.L",
+        "qty": 540.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1679",
+        "mould": "Jointer",
+        "qty": 520.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33065,7 +36528,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33078,11 +36541,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-284",
-        "mould": "Standard Casting Lot #284",
-        "qty": 1,
-        "price": 1450,
-        "total": 1625
+        "id": "m-1675",
+        "mould": "SCREW",
+        "qty": 13.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1676",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33094,7 +36564,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33107,11 +36577,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-283",
-        "mould": "Standard Casting Lot #283",
-        "qty": 1,
-        "price": 1450,
-        "total": 2500
+        "id": "m-1672",
+        "mould": "LA23",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33123,7 +36593,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33141,15 +36611,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-282",
-        "mould": "Standard Casting Lot #282",
-        "qty": 2,
-        "price": 1450,
-        "total": 6250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-281",
@@ -33159,7 +36621,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33170,15 +36632,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-281",
-        "mould": "Standard Casting Lot #281",
-        "qty": 1,
-        "price": 1450,
-        "total": 5000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-280",
@@ -33188,7 +36642,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33220,15 +36674,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-280",
-        "mould": "Standard Casting Lot #280",
-        "qty": 4,
-        "price": 1450,
-        "total": 6875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-279",
@@ -33238,7 +36684,7 @@ export const SQLITE_BILLS = [
     "docType": "ORDER",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33256,15 +36702,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-279",
-        "mould": "Standard Casting Lot #279",
-        "qty": 2,
-        "price": 1450,
-        "total": 3500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-278",
@@ -33274,7 +36712,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33285,15 +36723,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-278",
-        "mould": "Standard Casting Lot #278",
-        "qty": 1,
-        "price": 1450,
-        "total": 10625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-277",
@@ -33303,7 +36733,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 143750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33335,15 +36765,7 @@ export const SQLITE_BILLS = [
         "lCap": 40.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-277",
-        "mould": "Standard Casting Lot #277",
-        "qty": 4,
-        "price": 1450,
-        "total": 143750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-276",
@@ -33353,7 +36775,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 231250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33406,15 +36828,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-276",
-        "mould": "Standard Casting Lot #276",
-        "qty": 7,
-        "price": 1450,
-        "total": 231250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-275",
@@ -33424,7 +36838,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 8375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33465,11 +36879,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-275",
-        "mould": "Standard Casting Lot #275",
-        "qty": 5,
-        "price": 1450,
-        "total": 8375
+        "id": "m-1586",
+        "mould": "C.M",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1587",
+        "mould": "B.F.P-(G)",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1588",
+        "mould": "L.U",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1589",
+        "mould": "B.F.P",
+        "qty": 15.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1590",
+        "mould": "Jointer",
+        "qty": 43.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1591",
+        "mould": "Fluted Jointer",
+        "qty": 18.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33481,7 +36930,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6750,
+    "total": 8560.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33501,11 +36950,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-274",
-        "mould": "Standard Casting Lot #274",
-        "qty": 2,
-        "price": 1450,
-        "total": 6750
+        "id": "m-1584",
+        "mould": "H.O",
+        "qty": 31.0,
+        "price": 150.0,
+        "total": 4650.0
+      },
+      {
+        "id": "m-1585",
+        "mould": "S.L",
+        "qty": 23.0,
+        "price": 170.0,
+        "total": 3910.0
       }
     ]
   },
@@ -33517,7 +36973,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33528,15 +36984,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-273",
-        "mould": "Standard Casting Lot #273",
-        "qty": 1,
-        "price": 1450,
-        "total": 625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-272",
@@ -33546,7 +36994,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33564,15 +37012,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-272",
-        "mould": "Standard Casting Lot #272",
-        "qty": 2,
-        "price": 1450,
-        "total": 875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-271",
@@ -33593,15 +37033,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-271",
-        "mould": "Standard Casting Lot #271",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-270",
@@ -33611,7 +37043,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 20750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33671,15 +37103,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-270",
-        "mould": "Standard Casting Lot #270",
-        "qty": 8,
-        "price": 1450,
-        "total": 20750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-269",
@@ -33689,7 +37113,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 312250,
+    "total": 164750.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33863,11 +37287,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-269",
-        "mould": "Standard Casting Lot #269",
-        "qty": 24,
-        "price": 1450,
-        "total": 312250
+        "id": "m-1644",
+        "mould": "B.F.P-(G)",
+        "qty": 850.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1645",
+        "mould": "B.F.P",
+        "qty": 298.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1646",
+        "mould": "S.L",
+        "qty": 850.0,
+        "price": 135.0,
+        "total": 114750.0
+      },
+      {
+        "id": "m-1647",
+        "mould": "H.O",
+        "qty": 400.0,
+        "price": 125.0,
+        "total": 50000.0
+      },
+      {
+        "id": "m-1648",
+        "mould": "T.G",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1649",
+        "mould": "Fluted Jointer",
+        "qty": 680.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1650",
+        "mould": "Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33879,7 +37345,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33892,11 +37358,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-268",
-        "mould": "Standard Casting Lot #268",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
+        "id": "m-1550",
+        "mould": "B.F.P",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33908,7 +37374,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33928,11 +37394,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-267",
-        "mould": "Standard Casting Lot #267",
-        "qty": 2,
-        "price": 1450,
-        "total": 5625
+        "id": "m-1548",
+        "mould": "H.O",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1549",
+        "mould": "Jointer",
+        "qty": 11.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -33944,7 +37417,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1595.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -33964,11 +37437,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-266",
-        "mould": "Standard Casting Lot #266",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
+        "id": "m-1546",
+        "mould": "Fluted Jointer",
+        "qty": 22.0,
+        "price": 60.0,
+        "total": 1320.0
+      },
+      {
+        "id": "m-1547",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 55.0,
+        "total": 275.0
       }
     ]
   },
@@ -33980,7 +37460,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 137500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34063,11 +37543,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-265",
-        "mould": "Standard Casting Lot #265",
-        "qty": 11,
-        "price": 1450,
-        "total": 137500
+        "id": "m-1532",
+        "mould": "S.L",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1533",
+        "mould": "B.F.P-(G)",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1534",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1535",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1536",
+        "mould": "Jointer",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1537",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -34079,7 +37594,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 120000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34155,11 +37670,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-264",
-        "mould": "Standard Casting Lot #264",
-        "qty": 10,
-        "price": 1450,
-        "total": 120000
+        "id": "m-1538",
+        "mould": "C.M",
+        "qty": 620.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1539",
+        "mould": "S.L",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1540",
+        "mould": "B.F.P",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1541",
+        "mould": "UVD",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1542",
+        "mould": "Jointer",
+        "qty": 430.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1543",
+        "mould": "Fluted Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -34171,7 +37721,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 12250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34254,11 +37804,81 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-263",
-        "mould": "Standard Casting Lot #263",
-        "qty": 11,
-        "price": 1450,
-        "total": 12250
+        "id": "m-1452",
+        "mould": "UVD",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1453",
+        "mould": "L.U",
+        "qty": 8.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1454",
+        "mould": "C.M",
+        "qty": 42.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1455",
+        "mould": "S.L",
+        "qty": 21.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1456",
+        "mould": "PERAMETER",
+        "qty": 15.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1457",
+        "mould": "BLACK",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1458",
+        "mould": "BATTEN",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1459",
+        "mould": "RAJA",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1460",
+        "mould": "GATTI",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1461",
+        "mould": "ELFY",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1462",
+        "mould": "Jointer",
+        "qty": 26.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -34270,7 +37890,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34290,11 +37910,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-262",
-        "mould": "Standard Casting Lot #262",
-        "qty": 2,
-        "price": 1450,
-        "total": 2875
+        "id": "m-1439",
+        "mould": "S.L",
+        "qty": 23.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1440",
+        "mould": "Jointer",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -34306,7 +37933,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 426875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34669,11 +38296,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-261",
-        "mould": "Standard Casting Lot #261",
-        "qty": 51,
-        "price": 1450,
-        "total": 426875
+        "id": "m-1662",
+        "mould": "C.M",
+        "qty": 1700.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1663",
+        "mould": "H.O",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1664",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1665",
+        "mould": "B.F.P-(G)",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1666",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1667",
+        "mould": "U.V",
+        "qty": 15.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1668",
+        "mould": "S.P",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1669",
+        "mould": "T.G",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1670",
+        "mould": "Jointer",
+        "qty": 1560.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1671",
+        "mould": "Fluted Jointer",
+        "qty": 240.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -34685,7 +38375,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34717,15 +38407,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-260",
-        "mould": "Standard Casting Lot #260",
-        "qty": 4,
-        "price": 1450,
-        "total": 5375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-259",
@@ -34735,7 +38417,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 840.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34748,11 +38430,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-259",
-        "mould": "Standard Casting Lot #259",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
+        "id": "m-1422",
+        "mould": "L.U",
+        "qty": 3.0,
+        "price": 280.0,
+        "total": 840.0
       }
     ]
   },
@@ -34764,7 +38446,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 1795.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34777,11 +38459,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-258",
-        "mould": "Standard Casting Lot #258",
-        "qty": 1,
-        "price": 1450,
-        "total": 500
+        "id": "m-1420",
+        "mould": "B.F.P-(G)",
+        "qty": 4.0,
+        "price": 380.0,
+        "total": 1520.0
+      },
+      {
+        "id": "m-1421",
+        "mould": "Fluted Jointer",
+        "qty": 5.0,
+        "price": 55.0,
+        "total": 275.0
       }
     ]
   },
@@ -34793,7 +38482,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34818,15 +38507,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-257",
-        "mould": "Standard Casting Lot #257",
-        "qty": 3,
-        "price": 1450,
-        "total": 2000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-256",
@@ -34836,7 +38517,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 27500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -34847,15 +38528,7 @@ export const SQLITE_BILLS = [
         "lCap": 5.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-256",
-        "mould": "Standard Casting Lot #256",
-        "qty": 1,
-        "price": 1450,
-        "total": 27500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-255",
@@ -34865,7 +38538,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 717125,
+    "total": 766156.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35088,11 +38761,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-255",
-        "mould": "Standard Casting Lot #255",
-        "qty": 31,
-        "price": 1450,
-        "total": 717125
+        "id": "m-1622",
+        "mould": "H.O",
+        "qty": 800.0,
+        "price": 130.0,
+        "total": 104000.0
+      },
+      {
+        "id": "m-1623",
+        "mould": "S.L",
+        "qty": 2958.0,
+        "price": 135.0,
+        "total": 399330.0
+      },
+      {
+        "id": "m-1624",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 245.0,
+        "total": 49000.0
+      },
+      {
+        "id": "m-1625",
+        "mould": "U.V",
+        "qty": 20.0,
+        "price": 1050.0,
+        "total": 21000.0
+      },
+      {
+        "id": "m-1626",
+        "mould": "CLIP",
+        "qty": 1000.0,
+        "price": 2.0,
+        "total": 2000.0
+      },
+      {
+        "id": "m-1627",
+        "mould": "SILICON",
+        "qty": 10.0,
+        "price": 135.0,
+        "total": 1350.0
+      },
+      {
+        "id": "m-1628",
+        "mould": "B.F.P-(G)",
+        "qty": 500.0,
+        "price": 285.0,
+        "total": 142500.0
+      },
+      {
+        "id": "m-1629",
+        "mould": "T.G",
+        "qty": 249.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1630",
+        "mould": "Jointer",
+        "qty": 1344.0,
+        "price": 29.0,
+        "total": 38976.0
+      },
+      {
+        "id": "m-1631",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 40.0,
+        "total": 8000.0
       }
     ]
   },
@@ -35104,7 +38840,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 162500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35180,11 +38916,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-254",
-        "mould": "Standard Casting Lot #254",
-        "qty": 10,
-        "price": 1450,
-        "total": 162500
+        "id": "m-1408",
+        "mould": "C.M",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1409",
+        "mould": "S.L",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1410",
+        "mould": "Jointer",
+        "qty": 1080.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -35196,7 +38946,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35207,15 +38957,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-253",
-        "mould": "Standard Casting Lot #253",
-        "qty": 1,
-        "price": 1450,
-        "total": 6250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-252",
@@ -35225,7 +38967,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35250,15 +38992,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-252",
-        "mould": "Standard Casting Lot #252",
-        "qty": 3,
-        "price": 1450,
-        "total": 1125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-251",
@@ -35268,7 +39002,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 108750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35342,15 +39076,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-251",
-        "mould": "Standard Casting Lot #251",
-        "qty": 10,
-        "price": 1450,
-        "total": 108750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-250",
@@ -35360,7 +39086,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 523750,
+    "total": 909515.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35513,11 +39239,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-250",
-        "mould": "Standard Casting Lot #250",
-        "qty": 21,
-        "price": 1450,
-        "total": 523750
+        "id": "m-1393",
+        "mould": "C.M",
+        "qty": 1160.0,
+        "price": 162.5,
+        "total": 188500.0
+      },
+      {
+        "id": "m-1394",
+        "mould": "C.M DIGITAL",
+        "qty": 1470.0,
+        "price": 167.5,
+        "total": 246225.0
+      },
+      {
+        "id": "m-1395",
+        "mould": "S.P",
+        "qty": 300.0,
+        "price": 275.0,
+        "total": 82500.0
+      },
+      {
+        "id": "m-1396",
+        "mould": "S.P DIGITAL",
+        "qty": 600.0,
+        "price": 277.5,
+        "total": 166500.0
+      },
+      {
+        "id": "m-1397",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 275.0,
+        "total": 27500.0
+      },
+      {
+        "id": "m-1398",
+        "mould": "B.F.P-(G) DIGITAL",
+        "qty": 360.0,
+        "price": 277.5,
+        "total": 99900.0
+      },
+      {
+        "id": "m-1399",
+        "mould": "F.P",
+        "qty": 200.0,
+        "price": 230.0,
+        "total": 46000.0
+      },
+      {
+        "id": "m-1400",
+        "mould": "Jointer",
+        "qty": 1310.0,
+        "price": 29.0,
+        "total": 37990.0
+      },
+      {
+        "id": "m-1401",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 40.0,
+        "total": 14400.0
       }
     ]
   },
@@ -35529,7 +39311,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 523750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35682,11 +39464,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-249",
-        "mould": "Standard Casting Lot #249",
-        "qty": 21,
-        "price": 1450,
-        "total": 523750
+        "id": "m-1402",
+        "mould": "C.M",
+        "qty": 2630.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1403",
+        "mould": "S.P",
+        "qty": 900.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1404",
+        "mould": "B.F.P-(G)",
+        "qty": 460.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1405",
+        "mould": "F.P",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1406",
+        "mould": "Jointer",
+        "qty": 1310.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1407",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -35698,18 +39515,74 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 911915.0,
     "status": "PAID",
-    "rawItems": [
+    "rawItems": [],
+    "finishedItems": [
       {
-        "id": "1",
-        "name": "Aluminium Ingot 6063 Primary",
-        "qty": 100,
-        "uCap": 85,
-        "lCap": 75
+        "id": "m-1354",
+        "mould": "CM",
+        "qty": 1160.0,
+        "price": 162.5,
+        "total": 188500.0
+      },
+      {
+        "id": "m-1355",
+        "mould": "CM DIGITAL",
+        "qty": 1470.0,
+        "price": 167.5,
+        "total": 246225.0
+      },
+      {
+        "id": "m-1356",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 275.0,
+        "total": 27500.0
+      },
+      {
+        "id": "m-1357",
+        "mould": "B.F.P-(G) DIGITAL",
+        "qty": 360.0,
+        "price": 280.0,
+        "total": 100800.0
+      },
+      {
+        "id": "m-1358",
+        "mould": "SP",
+        "qty": 300.0,
+        "price": 275.0,
+        "total": 82500.0
+      },
+      {
+        "id": "m-1359",
+        "mould": "SP DIGITAL",
+        "qty": 600.0,
+        "price": 280.0,
+        "total": 168000.0
+      },
+      {
+        "id": "m-1360",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 40.0,
+        "total": 14400.0
+      },
+      {
+        "id": "m-1361",
+        "mould": "Jointer",
+        "qty": 1310.0,
+        "price": 29.0,
+        "total": 37990.0
+      },
+      {
+        "id": "m-1362",
+        "mould": "F.P",
+        "qty": 200.0,
+        "price": 230.0,
+        "total": 46000.0
       }
-    ],
-    "finishedItems": []
+    ]
   },
   {
     "id": "B-247",
@@ -35737,15 +39610,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-247",
-        "mould": "Standard Casting Lot #247",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-246",
@@ -35755,7 +39620,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35766,15 +39631,7 @@ export const SQLITE_BILLS = [
         "lCap": 1.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-246",
-        "mould": "Standard Casting Lot #246",
-        "qty": 1,
-        "price": 1450,
-        "total": 2000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-245",
@@ -35784,7 +39641,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35816,15 +39673,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-245",
-        "mould": "Standard Casting Lot #245",
-        "qty": 4,
-        "price": 1450,
-        "total": 3875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-244",
@@ -35834,7 +39683,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 7500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35852,15 +39701,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-244",
-        "mould": "Standard Casting Lot #244",
-        "qty": 2,
-        "price": 1450,
-        "total": 7500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-243",
@@ -35870,7 +39711,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 500.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35883,11 +39724,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-243",
-        "mould": "Standard Casting Lot #243",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-1344",
+        "mould": "Jointer",
+        "qty": 10.0,
+        "price": 50.0,
+        "total": 500.0
       }
     ]
   },
@@ -35899,7 +39740,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 150000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35945,15 +39786,7 @@ export const SQLITE_BILLS = [
         "lCap": 40.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-242",
-        "mould": "Standard Casting Lot #242",
-        "qty": 6,
-        "price": 1450,
-        "total": 150000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-241",
@@ -35963,7 +39796,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -35981,15 +39814,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-241",
-        "mould": "Standard Casting Lot #241",
-        "qty": 2,
-        "price": 1450,
-        "total": 875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-240",
@@ -35999,7 +39824,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 2375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36010,15 +39835,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-240",
-        "mould": "Standard Casting Lot #240",
-        "qty": 1,
-        "price": 1450,
-        "total": 2375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-239",
@@ -36028,7 +39845,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 36125,
+    "total": 150.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36111,11 +39928,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-239",
-        "mould": "Standard Casting Lot #239",
-        "qty": 11,
-        "price": 1450,
-        "total": 36125
+        "id": "m-1318",
+        "mould": "C.M",
+        "qty": 58.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1319",
+        "mould": "L.A",
+        "qty": 8.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1320",
+        "mould": "PERAMETER",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1321",
+        "mould": "BLACK",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1322",
+        "mould": "CLIP",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1323",
+        "mould": "RAJA",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1324",
+        "mould": "GATTI",
+        "qty": 6.0,
+        "price": 25.0,
+        "total": 150.0
+      },
+      {
+        "id": "m-1325",
+        "mould": "ELFY",
+        "qty": 8.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1326",
+        "mould": "Jointer",
+        "qty": 26.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -36138,15 +40011,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-238",
-        "mould": "Standard Casting Lot #238",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-237",
@@ -36156,7 +40021,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36167,15 +40032,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-237",
-        "mould": "Standard Casting Lot #237",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-236",
@@ -36185,7 +40042,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 7375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36240,11 +40097,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-236",
-        "mould": "Standard Casting Lot #236",
-        "qty": 7,
-        "price": 1450,
-        "total": 7375
+        "id": "m-1309",
+        "mould": "U.V",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1310",
+        "mould": "B.F.P-(G)",
+        "qty": 12.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1311",
+        "mould": "C.M",
+        "qty": 35.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1312",
+        "mould": "GOLDEN-TAPE",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1313",
+        "mould": "SILICON",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1314",
+        "mould": "BATTEN",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1315",
+        "mould": "ELFY",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1316",
+        "mould": "Jointer",
+        "qty": 18.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1317",
+        "mould": "Fluted Jointer",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -36256,7 +40169,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 63000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36311,11 +40224,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-235",
-        "mould": "Standard Casting Lot #235",
-        "qty": 7,
-        "price": 1450,
-        "total": 63000
+        "id": "m-1306",
+        "mould": "C.M",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1307",
+        "mould": "S.L",
+        "qty": 104.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1308",
+        "mould": "Jointer",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -36327,7 +40254,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36338,15 +40265,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-234",
-        "mould": "Standard Casting Lot #234",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-233",
@@ -36356,7 +40275,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 850000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36432,11 +40351,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-233",
-        "mould": "Standard Casting Lot #233",
-        "qty": 10,
-        "price": 1450,
-        "total": 850000
+        "id": "m-1288",
+        "mould": "B.F.P-(G)",
+        "qty": 1800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1289",
+        "mould": "CLIP",
+        "qty": 5000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1290",
+        "mould": "Fluted Jointer",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1291",
+        "mould": "Jointer",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -36448,7 +40388,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 315000,
+    "total": 732860.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36531,11 +40471,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-232",
-        "mould": "Standard Casting Lot #232",
-        "qty": 11,
-        "price": 1450,
-        "total": 315000
+        "id": "m-1339",
+        "mould": "B.F.P-(G)",
+        "qty": 1620.0,
+        "price": 280.0,
+        "total": 453600.0
+      },
+      {
+        "id": "m-1340",
+        "mould": "B.F.P",
+        "qty": 900.0,
+        "price": 250.0,
+        "total": 225000.0
+      },
+      {
+        "id": "m-1341",
+        "mould": "Fluted Jointer",
+        "qty": 1080.0,
+        "price": 40.0,
+        "total": 43200.0
+      },
+      {
+        "id": "m-1342",
+        "mould": "Jointer",
+        "qty": 395.0,
+        "price": 28.0,
+        "total": 11060.0
       }
     ]
   },
@@ -36558,15 +40519,7 @@ export const SQLITE_BILLS = [
         "lCap": 10.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-231",
-        "mould": "Standard Casting Lot #231",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-230",
@@ -36576,7 +40529,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 3250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36608,15 +40561,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-230",
-        "mould": "Standard Casting Lot #230",
-        "qty": 4,
-        "price": 1450,
-        "total": 3250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-229",
@@ -36626,7 +40571,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 15125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36660,11 +40605,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-229",
-        "mould": "Standard Casting Lot #229",
-        "qty": 4,
-        "price": 1450,
-        "total": 15125
+        "id": "m-1279",
+        "mould": "H.O",
+        "qty": 110.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1280",
+        "mould": "B.F.P",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1281",
+        "mould": "B.F.P-(G)",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1282",
+        "mould": "C.M",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1283",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -36676,7 +40649,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 2000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36687,15 +40660,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-228",
-        "mould": "Standard Casting Lot #228",
-        "qty": 1,
-        "price": 1450,
-        "total": 2000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-227",
@@ -36705,7 +40670,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 1750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36723,15 +40688,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-227",
-        "mould": "Standard Casting Lot #227",
-        "qty": 2,
-        "price": 1450,
-        "total": 1750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-226",
@@ -36741,7 +40698,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "3",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36752,15 +40709,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-226",
-        "mould": "Standard Casting Lot #226",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-225",
@@ -36770,7 +40719,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "3",
     "typeSelection": "3",
-    "total": 3250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36788,15 +40737,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-225",
-        "mould": "Standard Casting Lot #225",
-        "qty": 2,
-        "price": 1450,
-        "total": 3250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-224",
@@ -36806,7 +40747,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 787500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -36980,11 +40921,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-224",
-        "mould": "Standard Casting Lot #224",
-        "qty": 24,
-        "price": 1450,
-        "total": 787500
+        "id": "m-1266",
+        "mould": "C.M",
+        "qty": 3900.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1267",
+        "mould": "S.P",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1268",
+        "mould": "B.F.P-(G)",
+        "qty": 1400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1269",
+        "mould": "Jointer",
+        "qty": 5360.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1270",
+        "mould": "Fluted Jointer",
+        "qty": 1080.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -36996,7 +40965,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37007,15 +40976,7 @@ export const SQLITE_BILLS = [
         "lCap": 8.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-223",
-        "mould": "Standard Casting Lot #223",
-        "qty": 1,
-        "price": 1450,
-        "total": 4625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-222",
@@ -37025,7 +40986,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37036,15 +40997,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-222",
-        "mould": "Standard Casting Lot #222",
-        "qty": 1,
-        "price": 1450,
-        "total": 1500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-221",
@@ -37054,7 +41007,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37065,15 +41018,7 @@ export const SQLITE_BILLS = [
         "lCap": 4.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-221",
-        "mould": "Standard Casting Lot #221",
-        "qty": 1,
-        "price": 1450,
-        "total": 6875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-220",
@@ -37083,7 +41028,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 275000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37159,11 +41104,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-220",
-        "mould": "Standard Casting Lot #220",
-        "qty": 10,
-        "price": 1450,
-        "total": 275000
+        "id": "m-1275",
+        "mould": "S.P",
+        "qty": 2000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1276",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1277",
+        "mould": "Fluted Jointer",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1278",
+        "mould": "Jointer",
+        "qty": 520.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -37175,7 +41141,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 800.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37188,11 +41154,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-219",
-        "mould": "Standard Casting Lot #219",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-1259",
+        "mould": "B.F.P-(G)",
+        "qty": 2.0,
+        "price": 400.0,
+        "total": 800.0
       }
     ]
   },
@@ -37204,7 +41170,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 150000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37238,11 +41204,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-218",
-        "mould": "Standard Casting Lot #218",
-        "qty": 4,
-        "price": 1450,
-        "total": 150000
+        "id": "m-1257",
+        "mould": "C.M",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1258",
+        "mould": "Jointer",
+        "qty": 520.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -37254,7 +41227,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37316,11 +41289,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-217",
-        "mould": "Standard Casting Lot #217",
-        "qty": 8,
-        "price": 1450,
-        "total": 3750
+        "id": "m-1248",
+        "mould": "C.M",
+        "qty": 12.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1249",
+        "mould": "S.L",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1250",
+        "mould": "PERAMETER",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1251",
+        "mould": "BLACK",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1252",
+        "mould": "RAJA",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1253",
+        "mould": "GATTI",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1254",
+        "mould": "BATTEN",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1255",
+        "mould": "ELFY",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1256",
+        "mould": "Jointer",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -37332,7 +41361,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 362500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37408,11 +41437,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-216",
-        "mould": "Standard Casting Lot #216",
-        "qty": 10,
-        "price": 1450,
-        "total": 362500
+        "id": "m-1232",
+        "mould": "H.O   (12ft)",
+        "qty": 1100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1233",
+        "mould": "H.O   (10ft)",
+        "qty": 1400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1234",
+        "mould": "T.G   (12ft)",
+        "qty": 2000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1235",
+        "mould": "T.G   (10ft)",
+        "qty": 1800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1236",
+        "mould": "B.F.P-(G)",
+        "qty": 2000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1237",
+        "mould": "Jointer",
+        "qty": 2160.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1238",
+        "mould": "Fluted Jointer",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -37424,7 +41495,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 182500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37493,11 +41564,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-215",
-        "mould": "Standard Casting Lot #215",
-        "qty": 9,
-        "price": 1450,
-        "total": 182500
+        "id": "m-1214",
+        "mould": "C.M",
+        "qty": 850.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1215",
+        "mould": "H.O",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1216",
+        "mould": "UVD",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1217",
+        "mould": "Jointer",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -37509,7 +41601,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2000,
+    "total": 3260.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37529,11 +41621,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-214",
-        "mould": "Standard Casting Lot #214",
-        "qty": 2,
-        "price": 1450,
-        "total": 2000
+        "id": "m-1199",
+        "mould": "S.L",
+        "qty": 2.0,
+        "price": 180.0,
+        "total": 360.0
+      },
+      {
+        "id": "m-1200",
+        "mould": "C.M",
+        "qty": 14.0,
+        "price": 200.0,
+        "total": 2800.0
+      },
+      {
+        "id": "m-1201",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 50.0,
+        "total": 100.0
       }
     ]
   },
@@ -37545,7 +41651,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37563,15 +41669,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-213",
-        "mould": "Standard Casting Lot #213",
-        "qty": 2,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-212",
@@ -37581,7 +41679,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37599,15 +41697,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-212",
-        "mould": "Standard Casting Lot #212",
-        "qty": 2,
-        "price": 1450,
-        "total": 1125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-211",
@@ -37617,7 +41707,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37707,11 +41797,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-211",
-        "mould": "Standard Casting Lot #211",
-        "qty": 12,
-        "price": 1450,
-        "total": 500000
+        "id": "m-1184",
+        "mould": "F.P.C.G",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1185",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1186",
+        "mould": "C.M",
+        "qty": 2400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1187",
+        "mould": "Fluted Jointer",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1188",
+        "mould": "Jointer",
+        "qty": 480.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -37723,7 +41841,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 643750,
+    "total": 1331500.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37820,11 +41938,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-210",
-        "mould": "Standard Casting Lot #210",
-        "qty": 13,
-        "price": 1450,
-        "total": 643750
+        "id": "m-1170",
+        "mould": "B.F.P-(G)",
+        "qty": 3100.0,
+        "price": 260.0,
+        "total": 806000.0
+      },
+      {
+        "id": "m-1171",
+        "mould": "B.F.P-(G)",
+        "qty": 950.0,
+        "price": 270.0,
+        "total": 256500.0
+      },
+      {
+        "id": "m-1172",
+        "mould": "B.F.P-(G)",
+        "qty": 200.0,
+        "price": 310.0,
+        "total": 62000.0
+      },
+      {
+        "id": "m-1173",
+        "mould": "B.F.P",
+        "qty": 900.0,
+        "price": 230.0,
+        "total": 207000.0
       }
     ]
   },
@@ -37836,7 +41975,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125000,
+    "total": 163360.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37912,11 +42051,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-209",
-        "mould": "Standard Casting Lot #209",
-        "qty": 10,
-        "price": 1450,
-        "total": 125000
+        "id": "m-1162",
+        "mould": "S.L",
+        "qty": 700.0,
+        "price": 135.0,
+        "total": 94500.0
+      },
+      {
+        "id": "m-1163",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 125.0,
+        "total": 12500.0
+      },
+      {
+        "id": "m-1164",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 160.0,
+        "total": 32000.0
+      },
+      {
+        "id": "m-1165",
+        "mould": "Jointer",
+        "qty": 840.0,
+        "price": 29.0,
+        "total": 24360.0
       }
     ]
   },
@@ -37928,7 +42088,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -37997,11 +42157,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-208",
-        "mould": "Standard Casting Lot #208",
-        "qty": 9,
-        "price": 1450,
-        "total": 18125
+        "id": "m-1146",
+        "mould": "L.U",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1147",
+        "mould": "S.L",
+        "qty": 49.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1148",
+        "mould": "UVD",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1149",
+        "mould": "PERAMETER",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1150",
+        "mould": "SILICON",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1151",
+        "mould": "CLIP",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1152",
+        "mould": "Jointer",
+        "qty": 28.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -38013,7 +42215,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38061,11 +42263,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-207",
-        "mould": "Standard Casting Lot #207",
-        "qty": 6,
-        "price": 1450,
-        "total": 10500
+        "id": "m-1153",
+        "mould": "B.F.P-(G)",
+        "qty": 84.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -38077,7 +42279,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38109,15 +42311,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-206",
-        "mould": "Standard Casting Lot #206",
-        "qty": 4,
-        "price": 1450,
-        "total": 18250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-205",
@@ -38127,7 +42321,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38145,15 +42339,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-205",
-        "mould": "Standard Casting Lot #205",
-        "qty": 2,
-        "price": 1450,
-        "total": 1750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-204",
@@ -38163,7 +42349,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 603750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38344,11 +42530,60 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-204",
-        "mould": "Standard Casting Lot #204",
-        "qty": 25,
-        "price": 1450,
-        "total": 603750
+        "id": "m-1202",
+        "mould": "B.F.P",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1203",
+        "mould": "B.F.P-(G)",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1204",
+        "mould": "C.M",
+        "qty": 2250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1205",
+        "mould": "S.L",
+        "qty": 1380.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1206",
+        "mould": "L.A",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1207",
+        "mould": "L.U",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1208",
+        "mould": "Fluted Jointer",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1209",
+        "mould": "Jointer",
+        "qty": 1320.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -38360,7 +42595,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 42125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38457,11 +42692,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-203",
-        "mould": "Standard Casting Lot #203",
-        "qty": 13,
-        "price": 1450,
-        "total": 42125
+        "id": "m-1133",
+        "mould": "B.F.P",
+        "qty": 221.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1134",
+        "mould": "S.L",
+        "qty": 56.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1135",
+        "mould": "PERAMETER",
+        "qty": 60.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1136",
+        "mould": "Fluted Jointer",
+        "qty": 74.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1137",
+        "mould": "Jointer",
+        "qty": 29.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -38473,7 +42736,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 175000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38505,15 +42768,7 @@ export const SQLITE_BILLS = [
         "lCap": 40.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-202",
-        "mould": "Standard Casting Lot #202",
-        "qty": 4,
-        "price": 1450,
-        "total": 175000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-201",
@@ -38523,7 +42778,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6000,
+    "total": 17915.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38543,11 +42798,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-201",
-        "mould": "Standard Casting Lot #201",
-        "qty": 2,
-        "price": 1450,
-        "total": 6000
+        "id": "m-1125",
+        "mould": "B.F.P",
+        "qty": 48.0,
+        "price": 320.0,
+        "total": 15360.0
+      },
+      {
+        "id": "m-1126",
+        "mould": "Fluted Jointer",
+        "qty": 27.0,
+        "price": 60.0,
+        "total": 1620.0
+      },
+      {
+        "id": "m-1127",
+        "mould": "Jointer",
+        "qty": 17.0,
+        "price": 55.0,
+        "total": 935.0
       }
     ]
   },
@@ -38559,7 +42828,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 7500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38577,15 +42846,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-200",
-        "mould": "Standard Casting Lot #200",
-        "qty": 2,
-        "price": 1450,
-        "total": 7500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-199",
@@ -38595,7 +42856,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 143250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38741,11 +43002,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-199",
-        "mould": "Standard Casting Lot #199",
-        "qty": 20,
-        "price": 1450,
-        "total": 143250
+        "id": "m-1109",
+        "mould": "C.M",
+        "qty": 420.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1110",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1111",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1112",
+        "mould": "B.F.P-(G)",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1113",
+        "mould": "UVD",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-1114",
+        "mould": "Jointer",
+        "qty": 470.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -38757,7 +43053,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38770,11 +43066,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-198",
-        "mould": "Standard Casting Lot #198",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-1102",
+        "mould": "Fluted Jointer",
+        "qty": 20.0,
+        "price": 60.0,
+        "total": 1200.0
       }
     ]
   },
@@ -38786,7 +43082,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38811,15 +43107,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-197",
-        "mould": "Standard Casting Lot #197",
-        "qty": 3,
-        "price": 1450,
-        "total": 2750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-196",
@@ -38829,7 +43117,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 71250,
+    "total": 72815.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -38933,11 +43221,81 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-196",
-        "mould": "Standard Casting Lot #196",
-        "qty": 14,
-        "price": 1450,
-        "total": 71250
+        "id": "m-1091",
+        "mould": "C.M",
+        "qty": 165.0,
+        "price": 190.0,
+        "total": 31350.0
+      },
+      {
+        "id": "m-1092",
+        "mould": "L.U",
+        "qty": 47.0,
+        "price": 320.0,
+        "total": 15040.0
+      },
+      {
+        "id": "m-1093",
+        "mould": "U.V",
+        "qty": 4.0,
+        "price": 1350.0,
+        "total": 5400.0
+      },
+      {
+        "id": "m-1094",
+        "mould": "L.A",
+        "qty": 25.0,
+        "price": 350.0,
+        "total": 8750.0
+      },
+      {
+        "id": "m-1095",
+        "mould": "UVD",
+        "qty": 3.0,
+        "price": 1500.0,
+        "total": 4500.0
+      },
+      {
+        "id": "m-1096",
+        "mould": "SILICON",
+        "qty": 15.0,
+        "price": 160.0,
+        "total": 2400.0
+      },
+      {
+        "id": "m-1097",
+        "mould": "BATTEN",
+        "qty": 1.0,
+        "price": 400.0,
+        "total": 400.0
+      },
+      {
+        "id": "m-1098",
+        "mould": "ELFY",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
+      },
+      {
+        "id": "m-1099",
+        "mould": "CLIP",
+        "qty": 300.0,
+        "price": 5.5,
+        "total": 1650.0
+      },
+      {
+        "id": "m-1100",
+        "mould": "GATTI",
+        "qty": 5.0,
+        "price": 25.0,
+        "total": 125.0
+      },
+      {
+        "id": "m-1101",
+        "mould": "Jointer",
+        "qty": 58.0,
+        "price": 50.0,
+        "total": 2900.0
       }
     ]
   },
@@ -38949,7 +43307,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 40000,
+    "total": 92380.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39011,11 +43369,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-195",
-        "mould": "Standard Casting Lot #195",
-        "qty": 8,
-        "price": 1450,
-        "total": 40000
+        "id": "m-1120",
+        "mould": "B.F.P",
+        "qty": 120.0,
+        "price": 240.0,
+        "total": 28800.0
+      },
+      {
+        "id": "m-1121",
+        "mould": "B.F.P-(G)",
+        "qty": 150.0,
+        "price": 270.0,
+        "total": 40500.0
+      },
+      {
+        "id": "m-1122",
+        "mould": "L.U",
+        "qty": 50.0,
+        "price": 240.0,
+        "total": 12000.0
+      },
+      {
+        "id": "m-1123",
+        "mould": "Fluted Jointer",
+        "qty": 109.0,
+        "price": 40.0,
+        "total": 4360.0
+      },
+      {
+        "id": "m-1124",
+        "mould": "Jointer",
+        "qty": 240.0,
+        "price": 28.0,
+        "total": 6720.0
       }
     ]
   },
@@ -39027,7 +43413,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 456250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39110,11 +43496,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-194",
-        "mould": "Standard Casting Lot #194",
-        "qty": 11,
-        "price": 1450,
-        "total": 456250
+        "id": "m-985",
+        "mould": "C.M",
+        "qty": 2400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-986",
+        "mould": "L.A",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-987",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-988",
+        "mould": "B.F.P",
+        "qty": 250.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-989",
+        "mould": "Jointer",
+        "qty": 1120.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -39126,7 +43540,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 73625,
+    "total": 141354.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39195,11 +43609,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-193",
-        "mould": "Standard Casting Lot #193",
-        "qty": 9,
-        "price": 1450,
-        "total": 73625
+        "id": "m-1002",
+        "mould": "B.F.P-(G)",
+        "qty": 290.0,
+        "price": 270.0,
+        "total": 78300.0
+      },
+      {
+        "id": "m-1003",
+        "mould": "B.F.P",
+        "qty": 50.0,
+        "price": 250.0,
+        "total": 12500.0
+      },
+      {
+        "id": "m-1004",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 125.0,
+        "total": 12500.0
+      },
+      {
+        "id": "m-1005",
+        "mould": "C.M",
+        "qty": 89.0,
+        "price": 160.0,
+        "total": 14240.0
+      },
+      {
+        "id": "m-1006",
+        "mould": "L.A",
+        "qty": 60.0,
+        "price": 260.0,
+        "total": 15600.0
+      },
+      {
+        "id": "m-1007",
+        "mould": "Fluted Jointer",
+        "qty": 113.0,
+        "price": 38.0,
+        "total": 4294.0
+      },
+      {
+        "id": "m-1008",
+        "mould": "Jointer",
+        "qty": 140.0,
+        "price": 28.0,
+        "total": 3920.0
       }
     ]
   },
@@ -39211,7 +43667,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 8000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39266,11 +43722,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-192",
-        "mould": "Standard Casting Lot #192",
-        "qty": 7,
-        "price": 1450,
-        "total": 8000
+        "id": "m-935",
+        "mould": "B.F.P",
+        "qty": 22.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-936",
+        "mould": "C.M",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-937",
+        "mould": "L.U",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-938",
+        "mould": "S.L",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-939",
+        "mould": "Fluted Jointer",
+        "qty": 8.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-940",
+        "mould": "Jointer",
+        "qty": 61.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -39282,7 +43773,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 23500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39328,15 +43819,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-191",
-        "mould": "Standard Casting Lot #191",
-        "qty": 6,
-        "price": 1450,
-        "total": 23500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-190",
@@ -39346,7 +43829,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 142500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39399,15 +43882,7 @@ export const SQLITE_BILLS = [
         "lCap": 10.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-190",
-        "mould": "Standard Casting Lot #190",
-        "qty": 7,
-        "price": 1450,
-        "total": 142500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-189",
@@ -39417,7 +43892,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1500.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39437,11 +43912,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-189",
-        "mould": "Standard Casting Lot #189",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
+        "id": "m-928",
+        "mould": "Jointer",
+        "qty": 30.0,
+        "price": 50.0,
+        "total": 1500.0
       }
     ]
   },
@@ -39453,7 +43928,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 32750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39499,15 +43974,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-188",
-        "mould": "Standard Casting Lot #188",
-        "qty": 6,
-        "price": 1450,
-        "total": 32750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-187",
@@ -39517,7 +43984,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39528,15 +43995,7 @@ export const SQLITE_BILLS = [
         "lCap": 4.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-187",
-        "mould": "Standard Casting Lot #187",
-        "qty": 1,
-        "price": 1450,
-        "total": 4625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-186",
@@ -39546,7 +44005,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39557,15 +44016,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-186",
-        "mould": "Standard Casting Lot #186",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-185",
@@ -39575,7 +44026,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 350000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39747,15 +44198,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-185",
-        "mould": "Standard Casting Lot #185",
-        "qty": 24,
-        "price": 1450,
-        "total": 350000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-184",
@@ -39765,7 +44208,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "AUTO",
-    "total": 6750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39804,15 +44247,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-184",
-        "mould": "Standard Casting Lot #184",
-        "qty": 5,
-        "price": 1450,
-        "total": 6750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-183",
@@ -39822,7 +44257,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 193750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39931,15 +44366,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-183",
-        "mould": "Standard Casting Lot #183",
-        "qty": 15,
-        "price": 1450,
-        "total": 193750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-182",
@@ -39949,7 +44376,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 610.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -39962,11 +44389,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-182",
-        "mould": "Standard Casting Lot #182",
-        "qty": 1,
-        "price": 1450,
-        "total": 375
+        "id": "m-925",
+        "mould": "S.L",
+        "qty": 3.0,
+        "price": 170.0,
+        "total": 510.0
+      },
+      {
+        "id": "m-926",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 50.0,
+        "total": 100.0
       }
     ]
   },
@@ -39978,7 +44412,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 175000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40045,15 +44479,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-181",
-        "mould": "Standard Casting Lot #181",
-        "qty": 9,
-        "price": 1450,
-        "total": 175000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-180",
@@ -40063,7 +44489,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40102,15 +44528,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-180",
-        "mould": "Standard Casting Lot #180",
-        "qty": 5,
-        "price": 1450,
-        "total": 125000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-179",
@@ -40120,7 +44538,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 640.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40133,11 +44551,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-179",
-        "mould": "Standard Casting Lot #179",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
+        "id": "m-921",
+        "mould": "C.M",
+        "qty": 1.0,
+        "price": 190.0,
+        "total": 190.0
+      },
+      {
+        "id": "m-922",
+        "mould": "Jointer",
+        "qty": 9.0,
+        "price": 50.0,
+        "total": 450.0
       }
     ]
   },
@@ -40160,15 +44585,7 @@ export const SQLITE_BILLS = [
         "lCap": 1.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-178",
-        "mould": "Standard Casting Lot #178",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-177",
@@ -40178,7 +44595,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 29375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40210,15 +44627,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-177",
-        "mould": "Standard Casting Lot #177",
-        "qty": 4,
-        "price": 1450,
-        "total": 29375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-176",
@@ -40228,7 +44637,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375,
+    "total": 2700.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40255,11 +44664,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-176",
-        "mould": "Standard Casting Lot #176",
-        "qty": 3,
-        "price": 1450,
-        "total": 375
+        "id": "m-917",
+        "mould": "C.M",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-918",
+        "mould": "Jointer",
+        "qty": 54.0,
+        "price": 50.0,
+        "total": 2700.0
       }
     ]
   },
@@ -40282,15 +44698,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-175",
-        "mould": "Standard Casting Lot #175",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-174",
@@ -40300,7 +44708,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40346,15 +44754,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-174",
-        "mould": "Standard Casting Lot #174",
-        "qty": 6,
-        "price": 1450,
-        "total": 10875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-173",
@@ -40364,7 +44764,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40375,15 +44775,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-173",
-        "mould": "Standard Casting Lot #173",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-172",
@@ -40393,7 +44785,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40425,15 +44817,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-172",
-        "mould": "Standard Casting Lot #172",
-        "qty": 4,
-        "price": 1450,
-        "total": 10750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-171",
@@ -40443,7 +44827,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 6750.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40463,11 +44847,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-171",
-        "mould": "Standard Casting Lot #171",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
+        "id": "m-913",
+        "mould": "Jointer",
+        "qty": 90.0,
+        "price": 75.0,
+        "total": 6750.0
       }
     ]
   },
@@ -40479,7 +44863,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 7375,
+    "total": 12450.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40499,11 +44883,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-170",
-        "mould": "Standard Casting Lot #170",
-        "qty": 2,
-        "price": 1450,
-        "total": 7375
+        "id": "m-909",
+        "mould": "C.M",
+        "qty": 55.0,
+        "price": 190.0,
+        "total": 10450.0
+      },
+      {
+        "id": "m-910",
+        "mould": "B.F.P-(G)",
+        "qty": 4.0,
+        "price": 350.0,
+        "total": 1400.0
+      },
+      {
+        "id": "m-911",
+        "mould": "Jointer",
+        "qty": 12.0,
+        "price": 50.0,
+        "total": 600.0
       }
     ]
   },
@@ -40515,7 +44913,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 84625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40584,11 +44982,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-169",
-        "mould": "Standard Casting Lot #169",
-        "qty": 9,
-        "price": 1450,
-        "total": 84625
+        "id": "m-904",
+        "mould": "L.A",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-905",
+        "mould": "UVD",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-906",
+        "mould": "C.M",
+        "qty": 350.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-907",
+        "mould": "H.O",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-908",
+        "mould": "Jointer",
+        "qty": 440.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -40600,7 +45026,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40611,15 +45037,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-168",
-        "mould": "Standard Casting Lot #168",
-        "qty": 1,
-        "price": 1450,
-        "total": 6250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-167",
@@ -40629,7 +45047,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40647,15 +45065,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-167",
-        "mould": "Standard Casting Lot #167",
-        "qty": 2,
-        "price": 1450,
-        "total": 4625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-166",
@@ -40665,7 +45075,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1375,
+    "total": 3740.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40678,11 +45088,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-166",
-        "mould": "Standard Casting Lot #166",
-        "qty": 1,
-        "price": 1450,
-        "total": 1375
+        "id": "m-903",
+        "mould": "L.U",
+        "qty": 11.0,
+        "price": 340.0,
+        "total": 3740.0
       }
     ]
   },
@@ -40694,7 +45104,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6375,
+    "total": 14955.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40721,11 +45131,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-165",
-        "mould": "Standard Casting Lot #165",
-        "qty": 3,
-        "price": 1450,
-        "total": 6375
+        "id": "m-900",
+        "mould": "C.M",
+        "qty": 45.0,
+        "price": 190.0,
+        "total": 8550.0
+      },
+      {
+        "id": "m-901",
+        "mould": "B.F.P-(G)",
+        "qty": 6.0,
+        "price": 340.0,
+        "total": 2040.0
+      },
+      {
+        "id": "m-902",
+        "mould": "Jointer",
+        "qty": 97.0,
+        "price": 45.0,
+        "total": 4365.0
       }
     ]
   },
@@ -40737,7 +45161,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 21250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40797,15 +45221,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-164",
-        "mould": "Standard Casting Lot #164",
-        "qty": 8,
-        "price": 1450,
-        "total": 21250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-163",
@@ -40815,7 +45231,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 76500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -40896,15 +45312,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-163",
-        "mould": "Standard Casting Lot #163",
-        "qty": 11,
-        "price": 1450,
-        "total": 76500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-162",
@@ -40925,15 +45333,7 @@ export const SQLITE_BILLS = [
         "lCap": 10.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-162",
-        "mould": "Standard Casting Lot #162",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-161",
@@ -40943,7 +45343,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 323625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41103,11 +45503,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-161",
-        "mould": "Standard Casting Lot #161",
-        "qty": 22,
-        "price": 1450,
-        "total": 323625
+        "id": "m-890",
+        "mould": "H.O",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-891",
+        "mould": "S.L",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-892",
+        "mould": "C.M",
+        "qty": 1050.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-893",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-894",
+        "mould": "B.F.P-(G)",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-895",
+        "mould": "L.U",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-896",
+        "mould": "U.V",
+        "qty": 13.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-897",
+        "mould": "UVD",
+        "qty": 26.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-898",
+        "mould": "Jointer",
+        "qty": 1360.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-899",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -41119,7 +45582,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 23250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41179,15 +45642,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-160",
-        "mould": "Standard Casting Lot #160",
-        "qty": 8,
-        "price": 1450,
-        "total": 23250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-159",
@@ -41197,7 +45652,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41208,15 +45663,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-159",
-        "mould": "Standard Casting Lot #159",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-158",
@@ -41226,7 +45673,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41237,15 +45684,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-158",
-        "mould": "Standard Casting Lot #158",
-        "qty": 1,
-        "price": 1450,
-        "total": 125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-157",
@@ -41255,7 +45694,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41266,15 +45705,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-157",
-        "mould": "Standard Casting Lot #157",
-        "qty": 1,
-        "price": 1450,
-        "total": 2500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-156",
@@ -41284,7 +45715,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 242500,
+    "total": 359900.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41591,11 +46022,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-156",
-        "mould": "Standard Casting Lot #156",
-        "qty": 43,
-        "price": 1450,
-        "total": 242500
+        "id": "m-884",
+        "mould": "H.O",
+        "qty": 490.0,
+        "price": 130.0,
+        "total": 63700.0
+      },
+      {
+        "id": "m-885",
+        "mould": "C.M",
+        "qty": 880.0,
+        "price": 160.0,
+        "total": 140800.0
+      },
+      {
+        "id": "m-886",
+        "mould": "S.L",
+        "qty": 550.0,
+        "price": 140.0,
+        "total": 77000.0
+      },
+      {
+        "id": "m-887",
+        "mould": "U.V",
+        "qty": 4.0,
+        "price": 1000.0,
+        "total": 4000.0
+      },
+      {
+        "id": "m-888",
+        "mould": "UVD",
+        "qty": 16.0,
+        "price": 1200.0,
+        "total": 19200.0
+      },
+      {
+        "id": "m-889",
+        "mould": "Jointer",
+        "qty": 1840.0,
+        "price": 30.0,
+        "total": 55200.0
       }
     ]
   },
@@ -41607,7 +46073,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 128125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41732,11 +46198,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-155",
-        "mould": "Standard Casting Lot #155",
-        "qty": 17,
-        "price": 1450,
-        "total": 128125
+        "id": "m-874",
+        "mould": "B.F.P-(G)",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-875",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-876",
+        "mould": "UVD",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-877",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -41748,7 +46235,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 112500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41817,11 +46304,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-154",
-        "mould": "Standard Casting Lot #154",
-        "qty": 9,
-        "price": 1450,
-        "total": 112500
+        "id": "m-871",
+        "mould": "H.O",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-872",
+        "mould": "S.L",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-873",
+        "mould": "Jointer",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -41833,7 +46334,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41844,15 +46345,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-153",
-        "mould": "Standard Casting Lot #153",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-152",
@@ -41862,7 +46355,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41873,15 +46366,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-152",
-        "mould": "Standard Casting Lot #152",
-        "qty": 1,
-        "price": 1450,
-        "total": 4750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-151",
@@ -41916,15 +46401,7 @@ export const SQLITE_BILLS = [
         "lCap": 4.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-151",
-        "mould": "Standard Casting Lot #151",
-        "qty": 3,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-150",
@@ -41934,7 +46411,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -41952,15 +46429,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-150",
-        "mould": "Standard Casting Lot #150",
-        "qty": 2,
-        "price": 1450,
-        "total": 4125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-149",
@@ -41970,7 +46439,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 690000,
+    "total": 646960.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42123,11 +46592,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-149",
-        "mould": "Standard Casting Lot #149",
-        "qty": 21,
-        "price": 1450,
-        "total": 690000
+        "id": "m-866",
+        "mould": "C.M",
+        "qty": 3120.0,
+        "price": 160.0,
+        "total": 499200.0
+      },
+      {
+        "id": "m-867",
+        "mould": "F.P",
+        "qty": 400.0,
+        "price": 225.0,
+        "total": 90000.0
+      },
+      {
+        "id": "m-868",
+        "mould": "CLIP",
+        "qty": 2000.0,
+        "price": 2.0,
+        "total": 4000.0
+      },
+      {
+        "id": "m-869",
+        "mould": "Jointer",
+        "qty": 1680.0,
+        "price": 30.0,
+        "total": 50400.0
+      },
+      {
+        "id": "m-870",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 42.0,
+        "total": 3360.0
       }
     ]
   },
@@ -42139,7 +46636,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 12500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42157,15 +46654,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-148",
-        "mould": "Standard Casting Lot #148",
-        "qty": 2,
-        "price": 1450,
-        "total": 12500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-147",
@@ -42175,7 +46664,7 @@ export const SQLITE_BILLS = [
     "docType": "ORDER",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 375000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42305,15 +46794,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-147",
-        "mould": "Standard Casting Lot #147",
-        "qty": 18,
-        "price": 1450,
-        "total": 375000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-146",
@@ -42323,7 +46804,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 125,
+    "total": 420.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42343,11 +46824,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-146",
-        "mould": "Standard Casting Lot #146",
-        "qty": 2,
-        "price": 1450,
-        "total": 125
+        "id": "m-855",
+        "mould": "C.M",
+        "qty": 1.0,
+        "price": 170.0,
+        "total": 170.0
+      },
+      {
+        "id": "m-856",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 50.0,
+        "total": 250.0
       }
     ]
   },
@@ -42359,7 +46847,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42370,15 +46858,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-145",
-        "mould": "Standard Casting Lot #145",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-144",
@@ -42406,15 +46886,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-144",
-        "mould": "Standard Casting Lot #144",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-143",
@@ -42424,7 +46896,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 176250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42568,15 +47040,7 @@ export const SQLITE_BILLS = [
         "lCap": 20.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-143",
-        "mould": "Standard Casting Lot #143",
-        "qty": 20,
-        "price": 1450,
-        "total": 176250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-142",
@@ -42586,7 +47050,7 @@ export const SQLITE_BILLS = [
     "docType": "RETURN",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42597,15 +47061,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-142",
-        "mould": "Standard Casting Lot #142",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-141",
@@ -42615,7 +47071,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42633,15 +47089,7 @@ export const SQLITE_BILLS = [
         "lCap": 1.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-141",
-        "mould": "Standard Casting Lot #141",
-        "qty": 2,
-        "price": 1450,
-        "total": 2125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-140",
@@ -42662,15 +47110,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-140",
-        "mould": "Standard Casting Lot #140",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-139",
@@ -42680,7 +47120,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42693,11 +47133,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-139",
-        "mould": "Standard Casting Lot #139",
-        "qty": 1,
-        "price": 1450,
-        "total": 500
+        "id": "m-853",
+        "mould": "B.F.P",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-854",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -42709,7 +47156,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 206250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42769,15 +47216,7 @@ export const SQLITE_BILLS = [
         "lCap": 40.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-138",
-        "mould": "Standard Casting Lot #138",
-        "qty": 8,
-        "price": 1450,
-        "total": 206250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-137",
@@ -42787,7 +47226,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 8750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42798,15 +47237,7 @@ export const SQLITE_BILLS = [
         "lCap": 4.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-137",
-        "mould": "Standard Casting Lot #137",
-        "qty": 1,
-        "price": 1450,
-        "total": 8750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-136",
@@ -42816,7 +47247,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 14000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42904,15 +47335,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-136",
-        "mould": "Standard Casting Lot #136",
-        "qty": 12,
-        "price": 1450,
-        "total": 14000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-135",
@@ -42922,7 +47345,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1125,
+    "total": 1830.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42935,11 +47358,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-135",
-        "mould": "Standard Casting Lot #135",
-        "qty": 1,
-        "price": 1450,
-        "total": 1125
+        "id": "m-839",
+        "mould": "T.G",
+        "qty": 9.0,
+        "price": 170.0,
+        "total": 1530.0
+      },
+      {
+        "id": "m-840",
+        "mould": "Jointer",
+        "qty": 6.0,
+        "price": 50.0,
+        "total": 300.0
       }
     ]
   },
@@ -42951,7 +47381,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4375,
+    "total": 11730.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -42978,11 +47408,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-134",
-        "mould": "Standard Casting Lot #134",
-        "qty": 3,
-        "price": 1450,
-        "total": 4375
+        "id": "m-829",
+        "mould": "B.F.P-(G)",
+        "qty": 13.0,
+        "price": 330.0,
+        "total": 4290.0
+      },
+      {
+        "id": "m-830",
+        "mould": "L.U",
+        "qty": 22.0,
+        "price": 320.0,
+        "total": 7040.0
+      },
+      {
+        "id": "m-831",
+        "mould": "Fluted Jointer",
+        "qty": 8.0,
+        "price": 50.0,
+        "total": 400.0
       }
     ]
   },
@@ -42994,7 +47438,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43012,15 +47456,7 @@ export const SQLITE_BILLS = [
         "lCap": 9.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-133",
-        "mould": "Standard Casting Lot #133",
-        "qty": 2,
-        "price": 1450,
-        "total": 5000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-132",
@@ -43030,7 +47466,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 43750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43062,15 +47498,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-132",
-        "mould": "Standard Casting Lot #132",
-        "qty": 4,
-        "price": 1450,
-        "total": 43750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-131",
@@ -43080,7 +47508,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43091,15 +47519,7 @@ export const SQLITE_BILLS = [
         "lCap": 2.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-131",
-        "mould": "Standard Casting Lot #131",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-130",
@@ -43109,7 +47529,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43127,15 +47547,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-130",
-        "mould": "Standard Casting Lot #130",
-        "qty": 2,
-        "price": 1450,
-        "total": 4750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-129",
@@ -43145,7 +47557,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 15000,
+    "total": 41400.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43165,11 +47577,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-129",
-        "mould": "Standard Casting Lot #129",
-        "qty": 2,
-        "price": 1450,
-        "total": 15000
+        "id": "m-848",
+        "mould": "B.F.P",
+        "qty": 120.0,
+        "price": 320.0,
+        "total": 38400.0
+      },
+      {
+        "id": "m-849",
+        "mould": "Fluted Jointer",
+        "qty": 35.0,
+        "price": 60.0,
+        "total": 2100.0
+      },
+      {
+        "id": "m-850",
+        "mould": "Jointer",
+        "qty": 15.0,
+        "price": 60.0,
+        "total": 900.0
       }
     ]
   },
@@ -43181,7 +47607,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 369000,
+    "total": 599920.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43404,11 +47830,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-128",
-        "mould": "Standard Casting Lot #128",
-        "qty": 31,
-        "price": 1450,
-        "total": 369000
+        "id": "m-841",
+        "mould": "C.M",
+        "qty": 1902.0,
+        "price": 160.0,
+        "total": 304320.0
+      },
+      {
+        "id": "m-842",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 135.0,
+        "total": 13500.0
+      },
+      {
+        "id": "m-843",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 240.0,
+        "total": 48000.0
+      },
+      {
+        "id": "m-844",
+        "mould": "B.F.P-(G)",
+        "qty": 300.0,
+        "price": 270.0,
+        "total": 81000.0
+      },
+      {
+        "id": "m-845",
+        "mould": "L.A",
+        "qty": 350.0,
+        "price": 270.0,
+        "total": 94500.0
+      },
+      {
+        "id": "m-846",
+        "mould": "L.U",
+        "qty": 100.0,
+        "price": 250.0,
+        "total": 25000.0
+      },
+      {
+        "id": "m-847",
+        "mould": "Jointer",
+        "qty": 1200.0,
+        "price": 28.0,
+        "total": 33600.0
       }
     ]
   },
@@ -43420,7 +47888,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43447,11 +47915,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-127",
-        "mould": "Standard Casting Lot #127",
-        "qty": 3,
-        "price": 1450,
-        "total": 18750
+        "id": "m-801",
+        "mould": "6",
+        "qty": 0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -43463,7 +47931,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43481,15 +47949,7 @@ export const SQLITE_BILLS = [
         "lCap": 5.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-126",
-        "mould": "Standard Casting Lot #126",
-        "qty": 2,
-        "price": 1450,
-        "total": 500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-125",
@@ -43499,7 +47959,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 175000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43561,11 +48021,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-125",
-        "mould": "Standard Casting Lot #125",
-        "qty": 8,
-        "price": 1450,
-        "total": 175000
+        "id": "m-790",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-791",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-792",
+        "mould": "B.F.P-(G)",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-793",
+        "mould": "B.F.P",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-794",
+        "mould": "Jointer",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -43577,7 +48065,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 30125,
+    "total": 46580.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43660,11 +48148,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-124",
-        "mould": "Standard Casting Lot #124",
-        "qty": 11,
-        "price": 1450,
-        "total": 30125
+        "id": "m-795",
+        "mould": "S.L",
+        "qty": 122.0,
+        "price": 160.0,
+        "total": 19520.0
+      },
+      {
+        "id": "m-796",
+        "mould": "C.M",
+        "qty": 119.0,
+        "price": 190.0,
+        "total": 22610.0
+      },
+      {
+        "id": "m-797",
+        "mould": "Jointer",
+        "qty": 89.0,
+        "price": 50.0,
+        "total": 4450.0
       }
     ]
   },
@@ -43676,7 +48178,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 664500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43794,11 +48296,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-123",
-        "mould": "Standard Casting Lot #123",
-        "qty": 16,
-        "price": 1450,
-        "total": 664500
+        "id": "m-857",
+        "mould": "C.M",
+        "qty": 3109.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-858",
+        "mould": "S.P",
+        "qty": 2207.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-859",
+        "mould": "Jointer",
+        "qty": 922.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-860",
+        "mould": "Fluted Jointer",
+        "qty": 520.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -43810,7 +48333,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3750,
+    "total": 6200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43823,11 +48346,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-122",
-        "mould": "Standard Casting Lot #122",
-        "qty": 1,
-        "price": 1450,
-        "total": 3750
+        "id": "m-775",
+        "mould": "C.M",
+        "qty": 30.0,
+        "price": 190.0,
+        "total": 5700.0
+      },
+      {
+        "id": "m-776",
+        "mould": "Jointer",
+        "qty": 10.0,
+        "price": 50.0,
+        "total": 500.0
       }
     ]
   },
@@ -43839,7 +48369,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 950000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -43985,11 +48515,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-121",
-        "mould": "Standard Casting Lot #121",
-        "qty": 20,
-        "price": 1450,
-        "total": 950000
+        "id": "m-783",
+        "mould": "C.M",
+        "qty": 7600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-784",
+        "mould": "Jointer",
+        "qty": 4718.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -44001,7 +48538,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44012,15 +48549,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-120",
-        "mould": "Standard Casting Lot #120",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-119",
@@ -44030,7 +48559,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 22500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44055,15 +48584,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-119",
-        "mould": "Standard Casting Lot #119",
-        "qty": 3,
-        "price": 1450,
-        "total": 22500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-118",
@@ -44100,10 +48621,17 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-118",
-        "mould": "Standard Casting Lot #118",
-        "qty": 3,
-        "price": 1450,
+        "id": "m-799",
+        "mould": "Fluted Jointer",
+        "qty": 260.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-800",
+        "mould": "Jointer",
+        "qty": 120.0,
+        "price": 0,
         "total": 0
       }
     ]
@@ -44116,7 +48644,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 1200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44129,11 +48657,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-117",
-        "mould": "Standard Casting Lot #117",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-761",
+        "mould": "Fluted Jointer",
+        "qty": 20.0,
+        "price": 60.0,
+        "total": 1200.0
       }
     ]
   },
@@ -44145,7 +48673,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44156,15 +48684,7 @@ export const SQLITE_BILLS = [
         "lCap": 5.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-116",
-        "mould": "Standard Casting Lot #116",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-115",
@@ -44174,7 +48694,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 11000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44206,15 +48726,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-115",
-        "mould": "Standard Casting Lot #115",
-        "qty": 4,
-        "price": 1450,
-        "total": 11000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-114",
@@ -44224,7 +48736,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 84750,
+    "total": 158580.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44377,11 +48889,60 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-114",
-        "mould": "Standard Casting Lot #114",
-        "qty": 21,
-        "price": 1450,
-        "total": 84750
+        "id": "m-764",
+        "mould": "C.M",
+        "qty": 100.0,
+        "price": 160.0,
+        "total": 16000.0
+      },
+      {
+        "id": "m-765",
+        "mould": "UVD",
+        "qty": 18.0,
+        "price": 1250.0,
+        "total": 22500.0
+      },
+      {
+        "id": "m-766",
+        "mould": "H",
+        "qty": 150.0,
+        "price": 130.0,
+        "total": 19500.0
+      },
+      {
+        "id": "m-767",
+        "mould": "L.U",
+        "qty": 90.0,
+        "price": 250.0,
+        "total": 22500.0
+      },
+      {
+        "id": "m-768",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 250.0,
+        "total": 50000.0
+      },
+      {
+        "id": "m-769",
+        "mould": "S.L",
+        "qty": 120.0,
+        "price": 140.0,
+        "total": 16800.0
+      },
+      {
+        "id": "m-770",
+        "mould": "Jointer",
+        "qty": 260.0,
+        "price": 28.0,
+        "total": 7280.0
+      },
+      {
+        "id": "m-771",
+        "mould": "Fluted Jointer",
+        "qty": 100.0,
+        "price": 40.0,
+        "total": 4000.0
       }
     ]
   },
@@ -44393,7 +48954,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 337500,
+    "total": 731000.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44448,11 +49009,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-113",
-        "mould": "Standard Casting Lot #113",
-        "qty": 7,
-        "price": 1450,
-        "total": 337500
+        "id": "m-756",
+        "mould": "S.P",
+        "qty": 2000.0,
+        "price": 270.0,
+        "total": 540000.0
+      },
+      {
+        "id": "m-757",
+        "mould": "C.M",
+        "qty": 400.0,
+        "price": 157.0,
+        "total": 62800.0
+      },
+      {
+        "id": "m-758",
+        "mould": "WPC-(LA)",
+        "qty": 300.0,
+        "price": 270.0,
+        "total": 81000.0
+      },
+      {
+        "id": "m-759",
+        "mould": "Fluted Jointer",
+        "qty": 800.0,
+        "price": 38.0,
+        "total": 30400.0
+      },
+      {
+        "id": "m-760",
+        "mould": "Jointer",
+        "qty": 600.0,
+        "price": 28.0,
+        "total": 16800.0
       }
     ]
   },
@@ -44464,7 +49053,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 35000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44489,15 +49078,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-112",
-        "mould": "Standard Casting Lot #112",
-        "qty": 3,
-        "price": 1450,
-        "total": 35000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-111",
@@ -44507,7 +49088,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 16125,
+    "total": 27035.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44604,11 +49185,102 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-111",
-        "mould": "Standard Casting Lot #111",
-        "qty": 13,
-        "price": 1450,
-        "total": 16125
+        "id": "m-742",
+        "mould": "UVD",
+        "qty": 2.0,
+        "price": 1650.0,
+        "total": 3300.0
+      },
+      {
+        "id": "m-743",
+        "mould": "B.F.P-(G)",
+        "qty": 8.0,
+        "price": 360.0,
+        "total": 2880.0
+      },
+      {
+        "id": "m-744",
+        "mould": "C.M",
+        "qty": 44.0,
+        "price": 200.0,
+        "total": 8800.0
+      },
+      {
+        "id": "m-745",
+        "mould": "S.L",
+        "qty": 29.0,
+        "price": 180.0,
+        "total": 5220.0
+      },
+      {
+        "id": "m-746",
+        "mould": "PERAMETER",
+        "qty": 20.0,
+        "price": 80.0,
+        "total": 1600.0
+      },
+      {
+        "id": "m-747",
+        "mould": "SILICON",
+        "qty": 5.0,
+        "price": 160.0,
+        "total": 800.0
+      },
+      {
+        "id": "m-748",
+        "mould": "BATTEN",
+        "qty": 10.0,
+        "price": 45.0,
+        "total": 450.0
+      },
+      {
+        "id": "m-749",
+        "mould": "ELFY",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
+      },
+      {
+        "id": "m-750",
+        "mould": "BLACK",
+        "qty": 1.0,
+        "price": 250.0,
+        "total": 250.0
+      },
+      {
+        "id": "m-751",
+        "mould": "RAJA",
+        "qty": 1.0,
+        "price": 50.0,
+        "total": 50.0
+      },
+      {
+        "id": "m-752",
+        "mould": "GATTI",
+        "qty": 1.0,
+        "price": 25.0,
+        "total": 25.0
+      },
+      {
+        "id": "m-753",
+        "mould": "golden-tap",
+        "qty": 3.0,
+        "price": 350.0,
+        "total": 1050.0
+      },
+      {
+        "id": "m-754",
+        "mould": "Jointer",
+        "qty": 28.0,
+        "price": 70.0,
+        "total": 1960.0
+      },
+      {
+        "id": "m-755",
+        "mould": "Fluted Jointer",
+        "qty": 5.0,
+        "price": 70.0,
+        "total": 350.0
       }
     ]
   },
@@ -44620,7 +49292,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44631,15 +49303,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-110",
-        "mould": "Standard Casting Lot #110",
-        "qty": 1,
-        "price": 1450,
-        "total": 500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-109",
@@ -44649,7 +49313,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EA8267",
     "typeSelection": "BY AUTO",
-    "total": 4375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44660,15 +49324,7 @@ export const SQLITE_BILLS = [
         "lCap": 5.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-109",
-        "mould": "Standard Casting Lot #109",
-        "qty": 1,
-        "price": 1450,
-        "total": 4375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-108",
@@ -44678,7 +49334,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY TEMPO",
-    "total": 380875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -44985,11 +49641,88 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-108",
-        "mould": "Standard Casting Lot #108",
-        "qty": 43,
-        "price": 1450,
-        "total": 380875
+        "id": "m-705",
+        "mould": "H.O",
+        "qty": 580.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-706",
+        "mould": "S.L",
+        "qty": 450.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-707",
+        "mould": "T.G",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-708",
+        "mould": "TG-(A)",
+        "qty": 50.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-709",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-710",
+        "mould": "B.F.P",
+        "qty": 480.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-711",
+        "mould": "B.F.P-(G)",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-712",
+        "mould": "L.A",
+        "qty": 122.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-713",
+        "mould": "L.U",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-714",
+        "mould": "UVD",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-715",
+        "mould": "Jointer",
+        "qty": 1068.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-716",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -45001,7 +49734,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB09AQ1598",
     "typeSelection": "BY TEMPO",
-    "total": 87500,
+    "total": 117360.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45056,11 +49789,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-107",
-        "mould": "Standard Casting Lot #107",
-        "qty": 7,
-        "price": 1450,
-        "total": 87500
+        "id": "m-738",
+        "mould": "C.M",
+        "qty": 300.0,
+        "price": 160.0,
+        "total": 48000.0
+      },
+      {
+        "id": "m-739",
+        "mould": "S.L",
+        "qty": 400.0,
+        "price": 138.0,
+        "total": 55200.0
+      },
+      {
+        "id": "m-740",
+        "mould": "Jointer",
+        "qty": 420.0,
+        "price": 28.0,
+        "total": 11760.0
+      },
+      {
+        "id": "m-741",
+        "mould": "Fluted Jointer",
+        "qty": 60.0,
+        "price": 40.0,
+        "total": 2400.0
       }
     ]
   },
@@ -45072,7 +49826,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45090,15 +49844,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-106",
-        "mould": "Standard Casting Lot #106",
-        "qty": 2,
-        "price": 1450,
-        "total": 4000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-105",
@@ -45108,7 +49854,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 1500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45119,15 +49865,7 @@ export const SQLITE_BILLS = [
         "lCap": 10.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-105",
-        "mould": "Standard Casting Lot #105",
-        "qty": 1,
-        "price": 1450,
-        "total": 1500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-104",
@@ -45137,7 +49875,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 150000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45148,15 +49886,7 @@ export const SQLITE_BILLS = [
         "lCap": 1154.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-104",
-        "mould": "Standard Casting Lot #104",
-        "qty": 1,
-        "price": 1450,
-        "total": 150000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-103",
@@ -45166,7 +49896,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08CH9718",
     "typeSelection": "BY TEMPO",
-    "total": 13375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45191,15 +49921,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-103",
-        "mould": "Standard Casting Lot #103",
-        "qty": 3,
-        "price": 1450,
-        "total": 13375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-102",
@@ -45209,7 +49931,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 560000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45467,11 +50189,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-102",
-        "mould": "Standard Casting Lot #102",
-        "qty": 36,
-        "price": 1450,
-        "total": 560000
+        "id": "m-724",
+        "mould": "S.L",
+        "qty": 2300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-725",
+        "mould": "C.M",
+        "qty": 1840.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-726",
+        "mould": "B.F.P",
+        "qty": 260.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-727",
+        "mould": "UVD",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-728",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-729",
+        "mould": "Jointer",
+        "qty": 2680.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-730",
+        "mould": "Fluted Jointer",
+        "qty": 40.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -45483,7 +50247,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 4750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45522,15 +50286,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-101",
-        "mould": "Standard Casting Lot #101",
-        "qty": 5,
-        "price": 1450,
-        "total": 4750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-100",
@@ -45540,7 +50296,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Self",
-    "total": 1625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45551,15 +50307,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-100",
-        "mould": "Standard Casting Lot #100",
-        "qty": 1,
-        "price": 1450,
-        "total": 1625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-99",
@@ -45569,7 +50317,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "SELF",
-    "total": 91000,
+    "total": 100990.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45617,11 +50365,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-99",
-        "mould": "Standard Casting Lot #99",
-        "qty": 6,
-        "price": 1450,
-        "total": 91000
+        "id": "m-621",
+        "mould": "C.M",
+        "qty": 310.0,
+        "price": 170.0,
+        "total": 52700.0
+      },
+      {
+        "id": "m-622",
+        "mould": "H.O",
+        "qty": 154.0,
+        "price": 160.0,
+        "total": 24640.0
+      },
+      {
+        "id": "m-623",
+        "mould": "PERAMETER",
+        "qty": 164.0,
+        "price": 75.0,
+        "total": 12300.0
+      },
+      {
+        "id": "m-624",
+        "mould": "HARDWARE",
+        "qty": 100.0,
+        "price": 25.0,
+        "total": 2500.0
+      },
+      {
+        "id": "m-625",
+        "mould": "Jointer",
+        "qty": 177.0,
+        "price": 50.0,
+        "total": 8850.0
       }
     ]
   },
@@ -45667,10 +50443,17 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-97",
-        "mould": "Standard Casting Lot #97",
-        "qty": 4,
-        "price": 1450,
+        "id": "m-660",
+        "mould": "Fluted Jointer",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-661",
+        "mould": "Jointer",
+        "qty": 14.0,
+        "price": 0,
         "total": 0
       }
     ]
@@ -45683,7 +50466,7 @@ export const SQLITE_BILLS = [
     "docType": "ORDER",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -45694,15 +50477,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-95",
-        "mould": "Standard Casting Lot #95",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-94",
@@ -45712,7 +50487,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 711250,
+    "total": 678600.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46033,11 +50808,88 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-94",
-        "mould": "Standard Casting Lot #94",
-        "qty": 45,
-        "price": 1450,
-        "total": 711250
+        "id": "m-626",
+        "mould": "H.O",
+        "qty": 1000.0,
+        "price": 130.0,
+        "total": 130000.0
+      },
+      {
+        "id": "m-627",
+        "mould": "T.G",
+        "qty": 450.0,
+        "price": 145.0,
+        "total": 65250.0
+      },
+      {
+        "id": "m-628",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 160.0,
+        "total": 80000.0
+      },
+      {
+        "id": "m-629",
+        "mould": "B.F.P",
+        "qty": 400.0,
+        "price": 250.0,
+        "total": 100000.0
+      },
+      {
+        "id": "m-630",
+        "mould": "B.F.P-(G)",
+        "qty": 400.0,
+        "price": 270.0,
+        "total": 108000.0
+      },
+      {
+        "id": "m-631",
+        "mould": "L.A",
+        "qty": 120.0,
+        "price": 270.0,
+        "total": 32400.0
+      },
+      {
+        "id": "m-632",
+        "mould": "L.U",
+        "qty": 120.0,
+        "price": 250.0,
+        "total": 30000.0
+      },
+      {
+        "id": "m-633",
+        "mould": "UVD",
+        "qty": 25.0,
+        "price": 1250.0,
+        "total": 31250.0
+      },
+      {
+        "id": "m-634",
+        "mould": "S.L",
+        "qty": 500.0,
+        "price": 145.0,
+        "total": 72500.0
+      },
+      {
+        "id": "m-635",
+        "mould": "Fulted jointer",
+        "qty": 120.0,
+        "price": 38.0,
+        "total": 4560.0
+      },
+      {
+        "id": "m-636",
+        "mould": "jointer",
+        "qty": 880.0,
+        "price": 28.0,
+        "total": 24640.0
+      },
+      {
+        "id": "m-637",
+        "mould": "joi",
+        "qty": 0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46060,15 +50912,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-92",
-        "mould": "Standard Casting Lot #92",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-91",
@@ -46078,7 +50922,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 352375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46147,11 +50991,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-91",
-        "mould": "Standard Casting Lot #91",
-        "qty": 9,
-        "price": 1450,
-        "total": 352375
+        "id": "m-638",
+        "mould": "C.M",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-639",
+        "mould": "S.L",
+        "qty": 600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-640",
+        "mould": "H.O",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-641",
+        "mould": "Jointer",
+        "qty": 1400.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46163,7 +51028,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB02BC9939",
     "typeSelection": "BY AUTO",
-    "total": 1000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46174,15 +51039,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-90",
-        "mould": "Standard Casting Lot #90",
-        "qty": 1,
-        "price": 1450,
-        "total": 1000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-89",
@@ -46192,7 +51049,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 275000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46296,11 +51153,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-89",
-        "mould": "Standard Casting Lot #89",
-        "qty": 14,
-        "price": 1450,
-        "total": 275000
+        "id": "m-543",
+        "mould": "C.M",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-544",
+        "mould": "S.L",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-545",
+        "mould": "Jointer",
+        "qty": 1260.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-546",
+        "mould": "Fluted Jointer",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46312,7 +51190,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB02BC9939",
     "typeSelection": "BY AUTO",
-    "total": 3125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46346,11 +51224,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-88",
-        "mould": "Standard Casting Lot #88",
-        "qty": 4,
-        "price": 1450,
-        "total": 3125
+        "id": "m-533",
+        "mould": "L.U",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-534",
+        "mould": "C.M",
+        "qty": 18.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-535",
+        "mould": "Jointer",
+        "qty": 15.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46362,7 +51254,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46373,15 +51265,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-87",
-        "mould": "Standard Casting Lot #87",
-        "qty": 1,
-        "price": 1450,
-        "total": 2000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-86",
@@ -46391,7 +51275,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 3625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46411,11 +51295,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-86",
-        "mould": "Standard Casting Lot #86",
-        "qty": 2,
-        "price": 1450,
-        "total": 3625
+        "id": "m-531",
+        "mould": "S.L",
+        "qty": 29.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-532",
+        "mould": "Jointer",
+        "qty": 14.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46427,7 +51318,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 14000,
+    "total": 32770.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46475,11 +51366,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-85",
-        "mould": "Standard Casting Lot #85",
-        "qty": 6,
-        "price": 1450,
-        "total": 14000
+        "id": "m-516",
+        "mould": "UVD",
+        "qty": 13.0,
+        "price": 1750.0,
+        "total": 22750.0
+      },
+      {
+        "id": "m-517",
+        "mould": "L.U",
+        "qty": 10.0,
+        "price": 360.0,
+        "total": 3600.0
+      },
+      {
+        "id": "m-518",
+        "mould": "SILICON",
+        "qty": 30.0,
+        "price": 160.0,
+        "total": 4800.0
+      },
+      {
+        "id": "m-519",
+        "mould": "BATTEN",
+        "qty": 4.0,
+        "price": 40.0,
+        "total": 160.0
+      },
+      {
+        "id": "m-520",
+        "mould": "CLIP",
+        "qty": 50.0,
+        "price": 5.0,
+        "total": 250.0
+      },
+      {
+        "id": "m-521",
+        "mould": "ELFY",
+        "qty": 5.0,
+        "price": 60.0,
+        "total": 300.0
+      },
+      {
+        "id": "m-522",
+        "mould": "Jointer",
+        "qty": 13.0,
+        "price": 70.0,
+        "total": 910.0
       }
     ]
   },
@@ -46491,7 +51424,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 78625,
+    "total": 100990.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46539,11 +51472,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-84",
-        "mould": "Standard Casting Lot #84",
-        "qty": 6,
-        "price": 1450,
-        "total": 78625
+        "id": "m-526",
+        "mould": "C.M",
+        "qty": 310.0,
+        "price": 170.0,
+        "total": 52700.0
+      },
+      {
+        "id": "m-527",
+        "mould": "H.O",
+        "qty": 154.0,
+        "price": 160.0,
+        "total": 24640.0
+      },
+      {
+        "id": "m-528",
+        "mould": "PERAMETER",
+        "qty": 164.0,
+        "price": 75.0,
+        "total": 12300.0
+      },
+      {
+        "id": "m-529",
+        "mould": "HARDWARE",
+        "qty": 1.0,
+        "price": 2500.0,
+        "total": 2500.0
+      },
+      {
+        "id": "m-530",
+        "mould": "Jointer",
+        "qty": 177.0,
+        "price": 50.0,
+        "total": 8850.0
       }
     ]
   },
@@ -46555,7 +51516,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 1255000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46708,11 +51669,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-83",
-        "mould": "Standard Casting Lot #83",
-        "qty": 21,
-        "price": 1450,
-        "total": 1255000
+        "id": "m-536",
+        "mould": "C.M",
+        "qty": 7700.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-537",
+        "mould": "B.F.P-(G)",
+        "qty": 3500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-538",
+        "mould": "Jointer",
+        "qty": 8480.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46724,7 +51699,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Canter",
-    "total": 451000,
+    "total": 1002985.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46793,11 +51768,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-82",
-        "mould": "Standard Casting Lot #82",
-        "qty": 9,
-        "price": 1450,
-        "total": 451000
+        "id": "m-523",
+        "mould": "S.P",
+        "qty": 3608.0,
+        "price": 255.0,
+        "total": 920040.0
+      },
+      {
+        "id": "m-524",
+        "mould": "Fluted Jointer",
+        "qty": 1080.0,
+        "price": 38.0,
+        "total": 41040.0
+      },
+      {
+        "id": "m-525",
+        "mould": "Jointer",
+        "qty": 1445.0,
+        "price": 29.0,
+        "total": 41905.0
       }
     ]
   },
@@ -46809,7 +51798,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Canter",
-    "total": 5750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -46829,11 +51818,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-81",
-        "mould": "Standard Casting Lot #81",
-        "qty": 2,
-        "price": 1450,
-        "total": 5750
+        "id": "m-503",
+        "mould": "S.L",
+        "qty": 21.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-504",
+        "mould": "PERAMETER",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -46845,7 +51841,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Canter",
-    "total": 3180500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47005,11 +52001,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-79",
-        "mould": "Standard Casting Lot #79",
-        "qty": 22,
-        "price": 1450,
-        "total": 3180500
+        "id": "m-494",
+        "mould": "B.F.P",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-495",
+        "mould": "B.F.P-(G)",
+        "qty": 2544.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-496",
+        "mould": "B.F.P-B-(G)",
+        "qty": 1080.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-497",
+        "mould": "B.F.P-(B)",
+        "qty": 370.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-498",
+        "mould": "UVD",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-499",
+        "mould": "T.G",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-500",
+        "mould": "H.O",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-501",
+        "mould": "CLIP",
+        "qty": 20000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-502",
+        "mould": "Jointer",
+        "qty": 2347.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -47021,7 +52073,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 2375,
+    "total": 3710.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47048,11 +52100,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-77",
-        "mould": "Standard Casting Lot #77",
-        "qty": 3,
-        "price": 1450,
-        "total": 2375
+        "id": "m-463",
+        "mould": "C.M",
+        "qty": 19.0,
+        "price": 190.0,
+        "total": 3610.0
+      },
+      {
+        "id": "m-464",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 50.0,
+        "total": 100.0
       }
     ]
   },
@@ -47064,7 +52123,7 @@ export const SQLITE_BILLS = [
     "docType": "0",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 8125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47075,15 +52134,7 @@ export const SQLITE_BILLS = [
         "lCap": 56.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-76",
-        "mould": "Standard Casting Lot #76",
-        "qty": 1,
-        "price": 1450,
-        "total": 8125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-75",
@@ -47093,7 +52144,7 @@ export const SQLITE_BILLS = [
     "docType": "0",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 8125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47104,15 +52155,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-75",
-        "mould": "Standard Casting Lot #75",
-        "qty": 1,
-        "price": 1450,
-        "total": 8125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-74",
@@ -47122,7 +52165,7 @@ export const SQLITE_BILLS = [
     "docType": "0",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 5625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47133,15 +52176,7 @@ export const SQLITE_BILLS = [
         "lCap": 45.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-74",
-        "mould": "Standard Casting Lot #74",
-        "qty": 1,
-        "price": 1450,
-        "total": 5625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-73",
@@ -47151,7 +52186,7 @@ export const SQLITE_BILLS = [
     "docType": "0",
     "vehicle": "",
     "typeSelection": "Canter",
-    "total": 3180500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47311,11 +52346,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-73",
-        "mould": "Standard Casting Lot #73",
-        "qty": 22,
-        "price": 1450,
-        "total": 3180500
+        "id": "m-452",
+        "mould": "B.F.P",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-453",
+        "mould": "B.F.P-(G)",
+        "qty": 2544.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-454",
+        "mould": "B.F.P-B-(G)",
+        "qty": 1080.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-455",
+        "mould": "B.F.P-(B)",
+        "qty": 370.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-456",
+        "mould": "UVD",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-457",
+        "mould": "T.G",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-458",
+        "mould": "H.O",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-459",
+        "mould": "CLIP",
+        "qty": 20000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-460",
+        "mould": "Fluted Jointer",
+        "qty": 1594.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-461",
+        "mould": "Jointer",
+        "qty": 753.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -47327,7 +52425,7 @@ export const SQLITE_BILLS = [
     "docType": "0",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 3180500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47487,11 +52585,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-72",
-        "mould": "Standard Casting Lot #72",
-        "qty": 22,
-        "price": 1450,
-        "total": 3180500
+        "id": "m-442",
+        "mould": "B.F.P",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-443",
+        "mould": "B.F.P-(G)",
+        "qty": 2544.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-444",
+        "mould": "B.F.P-B-(G)",
+        "qty": 1080.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-445",
+        "mould": "B.F.P-(B)",
+        "qty": 370.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-446",
+        "mould": "UVD",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-447",
+        "mould": "T.G",
+        "qty": 550.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-448",
+        "mould": "H.O",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-449",
+        "mould": "CLIP",
+        "qty": 20000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-450",
+        "mould": "Fluted Jointer",
+        "qty": 1594.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-451",
+        "mould": "Jointer",
+        "qty": 753.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -47503,7 +52664,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB10ES5372",
     "typeSelection": "BY AUTO",
-    "total": 9625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47521,15 +52682,7 @@ export const SQLITE_BILLS = [
         "lCap": 7.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-71",
-        "mould": "Standard Casting Lot #71",
-        "qty": 2,
-        "price": 1450,
-        "total": 9625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-70",
@@ -47539,7 +52692,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 0,
+    "total": 400.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47552,11 +52705,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-70",
-        "mould": "Standard Casting Lot #70",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-441",
+        "mould": "Jointer",
+        "qty": 5.0,
+        "price": 80.0,
+        "total": 400.0
       }
     ]
   },
@@ -47568,7 +52721,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 250,
+    "total": 460.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47581,11 +52734,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-69",
-        "mould": "Standard Casting Lot #69",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-440",
+        "mould": "C.M",
+        "qty": 2.0,
+        "price": 230.0,
+        "total": 460.0
       }
     ]
   },
@@ -47597,7 +52750,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08CH9616",
     "typeSelection": "BY TEMPO",
-    "total": 16875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47673,11 +52826,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-68",
-        "mould": "Standard Casting Lot #68",
-        "qty": 10,
-        "price": 1450,
-        "total": 16875
+        "id": "m-434",
+        "mould": "UVD",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-435",
+        "mould": "B.F.P-(G)",
+        "qty": 75.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-436",
+        "mould": "F.P.C.G",
+        "qty": 40.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-437",
+        "mould": "L.U",
+        "qty": 14.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-438",
+        "mould": "Jointer",
+        "qty": 16.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-439",
+        "mould": "Fluted Jointer",
+        "qty": 33.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -47689,7 +52877,7 @@ export const SQLITE_BILLS = [
     "docType": "0",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 450000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47749,15 +52937,7 @@ export const SQLITE_BILLS = [
         "lCap": 160.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-67",
-        "mould": "Standard Casting Lot #67",
-        "qty": 8,
-        "price": 1450,
-        "total": 450000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-66",
@@ -47767,7 +52947,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Self",
-    "total": 875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47780,11 +52960,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-66",
-        "mould": "Standard Casting Lot #66",
-        "qty": 1,
-        "price": 1450,
-        "total": 875
+        "id": "m-426",
+        "mould": "B.F.P-(G)",
+        "qty": 7.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-427",
+        "mould": "Fluted Jointer",
+        "qty": 5.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -47796,7 +52983,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47807,15 +52994,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-65",
-        "mould": "Standard Casting Lot #65",
-        "qty": 1,
-        "price": 1450,
-        "total": 750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-64",
@@ -47825,7 +53004,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 2375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47843,15 +53022,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-64",
-        "mould": "Standard Casting Lot #64",
-        "qty": 2,
-        "price": 1450,
-        "total": 2375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-63",
@@ -47861,7 +53032,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Truck",
-    "total": 2000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47872,15 +53043,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-63",
-        "mould": "Standard Casting Lot #63",
-        "qty": 1,
-        "price": 1450,
-        "total": 2000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-62",
@@ -47890,7 +53053,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "AUTO",
-    "total": 78625,
+    "total": 102160.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -47945,11 +53108,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-62",
-        "mould": "Standard Casting Lot #62",
-        "qty": 7,
-        "price": 1450,
-        "total": 78625
+        "id": "m-414",
+        "mould": "C.M",
+        "qty": 273.0,
+        "price": 170.0,
+        "total": 46410.0
+      },
+      {
+        "id": "m-415",
+        "mould": "S.L",
+        "qty": 37.0,
+        "price": 160.0,
+        "total": 5920.0
+      },
+      {
+        "id": "m-416",
+        "mould": "H.O",
+        "qty": 154.0,
+        "price": 170.0,
+        "total": 26180.0
+      },
+      {
+        "id": "m-417",
+        "mould": "PERAMETER",
+        "qty": 164.0,
+        "price": 75.0,
+        "total": 12300.0
+      },
+      {
+        "id": "m-418",
+        "mould": "HARDWARE",
+        "qty": 1.0,
+        "price": 2500.0,
+        "total": 2500.0
+      },
+      {
+        "id": "m-419",
+        "mould": "Jointer",
+        "qty": 177.0,
+        "price": 50.0,
+        "total": 8850.0
       }
     ]
   },
@@ -47961,7 +53159,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "AUTO",
-    "total": 59250,
+    "total": 73480.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48009,11 +53207,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-61",
-        "mould": "Standard Casting Lot #61",
-        "qty": 6,
-        "price": 1450,
-        "total": 59250
+        "id": "m-410",
+        "mould": "C.M",
+        "qty": 273.0,
+        "price": 170.0,
+        "total": 46410.0
+      },
+      {
+        "id": "m-411",
+        "mould": "S.L",
+        "qty": 37.0,
+        "price": 160.0,
+        "total": 5920.0
+      },
+      {
+        "id": "m-412",
+        "mould": "PERAMETER",
+        "qty": 164.0,
+        "price": 75.0,
+        "total": 12300.0
+      },
+      {
+        "id": "m-413",
+        "mould": "Jointer",
+        "qty": 177.0,
+        "price": 50.0,
+        "total": 8850.0
       }
     ]
   },
@@ -48025,7 +53244,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Self",
-    "total": 4500,
+    "total": 2700.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48038,11 +53257,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-60",
-        "mould": "Standard Casting Lot #60",
-        "qty": 1,
-        "price": 1450,
-        "total": 4500
+        "id": "m-409",
+        "mould": "PERAMETER",
+        "qty": 36.0,
+        "price": 75.0,
+        "total": 2700.0
       }
     ]
   },
@@ -48054,7 +53273,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "JK04G1928",
     "typeSelection": "Truck",
-    "total": 588000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48221,11 +53440,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-59",
-        "mould": "Standard Casting Lot #59",
-        "qty": 23,
-        "price": 1450,
-        "total": 588000
+        "id": "m-428",
+        "mould": "S.P",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-429",
+        "mould": "F.P.C.G",
+        "qty": 2200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-430",
+        "mould": "F.P",
+        "qty": 800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-431",
+        "mould": "F.P.G",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-432",
+        "mould": "Fluted Jointer",
+        "qty": 1800.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-433",
+        "mould": "Jointer",
+        "qty": 1440.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -48237,7 +53491,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08FP6375",
     "typeSelection": "JEEP",
-    "total": 127500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48313,11 +53567,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-58",
-        "mould": "Standard Casting Lot #58",
-        "qty": 10,
-        "price": 1450,
-        "total": 127500
+        "id": "m-385",
+        "mould": "S.L",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-386",
+        "mould": "C.M",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-387",
+        "mould": "B.F.P-(G)",
+        "qty": 270.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-388",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-389",
+        "mould": "Jointer",
+        "qty": 280.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-390",
+        "mould": "Fluted Jointer",
+        "qty": 480.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -48329,7 +53618,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 1250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48340,15 +53629,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-57",
-        "mould": "Standard Casting Lot #57",
-        "qty": 1,
-        "price": 1450,
-        "total": 1250
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-56",
@@ -48358,7 +53639,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 4375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48397,15 +53678,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-56",
-        "mould": "Standard Casting Lot #56",
-        "qty": 5,
-        "price": 1450,
-        "total": 4375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-55",
@@ -48415,7 +53688,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 14750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48484,11 +53757,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-55",
-        "mould": "Standard Casting Lot #55",
-        "qty": 9,
-        "price": 1450,
-        "total": 14750
+        "id": "m-363",
+        "mould": "C.M",
+        "qty": 67.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-364",
+        "mould": "B.F.P",
+        "qty": 13.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-365",
+        "mould": "S.L",
+        "qty": 3.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-366",
+        "mould": "PERAMETER",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-367",
+        "mould": "BLACK",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-368",
+        "mould": "RAJA",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-369",
+        "mould": "GATTI",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-370",
+        "mould": "BATTEN",
+        "qty": 10.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-371",
+        "mould": "Jointer",
+        "qty": 17.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-372",
+        "mould": "Fluted Jointer",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -48500,7 +53836,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EH8052",
     "typeSelection": "BY CANTER",
-    "total": 300000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48541,11 +53877,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-54",
-        "mould": "Standard Casting Lot #54",
-        "qty": 5,
-        "price": 1450,
-        "total": 300000
+        "id": "m-361",
+        "mould": "C.M",
+        "qty": 2400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-362",
+        "mould": "Jointer",
+        "qty": 1000.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -48557,7 +53900,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 470.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48577,11 +53920,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-53",
-        "mould": "Standard Casting Lot #53",
-        "qty": 2,
-        "price": 1450,
-        "total": 250
+        "id": "m-355",
+        "mould": "S.L",
+        "qty": 2.0,
+        "price": 160.0,
+        "total": 320.0
+      },
+      {
+        "id": "m-356",
+        "mould": "Jointer",
+        "qty": 3.0,
+        "price": 50.0,
+        "total": 150.0
       }
     ]
   },
@@ -48593,7 +53943,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Self",
-    "total": 0,
+    "total": 200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48606,11 +53956,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-52",
-        "mould": "Standard Casting Lot #52",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-354",
+        "mould": "Jointer",
+        "qty": 4.0,
+        "price": 50.0,
+        "total": 200.0
       }
     ]
   },
@@ -48622,7 +53972,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48635,11 +53985,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-50",
-        "mould": "Standard Casting Lot #50",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
+        "id": "m-345",
+        "mould": "C.M",
+        "qty": 15.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-346",
+        "mould": "Jointer",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -48651,7 +54008,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 87500,
+    "total": 24640.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48706,11 +54063,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-49",
-        "mould": "Standard Casting Lot #49",
-        "qty": 7,
-        "price": 1450,
-        "total": 87500
+        "id": "m-325",
+        "mould": "F.P.C",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-326",
+        "mould": "F.P.C.G",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-327",
+        "mould": "S.L",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-328",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 154.0,
+        "total": 24640.0
+      },
+      {
+        "id": "m-329",
+        "mould": "Jointer",
+        "qty": 230.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -48722,7 +54107,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 92500,
+    "total": 30800.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -48931,11 +54316,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-48",
-        "mould": "Standard Casting Lot #48",
-        "qty": 29,
-        "price": 1450,
-        "total": 92500
+        "id": "m-347",
+        "mould": "U.V",
+        "qty": 30.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-348",
+        "mould": "UVD",
+        "qty": 110.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-349",
+        "mould": "B.F.P-(G)",
+        "qty": 350.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-350",
+        "mould": "B.F.P",
+        "qty": 150.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-351",
+        "mould": "S.L",
+        "qty": 0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-352",
+        "mould": "Jointer",
+        "qty": 340.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-353",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 154.0,
+        "total": 30800.0
       }
     ]
   },
@@ -48947,7 +54374,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 212500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49086,11 +54513,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-47",
-        "mould": "Standard Casting Lot #47",
-        "qty": 19,
-        "price": 1450,
-        "total": 212500
+        "id": "m-277",
+        "mould": "C.M",
+        "qty": 1700.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-278",
+        "mould": "Jointer",
+        "qty": 990.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -49102,7 +54536,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 875,
+    "total": 3175.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49115,11 +54549,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-46",
-        "mould": "Standard Casting Lot #46",
-        "qty": 1,
-        "price": 1450,
-        "total": 875
+        "id": "m-269",
+        "mould": "B.F.P-(G)",
+        "qty": 7.0,
+        "price": 400.0,
+        "total": 2800.0
+      },
+      {
+        "id": "m-270",
+        "mould": "Fluted Jointer",
+        "qty": 3.0,
+        "price": 75.0,
+        "total": 225.0
+      },
+      {
+        "id": "m-271",
+        "mould": "Jointer",
+        "qty": 2.0,
+        "price": 75.0,
+        "total": 150.0
       }
     ]
   },
@@ -49131,7 +54579,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 380250,
+    "total": 214060.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49228,11 +54676,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-45",
-        "mould": "Standard Casting Lot #45",
-        "qty": 13,
-        "price": 1450,
-        "total": 380250
+        "id": "m-314",
+        "mould": "S.P",
+        "qty": 1812.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-315",
+        "mould": "F.P.C.G",
+        "qty": 830.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-316",
+        "mould": "F.P.C.G-(A)",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-317",
+        "mould": "S.L",
+        "qty": 0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-318",
+        "mould": "Fluted Jointer",
+        "qty": 1390.0,
+        "price": 154.0,
+        "total": 214060.0
+      },
+      {
+        "id": "m-319",
+        "mould": "Jointer",
+        "qty": 840.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -49244,7 +54727,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "WHOLESALE",
-    "total": 7125,
+    "total": 10910.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49278,11 +54761,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-44",
-        "mould": "Standard Casting Lot #44",
-        "qty": 4,
-        "price": 1450,
-        "total": 7125
+        "id": "m-256",
+        "mould": "C.M",
+        "qty": 19.0,
+        "price": 170.0,
+        "total": 3230.0
+      },
+      {
+        "id": "m-257",
+        "mould": "S.L",
+        "qty": 38.0,
+        "price": 160.0,
+        "total": 6080.0
+      },
+      {
+        "id": "m-258",
+        "mould": "Jointer",
+        "qty": 32.0,
+        "price": 50.0,
+        "total": 1600.0
       }
     ]
   },
@@ -49294,7 +54791,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08CH9718",
     "typeSelection": "BY TEMPO",
-    "total": 62500,
+    "total": 103540.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49349,11 +54846,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-43",
-        "mould": "Standard Casting Lot #43",
-        "qty": 7,
-        "price": 1450,
-        "total": 62500
+        "id": "m-251",
+        "mould": "C.M",
+        "qty": 350.0,
+        "price": 170.0,
+        "total": 59500.0
+      },
+      {
+        "id": "m-252",
+        "mould": "B.F.P",
+        "qty": 100.0,
+        "price": 280.0,
+        "total": 28000.0
+      },
+      {
+        "id": "m-253",
+        "mould": "H.O",
+        "qty": 50.0,
+        "price": 140.0,
+        "total": 7000.0
+      },
+      {
+        "id": "m-254",
+        "mould": "Jointer",
+        "qty": 230.0,
+        "price": 32.0,
+        "total": 7360.0
+      },
+      {
+        "id": "m-255",
+        "mould": "Fluted Jointer",
+        "qty": 40.0,
+        "price": 42.0,
+        "total": 1680.0
       }
     ]
   },
@@ -49365,7 +54890,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 15125,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49383,15 +54908,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-42",
-        "mould": "Standard Casting Lot #42",
-        "qty": 2,
-        "price": 1450,
-        "total": 15125
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-41",
@@ -49401,7 +54918,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 250,
+    "total": 660.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49414,11 +54931,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-41",
-        "mould": "Standard Casting Lot #41",
-        "qty": 1,
-        "price": 1450,
-        "total": 250
+        "id": "m-245",
+        "mould": "B.F.P",
+        "qty": 2.0,
+        "price": 330.0,
+        "total": 660.0
       }
     ]
   },
@@ -49430,7 +54947,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB10BR4565",
     "typeSelection": "JEEP",
-    "total": 100000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49455,15 +54972,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-40",
-        "mould": "Standard Casting Lot #40",
-        "qty": 3,
-        "price": 1450,
-        "total": 100000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-39",
@@ -49473,7 +54982,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 6500,
+    "total": 10040.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49486,11 +54995,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-39",
-        "mould": "Standard Casting Lot #39",
-        "qty": 1,
-        "price": 1450,
-        "total": 6500
+        "id": "m-243",
+        "mould": "C.M",
+        "qty": 52.0,
+        "price": 170.0,
+        "total": 8840.0
+      },
+      {
+        "id": "m-244",
+        "mould": "Jointer",
+        "qty": 24.0,
+        "price": 50.0,
+        "total": 1200.0
       }
     ]
   },
@@ -49502,7 +55018,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 5375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49520,15 +55036,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-38",
-        "mould": "Standard Casting Lot #38",
-        "qty": 2,
-        "price": 1450,
-        "total": 5375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-37",
@@ -49538,7 +55046,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB10ES5372",
     "typeSelection": "BY AUTO",
-    "total": 4000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49563,15 +55071,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-37",
-        "mould": "Standard Casting Lot #37",
-        "qty": 3,
-        "price": 1450,
-        "total": 4000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-36",
@@ -49581,7 +55081,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 851875,
+    "total": 46200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49832,11 +55332,81 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-36",
-        "mould": "Standard Casting Lot #36",
-        "qty": 35,
-        "price": 1450,
-        "total": 851875
+        "id": "m-232",
+        "mould": "B.F.P-(B)",
+        "qty": 540.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-233",
+        "mould": "B.F.P-(G)",
+        "qty": 1260.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-234",
+        "mould": "B.F.P",
+        "qty": 430.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-235",
+        "mould": "C.M",
+        "qty": 720.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-236",
+        "mould": "S.L",
+        "qty": 820.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-237",
+        "mould": "H.O",
+        "qty": 740.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-238",
+        "mould": "UVD",
+        "qty": 105.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-239",
+        "mould": "CLIP",
+        "qty": 2000.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-240",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-241",
+        "mould": "Fluted Jointer",
+        "qty": 300.0,
+        "price": 154.0,
+        "total": 46200.0
+      },
+      {
+        "id": "m-242",
+        "mould": "Jointer",
+        "qty": 980.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -49848,7 +55418,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EH9616",
     "typeSelection": "BY TEMPO",
-    "total": 104500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -49936,15 +55506,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-35",
-        "mould": "Standard Casting Lot #35",
-        "qty": 12,
-        "price": 1450,
-        "total": 104500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-34",
@@ -49954,7 +55516,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 11000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50030,11 +55592,74 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-34",
-        "mould": "Standard Casting Lot #34",
-        "qty": 10,
-        "price": 1450,
-        "total": 11000
+        "id": "m-222",
+        "mould": "C.M",
+        "qty": 20.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-223",
+        "mould": "S.L",
+        "qty": 26.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-224",
+        "mould": "UVD",
+        "qty": 1.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-225",
+        "mould": "SILICON",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-226",
+        "mould": "BATTEN",
+        "qty": 6.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-227",
+        "mould": "ELFY",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-228",
+        "mould": "PERAMETER",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-229",
+        "mould": "RAJA",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-230",
+        "mould": "GATTI",
+        "qty": 2.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-231",
+        "mould": "Jointer",
+        "qty": 25.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -50046,7 +55671,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY AUTO",
-    "total": 24000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50113,15 +55738,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-33",
-        "mould": "Standard Casting Lot #33",
-        "qty": 9,
-        "price": 1450,
-        "total": 24000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-32",
@@ -50131,7 +55748,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB10ES5372",
     "typeSelection": "BY AUTO",
-    "total": 3750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50142,15 +55759,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-32",
-        "mould": "Standard Casting Lot #32",
-        "qty": 1,
-        "price": 1450,
-        "total": 3750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-31",
@@ -50160,7 +55769,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "BY TEMPO",
-    "total": 131250,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50264,11 +55873,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-31",
-        "mould": "Standard Casting Lot #31",
-        "qty": 14,
-        "price": 1450,
-        "total": 131250
+        "id": "m-196",
+        "mould": "S.L",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-197",
+        "mould": "H.O",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-198",
+        "mould": "C.M",
+        "qty": 350.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-199",
+        "mould": "B.F.P",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-200",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-201",
+        "mould": "Jointer",
+        "qty": 490.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-202",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -50280,7 +55931,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB10ES5372",
     "typeSelection": "BY AUTO",
-    "total": 4750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50291,15 +55942,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-30",
-        "mould": "Standard Casting Lot #30",
-        "qty": 1,
-        "price": 1450,
-        "total": 4750
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-29",
@@ -50309,7 +55952,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 14000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50320,15 +55963,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-29",
-        "mould": "Standard Casting Lot #29",
-        "qty": 1,
-        "price": 1450,
-        "total": 14000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-28",
@@ -50338,7 +55973,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 10000,
+    "total": 24800.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50351,11 +55986,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-28",
-        "mould": "Standard Casting Lot #28",
-        "qty": 1,
-        "price": 1450,
-        "total": 10000
+        "id": "m-185",
+        "mould": "L.A",
+        "qty": 80.0,
+        "price": 300.0,
+        "total": 24000.0
+      },
+      {
+        "id": "m-186",
+        "mould": "Jointer",
+        "qty": 16.0,
+        "price": 50.0,
+        "total": 800.0
       }
     ]
   },
@@ -50367,7 +56009,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 425000,
+    "total": 822345.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50555,11 +56197,67 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-27",
-        "mould": "Standard Casting Lot #27",
-        "qty": 26,
-        "price": 1450,
-        "total": 425000
+        "id": "m-203",
+        "mould": "F.P.G",
+        "qty": 190.0,
+        "price": 260.0,
+        "total": 49400.0
+      },
+      {
+        "id": "m-204",
+        "mould": "F.P.C.G",
+        "qty": 500.0,
+        "price": 240.0,
+        "total": 120000.0
+      },
+      {
+        "id": "m-205",
+        "mould": "F.P",
+        "qty": 460.0,
+        "price": 240.0,
+        "total": 110400.0
+      },
+      {
+        "id": "m-206",
+        "mould": "C.M",
+        "qty": 1270.0,
+        "price": 162.5,
+        "total": 206375.0
+      },
+      {
+        "id": "m-207",
+        "mould": "S.P",
+        "qty": 650.0,
+        "price": 270.0,
+        "total": 175500.0
+      },
+      {
+        "id": "m-208",
+        "mould": "L.U",
+        "qty": 280.0,
+        "price": 245.0,
+        "total": 68600.0
+      },
+      {
+        "id": "m-209",
+        "mould": "L.A",
+        "qty": 50.0,
+        "price": 275.0,
+        "total": 13750.0
+      },
+      {
+        "id": "m-210",
+        "mould": "Fluted Jointer",
+        "qty": 1360.0,
+        "price": 37.0,
+        "total": 50320.0
+      },
+      {
+        "id": "m-211",
+        "mould": "Jointer",
+        "qty": 1000.0,
+        "price": 28.0,
+        "total": 28000.0
       }
     ]
   },
@@ -50571,7 +56269,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 0,
+    "total": 55.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50584,11 +56282,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-26",
-        "mould": "Standard Casting Lot #26",
-        "qty": 1,
-        "price": 1450,
-        "total": 0
+        "id": "m-166",
+        "mould": "Jointer",
+        "qty": 1.0,
+        "price": 55.0,
+        "total": 55.0
       }
     ]
   },
@@ -50600,7 +56298,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 175000,
+    "total": 12320.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50704,11 +56402,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-25",
-        "mould": "Standard Casting Lot #25",
-        "qty": 14,
-        "price": 1450,
-        "total": 175000
+        "id": "m-161",
+        "mould": "S.L",
+        "qty": 990.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-162",
+        "mould": "C.M",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-163",
+        "mould": "B.F.P-(G)",
+        "qty": 210.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-164",
+        "mould": "Jointer",
+        "qty": 820.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-165",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 154.0,
+        "total": 12320.0
       }
     ]
   },
@@ -50720,7 +56446,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 13625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50768,11 +56494,25 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-24",
-        "mould": "Standard Casting Lot #24",
-        "qty": 6,
-        "price": 1450,
-        "total": 13625
+        "id": "m-153",
+        "mould": "S.L",
+        "qty": 105.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-154",
+        "mould": "C.M",
+        "qty": 4.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-155",
+        "mould": "Jointer",
+        "qty": 44.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -50784,7 +56524,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 150000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -50818,11 +56558,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-23",
-        "mould": "Standard Casting Lot #23",
-        "qty": 4,
-        "price": 1450,
-        "total": 150000
+        "id": "m-151",
+        "mould": "C.M",
+        "qty": 1200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-152",
+        "mould": "Jointer",
+        "qty": 640.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -50834,7 +56581,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Truck",
-    "total": 582500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51029,11 +56776,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-22",
-        "mould": "Standard Casting Lot #22",
-        "qty": 27,
-        "price": 1450,
-        "total": 582500
+        "id": "m-146",
+        "mould": "C.M",
+        "qty": 4360.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-147",
+        "mould": "B.F.P",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-148",
+        "mould": "B.F.P-(G)",
+        "qty": 100.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-149",
+        "mould": "Jointer",
+        "qty": 2120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-150",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -51045,7 +56820,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08FU1049",
     "typeSelection": "JEEP",
-    "total": 162500,
+    "total": 46200.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51135,11 +56910,53 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-21",
-        "mould": "Standard Casting Lot #21",
-        "qty": 12,
-        "price": 1450,
-        "total": 162500
+        "id": "m-129",
+        "mould": "L.A",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-130",
+        "mould": "C.M",
+        "qty": 500.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-131",
+        "mould": "H.O",
+        "qty": 200.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-132",
+        "mould": "L.U",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-133",
+        "mould": "B.F.P",
+        "qty": 0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-134",
+        "mould": "Fluted Jointer",
+        "qty": 300.0,
+        "price": 154.0,
+        "total": 46200.0
+      },
+      {
+        "id": "m-135",
+        "mould": "Jointer",
+        "qty": 620.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -51169,15 +56986,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-20",
-        "mould": "Standard Casting Lot #20",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-19",
@@ -51187,7 +56996,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB10ES5372",
     "typeSelection": "BY AUTO",
-    "total": 5625,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51205,15 +57014,7 @@ export const SQLITE_BILLS = [
         "lCap": 6.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-19",
-        "mould": "Standard Casting Lot #19",
-        "qty": 2,
-        "price": 1450,
-        "total": 5625
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-18",
@@ -51223,7 +57024,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 250,
+    "total": 550.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51243,11 +57044,18 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-18",
-        "mould": "Standard Casting Lot #18",
-        "qty": 2,
-        "price": 1450,
-        "total": 250
+        "id": "m-89",
+        "mould": "C.M",
+        "qty": 2.0,
+        "price": 200.0,
+        "total": 400.0
+      },
+      {
+        "id": "m-90",
+        "mould": "Jointer",
+        "qty": 3.0,
+        "price": 50.0,
+        "total": 150.0
       }
     ]
   },
@@ -51259,7 +57067,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EZ2149",
     "typeSelection": "JEEP",
-    "total": 125000,
+    "total": 144800.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51307,11 +57115,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-17",
-        "mould": "Standard Casting Lot #17",
-        "qty": 6,
-        "price": 1450,
-        "total": 125000
+        "id": "m-83",
+        "mould": "B.F.P-(G)",
+        "qty": 400.0,
+        "price": 21.0,
+        "total": 8400.0
+      },
+      {
+        "id": "m-84",
+        "mould": "L.U",
+        "qty": 200.0,
+        "price": 54.0,
+        "total": 10800.0
+      },
+      {
+        "id": "m-85",
+        "mould": "L.A",
+        "qty": 400.0,
+        "price": 87.0,
+        "total": 34800.0
+      },
+      {
+        "id": "m-86",
+        "mould": "C.M",
+        "qty": 0,
+        "price": 54.0,
+        "total": 0
+      },
+      {
+        "id": "m-87",
+        "mould": "Fluted Jointer",
+        "qty": 0,
+        "price": 5.0,
+        "total": 0
+      },
+      {
+        "id": "m-88",
+        "mould": "Jointer",
+        "qty": 200.0,
+        "price": 454.0,
+        "total": 90800.0
       }
     ]
   },
@@ -51323,7 +57166,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EA8267",
     "typeSelection": "BY AUTO",
-    "total": 1500,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51334,15 +57177,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-16",
-        "mould": "Standard Casting Lot #16",
-        "qty": 1,
-        "price": 1450,
-        "total": 1500
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-15",
@@ -51352,7 +57187,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Truck",
-    "total": 453500,
+    "total": 813890.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51575,11 +57410,95 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-15",
-        "mould": "Standard Casting Lot #15",
-        "qty": 31,
-        "price": 1450,
-        "total": 453500
+        "id": "m-116",
+        "mould": "SP",
+        "qty": 419.0,
+        "price": 280.0,
+        "total": 117320.0
+      },
+      {
+        "id": "m-117",
+        "mould": "B.F.P-(G)",
+        "qty": 400.0,
+        "price": 280.0,
+        "total": 112000.0
+      },
+      {
+        "id": "m-118",
+        "mould": "F.P",
+        "qty": 400.0,
+        "price": 230.0,
+        "total": 92000.0
+      },
+      {
+        "id": "m-119",
+        "mould": "HO",
+        "qty": 300.0,
+        "price": 135.0,
+        "total": 40500.0
+      },
+      {
+        "id": "m-120",
+        "mould": "SL",
+        "qty": 1300.0,
+        "price": 145.0,
+        "total": 188500.0
+      },
+      {
+        "id": "m-121",
+        "mould": "CM",
+        "qty": 400.0,
+        "price": 165.0,
+        "total": 66000.0
+      },
+      {
+        "id": "m-122",
+        "mould": "FPCG",
+        "qty": 179.0,
+        "price": 250.0,
+        "total": 44750.0
+      },
+      {
+        "id": "m-123",
+        "mould": "U.V",
+        "qty": 10.0,
+        "price": 1000.0,
+        "total": 10000.0
+      },
+      {
+        "id": "m-124",
+        "mould": "UVD",
+        "qty": 20.0,
+        "price": 1200.0,
+        "total": 24000.0
+      },
+      {
+        "id": "m-125",
+        "mould": "L.U",
+        "qty": 120.0,
+        "price": 265.0,
+        "total": 31800.0
+      },
+      {
+        "id": "m-126",
+        "mould": "Fluted Jointer",
+        "qty": 560.0,
+        "price": 45.0,
+        "total": 25200.0
+      },
+      {
+        "id": "m-127",
+        "mould": "Jointer",
+        "qty": 1080.0,
+        "price": 29.0,
+        "total": 31320.0
+      },
+      {
+        "id": "m-128",
+        "mould": "LU",
+        "qty": 100.0,
+        "price": 305.0,
+        "total": 30500.0
       }
     ]
   },
@@ -51609,15 +57528,7 @@ export const SQLITE_BILLS = [
         "lCap": 4.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-14",
-        "mould": "Standard Casting Lot #14",
-        "qty": 2,
-        "price": 1450,
-        "total": 0
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-13",
@@ -51627,7 +57538,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "JEEP",
-    "total": 1625,
+    "total": 4160.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51640,11 +57551,11 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-13",
-        "mould": "Standard Casting Lot #13",
-        "qty": 1,
-        "price": 1450,
-        "total": 1625
+        "id": "m-52",
+        "mould": "B.F.P",
+        "qty": 13.0,
+        "price": 320.0,
+        "total": 4160.0
       }
     ]
   },
@@ -51656,7 +57567,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EA8267",
     "typeSelection": "BY AUTO",
-    "total": 1875,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51667,15 +57578,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-12",
-        "mould": "Standard Casting Lot #12",
-        "qty": 1,
-        "price": 1450,
-        "total": 1875
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-11",
@@ -51685,7 +57588,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08FU1049",
     "typeSelection": "JEEP",
-    "total": 87500,
+    "total": 12320.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51719,11 +57622,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-11",
-        "mould": "Standard Casting Lot #11",
-        "qty": 4,
-        "price": 1450,
-        "total": 87500
+        "id": "m-48",
+        "mould": "CM",
+        "qty": 400.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-49",
+        "mould": "B.F.P",
+        "qty": 300.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-50",
+        "mould": "Jointer",
+        "qty": 80.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-51",
+        "mould": "Fluted Jointer",
+        "qty": 80.0,
+        "price": 154.0,
+        "total": 12320.0
       }
     ]
   },
@@ -51735,7 +57659,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB02BC9939",
     "typeSelection": "AUTO",
-    "total": 4375,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51767,15 +57691,7 @@ export const SQLITE_BILLS = [
         "lCap": 3.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-10",
-        "mould": "Standard Casting Lot #10",
-        "qty": 4,
-        "price": 1450,
-        "total": 4375
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-9",
@@ -51785,7 +57701,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 20500,
+    "total": 5895378.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51812,11 +57728,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-9",
-        "mould": "Standard Casting Lot #9",
-        "qty": 3,
-        "price": 1450,
-        "total": 20500
+        "id": "m-32",
+        "mould": "TG",
+        "qty": 54.0,
+        "price": 120.0,
+        "total": 6480.0
+      },
+      {
+        "id": "m-33",
+        "mould": "SL",
+        "qty": 45.0,
+        "price": 54.0,
+        "total": 2430.0
+      },
+      {
+        "id": "m-34",
+        "mould": "LU",
+        "qty": 65.0,
+        "price": 84.0,
+        "total": 5460.0
+      },
+      {
+        "id": "m-35",
+        "mould": "Jointer",
+        "qty": 70012.0,
+        "price": 84.0,
+        "total": 5881008.0
+      },
+      {
+        "id": "m-36",
+        "mould": "Fluted Jointer",
+        "qty": 1844.0,
+        "price": 154.0,
+        "total": 0
       }
     ]
   },
@@ -51828,7 +57772,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "PB08EZ2149",
     "typeSelection": "Select Type",
-    "total": 181250,
+    "total": 450300.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51897,11 +57841,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-8",
-        "mould": "Standard Casting Lot #8",
-        "qty": 9,
-        "price": 1450,
-        "total": 181250
+        "id": "m-37",
+        "mould": "CM",
+        "qty": 500.0,
+        "price": 120.0,
+        "total": 60000.0
+      },
+      {
+        "id": "m-38",
+        "mould": "SL",
+        "qty": 650.0,
+        "price": 54.0,
+        "total": 35100.0
+      },
+      {
+        "id": "m-39",
+        "mould": "B.F.P-(G)",
+        "qty": 300.0,
+        "price": 54.0,
+        "total": 16200.0
+      },
+      {
+        "id": "m-40",
+        "mould": "Jointer",
+        "qty": 600.0,
+        "price": 548.0,
+        "total": 328800.0
+      },
+      {
+        "id": "m-41",
+        "mould": "Fluted Jointer",
+        "qty": 200.0,
+        "price": 51.0,
+        "total": 10200.0
       }
     ]
   },
@@ -51913,7 +57885,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 18000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -51931,15 +57903,7 @@ export const SQLITE_BILLS = [
         "lCap": 0.0
       }
     ],
-    "finishedItems": [
-      {
-        "id": "m-7",
-        "mould": "Standard Casting Lot #7",
-        "qty": 2,
-        "price": 1450,
-        "total": 18000
-      }
-    ]
+    "finishedItems": []
   },
   {
     "id": "B-6",
@@ -51949,7 +57913,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 512500,
+    "total": 588160.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -52151,11 +58115,46 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-6",
-        "mould": "Standard Casting Lot #6",
-        "qty": 28,
-        "price": 1450,
-        "total": 512500
+        "id": "m-42",
+        "mould": "CM",
+        "qty": 3600.0,
+        "price": 120.0,
+        "total": 432000.0
+      },
+      {
+        "id": "m-43",
+        "mould": "B.F.P-(G)",
+        "qty": 200.0,
+        "price": 54.0,
+        "total": 10800.0
+      },
+      {
+        "id": "m-44",
+        "mould": "HO",
+        "qty": 200.0,
+        "price": 54.0,
+        "total": 10800.0
+      },
+      {
+        "id": "m-45",
+        "mould": "TG",
+        "qty": 100.0,
+        "price": 84.0,
+        "total": 8400.0
+      },
+      {
+        "id": "m-46",
+        "mould": "Jointer",
+        "qty": 1880.0,
+        "price": 54.0,
+        "total": 101520.0
+      },
+      {
+        "id": "m-47",
+        "mould": "Fluted Jointer",
+        "qty": 160.0,
+        "price": 154.0,
+        "total": 24640.0
       }
     ]
   },
@@ -52167,7 +58166,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 333750,
+    "total": 70840.0,
     "status": "PAID",
     "rawItems": [
       {
@@ -52264,11 +58263,32 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-5",
-        "mould": "Standard Casting Lot #5",
-        "qty": 13,
-        "price": 1450,
-        "total": 333750
+        "id": "m-25",
+        "mould": "B.F.P-(G)",
+        "qty": 2030.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-26",
+        "mould": "CM",
+        "qty": 640.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-27",
+        "mould": "Fluted Jointer",
+        "qty": 460.0,
+        "price": 154.0,
+        "total": 70840.0
+      },
+      {
+        "id": "m-28",
+        "mould": "Jointer",
+        "qty": 0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -52280,7 +58300,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 333750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -52412,11 +58432,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-4",
-        "mould": "Standard Casting Lot #4",
-        "qty": 18,
-        "price": 1450,
-        "total": 333750
+        "id": "m-20",
+        "mould": "CM",
+        "qty": 1600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-21",
+        "mould": "SL",
+        "qty": 750.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-22",
+        "mould": "B.F.P",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-23",
+        "mould": "Jointer",
+        "qty": 1120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-24",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -52428,7 +58476,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 333750,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -52560,11 +58608,39 @@ export const SQLITE_BILLS = [
     ],
     "finishedItems": [
       {
-        "id": "m-3",
-        "mould": "Standard Casting Lot #3",
-        "qty": 18,
-        "price": 1450,
-        "total": 333750
+        "id": "m-15",
+        "mould": "CM",
+        "qty": 1600.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-16",
+        "mould": "SL",
+        "qty": 750.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-17",
+        "mould": "B.F.P",
+        "qty": 320.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-18",
+        "mould": "Jointer",
+        "qty": 1120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-19",
+        "mould": "Fluted Jointer",
+        "qty": 360.0,
+        "price": 0,
+        "total": 0
       }
     ]
   },
@@ -52576,7 +58652,7 @@ export const SQLITE_BILLS = [
     "docType": "SALE BILL",
     "vehicle": "",
     "typeSelection": "Select Type",
-    "total": 41000,
+    "total": 0,
     "status": "PAID",
     "rawItems": [
       {
@@ -52604,10 +58680,38 @@ export const SQLITE_BILLS = [
     "finishedItems": [
       {
         "id": "m-1",
-        "mould": "Standard Casting Lot #1",
-        "qty": 3,
-        "price": 1450,
-        "total": 41000
+        "mould": "CM",
+        "qty": 120.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-2",
+        "mould": "HO",
+        "qty": 154.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-3",
+        "mould": "F.P",
+        "qty": 54.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-4",
+        "mould": "Jointer",
+        "qty": 1516.0,
+        "price": 0,
+        "total": 0
+      },
+      {
+        "id": "m-5",
+        "mould": "Fluted Jointer",
+        "qty": 154.0,
+        "price": 0,
+        "total": 0
       }
     ]
   }

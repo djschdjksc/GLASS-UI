@@ -76,7 +76,7 @@ export const TableSettingsDropdown: React.FC<Props> = ({
     <div
       ref={panelRef}
       style={{
-        position: 'absolute',
+        position: 'absolute', animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards", transformOrigin: "top center", backdropFilter: "blur(60px) saturate(200%)", background: "rgba(10, 15, 25, 0.98)",
         top: 'calc(100% + 8px)',
         [align === 'right' ? 'right' : 'left']: 0,
         width: '280px',

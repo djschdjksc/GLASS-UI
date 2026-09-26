@@ -1,0 +1,4291 @@
+{
+    "control_panel": [
+        {
+            "shortcut": "G1",
+            "conversion": "B.F.P-(G)",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "B1",
+            "conversion": "B.F.P-(B)",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783701271710",
+            "conversion": "B.F.P-(G)-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783701291910",
+            "conversion": "B.F.P-(A)-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "A1",
+            "conversion": "B.F.P-(A)",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700664286",
+            "conversion": "B.F.P-(A)-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700669046",
+            "conversion": "B.F.P-(B)-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700673198",
+            "conversion": "B.F.P-(B)-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "G",
+            "conversion": "GATTI",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "E",
+            "conversion": "ELFY",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "C",
+            "conversion": "CLIP",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "B",
+            "conversion": "BLACK",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "S",
+            "conversion": "SCREW",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "R",
+            "conversion": "RAJA",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "T",
+            "conversion": "BATTEN",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "O",
+            "conversion": "SILICON",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "0",
+            "conversion": "U.V",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": ".",
+            "conversion": "UVD",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "J",
+            "conversion": "Jointer",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "F",
+            "conversion": "Fluted Jointer",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "BS",
+            "conversion": "BLACK-SCREW",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "P",
+            "conversion": "PERAMETER",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "BG1",
+            "conversion": "B.F.P-B-(G)",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "A2",
+            "conversion": "(A)-CM",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "2",
+            "conversion": "C.M",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700689142",
+            "conversion": "C.M-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700693878",
+            "conversion": "C.M-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "1",
+            "conversion": "B.F.P",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "I",
+            "conversion": "GOLDEN-PATTI",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "A",
+            "conversion": "GOLDEN-TAPE",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "8",
+            "conversion": "L.U",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "9",
+            "conversion": "L.A",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "`",
+            "conversion": "CP",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783701280062",
+            "conversion": "B.F.P-(G)-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "3",
+            "conversion": "S.L",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "4",
+            "conversion": "T.G",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "A4",
+            "conversion": "T.G-(A)",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "6",
+            "conversion": "H.O",
+            "u_cap": "Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700739862",
+            "conversion": "T.G-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700736526",
+            "conversion": "T.G-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700721638",
+            "conversion": "S.L-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700725566",
+            "conversion": "S.L-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "C5",
+            "conversion": "F.P.C",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "CG5",
+            "conversion": "F.P.C.G",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "G5",
+            "conversion": "F.P.G",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "5",
+            "conversion": "F.P",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "CGA5",
+            "conversion": "F.P.C.G-(A)",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700697870",
+            "conversion": "F.P-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700702101",
+            "conversion": "F.P-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700706654",
+            "conversion": "F.P.C.G-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700710686",
+            "conversion": "F.P.C.G-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700714598",
+            "conversion": "F.P.G-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700718246",
+            "conversion": "F.P.G-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "7",
+            "conversion": "S.P",
+            "u_cap": "Fluted Jointer",
+            "l_cap": "Jointer",
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700728973",
+            "conversion": "S.P-(Digital)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        },
+        {
+            "shortcut": "__auto_1783700732781",
+            "conversion": "S.P-(Digital-or-Golden)",
+            "u_cap": 0.0,
+            "l_cap": 0.0,
+            "multiplication": null,
+            "color": "#000000",
+            "box_size": 1.0,
+            "weight_per_pcs": 0.0,
+            "real_item_name": ""
+        }
+    ],
+    "main_groups": [
+        "General",
+        "Digital or Golden",
+        "Digital",
+        "Digital or Golden Lower Film",
+        "7D UV SHEET"
+    ],
+    "skip_groups": [
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(A)-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(B)-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(G)-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "C.M-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "F.P-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.C.G-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.G-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "S.L-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "S.P-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "T.G-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(Digital-or-Golden)",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(A)-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(B)-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(G)-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "C.M-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.C.G-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.G-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.L-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.P-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "T.G-(Digital)-Lower-Film",
+            "sum_column": "QTY"
+        },
+        {
+            "main_group": "7D UV SHEET",
+            "group_name": "7D UV",
+            "sum_column": "QTY"
+        }
+    ],
+    "skip_items": [
+        {
+            "item_prefix": "B.F.P-(A) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(A)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(G)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(B)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "S.L 770",
+            "main_group": "Digital or Golden",
+            "group_name": "S.L-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "S.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "S.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "T.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "T.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P.C.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.C.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "C.M 770",
+            "main_group": "Digital or Golden",
+            "group_name": "C.M-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(A)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(B)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(G)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "C.M 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "C.M-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P.C.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.C.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "S.L 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.L-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "S.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "T.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "T.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(A)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(G)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(B)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "S.L 770",
+            "main_group": "Digital or Golden",
+            "group_name": "S.L-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "S.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "S.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "T.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "T.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P.C.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.C.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "C.M 770",
+            "main_group": "Digital or Golden",
+            "group_name": "C.M-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(A)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(B)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(G)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "C.M 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "C.M-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P.C.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.C.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "S.L 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.L-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "S.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "T.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "T.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(A)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(G)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(B)-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "S.L 770",
+            "main_group": "Digital or Golden",
+            "group_name": "S.L-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "S.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "S.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "T.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "T.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "F.P.C.G 770",
+            "main_group": "Digital or Golden",
+            "group_name": "F.P.C.G-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "C.M 770",
+            "main_group": "Digital or Golden",
+            "group_name": "C.M-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P 770",
+            "main_group": "Digital or Golden",
+            "group_name": "B.F.P-(Digital-or-Golden)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(A)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(B)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "B.F.P-(G)-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "C.M 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "C.M-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P.C.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.C.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "F.P.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "F.P.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "S.L 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.L-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "S.P 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "S.P-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "T.G 780",
+            "main_group": "Digital or Golden Lower Film",
+            "group_name": "T.G-(Digital)-Lower-Film"
+        },
+        {
+            "item_prefix": "UVD 2044",
+            "main_group": "7D UV SHEET",
+            "group_name": "7D UV"
+        },
+        {
+            "item_prefix": "UVD 2043",
+            "main_group": "7D UV SHEET",
+            "group_name": "7D UV"
+        },
+        {
+            "item_prefix": "UVD 2042",
+            "main_group": "7D UV SHEET",
+            "group_name": "7D UV"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 200",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 209",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 216",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 217",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 756",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 768",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 769",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 770",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 780",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 786",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 800",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 801",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 808",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(A) 809",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(A)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 200",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 209",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 216",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 217",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 756",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 768",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 769",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 770",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 780",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 786",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 800",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 801",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 808",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(B) 809",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(B)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 200",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 209",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 216",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 217",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 756",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 768",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 769",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 770",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 780",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 786",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 800",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 801",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 808",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P 809",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 200",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 209",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 216",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 217",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 756",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 768",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 769",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 770",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 773",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 774",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 775",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 776",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 777",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 778",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 779",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 780",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 781",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 782",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 783",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 785",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 786",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 787",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 800",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 801",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 802",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 803",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 804",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 805",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 808",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "B.F.P-(G) 809",
+            "main_group": "Digital",
+            "group_name": "B.F.P-(G)-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 200",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 209",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 216",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 217",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 756",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 768",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 769",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 770",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 773",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 773",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 773",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 774",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 774",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 774",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 775",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 775",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 775",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 776",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 776",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 776",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 777",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 777",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 777",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 778",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 778",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 778",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 779",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 779",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 779",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 780",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 781",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 781",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 781",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 782",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 782",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 782",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 783",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 783",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 783",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 785",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 785",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 785",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 786",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 787",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 787",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 787",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 800",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 801",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 802",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 802",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 803",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 803",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 804",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 804",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 805",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 805",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 808",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "C.M 809",
+            "main_group": "Digital",
+            "group_name": "C.M-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 200",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 209",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 216",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 217",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 756",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 768",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 769",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 770",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 773",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 773",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 773",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 774",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 774",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 774",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 775",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 775",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 775",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 776",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 776",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 776",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 777",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 777",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 777",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 778",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 778",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 778",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 779",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 779",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 779",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 780",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 781",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 781",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 781",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 782",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 782",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 782",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 783",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 783",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 783",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 785",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 785",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 785",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 786",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 787",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 787",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 787",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 800",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 801",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 802",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 802",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 803",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 803",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 804",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 804",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 805",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 805",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 808",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P 809",
+            "main_group": "Digital",
+            "group_name": "F.P-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G 783",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G 783",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G.781",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G.781",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G.785",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G.785",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G782",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G782",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P C.G802",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P CG803",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P CG804",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P CG805",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 200",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 209",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 216",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 217",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 756",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 768",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 769",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 770",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 773",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 773",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 773",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 774",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 774",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 774",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 775",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 775",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 775",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 776",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 776",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 776",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 777",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 777",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 777",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 778",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 778",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 778",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 779",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 779",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 779",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 780",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 781",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 782",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 783",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 784",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 785",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 786",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 800",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 801",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 802",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 803",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 804",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 805",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 808",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.C.G 809",
+            "main_group": "Digital",
+            "group_name": "F.P.C.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 200",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 209",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 216",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 217",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 756",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 768",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 769",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 770",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 773",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 773",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 773",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 774",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 774",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 774",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 775",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 775",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 775",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 776",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 776",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 776",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 777",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 777",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 777",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 778",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 778",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 778",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 779",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 779",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 779",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 780",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 781",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 781",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 781",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 782",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 782",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 782",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 783",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 783",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 783",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 785",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 785",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 785",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 786",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 787",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 787",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 787",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 800",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 801",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 802",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 802",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 803",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 803",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 804",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 804",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 805",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 808",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "F.P.G 809",
+            "main_group": "Digital",
+            "group_name": "F.P.G-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 200",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 209",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 216",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 217",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 756",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 768",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 769",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 770",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 773",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 773",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 773",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 774",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 774",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 774",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 775",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 775",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 775",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 776",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 776",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 776",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 777",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 777",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 777",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 778",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 778",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 778",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 779",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 779",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 779",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 780",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 781",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 781",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 781",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 782",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 782",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 782",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 783",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 783",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 783",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 785",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 785",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 785",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 786",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 787",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 787",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 787",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 800",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 801",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 802",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 802",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 803",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 803",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 804",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 804",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 805",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 805",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 808",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.L 809",
+            "main_group": "Digital",
+            "group_name": "S.L-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 200",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 209",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 216",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 217",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 756",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 768",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 769",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 770",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 773",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 773",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 773",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 774",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 774",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 774",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 775",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 775",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 775",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 776",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 776",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 776",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 777",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 777",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 777",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 778",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 778",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 778",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 779",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 779",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 779",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 780",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 781",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 781",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 781",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 782",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 782",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 782",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 783",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 783",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 783",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 785",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 785",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 785",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 786",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 787",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 787",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 787",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 800",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 801",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 802",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 802",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 803",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 803",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 804",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 804",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 805",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 805",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 808",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "S.P 809",
+            "main_group": "Digital",
+            "group_name": "S.P-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 200",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 209",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 216",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 217",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 756",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 768",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 769",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 770",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 773",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 773",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 773",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 774",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 774",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 774",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 775",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 775",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 775",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 776",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 776",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 776",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 777",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 777",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 777",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 778",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 778",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 778",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 779",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 779",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 779",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 780",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 781",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 781",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 781",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 782",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 782",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 782",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 783",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 783",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 783",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 785",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 785",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 785",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 786",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 787",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 787",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 787",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 800",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 801",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 802",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 802",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 803",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 803",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 804",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 804",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 805",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 805",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 808",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        },
+        {
+            "item_prefix": "T.G 809",
+            "main_group": "Digital",
+            "group_name": "T.G-(Digital)"
+        }
+    ]
+}

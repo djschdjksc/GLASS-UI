@@ -69,6 +69,7 @@ export const RightNavRail: React.FC<Props> = ({
 
   return (
     <div 
+      data-np-zone="6"
       className="glass-panel"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -124,6 +125,7 @@ export const RightNavRail: React.FC<Props> = ({
         return (
           <button
             key={t.key}
+            data-np-target={`6-${idx + 1}`}
             ref={(el) => { btnRefs.current[itemIdx] = el; }}
             type="button"
             onMouseEnter={() => {

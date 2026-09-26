@@ -12,6 +12,8 @@ export interface BillRecord {
   status: 'PAID' | 'PENDING' | 'CANCELLED';
   rawItems: RawItem[];
   finishedItems: FinishedItem[];
+  dynamicCols?: { field: string; label: string }[];
+  hasPartyCodeCol?: boolean;
   createdAt: number;
   updatedAt: number;
   synced: boolean;
@@ -24,7 +26,10 @@ export interface PartyRecord {
   contact: string;
   phone: string;
   city: string;
+  station?: string;
   district?: string;
+  state?: string;
+  pincode?: string;
   balance: number;
   limit: number;
   gstin: string;

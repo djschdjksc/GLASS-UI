@@ -354,11 +354,13 @@ body {
 }
 
 .direction-dropdown-menu {
+  animation: antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  transform-origin: top right;
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: rgba(20, 24, 32, 0.96);
-  backdrop-filter: blur(20px);
+  background: rgba(10, 15, 25, 0.98) !important;
+  backdrop-filter: blur(60px) saturate(200%) !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
@@ -1215,3 +1217,578 @@ body {
 
 
 
+/* ========================================================================= */
+/* ZOHO-STYLE CLEAN FORM FIELDS (GROUP CONFIGURATION MODAL)                  */
+/* ========================================================================= */
+
+.zf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.zf-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.zf-field:focus-within .zf-label {
+  color: #0284c7;
+}
+
+.zf-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 7px;
+  transition: all 0.18s ease;
+  overflow: hidden;
+}
+
+.zf-input-wrap:hover {
+  border-color: #64748b;
+  background: #ffffff;
+}
+
+.zf-input-wrap:focus-within {
+  border-color: #0284c7;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.zf-field:focus-within .zf-label {
+  color: #0284c7;
+}
+
+.zf-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-right: 1.5px solid #e2e8f0;
+  background: #f1f5f9;
+  color: #475569;
+  transition: all 0.18s ease;
+}
+
+.zf-input-wrap:focus-within .zf-icon {
+  color: #0284c7;
+  border-right-color: #bae6fd;
+  background: #e0f2fe;
+}
+
+.zf-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #0f172a;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0 10px;
+  height: 34px;
+  min-width: 0;
+}
+
+.zf-input::placeholder {
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+/* Section divider inside modal */
+.zf-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zf-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1.5px;
+  background: #e2e8f0;
+}
+
+/* YES/NO toggle chip */
+.zf-toggle-group {
+  display: flex;
+  height: 32px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.zf-toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.zf-toggle-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.zf-toggle-btn.yes-active {
+  background: rgba(248, 113, 113, 0.18);
+  color: #f87171;
+  box-shadow: inset 0 1px 0 rgba(248, 113, 113, 0.2);
+}
+
+.zf-toggle-btn.no-active {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  box-shadow: inset 0 1px 0 rgba(52, 211, 153, 0.2);
+}
+
+.zf-divider {
+  width: 1px;
+  background: #e2e8f0;
+  align-self: stretch;
+}
+
+
+
+
+/* ========================================================================= */
+/* iOS-STYLE GLASS PILL TAB SWITCHER — CONTROL PANEL (DARK GLASS THEME)      */
+/* ========================================================================= */
+
+.ctrl-ios-tabs__control {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    inset 0 2px 8px rgba(0, 0, 0, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.ctrl-ios-tabs__thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(25% - 3px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.75) 0%, rgba(37, 99, 235, 0.75) 100%);
+  box-shadow:
+    0 0 16px rgba(56, 189, 248, 0.45),
+    0 2px 10px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.ctrl-ios-tabs__item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: color 240ms ease, opacity 200ms ease;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.ctrl-ios-tabs__item:hover {
+  opacity: 1 !important;
+  color: #ffffff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctrl-ios-tabs__thumb,
+  .ctrl-ios-tabs__item {
+    transition: none;
+  }
+}
+
+/* ========================================================================= */
+/* LUXURY APPLE / NEUMORPHIC TOGGLE SWITCH SYSTEM (USER'S EXACT SPEC)       */
+/* ========================================================================= */
+.luxury-toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.2)), rgba(30, 41, 59, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+}
+.luxury-toggle-label:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.25)), rgba(30, 41, 59, 0.55);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.luxury-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.luxury-toggle-switch {
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  position: relative;
+  flex-shrink: 0;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.5),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.luxury-toggle-switch::before {
+  content: "";
+  position: absolute;
+  inset: 2px 2px auto 2px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.luxury-toggle-handle {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 120% at 30% 30%, #ffffff, #cfd8e3 80%, #aeb9c9);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  transition: transform 0.32s cubic-bezier(0.23, 1, 0.32, 1), background 0.32s ease;
+}
+
+.luxury-toggle-icon {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.luxury-icon-cross {
+  stroke: #4f5d75;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.luxury-icon-check {
+  stroke: #0284c7;
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+/* Checked state */
+.luxury-toggle-input:checked + .luxury-toggle-switch {
+  background: linear-gradient(145deg, #0284c7, #38bdf8);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.2),
+    0 0 12px rgba(56, 189, 248, 0.45);
+  border-color: #38bdf8;
+}
+
+.luxury-toggle-input:checked + .luxury-toggle-switch .luxury-toggle-handle {
+  transform: translateX(22px);
+  background: radial-gradient(120% 120% at 30% 30%, #ffffff, #f0f9ff 70%, #bae6fd);
+  box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.35), inset 0 1px 1px #ffffff;
+}
+
+.luxury-toggle-input:checked + .luxury-toggle-switch .luxury-icon-cross {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.luxury-toggle-input:checked + .luxury-toggle-switch .luxury-icon-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ========================================================================= */
+/* 3D ANIMATED FOLDER FILE UPLOADER (USER'S EXACT SPEC)                     */
+/* ========================================================================= */
+.folder-upload-container {
+  --transition: 350ms;
+  --folder-W: 100px;
+  --folder-H: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(37, 99, 235, 0.28));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  height: 110px;
+  position: relative;
+  overflow: visible;
+  transition: all 0.25s ease;
+}
+
+.folder-upload-container:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 12px 30px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.folder-upload-container .folder {
+  position: absolute;
+  top: -10px;
+  left: calc(50% - 50px);
+  animation: folder-float 2.5s infinite ease-in-out;
+  transition: transform var(--transition) ease;
+}
+
+.folder-upload-container .folder:hover {
+  transform: scale(1.05);
+}
+
+.folder-upload-container .folder .front-side,
+.folder-upload-container .folder .back-side {
+  position: absolute;
+  transition: transform var(--transition);
+  transform-origin: bottom center;
+}
+
+.folder-upload-container .folder .back-side::before,
+.folder-upload-container .folder .back-side::after {
+  content: "";
+  display: block;
+  background-color: white;
+  opacity: 0.5;
+  width: var(--folder-W);
+  height: var(--folder-H);
+  position: absolute;
+  transform-origin: bottom center;
+  border-radius: 10px;
+  transition: transform 350ms;
+  z-index: 0;
+}
+
+.folder-upload-container:hover .back-side::before {
+  transform: rotateX(-5deg) skewX(5deg);
+}
+
+.folder-upload-container:hover .back-side::after {
+  transform: rotateX(-15deg) skewX(12deg);
+}
+
+.folder-upload-container .folder .front-side {
+  z-index: 1;
+}
+
+.folder-upload-container:hover .front-side {
+  transform: rotateX(-40deg) skewX(15deg);
+}
+
+.folder-upload-container .folder .tip {
+  background: linear-gradient(135deg, #ff9a56, #ff6f56);
+  width: 65px;
+  height: 16px;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  position: absolute;
+  top: -8px;
+  z-index: 2;
+}
+
+.folder-upload-container .folder .cover {
+  background: linear-gradient(135deg, #ffe563, #ffc663);
+  width: var(--folder-W);
+  height: var(--folder-H);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+}
+
+.folder-upload-container .custom-file-upload {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: background var(--transition) ease, border-color var(--transition) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 14px;
+  position: relative;
+  z-index: 5;
+  user-select: none;
+}
+
+.folder-upload-container .custom-file-upload:hover {
+  background: rgba(2, 132, 199, 0.85);
+  border-color: #38bdf8;
+}
+
+.folder-upload-container .custom-file-upload input[type="file"] {
+  display: none;
+}
+
+@keyframes folder-float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Bill History Smooth Scroll Animation & Gradient Fades */
+.scroll-list-container {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-list {
+  overflow-y: auto;
+  padding: 8px 4px;
+}
+
+.scroll-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-list::-webkit-scrollbar-track {
+  background: rgba(18, 15, 23, 0.4);
+}
+
+.scroll-list::-webkit-scrollbar-thumb {
+  background: #2F293A;
+  border-radius: 4px;
+}
+
+.scroll-list::-webkit-scrollbar-thumb:hover {
+  background: #473e58;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.top-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(14, 17, 24, 0.95), transparent);
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.3s ease;
+}
+
+.bottom-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to top, rgba(14, 17, 24, 0.95), transparent);
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.3s ease;
+}
+
+
+
+
+
+/* Ant Design Dropdown/Search Animation */
+@keyframes antSlideDown {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.8) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+.ant-dropdown-anim {
+  animation: antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  transform-origin: top center;
+  backdrop-filter: blur(60px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
+  background: rgba(10, 15, 25, 0.98) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8) !important;
+}

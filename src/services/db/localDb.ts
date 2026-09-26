@@ -22,10 +22,106 @@ class LocalDatabase {
   private listeners: Map<string, Set<Listener<any>>> = new Map();
 
   constructor() {
+    // Pre-populate with all 521 real SQLite bills synchronously
+    if (SQLITE_BILLS && SQLITE_BILLS.length > 0) {
+      SQLITE_BILLS.forEach((raw: any) => {
+        const bill: BillRecord = {
+          id: raw.id || `B-${raw.token || Math.random().toString(36).substring(2, 7)}`,
+          token: String(raw.token || '0'),
+          date: raw.date || '2026-07-23',
+          party: raw.party || 'Standard Account',
+          docType: raw.docType || 'SALE BILL',
+          vehicle: raw.vehicle || '',
+          typeSelection: raw.typeSelection || 'WHOLESALE',
+          total: Number(raw.total || 0),
+          status: (raw.status as any) || 'PAID',
+          rawItems: (raw.rawItems || []).map((r: any, idx: number) => ({
+            id: String(r.id || idx + 1),
+            name: r.name || 'Raw Material',
+            qty: Number(r.qty || 0),
+            uCap: Number(r.uCap || 0),
+            lCap: Number(r.lCap || 0)
+          })),
+          finishedItems: (raw.finishedItems || []).map((f: any, idx: number) => ({
+            id: String(f.id || idx + 1),
+            mould: f.mould || 'Standard Mould',
+            qty: Number(f.qty || 0),
+            price: Number(f.price || 0),
+            total: Number(f.total || 0)
+          })),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          synced: true,
+          version: 1
+        };
+        this.billsCache.set(bill.id, bill);
+      });
+    }
+
+    // Load any custom user-created/saved bills from localStorage synchronously
+    try {
+      const customBills = JSON.parse(localStorage.getItem('modern_saved_custom_bills') || '[]');
+      if (Array.isArray(customBills)) {
+        customBills.forEach((b: BillRecord) => {
+          // Clean empty rows from previously saved custom bills
+          const cleanRaw = (b.rawItems || []).filter(r => {
+            const hasName = Boolean(r.name && r.name.trim() !== '');
+            const hasQty = (Number(r.qty) || 0) > 0;
+            const hasPartyCode = Boolean(r.partyCode && r.partyCode.trim() !== '');
+            const hasDyn = Object.keys(r).some(k => (k.startsWith('col_') || k === 'qty') && (Number((r as any)[k]) || 0) > 0);
+            const hasCaps = (Number(r.uCap) || 0) > 0 || (Number(r.lCap) || 0) > 0;
+            return hasName || hasQty || hasPartyCode || hasDyn || hasCaps;
+          });
+          const cleanFinished = (b.finishedItems || []).filter(f => {
+            const hasMould = Boolean(f.mould && f.mould.trim() !== '' && f.mould !== 'Mould Name' && f.mould !== '-');
+            const hasQty = (Number(f.qty) || 0) > 0;
+            const hasTotal = (Number(f.total) || 0) > 0;
+            const hasPrice = (Number(f.price) || 0) > 0;
+            return hasMould && (hasQty || hasTotal || hasPrice);
+          });
+          const cleanedBill: BillRecord = { ...b, rawItems: cleanRaw, finishedItems: cleanFinished };
+          this.billsCache.set(cleanedBill.id, cleanedBill);
+        });
+      }
+    } catch {}
+
+    // Pre-populate with all 1,800 real SQLite parties synchronously
+    if (SQLITE_PARTIES && SQLITE_PARTIES.length > 0) {
+      SQLITE_PARTIES.forEach((p: any, i: number) => {
+        const partyName = (p.party_name || '').trim();
+        if (!partyName) return;
+        const party: PartyRecord = {
+          id: `P-${i + 1}`,
+          name: partyName,
+          phone: (p.contacts || '').trim(),
+          station: (p.station || '').trim(),
+          district: (p.district || '').trim(),
+          state: (p.state || '').trim(),
+          pincode: (p.pincode || '').trim(),
+          city: (p.station || p.district || '').trim(),
+          contact: (p.district || '').trim(),
+          balance: 0,
+          limit: 500000,
+          gstin: '',
+          updatedAt: Date.now(),
+          synced: true
+        };
+        this.partiesCache.set(party.id, party);
+      });
+    }
+
+    // Load any custom user-created/saved parties from localStorage synchronously
+    try {
+      const customParties = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');
+      if (Array.isArray(customParties)) {
+        customParties.forEach((p: PartyRecord) => this.partiesCache.set(p.id, p));
+      }
+    } catch {}
+
     this.dbReadyPromise = this.initIndexedDB();
   }
 
-  private async initIndexedDB(): Promise<IDBDatabase> {
+  private initIndexedDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -72,12 +168,11 @@ class LocalDatabase {
         }
       };
 
-      request.onsuccess = async (event) => {
+      request.onsuccess = (event) => {
         this.db = (event.target as IDBOpenDBRequest).result;
-        await this.loadAllToCache();
-        await this.ensureSeedData();
         this.isInitialized = true;
         resolve(this.db);
+        this.loadAllToCache().catch((err) => console.warn('Cache warm-up error:', err));
       };
 
       request.onerror = (event) => {
@@ -112,7 +207,8 @@ class LocalDatabase {
 
   // Seed default data if empty
   private async ensureSeedData() {
-    if (this.billsCache.size === 0 && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
+    const existingStoreBills = await this.getAllFromStore<BillRecord>('bills');
+    if (existingStoreBills.length < SQLITE_BILLS.length && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
       const now = Date.now();
       for (const raw of SQLITE_BILLS) {
         const bill: BillRecord = {
@@ -209,26 +305,46 @@ class LocalDatabase {
 
   // Helper to write to an object store
   private async putToStore(storeName: string, item: any): Promise<void> {
-    await this.dbReadyPromise;
-    return new Promise((resolve, reject) => {
+    if (!this.db) {
+      await this.dbReadyPromise;
+    }
+    return new Promise((resolve) => {
       if (!this.db) { resolve(); return; }
-      const tx = this.db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.put(item);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = this.db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.put(item);
+        req.onsuccess = () => resolve();
+        req.onerror = () => {
+          console.warn(`putToStore ${storeName} error:`, req.error);
+          resolve();
+        };
+      } catch (err) {
+        console.warn(`putToStore ${storeName} tx error:`, err);
+        resolve();
+      }
     });
   }
 
   private async deleteFromStore(storeName: string, key: string): Promise<void> {
-    await this.dbReadyPromise;
-    return new Promise((resolve, reject) => {
+    if (!this.db) {
+      await this.dbReadyPromise;
+    }
+    return new Promise((resolve) => {
       if (!this.db) { resolve(); return; }
-      const tx = this.db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.delete(key);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = this.db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => {
+          console.warn(`deleteFromStore ${storeName} error:`, req.error);
+          resolve();
+        };
+      } catch (err) {
+        console.warn(`deleteFromStore ${storeName} tx error:`, err);
+        resolve();
+      }
     });
   }
 
@@ -255,7 +371,14 @@ class LocalDatabase {
 
   // --- Synchronous Instant Getters (0ms UI latency) ---
   public getBills(): BillRecord[] {
-    return Array.from(this.billsCache.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+    return Array.from(this.billsCache.values()).sort((a, b) => {
+      const numA = parseInt(a.token, 10);
+      const numB = parseInt(b.token, 10);
+      if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+        return numB - numA;
+      }
+      return b.updatedAt - a.updatedAt;
+    });
   }
 
   public getBillById(id: string): BillRecord | undefined {
@@ -282,7 +405,36 @@ class LocalDatabase {
   // --- CRUD Operations (Optimistic UI + Persistent DB + Sync Enqueue) ---
   public async saveBill(bill: BillRecord, enqueueSync = true): Promise<BillRecord> {
     bill.updatedAt = Date.now();
+
+    // Ensure clean raw and finished items without blank/dummy rows
+    bill.rawItems = (bill.rawItems || []).filter(r => {
+      const hasName = Boolean(r.name && r.name.trim() !== '');
+      const hasQty = (Number(r.qty) || 0) > 0;
+      const hasPartyCode = Boolean(r.partyCode && r.partyCode.trim() !== '');
+      const hasDyn = Object.keys(r).some(k => (k.startsWith('col_') || k === 'qty') && (Number((r as any)[k]) || 0) > 0);
+      const hasCaps = (Number(r.uCap) || 0) > 0 || (Number(r.lCap) || 0) > 0;
+      return hasName || hasQty || hasPartyCode || hasDyn || hasCaps;
+    });
+
+    bill.finishedItems = (bill.finishedItems || []).filter(f => {
+      const hasMould = Boolean(f.mould && f.mould.trim() !== '' && f.mould !== 'Mould Name' && f.mould !== '-');
+      const hasQty = (Number(f.qty) || 0) > 0;
+      const hasTotal = (Number(f.total) || 0) > 0;
+      const hasPrice = (Number(f.price) || 0) > 0;
+      return hasMould && (hasQty || hasTotal || hasPrice);
+    });
+
     this.billsCache.set(bill.id, bill);
+
+    // Instant Synchronous localStorage persistence backup
+    try {
+      const currentSavedBills: BillRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_bills') || '[]');
+      const filtered = currentSavedBills.filter(b => b.id !== bill.id && b.token !== bill.token);
+      localStorage.setItem('modern_saved_custom_bills', JSON.stringify([bill, ...filtered]));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
+
     this.notify('bills', this.getBills());
 
     await this.putToStore('bills', bill);
@@ -307,14 +459,36 @@ class LocalDatabase {
   public async saveParty(party: PartyRecord, enqueueSync = true): Promise<PartyRecord> {
     party.updatedAt = Date.now();
     this.partiesCache.set(party.id, party);
-    this.notify('parties', this.getParties());
 
+    try {
+      const currentSaved: PartyRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');
+      const filtered = currentSaved.filter(p => p.id !== party.id && p.name !== party.name);
+      localStorage.setItem('modern_saved_custom_parties', JSON.stringify([party, ...filtered]));
+    } catch (e) {
+      console.warn('localStorage save party warning:', e);
+    }
+
+    this.notify('parties', this.getParties());
     await this.putToStore('parties', party);
 
     if (enqueueSync) {
       await this.enqueueSync('parties', party.id, 'UPDATE', party);
     }
     return party;
+  }
+
+  public async deleteParty(id: string, enqueueSync = true): Promise<void> {
+    this.partiesCache.delete(id);
+    try {
+      const currentSaved: PartyRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');
+      const filtered = currentSaved.filter(p => p.id !== id);
+      localStorage.setItem('modern_saved_custom_parties', JSON.stringify(filtered));
+    } catch {}
+    this.notify('parties', this.getParties());
+    await this.deleteFromStore('parties', id);
+    if (enqueueSync) {
+      await this.enqueueSync('parties', id, 'DELETE', { id });
+    }
   }
 
   public async saveStockItem(item: StockItemRecord, enqueueSync = true): Promise<StockItemRecord> {

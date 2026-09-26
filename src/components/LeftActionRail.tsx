@@ -13,7 +13,8 @@ import {
   Code, 
   RotateCcw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  History
 } from 'lucide-react';
 
 interface Props {
@@ -30,6 +31,8 @@ interface Props {
   onReset: () => void;
   onPrevRecord: () => void;
   onNextRecord: () => void;
+  onSummary: () => void;
+  onLoadOldPrice: () => void;
 }
 
 export const LeftActionRail: React.FC<Props> = ({
@@ -45,9 +48,13 @@ export const LeftActionRail: React.FC<Props> = ({
   onExportJson,
   onReset,
   onPrevRecord,
-  onNextRecord
+  onNextRecord,
+  onSummary,
+  onLoadOldPrice
 }) => {
   const BUTTONS = [
+    { id: 'summary', name: 'Calculate Summary (Ctrl+G)', icon: <Layers size={17} color="#10b981" />, action: onSummary },
+    { id: 'oldprice', name: 'Load Old Price (Alt+P)', icon: <History size={17} color="#f59e0b" />, action: onLoadOldPrice },
     { id: 'save', name: 'Save Bill', icon: <Save size={17} color="#ffffff" />, action: onSave },
     { id: 'slip', name: 'Print Slip', icon: <Printer size={17} color="#ffffff" />, action: onPrintSlip },
     { id: 'add', name: 'Add Raw Item', icon: <PlusCircle size={17} color="#ffffff" />, action: onAddRawRow },
@@ -95,6 +102,7 @@ export const LeftActionRail: React.FC<Props> = ({
 
   return (
     <div 
+      data-np-zone="2"
       className="glass-panel"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -118,6 +126,7 @@ export const LeftActionRail: React.FC<Props> = ({
         return (
           <button
             key={b.id}
+            data-np-target={`2-${idx + 1}`}
             ref={(el) => { btnRefs.current[idx] = el; }}
             type="button"
             onMouseEnter={() => {

@@ -4,7 +4,7 @@ import type { FinishedItem, EnterDirection } from '../types';
 import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
-import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check } from 'lucide-react';
+import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History } from 'lucide-react';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -48,6 +48,7 @@ interface Props {
   onSetRowHeight: (height: number) => void;
   isActiveTable?: boolean;
   onActivateTable?: () => void;
+  onLoadOldPrice?: () => void;
 }
 
 const DEFAULT_RIGHT_COLS = {
@@ -78,7 +79,8 @@ export const RightGrid: React.FC<Props> = ({
   rowHeight,
   onSetRowHeight,
   isActiveTable = false,
-  onActivateTable
+  onActivateTable,
+  onLoadOldPrice
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -106,7 +108,8 @@ export const RightGrid: React.FC<Props> = ({
   const [colWidths, setColWidths] = useState(() => {
     try {
       const saved = localStorage.getItem('modern_right_cols');
-      return saved ? JSON.parse(saved) : DEFAULT_RIGHT_COLS;
+      const parsed = saved ? JSON.parse(saved) : {};
+      return { ...DEFAULT_RIGHT_COLS, ...parsed };
     } catch {
       return DEFAULT_RIGHT_COLS;
     }
@@ -190,7 +193,7 @@ export const RightGrid: React.FC<Props> = ({
   const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
 
   let filteredItems = items.filter(it =>
-    it.mould.toLowerCase().includes(searchQuery.toLowerCase())
+    (it?.mould || '').toLowerCase().includes((searchQuery || '').toLowerCase())
   );
 
   if (sortField) {
@@ -342,11 +345,11 @@ export const RightGrid: React.FC<Props> = ({
     if (cellDrafts[draftKey] !== undefined) {
       const rawText = cellDrafts[draftKey];
       const evaluated = evaluateMathExpression(rawText);
-      const newQty = field === 'qty' ? evaluated : item.qty;
-      const newPrice = field === 'price' ? evaluated : item.price;
-      if (field === 'qty' && item.qty !== evaluated) onUpdateItem(item.id, 'qty', evaluated);
-      if (field === 'price' && item.price !== evaluated) onUpdateItem(item.id, 'price', evaluated);
-      onUpdateItem(item.id, 'total', newQty * newPrice);
+      if (field === 'qty') {
+        onUpdateItem(item.id, 'qty', evaluated);
+      } else if (field === 'price') {
+        onUpdateItem(item.id, 'price', evaluated);
+      }
       setCellDrafts(prev => {
         const next = { ...prev };
         delete next[draftKey];
@@ -363,9 +366,30 @@ export const RightGrid: React.FC<Props> = ({
     }
   };
 
+  const selectAllGrid = () => {
+    const keys = new Set<string>();
+    for (let r = 0; r < filteredItems.length; r++) {
+      for (let c = 0; c < 3; c++) {
+        keys.add(r + '-' + c);
+      }
+    }
+    setSelectedCellKeys(keys);
+    setSelectedRows(filteredItems.map((_, i) => i));
+    setSelectedCol(null);
+    onToast('Selected All Cells (' + filteredItems.length + ' Rows)', 'info');
+  };
+
   // Global Table Keydown
   useEffect(() => {
     const handleGlobalTableKey = (e: KeyboardEvent) => {
+      if (!isActiveTable) return;
+
+      // Ctrl + A: Select All Grid Cells
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        selectAllGrid();
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && selectedCellKeys.size > 1) {
         e.preventDefault();
         handleCopyGrid();
@@ -582,6 +606,13 @@ export const RightGrid: React.FC<Props> = ({
     colIndex: number,
     field: 'mould' | 'qty' | 'price'
   ) => {
+    // 1. CTRL + A: Select All Grid Cells
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+      e.preventDefault();
+      selectAllGrid();
+      return;
+    }
+
     // 1. CTRL + DELETE: Instantly delete active row
     if ((e.ctrlKey || e.metaKey) && (e.key === 'Delete' || e.key === 'Backspace')) {
       e.preventDefault();
@@ -641,8 +672,41 @@ export const RightGrid: React.FC<Props> = ({
       return;
     }
 
+    const expandSelectionTo = (targetR: number, targetC: number) => {
+      const maxCol = 2;
+      const clampedR = Math.max(0, Math.min(filteredItems.length - 1, targetR));
+      const clampedC = Math.max(0, Math.min(maxCol, targetC));
+
+      const anchor = anchorCell || { r: rowIndex, c: colIndex };
+      if (!anchorCell) setAnchorCell(anchor);
+
+      const minR = Math.min(anchor.r, clampedR);
+      const maxR = Math.max(anchor.r, clampedR);
+      const minC = Math.min(anchor.c, clampedC);
+      const maxC = Math.max(anchor.c, clampedC);
+
+      const keys = new Set<string>();
+      for (let r = minR; r <= maxR; r++) {
+        for (let c = minC; c <= maxC; c++) {
+          keys.add(r + '-' + c);
+        }
+      }
+      setSelectedCellKeys(keys);
+      setActiveCell({ r: clampedR, c: clampedC });
+      focusCell(clampedR, clampedC);
+    };
+
     if (e.key === 'ArrowRight') {
       const target = e.target as HTMLInputElement;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+        return; // Allow Ctrl+Shift+ArrowRight to bubble for Next Bill!
+      }
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        commitCell(rowIndex, colIndex, field);
+        expandSelectionTo(rowIndex, colIndex + 1);
+        return;
+      }
       if (target.selectionEnd === target.value.length || e.altKey) {
         e.preventDefault();
         commitCell(rowIndex, colIndex, field);
@@ -650,16 +714,25 @@ export const RightGrid: React.FC<Props> = ({
           focusCell(rowIndex, colIndex + 1);
           setActiveCell({ r: rowIndex, c: colIndex + 1 });
           setAnchorCell({ r: rowIndex, c: colIndex + 1 });
-          setSelectedCellKeys(new Set([`${rowIndex}-${colIndex + 1}`]));
+          setSelectedCellKeys(new Set([rowIndex + '-' + (colIndex + 1)]));
         } else if (rowIndex + 1 < filteredItems.length) {
           focusCell(rowIndex + 1, 0);
           setActiveCell({ r: rowIndex + 1, c: 0 });
           setAnchorCell({ r: rowIndex + 1, c: 0 });
-          setSelectedCellKeys(new Set([`${rowIndex + 1}-0`]));
+          setSelectedCellKeys(new Set([(rowIndex + 1) + '-0']));
         }
       }
     } else if (e.key === 'ArrowLeft') {
       const target = e.target as HTMLInputElement;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+        return; // Allow Ctrl+Shift+ArrowLeft to bubble for Prev Bill!
+      }
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        commitCell(rowIndex, colIndex, field);
+        expandSelectionTo(rowIndex, colIndex - 1);
+        return;
+      }
       if (target.selectionStart === 0 || e.altKey) {
         e.preventDefault();
         commitCell(rowIndex, colIndex, field);
@@ -667,30 +740,36 @@ export const RightGrid: React.FC<Props> = ({
           focusCell(rowIndex, colIndex - 1);
           setActiveCell({ r: rowIndex, c: colIndex - 1 });
           setAnchorCell({ r: rowIndex, c: colIndex - 1 });
-          setSelectedCellKeys(new Set([`${rowIndex}-${colIndex - 1}`]));
+          setSelectedCellKeys(new Set([rowIndex + '-' + (colIndex - 1)]));
         } else if (rowIndex > 0) {
           focusCell(rowIndex - 1, 2);
           setActiveCell({ r: rowIndex - 1, c: 2 });
           setAnchorCell({ r: rowIndex - 1, c: 2 });
-          setSelectedCellKeys(new Set([`${rowIndex - 1}-2`]));
+          setSelectedCellKeys(new Set([(rowIndex - 1) + '-2']));
         }
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       commitCell(rowIndex, colIndex, field);
 
-      // Ctrl + ArrowDown: Shift row DOWN
-      if (e.ctrlKey || e.metaKey) {
+      // Shift + ArrowDown: Shift row DOWN
+      if (e.shiftKey) {
         if (rowIndex + 1 < filteredItems.length) {
           onReorderItems(rowIndex, rowIndex + 1);
           setTimeout(() => {
             focusCell(rowIndex + 1, colIndex);
             setActiveCell({ r: rowIndex + 1, c: colIndex });
             setAnchorCell({ r: rowIndex + 1, c: colIndex });
-            setSelectedCellKeys(new Set([`${rowIndex + 1}-${colIndex}`]));
+            setSelectedCellKeys(new Set([(rowIndex + 1) + '-' + colIndex]));
           }, 30);
-          onToast(`Row #${rowIndex + 1} shifted down (Ctrl+Down)`, 'info');
+          onToast('Row #' + (rowIndex + 2) + ' shifted down (Shift+Down)', 'info');
         }
+        return;
+      }
+
+      // Ctrl + ArrowDown: Multi-cell selection downwards
+      if (e.ctrlKey || e.metaKey) {
+        expandSelectionTo(rowIndex + 1, colIndex);
         return;
       }
 
@@ -698,32 +777,38 @@ export const RightGrid: React.FC<Props> = ({
         focusCell(rowIndex + 1, colIndex);
         setActiveCell({ r: rowIndex + 1, c: colIndex });
         setAnchorCell({ r: rowIndex + 1, c: colIndex });
-        setSelectedCellKeys(new Set([`${rowIndex + 1}-${colIndex}`]));
+        setSelectedCellKeys(new Set([(rowIndex + 1) + '-' + colIndex]));
       } else {
         onAddNewRow();
         setTimeout(() => {
           focusCell(rowIndex + 1, colIndex);
           setActiveCell({ r: rowIndex + 1, c: colIndex });
           setAnchorCell({ r: rowIndex + 1, c: colIndex });
-          setSelectedCellKeys(new Set([`${rowIndex + 1}-${colIndex}`]));
+          setSelectedCellKeys(new Set([(rowIndex + 1) + '-' + colIndex]));
         }, 20);
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       commitCell(rowIndex, colIndex, field);
 
-      // Ctrl + ArrowUp: Shift row UP
-      if (e.ctrlKey || e.metaKey) {
+      // Shift + ArrowUp: Shift row UP
+      if (e.shiftKey) {
         if (rowIndex > 0) {
           onReorderItems(rowIndex, rowIndex - 1);
           setTimeout(() => {
             focusCell(rowIndex - 1, colIndex);
             setActiveCell({ r: rowIndex - 1, c: colIndex });
             setAnchorCell({ r: rowIndex - 1, c: colIndex });
-            setSelectedCellKeys(new Set([`${rowIndex - 1}-${colIndex}`]));
+            setSelectedCellKeys(new Set([(rowIndex - 1) + '-' + colIndex]));
           }, 30);
-          onToast(`Row #${rowIndex + 1} shifted up (Ctrl+Up)`, 'info');
+          onToast('Row #' + rowIndex + ' shifted up (Shift+Up)', 'info');
         }
+        return;
+      }
+
+      // Ctrl + ArrowUp: Multi-cell selection upwards
+      if (e.ctrlKey || e.metaKey) {
+        expandSelectionTo(rowIndex - 1, colIndex);
         return;
       }
 
@@ -731,7 +816,7 @@ export const RightGrid: React.FC<Props> = ({
         focusCell(rowIndex - 1, colIndex);
         setActiveCell({ r: rowIndex - 1, c: colIndex });
         setAnchorCell({ r: rowIndex - 1, c: colIndex });
-        setSelectedCellKeys(new Set([`${rowIndex - 1}-${colIndex}`]));
+        setSelectedCellKeys(new Set([(rowIndex - 1) + '-' + colIndex]));
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
@@ -777,6 +862,7 @@ export const RightGrid: React.FC<Props> = ({
 
   return (
     <div 
+      data-np-zone="4"
       className="glass-panel" 
       style={{ 
         display: 'flex', 
@@ -794,15 +880,43 @@ export const RightGrid: React.FC<Props> = ({
         style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           marginBottom: '8px'
         }}
       >
-        <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.6px', color: '#94a3b8' }}>
-          FINISHED MOULDS / ITEMS
+        <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px', color: '#fbbf24' }}>
+          GROUP TOTAL
         </span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Add Mould Button */}
+          <button
+            data-np-target="4-3"
+            type="button"
+            onClick={onAddNewRow}
+            className="apple-box-btn"
+            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            title="Add New Mould (Insert)"
+          >
+            <Plus size={13} color="#34d399" />
+          </button>
+
+          {/* Delete Moulds Button */}
+          <button
+            data-np-target="4-4"
+            type="button"
+            onClick={() => {
+              if (selectedRows.length > 0) onDeleteRows(selectedRows);
+              else if (activeCell) onDeleteRows([activeCell.r]);
+              else if (filteredItems.length > 0) onDeleteRows([filteredItems.length - 1]);
+            }}
+            className="apple-box-btn"
+            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            title="Delete Selected Mould"
+          >
+            <Trash2 size={13} color="#f87171" />
+          </button>
+
           {/* Copy Button */}
           <button
             type="button"
@@ -816,6 +930,7 @@ export const RightGrid: React.FC<Props> = ({
 
           {/* Dedicated Paste Button */}
           <button
+            data-np-target="4-5"
             type="button"
             onClick={handlePasteButtonClick}
             className="apple-box-btn"
@@ -824,6 +939,33 @@ export const RightGrid: React.FC<Props> = ({
           >
             <ClipboardPaste size={13} />
           </button>
+
+          {/* Load Old Price Button */}
+          {onLoadOldPrice && (
+            <button
+              type="button"
+              onClick={onLoadOldPrice}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              title="Load Old Price from Party History (Alt+P)"
+            >
+              <History size={13} color="#f59e0b" />
+            </button>
+          )}
+
+          {/* Jump Left Button */}
+          {onJumpToLeftGrid && (
+            <button
+              data-np-target="4-6"
+              type="button"
+              onClick={() => onJumpToLeftGrid(activeCell?.r || 0)}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              title="Jump to Left Grid (←)"
+            >
+              <ArrowLeft size={13} color="#38bdf8" />
+            </button>
+          )}
 
           {/* Table Settings Button & Popover */}
           <div style={{ position: 'relative' }}>
@@ -1097,6 +1239,7 @@ export const RightGrid: React.FC<Props> = ({
                   >
                     <input
                       id={'right-cell-' + rIdx + '-0'}
+                      data-np-target={rIdx === 0 ? '4-1' : (rIdx === filteredItems.length - 1 ? '4-2' : undefined)}
                       type="text"
                       className="excel-cell-input"
                       value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.mould || '')}

@@ -8,6 +8,8 @@ import {
   Download 
 } from 'lucide-react';
 import type { RawItem, FinishedItem } from '../types';
+import { localDb } from '../services/db/localDb';
+import { SQLITE_BILLS } from '../data/sqliteData';
 
 export type AppMode = 'ENTRY' | 'SEARCH_LOAD' | 'SUMMARY';
 
@@ -20,6 +22,7 @@ export interface SavedSlipData {
   date: string;
   rawItems: RawItem[];
   finishedItems: FinishedItem[];
+  dynamicCols?: { field: string; label: string }[];
 }
 
 export const PRESET_SLIPS: SavedSlipData[] = [
@@ -132,45 +135,48 @@ export const BottomModeBar: React.FC<Props> = ({
   const [searchSlipQuery, setSearchSlipQuery] = useState('');
 
   const executeSlipSearchAndLoad = () => {
-    const q = searchSlipQuery.trim().toLowerCase();
-    if (!q) {
-      onToast('Enter a Slip # (e.g. 625, 15415)!', 'warning');
+    const rawQ = searchSlipQuery.trim();
+    if (!rawQ) {
+      onToast('Enter Bill # or Party Name to search!', 'warning');
       return;
     }
+    const cleanNum = rawQ.replace(/^(bill|slip|#)\s*/i, '').trim();
+    const qLower = cleanNum.toLowerCase();
 
-    // Match by tokenNo or partyName
-    const matched = PRESET_SLIPS.find(s => 
-      s.tokenNo === q || 
-      s.partyName.toLowerCase().includes(q) ||
-      ('slip ' + s.tokenNo) === q ||
-      ('#' + s.tokenNo) === q
+    // 1. Search in localDb
+    const allBills = localDb.getBills();
+    let matched: any = allBills.find(b => 
+      b.token === cleanNum || 
+      b.token.toLowerCase() === qLower ||
+      b.party.toLowerCase().includes(rawQ.toLowerCase())
     );
 
+    // 2. If not found in localDb, search in real SQLITE_BILLS
+    if (!matched && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
+      matched = SQLITE_BILLS.find((b: any) => 
+        String(b.token) === cleanNum || 
+        String(b.token).toLowerCase() === qLower ||
+        (b.party && b.party.toLowerCase().includes(rawQ.toLowerCase()))
+      );
+    }
+
     if (matched) {
-      onLoadSlipData(matched);
-      onToast(`Loaded Slip #${matched.tokenNo} - ${matched.partyName}!`, 'success');
+      const slipData: SavedSlipData = {
+        tokenNo: String(matched.token),
+        docType: matched.docType || 'SALE BILL',
+        partyName: matched.party || '',
+        typeSelection: matched.typeSelection || 'WHOLESALE',
+        vehicleNo: matched.vehicle || '',
+        date: matched.date || new Date().toISOString().split('T')[0],
+        rawItems: (matched.rawItems || []).map((r: any) => ({ ...r })),
+        finishedItems: (matched.finishedItems || []).map((f: any) => ({ ...f })),
+        dynamicCols: matched.dynamicCols ? matched.dynamicCols.map((c: any) => ({ ...c })) : []
+      };
+      onLoadSlipData(slipData);
+      onToast(`Loaded Bill #${matched.token} — ${matched.party || 'No Party'}`, 'success');
       setSearchSlipQuery('');
     } else {
-      // Dynamic fallback for any entered slip # like 15415
-      const cleanNum = q.toUpperCase();
-      const generatedSlip: SavedSlipData = {
-        tokenNo: cleanNum,
-        docType: 'SALE BILL',
-        partyName: `Customer Slip #${cleanNum}`,
-        typeSelection: 'WHOLESALE',
-        vehicleNo: 'DL-04-AB-' + (parseInt(cleanNum.replace(/\D/g, '').slice(-4)) || 1024),
-        date: new Date().toISOString().split('T')[0],
-        rawItems: [
-          { id: '1', name: `Material Spec Batch-${cleanNum}`, qty: 150, uCap: 120, lCap: 100 },
-          { id: '2', name: 'Alloy Core Fitting', qty: 75, uCap: 60, lCap: 50 }
-        ],
-        finishedItems: [
-          { id: '1', mould: `Custom Mould Precision #${cleanNum}`, qty: 25, price: 850, total: 21250 }
-        ]
-      };
-      onLoadSlipData(generatedSlip);
-      onToast(`Loaded Slip #${cleanNum}!`, 'success');
-      setSearchSlipQuery('');
+      onToast(`Bill #${rawQ} not found in database!`, 'warning');
     }
   };
 
@@ -183,6 +189,7 @@ export const BottomModeBar: React.FC<Props> = ({
 
   return (
     <div 
+      data-np-zone="5"
       className="glass-panel"
       style={{
         padding: '5px 12px',
@@ -200,6 +207,7 @@ export const BottomModeBar: React.FC<Props> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'visible' }}>
         {/* Button 1: AUTO CONVERT */}
         <button
+          data-np-target="5-1"
           type="button"
           onMouseEnter={() => macAudio.playHover()}
           onClick={() => {
@@ -216,6 +224,7 @@ export const BottomModeBar: React.FC<Props> = ({
 
         {/* Button 2: AUTO ITEM */}
         <button
+          data-np-target="5-2"
           type="button"
           onMouseEnter={() => macAudio.playHover()}
           onClick={() => {
@@ -232,6 +241,7 @@ export const BottomModeBar: React.FC<Props> = ({
 
         {/* Button 3: SIMPLE MODE */}
         <button
+          data-np-target="5-3"
           type="button"
           onMouseEnter={() => macAudio.playHover()}
           onClick={() => {
@@ -275,12 +285,13 @@ export const BottomModeBar: React.FC<Props> = ({
             }} 
           />
           <input
+            data-np-target="5-4"
             type="text"
-            placeholder="15415"
+            placeholder="Bill #..."
             value={searchSlipQuery}
             onChange={(e) => setSearchSlipQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            title="Type Slip # (e.g. 15415) & press Enter"
+            title="Type Bill # (e.g. 528) & press Enter"
             style={{
               width: '100%',
               background: 'transparent',

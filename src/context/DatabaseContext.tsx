@@ -14,6 +14,7 @@ interface DatabaseContextType {
   saveBill: (bill: BillRecord) => Promise<BillRecord>;
   deleteBill: (id: string) => Promise<void>;
   saveParty: (party: PartyRecord) => Promise<PartyRecord>;
+  deleteParty: (id: string) => Promise<void>;
   saveStockItem: (item: StockItemRecord) => Promise<StockItemRecord>;
   saveLedgerEntry: (entry: LedgerEntryRecord) => Promise<LedgerEntryRecord>;
   triggerSync: () => Promise<void>;
@@ -69,6 +70,10 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return await localDb.saveParty(party);
   }, []);
 
+  const handleDeleteParty = useCallback(async (id: string) => {
+    return await localDb.deleteParty(id);
+  }, []);
+
   const handleSaveStockItem = useCallback(async (item: StockItemRecord) => {
     return await localDb.saveStockItem(item);
   }, []);
@@ -93,6 +98,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         saveBill: handleSaveBill,
         deleteBill: handleDeleteBill,
         saveParty: handleSaveParty,
+        deleteParty: handleDeleteParty,
         saveStockItem: handleSaveStockItem,
         saveLedgerEntry: handleSaveLedgerEntry,
         triggerSync: handleTriggerSync

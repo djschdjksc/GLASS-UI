@@ -1,7 +1,9 @@
 import { ControlPanelView } from './ControlPanelView';
-import React, { useState, useEffect, useRef } from 'react';
+import { SettingsTabView } from './SettingsTabView';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { NavKey } from '../types';
 import { macAudio } from '../utils/macAudio';
+import { extractSizeFromColLabel } from '../utils/mouldUtils';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
 import type { BillRecord } from '../services/db/schema';
@@ -15,17 +17,34 @@ import {
   Image as ImageIcon,
   Palette,
   SlidersHorizontal,
-  ExternalLink
+  ExternalLink,
+  Search,
+  Phone,
+  MapPin,
+  Building,
+  Trash2,
+  Check,
+  X,
+  FileText,
+  UserPlus,
+  Edit3,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  Hash
 } from 'lucide-react';
 
 interface Props {
   activeTab: NavKey;
   onBackToBill: () => void;
   onLoadBillToEditor?: (bill: any) => void;
-  bgType: 'image' | 'color';
-  onChangeBgType: (t: 'image' | 'color') => void;
+  onSelectPartyForBill?: (partyName: string) => void;
+  bgType: 'image' | 'color' | 'video';
+  onChangeBgType: (t: 'image' | 'color' | 'video') => void;
   bgImage: string;
   onSelectBgImage: (url: string) => void;
+  bgVideo?: string;
+  onSelectBgVideo?: (url: string) => void;
   bgColor: string;
   onChangeBgColor: (c: string) => void;
   blurAmount: number;
@@ -41,25 +60,35 @@ interface Props {
 }
 
 interface AllTableCols {
-  f2Raw: { index: number; name: number; qty: number; uCap: number; lCap: number };
+  f2Raw: { index: number; name: number; partyCode?: number; qty: number; uCap: number; lCap: number };
   f2Finished: { index: number; mould: number; qty: number; price: number; total: number };
   f3Matrix: { mouldName: number; stdWt: number; uCapRatio: number; lCapRatio: number; recoveryRate: number };
   f4Raw: { code: number; name: number; unit: number; stock: number; reorder: number; rate: number; supplier: number };
   f4Moulds: { code: number; name: number; cavities: number; cycleSec: number; maxTemp: number; status: number };
   f4Sales: { bill: number; date: number; item: number; qty: number; price: number; total: number; party: number };
-  f5Parties: { name: number; contact: number; station: number; balance: number };
+  f5Parties: {
+    index: number;
+    name: number;
+    phone: number;
+    station: number;
+    district: number;
+    state: number;
+    pincode: number;
+    bills: number;
+    balance: number;
+  };
   f8Stock: { code: number; name: number; qty: number; rack: number; status: number };
   f9Ledger: { date: number; type: number; voucher: number; particulars: number; debit: number; credit: number; balance: number };
 }
 
 const DEFAULT_ALL_COLS: AllTableCols = {
-  f2Raw: { index: 38, name: 200, qty: 65, uCap: 65, lCap: 65 },
+  f2Raw: { index: 38, name: 180, partyCode: 120, qty: 65, uCap: 65, lCap: 65 },
   f2Finished: { index: 38, mould: 220, qty: 60, price: 80, total: 95 },
   f3Matrix: { mouldName: 200, stdWt: 90, uCapRatio: 80, lCapRatio: 80, recoveryRate: 85 },
   f4Raw: { code: 80, name: 220, unit: 60, stock: 100, reorder: 100, rate: 100, supplier: 180 },
   f4Moulds: { code: 80, name: 220, cavities: 80, cycleSec: 90, maxTemp: 90, status: 90 },
   f4Sales: { bill: 75, date: 90, item: 220, qty: 60, price: 90, total: 110, party: 180 },
-  f5Parties: { name: 230, contact: 180, station: 120, balance: 130 },
+  f5Parties: { index: 45, name: 240, phone: 135, station: 120, district: 120, state: 100, pincode: 85, bills: 70, balance: 100 },
   f8Stock: { code: 85, name: 240, qty: 85, rack: 85, status: 95 },
   f9Ledger: { date: 95, type: 100, voucher: 95, particulars: 260, debit: 110, credit: 110, balance: 130 }
 };
@@ -68,10 +97,13 @@ export const OtherTabsView: React.FC<Props> = ({
   activeTab,
   onBackToBill,
   onLoadBillToEditor,
+  onSelectPartyForBill,
   bgType,
   onChangeBgType,
   bgImage,
   onSelectBgImage,
+  bgVideo,
+  onSelectBgVideo,
   bgColor,
   onChangeBgColor,
   blurAmount,
@@ -86,7 +118,7 @@ export const OtherTabsView: React.FC<Props> = ({
   onSetTableFontSize: _onSetTableFontSize
 }) => {
   // Live reactive Database Context
-  const { bills, parties, stockItems, ledgerEntries } = useDatabase();
+  const { bills, parties, stockItems, ledgerEntries, saveParty, deleteParty } = useDatabase();
   const { rowHeightPx } = useSettings();
 
   const activeRowHeight = propRowHeight || rowHeightPx || 28;
@@ -181,9 +213,25 @@ export const OtherTabsView: React.FC<Props> = ({
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  // Selected Bill & Row indices
-  const [selectedBillIndex, setSelectedBillIndex] = useState<number>(0);
-  const selectedBill = bills[selectedBillIndex] || bills[0] || {
+  // Search query for invoices in F2 tab
+  const [billSearchQuery, setBillSearchQuery] = useState('');
+
+  const filteredBills = useMemo(() => {
+    const rawQ = billSearchQuery.trim();
+    if (!rawQ) return bills;
+    const cleanNum = rawQ.replace(/^(bill|slip|#)\s*/i, '').trim();
+    const qLower = cleanNum.toLowerCase();
+    return bills.filter(b => 
+      b.token === cleanNum ||
+      b.token.toLowerCase().includes(qLower) ||
+      b.party.toLowerCase().includes(rawQ.toLowerCase()) ||
+      b.date.includes(rawQ)
+    );
+  }, [bills, billSearchQuery]);
+
+  // Selected Bill Id tracking
+  const [selectedBillId, setSelectedBillId] = useState<string>('');
+  const selectedBill = (selectedBillId ? filteredBills.find(b => b.id === selectedBillId) : null) || filteredBills[0] || bills[0] || {
     id: 'empty',
     token: '0',
     date: '2026-09-18',
@@ -213,15 +261,18 @@ export const OtherTabsView: React.FC<Props> = ({
   const finishedRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const autoScrollTimerRef = useRef<number | null>(null);
 
-  // Auto-scroll selected bill into view whenever selectedBillIndex changes
+  // Auto-scroll selected bill into view
   useEffect(() => {
-    if (activeTab === 'F2' && billItemRefs.current[selectedBillIndex]) {
-      billItemRefs.current[selectedBillIndex]?.scrollIntoView({
-        block: 'nearest',
-        behavior: 'smooth'
-      });
+    if (activeTab === 'F2') {
+      const idx = filteredBills.findIndex(b => b.id === selectedBill.id);
+      if (idx >= 0 && billItemRefs.current[idx]) {
+        billItemRefs.current[idx]?.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth'
+        });
+      }
     }
-  }, [selectedBillIndex, activeTab]);
+  }, [selectedBill.id, filteredBills, activeTab]);
 
   // Auto-scroll selected raw row into view
   useEffect(() => {
@@ -328,11 +379,14 @@ export const OtherTabsView: React.FC<Props> = ({
           e.preventDefault();
           macAudio.playHover();
           if (f2FocusArea === 'bills') {
-            setSelectedBillIndex(prev => (prev + 1 < bills.length ? prev + 1 : prev));
+            const currentIdx = filteredBills.findIndex(b => b.id === selectedBill.id);
+            if (currentIdx >= 0 && currentIdx + 1 < filteredBills.length) {
+              setSelectedBillId(filteredBills[currentIdx + 1].id);
+            }
           } else if (f2FocusArea === 'raw') {
-            setSelectedRawRowIdx(prev => (prev + 1 < selectedBill.rawItems.length ? prev + 1 : prev));
+            setSelectedRawRowIdx(prev => (prev + 1 < displayRawItems.length ? prev + 1 : prev));
           } else if (f2FocusArea === 'finished') {
-            setSelectedFinishedRowIdx(prev => (prev + 1 < selectedBill.finishedItems.length ? prev + 1 : prev));
+            setSelectedFinishedRowIdx(prev => (prev + 1 < displayFinishedItems.length ? prev + 1 : prev));
           }
           return;
         }
@@ -341,7 +395,10 @@ export const OtherTabsView: React.FC<Props> = ({
           e.preventDefault();
           macAudio.playHover();
           if (f2FocusArea === 'bills') {
-            setSelectedBillIndex(prev => (prev - 1 >= 0 ? prev - 1 : 0));
+            const currentIdx = filteredBills.findIndex(b => b.id === selectedBill.id);
+            if (currentIdx > 0) {
+              setSelectedBillId(filteredBills[currentIdx - 1].id);
+            }
           } else if (f2FocusArea === 'raw') {
             setSelectedRawRowIdx(prev => (prev - 1 >= 0 ? prev - 1 : 0));
           } else if (f2FocusArea === 'finished') {
@@ -366,14 +423,86 @@ export const OtherTabsView: React.FC<Props> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, f2FocusArea, bills, selectedBill, onLoadBillToEditor, onBackToBill]);
+  }, [activeTab, f2FocusArea, filteredBills, selectedBill, onLoadBillToEditor, onBackToBill]);
 
-  // Calculated totals for selected bill
-  const totalRawQty = selectedBill.rawItems.reduce((acc, r) => acc + (r.qty || 0), 0);
-  const totalRawUCap = selectedBill.rawItems.reduce((acc, r) => acc + (r.uCap || 0), 0);
-  const totalRawLCap = selectedBill.rawItems.reduce((acc, r) => acc + (r.lCap || 0), 0);
-  const totalFinishedQty = selectedBill.finishedItems.reduce((acc, f) => acc + (f.qty || 0), 0);
-  const totalFinishedAmount = selectedBill.finishedItems.reduce((acc, f) => acc + (f.total || 0), 0);
+  // Discover and sort all size columns for the selected bill in Bill History (e.g. 12 FT -> 10 FT -> 9.5 FT)
+  const f2AllSizeCols = useMemo(() => {
+    const dynamicList = (selectedBill.dynamicCols && selectedBill.dynamicCols.length > 0)
+      ? selectedBill.dynamicCols
+      : (() => {
+          const keys = new Set<string>();
+          (selectedBill.rawItems || []).forEach(r => {
+            Object.keys(r).forEach(k => {
+              if (k !== 'id' && k !== 'name' && k !== 'qty' && k !== 'uCap' && k !== 'lCap') {
+                keys.add(k);
+              }
+            });
+          });
+          return Array.from(keys).map(k => {
+            const size = extractSizeFromColLabel(k);
+            return { field: k, label: `${size} FT` };
+          });
+        })();
+
+    const list = [
+      { field: 'qty', label: '(10 FT)', size: 10, isBase: true },
+      ...dynamicList.map(c => ({
+        field: c.field,
+        label: c.label || `${extractSizeFromColLabel(c.field)} FT`,
+        size: extractSizeFromColLabel(c.label || c.field),
+        isBase: false
+      }))
+    ];
+
+    // Sort descending by size (e.g. 12 FT -> 10 FT -> 9.5 FT)
+    return list.sort((a, b) => b.size - a.size);
+  }, [selectedBill]);
+
+  // Filter out any blank/unused padding rows so only actual recorded rows are shown in Bill History
+  const displayRawItems = useMemo(() => {
+    return (selectedBill.rawItems || []).filter(r => {
+      const hasName = Boolean(r.name && r.name.trim() !== '');
+      const hasQty = (Number(r.qty) || 0) > 0;
+      const hasPartyCode = Boolean(r.partyCode && r.partyCode.trim() !== '');
+      const hasDyn = f2AllSizeCols.some(sc => (Number((r as any)[sc.field]) || 0) > 0);
+      const hasCaps = (Number(r.uCap) || 0) > 0 || (Number(r.lCap) || 0) > 0;
+      return hasName || hasQty || hasPartyCode || hasDyn || hasCaps;
+    });
+  }, [selectedBill.rawItems, f2AllSizeCols]);
+
+  const displayFinishedItems = useMemo(() => {
+    return (selectedBill.finishedItems || []).filter(f => {
+      const hasMould = Boolean(f.mould && f.mould.trim() !== '' && f.mould !== 'Mould Name' && f.mould !== '-');
+      const hasQty = (Number(f.qty) || 0) > 0;
+      const hasTotal = (Number(f.total) || 0) > 0;
+      const hasPrice = (Number(f.price) || 0) > 0;
+      return hasMould && (hasQty || hasTotal || hasPrice);
+    });
+  }, [selectedBill.finishedItems]);
+
+  // Calculated totals for selected bill based on actual recorded items
+  const totalRawQty = displayRawItems.reduce((acc, r) => acc + (r.qty || 0), 0);
+  const totalRawUCap = displayRawItems.reduce((acc, r) => acc + (r.uCap || 0), 0);
+  const totalRawLCap = displayRawItems.reduce((acc, r) => acc + (r.lCap || 0), 0);
+  const totalFinishedQty = displayFinishedItems.reduce((acc, f) => acc + (f.qty || 0), 0);
+  const totalFinishedAmount = displayFinishedItems.reduce((acc, f) => acc + (f.total || 0), 0);
+
+  const grandTotalAllCols = useMemo(() => {
+    let sum = 0;
+    displayRawItems.forEach(r => {
+      f2AllSizeCols.forEach(sc => {
+        sum += (Number((r as any)[sc.field]) || 0);
+      });
+      sum += (Number(r.uCap) || 0);
+      sum += (Number(r.lCap) || 0);
+    });
+    return sum;
+  }, [displayRawItems, f2AllSizeCols]);
+
+  const showPartyCode = Boolean(
+    selectedBill.hasPartyCodeCol ||
+    displayRawItems.some(r => r.partyCode && r.partyCode.trim() !== '')
+  );
 
   // F3 Equation state
   const [selectedEqId, setSelectedEqId] = useState<string | null>('EQ-1');
@@ -407,7 +536,147 @@ export const OtherTabsView: React.FC<Props> = ({
   ]);
 
   // F5 Party Directory state
+  const [partySearchQuery, setPartySearchQuery] = useState('');
+  const [partyCurrentPage, setPartyCurrentPage] = useState(1);
+  const PARTIES_PER_PAGE = 80;
   const [selectedPartyId, setSelectedPartyId] = useState<string | null>('P-1');
+  const [isEditingParty, setIsEditingParty] = useState(false);
+  const [partyToast, setPartyToast] = useState<string | null>(null);
+
+  const [partyForm, setPartyForm] = useState({
+    id: '',
+    name: '',
+    phone: '',
+    station: '',
+    district: '',
+    state: '',
+    pincode: '',
+    gstin: '',
+    balance: 0
+  });
+
+  const showPartyToast = (msg: string) => {
+    setPartyToast(msg);
+    setTimeout(() => setPartyToast(null), 3000);
+  };
+
+  // Bill stats per party (bill counts and total turnover)
+  const partyBillStats = useMemo(() => {
+    const stats: Record<string, { count: number; total: number }> = {};
+    for (const b of bills) {
+      const pName = (b.party || '').trim().toLowerCase();
+      if (!pName) continue;
+      if (!stats[pName]) {
+        stats[pName] = { count: 0, total: 0 };
+      }
+      stats[pName].count += 1;
+      stats[pName].total += (b.total || 0);
+    }
+    return stats;
+  }, [bills]);
+
+  // Filtered parties across name, phone, station, district, state, pincode, gstin
+  const filteredParties = useMemo(() => {
+    const q = partySearchQuery.trim().toLowerCase();
+    if (!q) return parties;
+    return parties.filter(p => {
+      return (
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.phone && p.phone.toLowerCase().includes(q)) ||
+        (p.station && p.station.toLowerCase().includes(q)) ||
+        (p.district && p.district.toLowerCase().includes(q)) ||
+        (p.state && p.state.toLowerCase().includes(q)) ||
+        (p.pincode && p.pincode.toLowerCase().includes(q)) ||
+        (p.gstin && p.gstin.toLowerCase().includes(q))
+      );
+    });
+  }, [parties, partySearchQuery]);
+
+  const totalPartyPages = Math.max(1, Math.ceil(filteredParties.length / PARTIES_PER_PAGE));
+  const paginatedParties = useMemo(() => {
+    const start = (partyCurrentPage - 1) * PARTIES_PER_PAGE;
+    return filteredParties.slice(start, start + PARTIES_PER_PAGE);
+  }, [filteredParties, partyCurrentPage]);
+
+  // Selected party object
+  const selectedParty = useMemo(() => {
+    if (selectedPartyId) {
+      const found = parties.find(p => p.id === selectedPartyId);
+      if (found) return found;
+    }
+    return filteredParties[0] || parties[0] || null;
+  }, [parties, selectedPartyId, filteredParties]);
+
+  const handleStartEditParty = (p: typeof parties[0]) => {
+    setPartyForm({
+      id: p.id,
+      name: p.name || '',
+      phone: p.phone || '',
+      station: p.station || '',
+      district: p.district || '',
+      state: p.state || '',
+      pincode: p.pincode || '',
+      gstin: p.gstin || '',
+      balance: p.balance || 0
+    });
+    setIsEditingParty(true);
+  };
+
+  const handleStartNewParty = () => {
+    setPartyForm({
+      id: '',
+      name: '',
+      phone: '',
+      station: '',
+      district: '',
+      state: '',
+      pincode: '',
+      gstin: '',
+      balance: 0
+    });
+    setIsEditingParty(true);
+  };
+
+  const handleSavePartyForm = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanName = partyForm.name.trim();
+    if (!cleanName) {
+      showPartyToast('Please enter party name');
+      return;
+    }
+
+    const partyId = partyForm.id ? partyForm.id : `P-${Date.now()}`;
+    const newRecord = {
+      id: partyId,
+      name: cleanName,
+      phone: partyForm.phone.trim(),
+      station: partyForm.station.trim(),
+      district: partyForm.district.trim(),
+      state: partyForm.state.trim(),
+      pincode: partyForm.pincode.trim(),
+      city: partyForm.station.trim() || partyForm.district.trim(),
+      contact: partyForm.district.trim() || partyForm.phone.trim(),
+      balance: Number(partyForm.balance) || 0,
+      limit: 500000,
+      gstin: partyForm.gstin.trim(),
+      updatedAt: Date.now(),
+      synced: false
+    };
+
+    await saveParty(newRecord);
+    setSelectedPartyId(partyId);
+    setIsEditingParty(false);
+    showPartyToast(`Party "${cleanName}" saved successfully`);
+    macAudio.playSuccess();
+  };
+
+  const handleDeletePartyAction = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to remove party "${name}"?`)) {
+      await deleteParty(id);
+      showPartyToast(`Party "${name}" removed`);
+      macAudio.playClick();
+    }
+  };
 
   // F8 Stock Inventory state
   const [selectedStockId, setSelectedStockId] = useState<string | null>('STK-1');
@@ -464,30 +733,72 @@ export const OtherTabsView: React.FC<Props> = ({
               justifyContent: 'space-between'
             }}>
               <span>SAVED INVOICES</span>
-              <span style={{ color: '#38bdf8', fontSize: '10px' }}>{bills.length} BILLS</span>
+              <span style={{ color: '#38bdf8', fontSize: '10px' }}>{filteredBills.length} BILLS</span>
             </div>
 
-            <div 
-              ref={billsListRef}
-              onMouseMove={handleBillsMouseMove}
-              onMouseLeave={handleBillsMouseLeave}
-              style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px', scrollBehavior: 'smooth' }}
-            >
-              {bills.map((b, idx) => {
-                const isSelected = selectedBillIndex === idx;
+            {/* Quick Bill Search Filter Input */}
+            <div style={{ padding: '6px 4px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={12} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  placeholder="Search Bill # or Party..."
+                  value={billSearchQuery}
+                  onChange={e => setBillSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (filteredBills.length > 0) {
+                        const target = (selectedBillId ? filteredBills.find(b => b.id === selectedBillId) : null) || filteredBills[0];
+                        if (target && onLoadBillToEditor) {
+                          onLoadBillToEditor(target);
+                        }
+                      }
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '5px 8px 5px 24px',
+                    fontSize: '11px',
+                    borderRadius: '6px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Smooth Scroll Container with Top/Bottom Gradient Masks */}
+            <div className="scroll-list-container" style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              <div className="top-gradient" />
+
+              <div 
+                ref={billsListRef}
+                className="scroll-list"
+                onMouseMove={handleBillsMouseMove}
+                onMouseLeave={handleBillsMouseLeave}
+                style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', scrollBehavior: 'smooth' }}
+              >
+              {filteredBills.map((b, idx) => {
+                const isSelected = selectedBill.id === b.id;
                 return (
                   <div
                     key={b.id}
                     ref={el => { billItemRefs.current[idx] = el; }}
                     onClick={() => {
                       macAudio.playClick();
-                      setSelectedBillIndex(idx);
+                      setSelectedBillId(b.id);
                       setF2FocusArea('bills');
                     }}
                     onMouseEnter={() => {
                       macAudio.playHover();
-                      setSelectedBillIndex(idx);
+                      setSelectedBillId(b.id);
                       setF2FocusArea('bills');
+                    }}
+                    onDoubleClick={() => {
+                      if (onLoadBillToEditor) onLoadBillToEditor(b);
                     }}
                     style={{
                       padding: '8px 10px',
@@ -545,6 +856,8 @@ export const OtherTabsView: React.FC<Props> = ({
                   </div>
                 );
               })}
+              </div>
+              <div className="bottom-gradient" />
             </div>
           </div>
 
@@ -648,7 +961,7 @@ export const OtherTabsView: React.FC<Props> = ({
                   alignItems: 'center'
                 }}>
                   <span>LEFT TABLE: RAW MATERIALS / INPUT</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{selectedBill.rawItems.length} ITEMS</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{displayRawItems.length} ITEMS</span>
                 </div>
 
                 <div style={{ flex: 1, overflow: 'auto', minHeight: 0, marginTop: '2px' }}>
@@ -663,10 +976,25 @@ export const OtherTabsView: React.FC<Props> = ({
                           ITEM NAME
                           <div className="th-resizer" onMouseDown={(e) => startResizeCol('f2Raw', 'name', e)} title="Drag to resize column" />
                         </th>
-                        <th style={{ width: `${tableCols.f2Raw.qty}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                          QTY
-                          <div className="th-resizer" onMouseDown={(e) => startResizeCol('f2Raw', 'qty', e)} title="Drag to resize column" />
-                        </th>
+                        {showPartyCode && (
+                          <th style={{ width: `${(tableCols.f2Raw as any).partyCode || 120}px`, position: 'relative', userSelect: 'none' }}>
+                            PARTY CODE
+                            <div className="th-resizer" onMouseDown={(e) => startResizeCol('f2Raw', 'partyCode' as any, e)} title="Drag to resize column" />
+                          </th>
+                        )}
+                        {/* All Feet Size Columns (Sorted Descending: e.g. 12 FT -> 10 FT -> 9.5 FT) */}
+                        {f2AllSizeCols.map(sc => {
+                          const colW = (tableCols.f2Raw as any)[sc.field] || (sc.isBase ? tableCols.f2Raw.qty : 65);
+                          return (
+                            <th 
+                              key={sc.field} 
+                              style={{ width: `${colW}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}
+                            >
+                              <span style={{ color: sc.isBase ? '#38bdf8' : '#34d399' }}>{sc.label}</span>
+                              <div className="th-resizer" onMouseDown={(e) => startResizeCol('f2Raw', sc.field as any, e)} title="Drag to resize column" />
+                            </th>
+                          );
+                        })}
                         <th style={{ width: `${tableCols.f2Raw.uCap}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
                           U CAP
                           <div className="th-resizer" onMouseDown={(e) => startResizeCol('f2Raw', 'uCap', e)} title="Drag to resize column" />
@@ -678,7 +1006,7 @@ export const OtherTabsView: React.FC<Props> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedBill.rawItems.map((r, idx) => {
+                      {displayRawItems.map((r, idx) => {
                         const isSelectedRow = f2FocusArea === 'raw' && selectedRawRowIdx === idx;
                         return (
                           <tr 
@@ -698,9 +1026,34 @@ export const OtherTabsView: React.FC<Props> = ({
                               <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
                             </td>
                             <td style={{ fontWeight: 500, color: '#f8fafc' }}>{r.name}</td>
-                            <td style={{ textAlign: 'right', fontWeight: 700, color: '#38bdf8' }}>{r.qty}</td>
-                            <td style={{ textAlign: 'right', color: '#a78bfa' }}>{r.uCap}</td>
-                            <td style={{ textAlign: 'right', color: '#f472b6' }}>{r.lCap}</td>
+                            {showPartyCode && (
+                              <td style={{ color: '#38bdf8', fontFamily: 'monospace', fontSize: '11px' }}>
+                                {r.partyCode || '-'}
+                              </td>
+                            )}
+                            {/* All Feet Size Column Values */}
+                            {f2AllSizeCols.map(sc => {
+                              const val = (r as any)[sc.field];
+                              const numVal = Number(val) || 0;
+                              return (
+                                <td 
+                                  key={sc.field} 
+                                  style={{ 
+                                    textAlign: 'right', 
+                                    fontWeight: sc.isBase ? 700 : 600, 
+                                    color: numVal > 0 ? (sc.isBase ? '#38bdf8' : '#34d399') : 'rgba(255, 255, 255, 0.2)' 
+                                  }}
+                                >
+                                  {numVal > 0 ? numVal : '-'}
+                                </td>
+                              );
+                            })}
+                            <td style={{ textAlign: 'right', color: Number(r.uCap) > 0 ? '#a78bfa' : 'rgba(255, 255, 255, 0.2)' }}>
+                              {Number(r.uCap) > 0 ? r.uCap : '-'}
+                            </td>
+                            <td style={{ textAlign: 'right', color: Number(r.lCap) > 0 ? '#f472b6' : 'rgba(255, 255, 255, 0.2)' }}>
+                              {Number(r.lCap) > 0 ? r.lCap : '-'}
+                            </td>
                           </tr>
                         );
                       })}
@@ -715,15 +1068,27 @@ export const OtherTabsView: React.FC<Props> = ({
                   borderRadius: '6px', 
                   display: 'flex', 
                   justifyContent: 'space-between', 
+                  alignItems: 'center',
                   fontSize: '11px',
                   fontWeight: 600,
-                  marginTop: 'auto'
+                  marginTop: 'auto',
+                  flexWrap: 'wrap',
+                  gap: '8px'
                 }}>
-                  <span style={{ color: '#e2e8f0' }}>Total Inputs:</span>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <span>Qty: <strong style={{ color: '#38bdf8' }}>{totalRawQty}</strong></span>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {f2AllSizeCols.map(sc => {
+                      const colTotal = displayRawItems.reduce((acc, r) => acc + (Number((r as any)[sc.field]) || 0), 0);
+                      return (
+                        <span key={sc.field}>
+                          {sc.label}: <strong style={{ color: sc.isBase ? '#38bdf8' : '#34d399' }}>{colTotal}</strong>
+                        </span>
+                      );
+                    })}
                     <span>UCap: <strong style={{ color: '#a78bfa' }}>{totalRawUCap}</strong></span>
                     <span>LCap: <strong style={{ color: '#f472b6' }}>{totalRawLCap}</strong></span>
+                  </div>
+                  <div style={{ marginLeft: 'auto', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.12)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                    ALL TOTAL: <strong>{grandTotalAllCols}</strong>
                   </div>
                 </div>
               </div>
@@ -753,8 +1118,8 @@ export const OtherTabsView: React.FC<Props> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span>RIGHT TABLE: FINISHED MOULDS / ITEMS</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{selectedBill.finishedItems.length} MOULDS</span>
+                  <span>RIGHT TABLE: GROUP TOTAL</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{displayFinishedItems.length} MOULDS</span>
                 </div>
 
                 <div style={{ flex: 1, overflow: 'auto', minHeight: 0, marginTop: '2px' }}>
@@ -784,7 +1149,7 @@ export const OtherTabsView: React.FC<Props> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedBill.finishedItems.map((f, idx) => {
+                      {displayFinishedItems.map((f, idx) => {
                         const isSelectedRow = f2FocusArea === 'finished' && selectedFinishedRowIdx === idx;
                         return (
                           <tr 
@@ -1222,102 +1587,504 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* TAB F5: PARTY DIRECTORY & BALANCES */}
       {/* ========================================================================= */}
       {activeTab === 'F5' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '8px', minHeight: 0 }}>
-          {/* Party Directory Table */}
-          <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '6px' }}>
-            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
-                    PARTY NAME
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.contact}px`, position: 'relative', userSelect: 'none' }}>
-                    CONTACT
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'contact', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
-                    STATION
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    BALANCE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize column" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {parties.map((p) => {
-                  const isSelected = selectedPartyId === p.id;
-                  return (
-                    <tr 
-                      key={p.id} 
-                      className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                      style={{ height: `${activeRowHeight}px` }}
-                      onMouseEnter={() => macAudio.playHover()}
-                      onClick={() => {
-                        macAudio.playClick();
-                        setSelectedPartyId(p.id);
-                      }}
-                    >
-                      <td style={{ fontWeight: 600, color: '#f8fafc', position: 'relative' }}>
-                        <div>{p.name}</div>
-                        <div style={{ fontSize: '9.5px', color: '#f8fafc', fontFamily: 'monospace' }}>{p.gstin}</div>
-                        <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                      </td>
-                      <td>
-                        <div style={{ color: '#f8fafc' }}>{p.contact}</div>
-                        <div style={{ fontSize: '10px', color: '#38bdf8' }}>{p.phone}</div>
-                      </td>
-                      <td style={{ color: '#e2e8f0' }}>{p.city}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: p.balance >= 0 ? '#34d399' : '#f87171' }}>
-                        ₹{Math.abs(p.balance).toLocaleString('en-IN')} {p.balance >= 0 ? 'Dr' : 'Cr'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Quick Party Add / Info Card */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#f472b6' }}>Create / Edit Party</span>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div>
-                <label style={{ fontSize: '10px', color: '#e2e8f0', display: 'block', marginBottom: '2px' }}>Party Legal Name *</label>
-                <input type="text" placeholder="e.g. Apex Industrial" className="mac-input" style={{ width: '100%', height: '28px', fontSize: '11px' }} />
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.9fr 1.1fr', gap: '8px', minHeight: 0 }}>
+          {/* Party Directory Left Pane */}
+          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRadius: '8px', padding: '6px', overflow: 'hidden' }}>
+            {/* Search & Action Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', padding: '2px 4px' }}>
+              <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                <Search size={14} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  placeholder="Search 1,800+ parties by Name, Phone, Station, District, State, Pincode..."
+                  value={partySearchQuery}
+                  onChange={(e) => {
+                    setPartySearchQuery(e.target.value);
+                    setPartyCurrentPage(1);
+                  }}
+                  className="mac-input"
+                  style={{ width: '100%', height: '28px', paddingLeft: '28px', paddingRight: partySearchQuery ? '26px' : '8px', fontSize: '11px' }}
+                />
+                {partySearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPartySearchQuery('');
+                      setPartyCurrentPage(1);
+                    }}
+                    style={{ position: 'absolute', right: '6px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                <div>
-                  <label style={{ fontSize: '10px', color: '#e2e8f0', display: 'block', marginBottom: '2px' }}>Phone *</label>
-                  <input type="text" placeholder="+91 98XXX" className="mac-input" style={{ width: '100%', height: '28px', fontSize: '11px' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '10px', color: '#e2e8f0', display: 'block', marginBottom: '2px' }}>City</label>
-                  <input type="text" placeholder="e.g. Noida, UP" className="mac-input" style={{ width: '100%', height: '28px', fontSize: '11px' }} />
-                </div>
+              {/* Total counter badge */}
+              <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '4px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                {filteredParties.length === parties.length
+                  ? `${parties.length.toLocaleString('en-IN')} Parties`
+                  : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '6px' }}>
-                <div>
-                  <label style={{ fontSize: '10px', color: '#e2e8f0', display: 'block', marginBottom: '2px' }}>GSTIN</label>
-                  <input type="text" placeholder="09AAAAA..." className="mac-input" style={{ width: '100%', height: '28px', fontSize: '11px' }} />
+              {/* Pagination controls */}
+              {totalPartyPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <button
+                    type="button"
+                    disabled={partyCurrentPage <= 1}
+                    onClick={() => setPartyCurrentPage(p => Math.max(1, p - 1))}
+                    className="mac-btn secondary"
+                    style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage <= 1 ? 0.4 : 1 }}
+                    title="Previous Page"
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+                  <span style={{ fontSize: '10px', color: '#cbd5e1', padding: '0 4px', whiteSpace: 'nowrap' }}>
+                    {partyCurrentPage}/{totalPartyPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={partyCurrentPage >= totalPartyPages}
+                    onClick={() => setPartyCurrentPage(p => Math.min(totalPartyPages, p + 1))}
+                    className="mac-btn secondary"
+                    style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage >= totalPartyPages ? 0.4 : 1 }}
+                    title="Next Page"
+                  >
+                    <ChevronRight size={13} />
+                  </button>
                 </div>
-                <div>
-                  <label style={{ fontSize: '10px', color: '#e2e8f0', display: 'block', marginBottom: '2px' }}>Balance (₹)</label>
-                  <input type="number" placeholder="0" className="mac-input" style={{ width: '100%', height: '28px', fontSize: '11px' }} />
-                </div>
-              </div>
-            </div>
+              )}
 
-            <div style={{ marginTop: 'auto', display: 'flex', gap: '6px' }}>
-              <button type="button" className="mac-btn primary" style={{ flex: 1, padding: '6px', fontSize: '11px' }} onClick={() => macAudio.playClick()} onMouseEnter={() => macAudio.playHover()}>
-                Save Party
+              {/* New Party Button */}
+              <button
+                type="button"
+                className="mac-btn primary"
+                style={{ height: '26px', padding: '0 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
+                onClick={() => {
+                  macAudio.playClick();
+                  handleStartNewParty();
+                }}
+              >
+                <Plus size={13} /> Add Party
               </button>
             </div>
+
+            {/* Table Area */}
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '4px' }}>
+              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
+                  <tr>
+                    <th style={{ width: `${tableCols.f5Parties.index}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                      #
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
+                      PARTY NAME
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.phone}px`, position: 'relative', userSelect: 'none' }}>
+                      PHONE NUMBER
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
+                      STATION
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.district}px`, position: 'relative', userSelect: 'none' }}>
+                      DISTRICT
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.state}px`, position: 'relative', userSelect: 'none' }}>
+                      STATE
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.pincode}px`, position: 'relative', userSelect: 'none' }}>
+                      PINCODE
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.bills}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                      BILLS
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
+                      BALANCE
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedParties.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8', fontSize: '12px' }}>
+                        No parties match "{partySearchQuery}". Try a different search term or click "Add Party".
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedParties.map((p, idx) => {
+                      const isSelected = selectedParty?.id === p.id;
+                      const globalIdx = (partyCurrentPage - 1) * PARTIES_PER_PAGE + idx + 1;
+                      const pNameKey = (p.name || '').trim().toLowerCase();
+                      const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
+                      const phoneClean = (p.phone || '').trim();
+
+                      return (
+                        <tr
+                          key={p.id || idx}
+                          className={`mac-table-row ${isSelected ? 'selected' : ''}`}
+                          style={{ height: `${activeRowHeight}px`, cursor: 'pointer' }}
+                          onMouseEnter={() => macAudio.playHover()}
+                          onClick={() => {
+                            macAudio.playClick();
+                            setSelectedPartyId(p.id);
+                          }}
+                        >
+                          <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px', position: 'relative' }}>
+                            {globalIdx}
+                            <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize row height" />
+                          </td>
+                          <td style={{ fontWeight: 600, color: isSelected ? '#38bdf8' : '#f8fafc' }}>
+                            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                            {p.gstin && (
+                              <div style={{ fontSize: '9px', color: '#94a3b8', fontFamily: 'monospace' }}>GSTIN: {p.gstin}</div>
+                            )}
+                          </td>
+                          <td style={{ color: phoneClean ? '#38bdf8' : '#64748b' }}>
+                            {phoneClean ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Phone size={10} style={{ opacity: 0.7 }} />
+                                <span style={{ fontFamily: 'monospace', fontSize: '10.5px' }}>{phoneClean}</span>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: '10px', opacity: 0.4 }}>—</span>
+                            )}
+                          </td>
+                          <td style={{ color: '#e2e8f0', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.station || p.city || '—'}
+                          </td>
+                          <td style={{ color: '#cbd5e1', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.district || '—'}
+                          </td>
+                          <td style={{ color: '#94a3b8', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.state || '—'}
+                          </td>
+                          <td style={{ color: '#94a3b8', fontSize: '10.5px', fontFamily: 'monospace' }}>
+                            {p.pincode || '—'}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {stat.count > 0 ? (
+                              <span style={{ background: 'rgba(56,189,248,0.16)', color: '#38bdf8', padding: '1px 6px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 600 }}>
+                                {stat.count} bills
+                              </span>
+                            ) : (
+                              <span style={{ color: '#475569', fontSize: '9.5px' }}>0</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '11px', color: (p.balance || 0) >= 0 ? '#34d399' : '#f87171' }}>
+                            ₹{Math.abs(p.balance || 0).toLocaleString('en-IN')} {(p.balance || 0) >= 0 ? 'Dr' : 'Cr'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bottom Status strip */}
+            <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#64748b', padding: '2px 4px' }}>
+              <span>Showing {paginatedParties.length} of {filteredParties.length} filtered (Total 1,800+ from SQLite Database)</span>
+              <span>Click any party to inspect, create bills in F1, or edit contact info</span>
+            </div>
+          </div>
+
+          {/* Right Pane: Party Details Card & Actions */}
+          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', borderRadius: '8px', minHeight: 0, overflow: 'auto' }}>
+            {selectedParty ? (
+              <>
+                {/* Header Profile Banner */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontSize: '16px',
+                      boxShadow: '0 4px 12px rgba(2,132,199,0.3)',
+                      flexShrink: 0
+                    }}
+                  >
+                    {selectedParty.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc', wordBreak: 'break-word', lineHeight: 1.3 }}>
+                      {selectedParty.name}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '9.5px', background: 'rgba(255,255,255,0.08)', color: '#94a3b8', padding: '1px 5px', borderRadius: '3px' }}>
+                        ID: {selectedParty.id}
+                      </span>
+                      {selectedParty.gstin ? (
+                        <span style={{ fontSize: '9.5px', background: 'rgba(52,211,153,0.12)', color: '#34d399', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace' }}>
+                          GSTIN: {selectedParty.gstin}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '9.5px', color: '#64748b' }}>Unregistered GST</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Primary Action Button: Start Bill for this Party (F1) */}
+                <button
+                  type="button"
+                  className="mac-btn primary"
+                  style={{
+                    width: '100%',
+                    height: '34px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #059669 100%)',
+                    boxShadow: '0 4px 14px rgba(2,132,199,0.25)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    macAudio.playSuccess();
+                    if (onSelectPartyForBill) {
+                      onSelectPartyForBill(selectedParty.name);
+                    }
+                  }}
+                >
+                  <FileText size={15} /> Start New Bill for this Party (F1)
+                </button>
+
+                {/* Toast message if present */}
+                {partyToast && (
+                  <div style={{ background: 'rgba(56,189,248,0.2)', border: '1px solid #0284c7', color: '#e0f2fe', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Check size={13} style={{ color: '#38bdf8' }} /> {partyToast}
+                  </div>
+                )}
+
+                {/* Key Party Stats & Info Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  {/* Phone Box */}
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontSize: '9.5px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                      <Phone size={10} style={{ color: '#38bdf8' }} /> Contact Phone
+                    </div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: selectedParty.phone ? '#38bdf8' : '#64748b', fontFamily: 'monospace' }}>
+                      {selectedParty.phone || 'No phone recorded'}
+                    </div>
+                  </div>
+
+                  {/* Station / City Box */}
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontSize: '9.5px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                      <MapPin size={10} style={{ color: '#f472b6' }} /> Station / City
+                    </div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {selectedParty.station || selectedParty.city || '—'}
+                    </div>
+                  </div>
+
+                  {/* District & State */}
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontSize: '9.5px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                      <Building size={10} style={{ color: '#a78bfa' }} /> District / State
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {[selectedParty.district, selectedParty.state].filter(Boolean).join(', ') || '—'}
+                    </div>
+                  </div>
+
+                  {/* Invoices Count & Total */}
+                  {(() => {
+                    const stat = partyBillStats[(selectedParty.name || '').trim().toLowerCase()] || { count: 0, total: 0 };
+                    return (
+                      <div style={{ background: 'rgba(0,0,0,0.25)', padding: '7px 9px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ fontSize: '9.5px', color: '#94a3b8', marginBottom: '2px' }}>
+                          Invoices in Database
+                        </div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: stat.count > 0 ? '#34d399' : '#64748b' }}>
+                          {stat.count} bills (₹{Math.round(stat.total).toLocaleString('en-IN')})
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Edit / Add Party Form Toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: isEditingParty ? '#38bdf8' : '#f472b6', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {isEditingParty ? (partyForm.id ? <><Edit3 size={12} /> Edit Party Details</> : <><UserPlus size={12} /> Add New Party</>) : 'Party Actions & Details'}
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      type="button"
+                      className="mac-btn secondary"
+                      style={{ height: '24px', padding: '0 8px', fontSize: '10px' }}
+                      onClick={() => {
+                        macAudio.playClick();
+                        handleStartEditParty(selectedParty);
+                      }}
+                    >
+                      <Edit3 size={11} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="mac-btn secondary"
+                      style={{ height: '24px', padding: '0 8px', fontSize: '10px', color: '#f87171' }}
+                      onClick={() => {
+                        handleDeletePartyAction(selectedParty.id, selectedParty.name);
+                      }}
+                    >
+                      <Trash2 size={11} /> Delete
+                    </button>
+                  </div>
+                </div>
+
+                {/* Form fields (shown when isEditingParty is true, or always accessible) */}
+                {isEditingParty ? (
+                  <form onSubmit={handleSavePartyForm} style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px' }}>
+                    <div>
+                      <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Party Legal Name *</label>
+                      <input
+                        type="text"
+                        value={partyForm.name}
+                        onChange={(e) => setPartyForm(f => ({ ...f, name: e.target.value }))}
+                        placeholder="e.g. Apex Industrial Corporation"
+                        className="mac-input"
+                        style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '6px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Phone / Mobile Number *</label>
+                        <input
+                          type="text"
+                          value={partyForm.phone}
+                          onChange={(e) => setPartyForm(f => ({ ...f, phone: e.target.value }))}
+                          placeholder="+91 9876543210"
+                          className="mac-input"
+                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Station / City</label>
+                        <input
+                          type="text"
+                          value={partyForm.station}
+                          onChange={(e) => setPartyForm(f => ({ ...f, station: e.target.value }))}
+                          placeholder="e.g. Surat, Jaipur"
+                          className="mac-input"
+                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>District</label>
+                        <input
+                          type="text"
+                          value={partyForm.district}
+                          onChange={(e) => setPartyForm(f => ({ ...f, district: e.target.value }))}
+                          placeholder="District"
+                          className="mac-input"
+                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>State</label>
+                        <input
+                          type="text"
+                          value={partyForm.state}
+                          onChange={(e) => setPartyForm(f => ({ ...f, state: e.target.value }))}
+                          placeholder="State"
+                          className="mac-input"
+                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Pincode</label>
+                        <input
+                          type="text"
+                          value={partyForm.pincode}
+                          onChange={(e) => setPartyForm(f => ({ ...f, pincode: e.target.value }))}
+                          placeholder="395002"
+                          className="mac-input"
+                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>GSTIN</label>
+                        <input
+                          type="text"
+                          value={partyForm.gstin}
+                          onChange={(e) => setPartyForm(f => ({ ...f, gstin: e.target.value }))}
+                          placeholder="24ABCDE1234F1Z5"
+                          className="mac-input"
+                          style={{ width: '100%', height: '26px', fontSize: '11px' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                      <button
+                        type="submit"
+                        className="mac-btn primary"
+                        style={{ flex: 1, height: '28px', fontSize: '11px' }}
+                      >
+                        <Check size={12} /> Save Party Record
+                      </button>
+                      <button
+                        type="button"
+                        className="mac-btn secondary"
+                        style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}
+                        onClick={() => setIsEditingParty(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Full Address:</span>
+                      <span style={{ color: '#e2e8f0', textAlign: 'right' }}>
+                        {[selectedParty.station, selectedParty.district, selectedParty.state, selectedParty.pincode].filter(Boolean).join(', ') || 'No address specified'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Current Balance:</span>
+                      <span style={{ fontWeight: 600, color: (selectedParty.balance || 0) >= 0 ? '#34d399' : '#f87171' }}>
+                        ₹{Math.abs(selectedParty.balance || 0).toLocaleString('en-IN')} {(selectedParty.balance || 0) >= 0 ? 'Dr (Receivable)' : 'Cr (Payable)'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                Select a party from the table to view details.
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1548,125 +2315,25 @@ export const OtherTabsView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB F10: SYSTEM SETTINGS & WALLPAPER */}
+      {/* TAB F10: SYSTEM SETTINGS & WALLPAPER (BILLAPP MAIN.PY TAB-WISE SETTINGS)  */}
       {/* ========================================================================= */}
       {activeTab === 'F10' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', minHeight: 0 }}>
-          {/* Wallpapers & Colors */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', borderRadius: '8px', minHeight: 0, overflowY: 'auto' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc' }}>Desktop Wallpapers</span>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              {WALLPAPERS.map((wp) => (
-                <div
-                  key={wp.name}
-                  onClick={() => {
-                    macAudio.playClick();
-                    onChangeBgType('image');
-                    onSelectBgImage(wp.url);
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                  style={{
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    border: bgType === 'image' && bgImage === wp.url ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: bgType === 'image' && bgImage === wp.url ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <img src={wp.url} alt={wp.name} style={{ width: '100%', height: '70px', objectFit: 'cover', display: 'block' }} />
-                  <div style={{ padding: '4px 6px', fontSize: '10px', fontWeight: 600, color: '#e2e8f0', background: 'rgba(0,0,0,0.6)' }}>
-                    {wp.name}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginTop: '6px' }}>Solid Colors</span>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              {COLOR_THEMES.map((theme) => (
-                <button
-                  key={theme.name}
-                  type="button"
-                  onClick={() => {
-                    macAudio.playClick();
-                    onChangeBgType('color');
-                    onChangeBgColor(theme.val);
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                  style={{
-                    background: theme.val,
-                    height: '34px',
-                    borderRadius: '6px',
-                    border: bgType === 'color' && bgColor === theme.val ? '2px solid #a78bfa' : '1px solid rgba(255,255,255,0.15)',
-                    color: '#ffffff',
-                    fontSize: '10.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {theme.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Liquid Glass Sliders & Theme Controls */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '12px', borderRadius: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8' }}>Glass Aero Tuning</span>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '4px' }}>
-                  <span>Glass Blur:</span>
-                  <strong style={{ color: '#38bdf8' }}>{blurAmount}px</strong>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={40}
-                  value={blurAmount}
-                  onChange={(e) => onChangeBlur(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#38bdf8' }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '4px' }}>
-                  <span>Darkness Dim:</span>
-                  <strong style={{ color: '#34d399' }}>{Math.round(overlayOpacity * 100)}%</strong>
-                </div>
-                <input
-                  type="range"
-                  min={0.1}
-                  max={0.9}
-                  step={0.05}
-                  value={overlayOpacity}
-                  onChange={(e) => onChangeOpacity(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#34d399' }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '4px' }}>
-                  <span>Glass Opacity:</span>
-                  <strong style={{ color: '#fbbf24' }}>{Math.round(glassOpacity * 100)}%</strong>
-                </div>
-                <input
-                  type="range"
-                  min={0.2}
-                  max={0.95}
-                  step={0.05}
-                  value={glassOpacity}
-                  onChange={(e) => onChangeGlassOpacity(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#fbbf24' }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <SettingsTabView
+          bgType={bgType}
+          onChangeBgType={onChangeBgType}
+          bgImage={bgImage}
+          onSelectBgImage={onSelectBgImage}
+          bgVideo={bgVideo || ''}
+          onSelectBgVideo={onSelectBgVideo || (() => {})}
+          bgColor={bgColor}
+          onChangeBgColor={onChangeBgColor}
+          blurAmount={blurAmount}
+          onChangeBlur={onChangeBlur}
+          overlayOpacity={overlayOpacity}
+          onChangeOpacity={onChangeOpacity}
+          glassOpacity={glassOpacity}
+          onChangeGlassOpacity={onChangeGlassOpacity}
+        />
       )}
     </div>
   );

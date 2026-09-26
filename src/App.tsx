@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { SQLITE_SHORTCUTS } from './data/sqliteData';
+import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
+import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
 import type { BillHeader, RawItem, FinishedItem, EnterDirection } from './types';
 import { AppleHeader } from './components/AppleHeader';
 import { LeftActionRail } from './components/LeftActionRail';
@@ -14,11 +15,15 @@ import { JsonModal } from './components/JsonModal';
 import { OtherTabsView } from './components/OtherTabsView';
 import { BottomModeBar } from './components/BottomModeBar';
 import type { AppMode, SavedSlipData } from './components/BottomModeBar';
-import { CheckCircle2, Info, AlertTriangle } from 'lucide-react';
+import { NumpadNavigator } from './components/common/NumpadNavigator';
+import { CheckCircle2, Info, AlertTriangle, Save, Trash2, X } from 'lucide-react';
 import { DatabaseProvider } from './context/DatabaseContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { localDb } from './services/db/localDb';
 import type { BillRecord } from './services/db/schema';
+import { loadMediaFromDB } from './services/mediaStorage';
+import { LoginPanel } from './components/LoginPanel';
+import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
 
 const playTapSound = () => {
   try {
@@ -36,31 +41,46 @@ const playTapSound = () => {
   } catch {}
 };
 
-const INITIAL_RAW_ITEMS: RawItem[] = [
-  { id: '1', name: 'Aluminium Ingot 6063', qty: 120, uCap: 95, lCap: 80 },
-  { id: '2', name: 'Silicon Carbide Grain', qty: 45, uCap: 30, lCap: 25 },
-  { id: '3', name: 'Hardener Rod H-88', qty: 250, uCap: 180, lCap: 160 },
-  { id: '4', name: 'Graphite Die Core 40mm', qty: 80, uCap: 65, lCap: 60 },
-  { id: '5', name: 'Flux Powder Grade-A', qty: 60, uCap: 50, lCap: 44 },
-  { id: '6', name: 'Degasser Tablet Pack', qty: 100, uCap: 70, lCap: 60 }
-];
+const LATEST_SQLITE_BILL = (SQLITE_BILLS && SQLITE_BILLS.length > 0) ? SQLITE_BILLS[0] : null;
 
-const INITIAL_FINISHED_ITEMS: FinishedItem[] = [
-  { id: '1', mould: 'Mould 14x20 Standard Housing', qty: 15, price: 650, total: 9750 },
-  { id: '2', mould: 'Mould 18x24 Reinforced Casing', qty: 12, price: 920, total: 11040 },
-  { id: '3', mould: 'Die Core Cap 50mm Precision', qty: 8, price: 1250, total: 10000 },
-  { id: '4', mould: 'Heat Sink Fin Mount Extrusion', qty: 6, price: 750, total: 4500 },
-  { id: '5', mould: 'Flange Coupling 120mm Alloy', qty: 2, price: 1505, total: 3010 }
-];
-
-const INITIAL_HEADER: BillHeader = {
+const INITIAL_HEADER: BillHeader = LATEST_SQLITE_BILL ? {
+  docType: LATEST_SQLITE_BILL.docType || 'SALE BILL',
+  partyName: LATEST_SQLITE_BILL.party || 'GOURAV - Kapurthala',
+  typeSelection: LATEST_SQLITE_BILL.typeSelection || 'WHOLESALE',
+  vehicleNo: LATEST_SQLITE_BILL.vehicle || '',
+  date: LATEST_SQLITE_BILL.date || '2026-07-23',
+  tokenNo: LATEST_SQLITE_BILL.token || '528'
+} : {
   docType: 'SALE BILL',
-  partyName: 'Apex Industrial Moldings Pvt Ltd',
+  partyName: 'GOURAV - Kapurthala',
   typeSelection: 'WHOLESALE',
-  vehicleNo: 'UP-16-AX-9921',
-  date: '2026-09-18',
-  tokenNo: '626'
+  vehicleNo: '',
+  date: '2026-07-23',
+  tokenNo: '528'
 };
+
+const INITIAL_RAW_ITEMS: RawItem[] = (LATEST_SQLITE_BILL && LATEST_SQLITE_BILL.rawItems && LATEST_SQLITE_BILL.rawItems.length > 0)
+  ? LATEST_SQLITE_BILL.rawItems.map((r: any) => ({
+      id: String(r.id),
+      name: r.name,
+      qty: Number(r.qty) || 0, // 10 FT
+      uCap: Number(r.uCap) || 0,
+      lCap: Number(r.lCap) || 0
+    }))
+  : [
+      { id: '13217', name: 'B.F.P 185', qty: 10, uCap: 2, lCap: 0 },
+      { id: '13218', name: 'S.L 716', qty: 34, uCap: 13, lCap: 4 }
+    ];
+
+const INITIAL_FINISHED_ITEMS: FinishedItem[] = (LATEST_SQLITE_BILL && LATEST_SQLITE_BILL.finishedItems && LATEST_SQLITE_BILL.finishedItems.length > 0)
+  ? LATEST_SQLITE_BILL.finishedItems.map((f: any) => ({
+      id: String(f.id),
+      mould: f.mould,
+      qty: Number(f.qty) || 0,
+      price: Number(f.price) || 0,
+      total: Number(f.total) || 0
+    }))
+  : [];
 
 function loadStored<T>(key: string, defaultValue: T): T {
   try {
@@ -71,50 +91,169 @@ function loadStored<T>(key: string, defaultValue: T): T {
   }
 }
 
+// Dirty-state Fingerprinting Helper for accurate change detection
+const getBillFingerprint = (h: BillHeader, raws: RawItem[], moulds: FinishedItem[], dynCols: any[], hasPartyCodeCol?: boolean) => {
+  return JSON.stringify({
+    h: {
+      docType: h.docType,
+      partyName: (h.partyName || '').trim(),
+      typeSelection: h.typeSelection,
+      vehicleNo: (h.vehicleNo || '').trim(),
+      date: h.date,
+      tokenNo: String(h.tokenNo || '').trim()
+    },
+    hasPartyCodeCol: Boolean(hasPartyCodeCol),
+    raws: (raws || []).map(r => ({
+      name: (r.name || '').trim(),
+      partyCode: (r.partyCode || '').trim(),
+      qty: Number(r.qty) || 0,
+      uCap: Number(r.uCap) || 0,
+      lCap: Number(r.lCap) || 0,
+      ...Object.fromEntries(
+        Object.entries(r).filter(([k, v]) => (k.startsWith('qty_') || k.startsWith('size_')) && Number(v) > 0)
+      )
+    })).filter(r => r.name !== '' || r.partyCode !== '' || r.qty > 0 || r.uCap > 0 || r.lCap > 0 || Object.keys(r).some(k => (k.startsWith('qty_') || k.startsWith('size_')) && Number((r as any)[k]) > 0)),
+    moulds: (moulds || []).map(m => ({
+      mould: (m.mould || '').trim(),
+      qty: Number(m.qty) || 0,
+      price: Number(m.price) || 0,
+      total: Number(m.total) || 0
+    })).filter(m => m.mould !== '' || m.qty > 0 || m.price > 0),
+    dynCols: (dynCols || []).map(d => ({ field: d.field, label: d.label }))
+  });
+};
+
+const isBillEmpty = (h: BillHeader, raws: RawItem[], moulds: FinishedItem[]) => {
+  const hasParty = (h.partyName || '').trim().length > 0;
+  const hasRaws = (raws || []).some(r => (r.name || '').trim().length > 0 || (Number(r.qty) || 0) > 0);
+  const hasMoulds = (moulds || []).some(m => (m.mould || '').trim().length > 0 || (Number(m.qty) || 0) > 0);
+  return !hasParty && !hasRaws && !hasMoulds;
+};
+
 function AppContent() {
   const [isGoodsModalOpen, setIsGoodsModalOpen] = useState(false);
 
-  // 1. Persisted Header
-  const [header, setHeader] = useState<BillHeader>(() => loadStored('modern_app_header', INITIAL_HEADER));
+  // 1. Persisted Header (fallback to real SQLite bill if empty or dummy)
+  const [header, setHeader] = useState<BillHeader>(() => {
+    const saved = loadStored('modern_app_header', INITIAL_HEADER);
+    const isValid = saved && saved.tokenNo && saved.partyName && saved.partyName !== 'Apex Industrial Moldings Pvt Ltd';
+    return isValid ? saved : INITIAL_HEADER;
+  });
   useEffect(() => {
     localStorage.setItem('modern_app_header', JSON.stringify(header));
   }, [header]);
 
-  // 2. Persisted Items
-  const [rawItems, setRawItems] = useState<RawItem[]>(() => loadStored('modern_app_raw_items', INITIAL_RAW_ITEMS));
+  // 2. Persisted Items (fallback to real SQLite bill if empty or all blank)
+  const [rawItems, setRawItems] = useState<RawItem[]>(() => {
+    const saved = loadStored('modern_app_raw_items', INITIAL_RAW_ITEMS);
+    const hasRealItems = Array.isArray(saved) && saved.length > 0 && saved.some(it => it.name && it.name.trim() !== '');
+    return hasRealItems ? saved : INITIAL_RAW_ITEMS;
+  });
   useEffect(() => {
     localStorage.setItem('modern_app_raw_items', JSON.stringify(rawItems));
   }, [rawItems]);
 
-  const [finishedItems, setFinishedItems] = useState<FinishedItem[]>(() => loadStored('modern_app_finished_items', INITIAL_FINISHED_ITEMS));
+  const [finishedItems, setFinishedItems] = useState<FinishedItem[]>(() => {
+    const saved = loadStored('modern_app_finished_items', INITIAL_FINISHED_ITEMS);
+    return (Array.isArray(saved) && saved.length > 0) ? saved : INITIAL_FINISHED_ITEMS;
+  });
   useEffect(() => {
     localStorage.setItem('modern_app_finished_items', JSON.stringify(finishedItems));
   }, [finishedItems]);
 
+  const [dynamicCols, setDynamicCols] = useState<{ field: string; label: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem('modern_left_dyncols');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem('modern_left_dyncols', JSON.stringify(dynamicCols));
+  }, [dynamicCols]);
+
+  const [hasPartyCodeCol, setHasPartyCodeCol] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('modern_has_party_code_col') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem('modern_has_party_code_col', String(hasPartyCodeCol));
+  }, [hasPartyCodeCol]);
+
+  // Dirty tracking snapshot and modal state
+  const lastSavedSnapshotRef = useRef<string>(getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol));
+  const [confirmClearDialog, setConfirmClearDialog] = useState<{
+    isOpen: boolean;
+    tokenNo: string;
+  } | null>(null);
+  const [dialogFocus, setDialogFocus] = useState<'save' | 'discard' | 'cancel'>('save');
+
   // Database Save & Navigation Handlers
   const handleSaveCurrentBill = useCallback(async () => {
-    const total = finishedItems.reduce((acc, f) => acc + (Number(f.total) || 0), 0);
+    // Filter out completely blank/dummy raw rows (keep only rows with actual name, qty, partyCode, dynamic feet qty, or caps)
+    const validRawItems = rawItems
+      .filter(r => {
+        const hasName = Boolean(r.name && r.name.trim() !== '');
+        const hasQty = (Number(r.qty) || 0) > 0;
+        const hasPartyCode = Boolean(r.partyCode && r.partyCode.trim() !== '');
+        const hasDyn = dynamicCols.some(dc => (Number((r as any)[dc.field]) || 0) > 0);
+        const hasCaps = (Number(r.uCap) || 0) > 0 || (Number(r.lCap) || 0) > 0;
+        return hasName || hasQty || hasPartyCode || hasDyn || hasCaps;
+      })
+      .map(r => ({ ...r }));
+
+    // Filter out completely blank/dummy finished rows (keep only rows with actual mould, qty, price, or total)
+    const validFinishedItems = finishedItems
+      .filter(f => {
+        const hasMould = Boolean(f.mould && f.mould.trim() !== '' && f.mould !== 'Mould Name' && f.mould !== '-');
+        const hasQty = (Number(f.qty) || 0) > 0;
+        const hasTotal = (Number(f.total) || 0) > 0;
+        const hasPrice = (Number(f.price) || 0) > 0;
+        return hasMould && (hasQty || hasTotal || hasPrice);
+      })
+      .map(f => ({ ...f }));
+
+    const total = validFinishedItems.reduce((acc, f) => acc + (Number(f.total) || 0), 0);
+    const tokenStr = String(header.tokenNo || '1');
     const billToSave: BillRecord = {
-      id: `B-${header.tokenNo || Date.now()}`,
-      token: String(header.tokenNo || '0'),
+      id: `B-${tokenStr}`,
+      token: tokenStr,
       date: header.date || new Date().toISOString().split('T')[0],
-      party: header.partyName || 'Apex Industrial Moldings Pvt Ltd',
+      party: (header?.partyName || '').trim() || 'Cash Sale',
       docType: header.docType || 'SALE BILL',
       vehicle: header.vehicleNo || '',
       typeSelection: header.typeSelection || 'WHOLESALE',
       total,
       status: 'PAID',
-      rawItems: rawItems.map(r => ({ ...r })),
-      finishedItems: finishedItems.map(f => ({ ...f })),
+      rawItems: validRawItems,
+      finishedItems: validFinishedItems,
+      dynamicCols: dynamicCols.map(c => ({ ...c })),
+      hasPartyCodeCol: Boolean(hasPartyCodeCol),
       createdAt: Date.now(),
       updatedAt: Date.now(),
       synced: false,
       version: 1
     };
+
     await localDb.saveBill(billToSave);
-    showToast(`Invoice #${billToSave.token} saved to local DB!`, 'success');
+    lastSavedSnapshotRef.current = getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol);
+
+    // Sync to localStorage
+    try {
+      localStorage.setItem('modern_app_header', JSON.stringify(header));
+      localStorage.setItem('modern_app_raw_items', JSON.stringify(rawItems));
+      localStorage.setItem('modern_app_finished_items', JSON.stringify(finishedItems));
+      localStorage.setItem('modern_left_dyncols', JSON.stringify(dynamicCols));
+      localStorage.setItem('modern_has_party_code_col', String(hasPartyCodeCol));
+    } catch {}
+
+    showToast(`Bill #${billToSave.token} (${billToSave.party}) Saved Successfully!`, 'success');
     playTapSound();
-  }, [header, rawItems, finishedItems]);
+  }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol]);
 
   const handlePrevBill = useCallback(() => {
     const allBills = localDb.getBills();
@@ -133,6 +272,23 @@ function AppContent() {
       });
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
+      setDynamicCols(target.dynamicCols || []);
+      const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
+      setHasPartyCodeCol(partyCodeCol);
+      lastSavedSnapshotRef.current = getBillFingerprint(
+        {
+          docType: target.docType,
+          partyName: target.party,
+          typeSelection: target.typeSelection,
+          vehicleNo: target.vehicle,
+          date: target.date,
+          tokenNo: target.token
+        },
+        target.rawItems || [],
+        target.finishedItems || [],
+        target.dynamicCols || [],
+        partyCodeCol
+      );
       showToast(`Loaded Bill #${target.token}`, 'info');
       playTapSound();
     }
@@ -155,10 +311,45 @@ function AppContent() {
       });
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
+      setDynamicCols(target.dynamicCols || []);
+      const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
+      setHasPartyCodeCol(partyCodeCol);
+      lastSavedSnapshotRef.current = getBillFingerprint(
+        {
+          docType: target.docType,
+          partyName: target.party,
+          typeSelection: target.typeSelection,
+          vehicleNo: target.vehicle,
+          date: target.date,
+          tokenNo: target.token
+        },
+        target.rawItems || [],
+        target.finishedItems || [],
+        target.dynamicCols || [],
+        partyCodeCol
+      );
       showToast(`Loaded Bill #${target.token}`, 'info');
       playTapSound();
     }
   }, [header]);
+
+  const prevBillRef = useRef(handlePrevBill);
+  prevBillRef.current = handlePrevBill;
+
+  const nextBillRef = useRef(handleNextBill);
+  nextBillRef.current = handleNextBill;
+
+  const saveBillRef = useRef(handleSaveCurrentBill);
+  saveBillRef.current = handleSaveCurrentBill;
+
+  const calcSummaryRef = useRef<(() => void) | null>(null);
+  const loadOldPriceRef = useRef<(() => void) | null>(null);
+
+  const escapeClearRef = useRef<() => void>(() => {});
+  const confirmSaveAndClearRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const confirmDiscardAndClearRef = useRef<() => void>(() => {});
+  const confirmClearDialogRef = useRef<{ isOpen: boolean; tokenNo: string } | null>(null);
+  const dialogFocusRef = useRef<'save' | 'discard' | 'cancel'>('save');
 
   // Global Browser Interceptor: Disable Chrome shortcuts and Chrome native contextmenu
   useEffect(() => {
@@ -169,77 +360,84 @@ function AppContent() {
 
     // 2. Intercept and block Chrome default keyboard shortcuts
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // 0. Confirm Clear Dialog Modal Controls (Y: Save & New, N: Discard & New, Esc: Cancel, Arrows/Tab: navigate, Enter: confirm)
+      if (confirmClearDialogRef.current?.isOpen) {
+        if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          confirmSaveAndClearRef.current();
+          return;
+        }
+        if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          confirmDiscardAndClearRef.current();
+          return;
+        }
+        if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+          e.preventDefault();
+          setConfirmClearDialog(null);
+          return;
+        }
+        if (e.key === 'ArrowRight' || e.key === 'Tab') {
+          e.preventDefault();
+          setDialogFocus(prev => prev === 'save' ? 'discard' : prev === 'discard' ? 'cancel' : 'save');
+          return;
+        }
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setDialogFocus(prev => prev === 'save' ? 'cancel' : prev === 'cancel' ? 'discard' : 'save');
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (dialogFocusRef.current === 'save') confirmSaveAndClearRef.current();
+          else if (dialogFocusRef.current === 'discard') confirmDiscardAndClearRef.current();
+          else setConfirmClearDialog(null);
+          return;
+        }
+        return;
+      }
+
+      // Escape key: SKIP current loaded bill or clear panel to new blank bill
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        escapeClearRef.current();
+        return;
+      }
+
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
-      // Ctrl+S: Instant Local DB Save
-      if (isCtrlOrCmd && (e.key === 's' || e.key === 'S')) {
+      // Ctrl + Shift + ArrowLeft: Previous Bill
+      if (isCtrlOrCmd && e.shiftKey && e.key === 'ArrowLeft') {
         e.preventDefault();
-        handleSaveCurrentBill();
+        prevBillRef.current();
         return;
       }
 
-            // Ctrl+G: Instant Calculate Left Panel into Right Panel (Mould Table)
+      // Ctrl + Shift + ArrowRight: Next Bill
+      if (isCtrlOrCmd && e.shiftKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextBillRef.current();
+        return;
+      }
+
+      // Ctrl+S: Instant Local DB Save
+      if (isCtrlOrCmd && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        saveBillRef.current();
+        return;
+      }
+
+      // Ctrl+G: Instant Calculate Left Panel into Right Panel (Mould Table)
       if (isCtrlOrCmd && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
         e.preventDefault();
-        calculateRightGridFromLeft();
+        calcSummaryRef.current?.();
         return;
       }
 
-      // Ctrl+Shift+G: Open Multi-Party Goods Distribution & GST Calculator
-      if (isCtrlOrCmd && e.shiftKey && (e.key === 'g' || e.key === 'G')) {
+      // Alt+P or Ctrl+Shift+L: Instant Load Old Price from Party History
+      if ((e.altKey && (e.key === 'p' || e.key === 'P')) || (isCtrlOrCmd && e.shiftKey && (e.key === 'l' || e.key === 'L'))) {
         e.preventDefault();
-        setIsGoodsModalOpen(true);
-        showToast('Opened Goods Distribution (Ctrl+Shift+G)', 'info');
-        return;
-      }
-
-      // Alt+A: Toggle Auto-Convert
-      if (e.altKey && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
-        setAutoConvert(prev => {
-          const next = !prev;
-          if (next) { setAutoItem(false); setSimpleMode(false); }
-          showToast(`Auto-Convert: ${next ? 'ON' : 'OFF'} (Alt+A)`, next ? 'success' : 'info');
-          return next;
-        });
-        return;
-      }
-
-      // Alt+Z: Toggle Auto-Item
-      if (e.altKey && (e.key === 'z' || e.key === 'Z')) {
-        e.preventDefault();
-        setAutoItem(prev => {
-          const next = !prev;
-          if (next) { setAutoConvert(false); setSimpleMode(false); }
-          showToast(`Auto-Item: ${next ? 'ON' : 'OFF'} (Alt+Z)`, next ? 'success' : 'info');
-          return next;
-        });
-        return;
-      }
-
-      // Alt+X: Toggle Simple Mode
-      if (e.altKey && (e.key === 'x' || e.key === 'X')) {
-        e.preventDefault();
-        setSimpleMode(prev => {
-          const next = !prev;
-          if (next) { setAutoConvert(false); setAutoItem(false); }
-          showToast(`Simple Mode: ${next ? 'ON' : 'OFF'} (Alt+X)`, next ? 'success' : 'info');
-          return next;
-        });
-        return;
-      }
-
-      // Chrome Print (Ctrl+P) -> Prevent Chrome print, open Party Code
-      if (isCtrlOrCmd && (e.key === 'p' || e.key === 'P')) {
-        e.preventDefault();
-        showToast('Party Code (Ctrl+P)', 'info');
-        return;
-      }
-
-      // Chrome Save (Ctrl+S) -> Prevent Chrome HTML save, trigger App Save
-      if (isCtrlOrCmd && (e.key === 's' || e.key === 'S')) {
-        e.preventDefault();
-        showToast('Bill Saved Successfully (Ctrl+S)', 'success');
+        loadOldPriceRef.current?.();
         return;
       }
 
@@ -312,8 +510,24 @@ function AppContent() {
       date: slip.date,
       tokenNo: slip.tokenNo
     });
-    setRawItems(slip.rawItems);
-    setFinishedItems(slip.finishedItems);
+    setRawItems(slip.rawItems || []);
+    setFinishedItems(slip.finishedItems || []);
+    setDynamicCols(slip.dynamicCols || []);
+    lastSavedSnapshotRef.current = getBillFingerprint(
+      {
+        docType: slip.docType,
+        partyName: slip.partyName,
+        typeSelection: slip.typeSelection,
+        vehicleNo: slip.vehicleNo,
+        date: slip.date,
+        tokenNo: slip.tokenNo
+      },
+      slip.rawItems || [],
+      slip.finishedItems || [],
+      slip.dynamicCols || []
+    );
+    setActiveTab('F1');
+    playTapSound();
   };
 
   // 3. Persisted Enter Direction
@@ -344,8 +558,8 @@ function AppContent() {
   const [isDraggingSplitter, setIsDraggingSplitter] = useState<boolean>(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
-  // 5. Persisted Background & Styling Settings
-  const [bgType, setBgType] = useState<'image' | 'color'>(() => loadStored('modern_app_bg_type', 'image'));
+  // 5. Persisted Background & Styling Settings (Supports Image, Color, and Looping Motion Video)
+  const [bgType, setBgType] = useState<'image' | 'color' | 'video'>(() => loadStored('modern_app_bg_type', 'image'));
   useEffect(() => {
     localStorage.setItem('modern_app_bg_type', JSON.stringify(bgType));
   }, [bgType]);
@@ -354,6 +568,32 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('modern_app_bg_image', JSON.stringify(bgImage));
   }, [bgImage]);
+
+  const [bgVideo, setBgVideo] = useState<string>(() => loadStored('modern_app_bg_video', '/custom_video.mp4'));
+  useEffect(() => {
+    try {
+      if (bgVideo && !bgVideo.startsWith('blob:') && !bgVideo.startsWith('data:')) {
+        localStorage.setItem('modern_app_bg_video', JSON.stringify(bgVideo));
+      }
+    } catch (e) {
+      console.warn('LocalStorage save skipped for large video URL:', e);
+    }
+  }, [bgVideo]);
+
+  // Load HD media from IndexedDB if previously uploaded by user
+  useEffect(() => {
+    loadMediaFromDB().then((media) => {
+      if (media && media.url) {
+        if (media.type === 'video') {
+          setBgVideo(media.url);
+          setBgType('video');
+        } else {
+          setBgImage(media.url);
+          setBgType('image');
+        }
+      }
+    }).catch((e) => console.warn('IndexedDB media load error:', e));
+  }, []);
 
   const [bgColor, setBgColor] = useState<string>(() => loadStored('modern_app_bg_color', 'linear-gradient(135deg, #070b14 0%, #0d1a30 50%, #080f1e 100%)'));
   useEffect(() => {
@@ -401,6 +641,136 @@ function AppContent() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 2500);
   };
+
+  // Keyboard-Friendly Skip / Clear Bill Handlers
+  const handleClearToNewBill = useCallback(() => {
+    const allBills = localDb.getBills();
+    let maxTokenNum = 0;
+    allBills.forEach(b => {
+      const n = parseInt(b.token, 10);
+      if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
+    });
+    const currentTokenNum = parseInt(String(header.tokenNo), 10);
+    if (!isNaN(currentTokenNum) && currentTokenNum > maxTokenNum) {
+      maxTokenNum = currentTokenNum;
+    }
+    const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const blankHeader: BillHeader = {
+      docType: 'SALE BILL',
+      partyName: '',
+      typeSelection: 'WHOLESALE',
+      vehicleNo: '',
+      date: todayStr,
+      tokenNo: nextToken
+    };
+
+    const blankRaws: RawItem[] = Array.from({ length: 10 }, (_, i) => ({
+      id: String(Date.now() + i),
+      name: '',
+      qty: 0,
+      uCap: 0,
+      lCap: 0
+    }));
+
+    setHeader(blankHeader);
+    setRawItems(blankRaws);
+    setFinishedItems([]);
+    setDynamicCols([]);
+
+    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], []);
+    setConfirmClearDialog(null);
+
+    showToast(`New Blank Bill #${nextToken} Ready (Panel Cleared)`, 'success');
+    playTapSound();
+
+    setActiveTab('F1');
+
+    // Automatically focus party input without requiring mouse
+    setTimeout(() => {
+      const partyInput = document.querySelector<HTMLInputElement>('[data-np-target="1-2"]');
+      if (partyInput) {
+        partyInput.focus();
+        partyInput.select();
+      }
+    }, 80);
+  }, [header.tokenNo]);
+
+  const handleConfirmSaveAndClear = useCallback(async () => {
+    await handleSaveCurrentBill();
+    handleClearToNewBill();
+  }, [handleSaveCurrentBill, handleClearToNewBill]);
+
+  const handleConfirmDiscardAndClear = useCallback(() => {
+    showToast(`Modifications on Bill #${header.tokenNo} discarded`, 'warning');
+    handleClearToNewBill();
+  }, [header.tokenNo, handleClearToNewBill]);
+
+  const handleTriggerEscapeClear = useCallback(() => {
+    // 1. If confirm dialog is already open, cancel it
+    if (confirmClearDialog?.isOpen) {
+      setConfirmClearDialog(null);
+      return;
+    }
+    // 2. If sub-modals are open, close them
+    if (isGoodsModalOpen) { setIsGoodsModalOpen(false); return; }
+    if (isSlipOpen) { setIsSlipOpen(false); return; }
+    if (isOcrOpen) { setIsOcrOpen(false); return; }
+    if (isNoteOpen) { setIsNoteOpen(false); return; }
+    if (isJsonOpen) { setIsJsonOpen(false); return; }
+
+    // 3. If in another tab, return to Bill Entry (F1)
+    if (activeTab !== 'F1' && activeTab !== 'HOME') {
+      setActiveTab('F1');
+      showToast('Returned to Bill Entry (F1)', 'info');
+      return;
+    }
+
+    // 4. Check if current bill is already empty
+    if (isBillEmpty(header, rawItems, finishedItems)) {
+      showToast('Bill is already empty / ready for typing', 'info');
+      const partyInput = document.querySelector<HTMLInputElement>('[data-np-target="1-2"]');
+      partyInput?.focus();
+      return;
+    }
+
+    // 5. Check if dirty / modified
+    const currentFingerprint = getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol);
+    const isDirty = currentFingerprint !== lastSavedSnapshotRef.current;
+
+    if (isDirty) {
+      setDialogFocus('save');
+      setConfirmClearDialog({
+        isOpen: true,
+        tokenNo: String(header.tokenNo || 'Current')
+      });
+      playTapSound();
+    } else {
+      // Clean or saved bill, clear directly to new blank bill
+      handleClearToNewBill();
+    }
+  }, [
+    confirmClearDialog,
+    isGoodsModalOpen,
+    isSlipOpen,
+    isOcrOpen,
+    isNoteOpen,
+    isJsonOpen,
+    activeTab,
+    header,
+    rawItems,
+    finishedItems,
+    dynamicCols,
+    hasPartyCodeCol,
+    handleClearToNewBill
+  ]);
+
+  escapeClearRef.current = handleTriggerEscapeClear;
+  confirmSaveAndClearRef.current = handleConfirmSaveAndClear;
+  confirmDiscardAndClearRef.current = handleConfirmDiscardAndClear;
+  confirmClearDialogRef.current = confirmClearDialog;
+  dialogFocusRef.current = dialogFocus;
 
   // Draggable Splitter mouse event handlers
   const handleMouseDownSplitter = () => {
@@ -485,16 +855,21 @@ function AppContent() {
     showToast(`Deleted ${indices.length} Row(s)`, 'warning');
   };
 
-  const handleClearRawCells = (cells: { rowIndex: number; colIndex: number }[]) => {
+  const handleClearRawCells = (cells: { rowIndex: number; colIndex: number; field?: string }[]) => {
     setRawItems(prev => {
       const next = [...prev];
-      cells.forEach(({ rowIndex, colIndex }) => {
+      cells.forEach(({ rowIndex, colIndex, field }) => {
         if (next[rowIndex]) {
-          const item = { ...next[rowIndex] };
-          if (colIndex === 0) item.name = '';
-          if (colIndex === 1) item.qty = 0;
-          if (colIndex === 2) item.uCap = 0;
-          if (colIndex === 3) item.lCap = 0;
+          const item = { ...next[rowIndex] } as any;
+          if (field) {
+            item[field] = (field === 'name' || field === 'partyCode') ? '' : 0;
+          } else {
+            if (colIndex === 0) item.name = '';
+            else if (hasPartyCodeCol && colIndex === 1) item.partyCode = '';
+            else if (colIndex === 1) item.qty = 0;
+            else if (colIndex === 2) item.uCap = 0;
+            else if (colIndex === 3) item.lCap = 0;
+          }
           next[rowIndex] = item;
         }
       });
@@ -540,7 +915,90 @@ function AppContent() {
 
   // Handlers for Finished Items
   const handleUpdateFinishedItem = (id: string, field: keyof FinishedItem, value: any) => {
-    setFinishedItems(prev => prev.map(it => it.id === id ? { ...it, [field]: value } : it));
+    setFinishedItems(prev => {
+      const targetItem = prev.find(it => it.id === id);
+      if (!targetItem) return prev;
+
+      if (field === 'price') {
+        const newPrice = Number(value) || 0;
+        const targetParsed = parseProductAndSize(targetItem.mould);
+
+        // If target item has a product name and valid price, propagate proportionally to same products
+        if (targetParsed.baseProduct && newPrice > 0) {
+          const targetNorm = targetParsed.normalizedBase;
+          const targetSize = targetParsed.size > 0 ? targetParsed.size : 10;
+          let affectedOtherCount = 0;
+
+          const updated = prev.map(it => {
+            if (it.id === id) {
+              return { ...it, price: newPrice, total: (Number(it.qty) || 0) * newPrice };
+            }
+            if (it.mould) {
+              const otherParsed = parseProductAndSize(it.mould);
+              const otherPrice = Number(it.price) || 0;
+              // User Rule: Only auto-fill when price is NOT already set (otherPrice === 0)
+              if (otherParsed.normalizedBase === targetNorm && targetNorm.length > 0 && otherPrice === 0) {
+                const otherSize = otherParsed.size > 0 ? otherParsed.size : 10;
+                const propPrice = calculateProportionalPrice(newPrice, targetSize, otherSize);
+                affectedOtherCount++;
+                return { ...it, price: propPrice, total: (Number(it.qty) || 0) * propPrice };
+              }
+            }
+            return it;
+          });
+
+          if (affectedOtherCount > 0) {
+            showToast(`Auto-filled ${targetParsed.baseProduct} size rate(s) proportionally!`, 'info');
+          }
+          return updated;
+        }
+
+        return prev.map(it => it.id === id ? { ...it, price: newPrice, total: (Number(it.qty) || 0) * newPrice } : it);
+      }
+
+      if (field === 'qty') {
+        const newQty = Number(value) || 0;
+        return prev.map(it => it.id === id ? { ...it, qty: newQty, total: newQty * (Number(it.price) || 0) } : it);
+      }
+
+      if (field === 'total') {
+        const newTotal = Number(value) || 0;
+        return prev.map(it => it.id === id ? { ...it, total: newTotal } : it);
+      }
+
+      if (field === 'mould') {
+        const newMould = String(value || '');
+        const targetParsed = parseProductAndSize(newMould);
+        let derivedPrice = targetItem.price;
+
+        // Auto-derive price only if current price is 0
+        if (targetParsed.baseProduct && (!derivedPrice || derivedPrice === 0)) {
+          const targetNorm = targetParsed.normalizedBase;
+          const targetSize = targetParsed.size > 0 ? targetParsed.size : 10;
+
+          // Find if any other row already has a rate for this base product
+          const matchExisting = prev.find(it => {
+            if (it.id === id || !it.mould || !((Number(it.price) || 0) > 0)) return false;
+            return parseProductAndSize(it.mould).normalizedBase === targetNorm;
+          });
+
+          if (matchExisting) {
+            const matchParsed = parseProductAndSize(matchExisting.mould);
+            const matchSize = matchParsed.size > 0 ? matchParsed.size : 10;
+            derivedPrice = calculateProportionalPrice(Number(matchExisting.price), matchSize, targetSize);
+          }
+        }
+
+        return prev.map(it => it.id === id ? {
+          ...it,
+          mould: newMould,
+          price: derivedPrice,
+          total: (Number(it.qty) || 0) * derivedPrice
+        } : it);
+      }
+
+      return prev.map(it => it.id === id ? { ...it, [field]: value } : it);
+    });
   };
 
   const handleAddFinishedItem = () => {
@@ -593,8 +1051,9 @@ function AppContent() {
         { id: newId, name: '', qty: 0, uCap: 0, lCap: 0 }
       ]);
     }
+    const lastCol = (hasPartyCodeCol ? 3 : 2) + dynamicCols.length;
     setTimeout(() => {
-      const leftInput = document.getElementById(`left-cell-${row}-3`) as HTMLInputElement;
+      const leftInput = document.getElementById(`left-cell-${row}-${lastCol}`) as HTMLInputElement;
       if (leftInput) {
         leftInput.focus();
         leftInput.select();
@@ -619,57 +1078,76 @@ function AppContent() {
     showToast(`Cleared ${cells.length} Cell(s)`, 'info');
   };
 
-  // Intelligent Excel Paste for Finished Items
-  // Left Panel -> Right Panel Summary Calculation Engine (Ctrl+G)
-  const calculateRightGridFromLeft = useCallback(() => {
+  // Helper to group raw items into mould and cap totals (shared by Ctrl+G and Load Old Price)
+  const groupRawItemsForSummary = useCallback((rawList: RawItem[], dynCols: { field: string; label: string }[]) => {
     const itemSummary: { [mouldName: string]: number } = {};
     const groupSummary: { [groupName: string]: number } = {};
 
+        // Load Skip Items from localStorage or use Seed
+    let skipMainGroups = SQLITE_SKIP_MAIN_GROUPS;
+    let skipSubGroups = SQLITE_SKIP_SUB_GROUPS;
+    let skipItems = SQLITE_SKIP_ITEMS;
+    try {
+      const ms = localStorage.getItem('si_main_groups'); if (ms) skipMainGroups = JSON.parse(ms);
+      const ss = localStorage.getItem('si_sub_groups'); if (ss) skipSubGroups = JSON.parse(ss);
+      const is = localStorage.getItem('si_items'); if (is) skipItems = JSON.parse(is);
+    } catch {}
+
     const sortedShortcuts = [...SQLITE_SHORTCUTS].sort((a: any, b: any) => ((b.shortcut || '').length - (a.shortcut || '').length));
 
-    // Default rate lookup map from bill_groups / mould_prices
-    const defaultPriceMap: { [key: string]: number } = {
-      'cm': 120,
-      'c.m': 120,
-      'sl': 54,
-      's.l': 54,
-      'tg': 120,
-      't.g': 120,
-      'lu': 84,
-      'l.u': 84,
-      'la': 84,
-      'l.a': 84,
-      'b.f.p': 54,
-      'bfp': 54,
-      'b.f.p-(g)': 54,
-      'b.f.p-(b)': 54,
-      'b.f.p-(a)': 54,
-      'fluted jointer': 154,
-      'jointer': 84,
-      'f.p': 54,
-      'h.o': 54,
-      's.p': 54,
-      'u.v': 80,
-      'uv': 80,
-      'clip': 12,
-      'screw': 15,
-      'black-screw': 18,
-      'gatti': 25,
-      'elfy': 40
-    };
-
-    rawItems.forEach(it => {
+    rawList.forEach(it => {
       const name = (it.name || '').trim();
       if (!name) return;
 
-      const qty = Number(it.qty) || 0;
+      const qty10 = Number(it.qty) || 0;
       const uCap = Number(it.uCap) || 0;
       const lCap = Number(it.lCap) || 0;
+      const nameLower = name.toLowerCase();
+
+      // --- NEW SKIP ITEM LOGIC ---
+      // Check if item name starts with any skip item prefix
+      const matchedSkipItem = skipItems.find((si: any) => nameLower.startsWith((si.itemPrefix || '').toLowerCase()));
+      if (matchedSkipItem) {
+        const subGrp = skipSubGroups.find((sg: any) => sg.id === matchedSkipItem.subGroupId);
+        if (subGrp) {
+          const mainGrp = skipMainGroups.find((mg: any) => mg.id === subGrp.mainGroupId);
+          if (mainGrp) {
+            const sumCol = subGrp.sumColumn || 'QTY';
+            const baseName = mainGrp.name;
+
+            if (sumCol === 'QTY') {
+              if (qty10 > 0) {
+                const key10 = formatMouldWithSize(baseName, 10);
+                itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+              }
+              if (dynCols && dynCols.length > 0) {
+                dynCols.forEach(col => {
+                  const colQty = Number((it as any)[col.field]) || 0;
+                  if (colQty > 0) {
+                    const size = extractSizeFromColLabel(col.label || col.field);
+                    const keyCol = formatMouldWithSize(baseName, size);
+                    itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+                  }
+                });
+              }
+            } else if (sumCol === 'U CAP') {
+              if (uCap > 0) {
+                groupSummary[baseName] = (groupSummary[baseName] || 0) + uCap;
+              }
+            } else if (sumCol === 'L CAP') {
+              if (lCap > 0) {
+                groupSummary[baseName] = (groupSummary[baseName] || 0) + lCap;
+              }
+            }
+            return; // Skip normal conversion logic!
+          }
+        }
+      }
+      // --- END SKIP ITEM LOGIC ---
 
       let matchedConv = '';
       let uGroup = '';
       let lGroup = '';
-      const nameLower = name.toLowerCase();
 
       for (const sc of sortedShortcuts as any[]) {
         const conv = (sc.conversion || '').toLowerCase().trim();
@@ -687,9 +1165,24 @@ function AppContent() {
         }
       }
 
-      const mouldKey = matchedConv || name;
-      if (qty > 0) {
-        itemSummary[mouldKey] = (itemSummary[mouldKey] || 0) + qty;
+      const baseMould = matchedConv || name;
+
+      // 1. Base 10 FT column
+      if (qty10 > 0) {
+        const key10 = formatMouldWithSize(baseMould, 10);
+        itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+      }
+
+      // 2. Dynamic Size columns (12 FT, 9.5 FT, etc.)
+      if (dynCols && dynCols.length > 0) {
+        dynCols.forEach(col => {
+          const colQty = Number((it as any)[col.field]) || 0;
+          if (colQty > 0) {
+            const size = extractSizeFromColLabel(col.label || col.field);
+            const keyCol = formatMouldWithSize(baseMould, size);
+            itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+          }
+        });
       }
 
       if (uCap > 0) {
@@ -703,6 +1196,14 @@ function AppContent() {
       }
     });
 
+    return { itemSummary, groupSummary };
+  }, []);
+
+  // Left Panel -> Right Panel Summary Calculation Engine (Ctrl+G)
+  // Groups quantities accurately. Does NOT inject default rates automatically (rates stay 0 unless user typed/loaded)
+  const calculateRightGridFromLeft = useCallback(() => {
+    const { itemSummary, groupSummary } = groupRawItemsForSummary(rawItems, dynamicCols);
+
     const totalCalculated = Object.keys(itemSummary).length + Object.keys(groupSummary).length;
     if (totalCalculated === 0) {
       showToast('Left Table is empty! Enter items & quantities first.', 'warning');
@@ -712,11 +1213,49 @@ function AppContent() {
     const newMoulds: FinishedItem[] = [];
     let idCounter = 1;
 
-    // 1. Grouped Mould Items
-    Object.entries(itemSummary).forEach(([mouldName, sumQty]) => {
-      const pKey = mouldName.toLowerCase();
-      const existing = finishedItems.find(m => m.mould.toLowerCase() === pKey);
-      const price = (existing && existing.price > 0) ? existing.price : (defaultPriceMap[pKey] || 0);
+    // 1. Grouped Mould Items (Sorted by base mould name and descending by size)
+    const sortedItemEntries = Object.entries(itemSummary).sort(([nameA], [nameB]) => {
+      const baseA = nameA.replace(/\s*\([\d.]+(?:\s*ft)?\)/i, '').trim();
+      const baseB = nameB.replace(/\s*\([\d.]+(?:\s*ft)?\)/i, '').trim();
+      if (baseA !== baseB) return baseA.localeCompare(baseB);
+      const matchA = nameA.match(/([\d]+(?:\.[\d]+)?)/);
+      const matchB = nameB.match(/([\d]+(?:\.[\d]+)?)/);
+      const sA = matchA ? parseFloat(matchA[1]) : 0;
+      const sB = matchB ? parseFloat(matchB[1]) : 0;
+      return sB - sA;
+    });
+
+    sortedItemEntries.forEach(([mouldName, sumQty]) => {
+      const parsed = parseProductAndSize(mouldName);
+      const targetNorm = parsed.normalizedBase;
+      const targetSize = parsed.size > 0 ? parsed.size : 10;
+
+      // 1. Check if this exact mould already has an existing price entered by user
+      const exactExisting = finishedItems.find(m => {
+        if (!m?.mould || !((Number(m.price) || 0) > 0)) return false;
+        return m.mould.trim().toLowerCase() === mouldName.trim().toLowerCase();
+      });
+
+      let price = 0;
+      if (exactExisting && Number(exactExisting.price) > 0) {
+        price = Number(exactExisting.price);
+      } else {
+        // 2. Check if finishedItems has ANY other size of this product with price entered by user
+        const otherExisting = finishedItems.find(m => {
+          if (!m?.mould || !((Number(m.price) || 0) > 0)) return false;
+          return parseProductAndSize(m.mould).normalizedBase === targetNorm;
+        });
+
+        if (otherExisting) {
+          const existParsed = parseProductAndSize(otherExisting.mould);
+          const existSize = existParsed.size > 0 ? existParsed.size : 10;
+          price = calculateProportionalPrice(Number(otherExisting.price), existSize, targetSize);
+        } else {
+          // No arbitrary default rate! Keep rate = 0
+          price = 0;
+        }
+      }
+
       newMoulds.push({
         id: 'fin-calc-' + idCounter++,
         mould: mouldName,
@@ -729,8 +1268,8 @@ function AppContent() {
     // 2. Grouped Caps (Fluted Jointer / Jointer)
     Object.entries(groupSummary).forEach(([groupName, sumQty]) => {
       const pKey = groupName.toLowerCase();
-      const existing = finishedItems.find(m => m.mould.toLowerCase() === pKey);
-      const price = (existing && existing.price > 0) ? existing.price : (defaultPriceMap[pKey] || 0);
+      const existing = finishedItems.find(m => (m?.mould || '').toLowerCase() === pKey);
+      const price = (existing && Number(existing.price) > 0) ? Number(existing.price) : 0;
       newMoulds.push({
         id: 'fin-calc-' + idCounter++,
         mould: groupName,
@@ -747,7 +1286,204 @@ function AppContent() {
     setFinishedItems(newMoulds);
     playTapSound();
     showToast(`⚡ Calculated Right Panel: ${totalCalculated} Groups/Moulds (Ctrl+G)`, 'success');
-  }, [rawItems, finishedItems, playTapSound]);
+  }, [rawItems, dynamicCols, finishedItems, groupRawItemsForSummary, playTapSound]);
+  calcSummaryRef.current = calculateRightGridFromLeft;
+
+  // Load Old Price from Party History:
+  // Scans history for the same person/party, finds each item/mould, and picks the LATEST rate (most recent bill)
+  const handleLoadOldPriceFromHistory = useCallback(() => {
+    const currentParty = (header?.partyName || '').trim();
+    if (!currentParty) {
+      showToast('Please enter or select a Party Name first!', 'warning');
+      return;
+    }
+
+    const allBills = localDb.getBills();
+    if (!allBills || allBills.length === 0) {
+      showToast('No bills in database history!', 'info');
+      return;
+    }
+
+    const cleanCurrentParty = currentParty.toLowerCase().replace(/[-–—(),.]/g, ' ').replace(/\s+/g, ' ').trim();
+    const currentPartyRoot = currentParty.split('-')[0].trim().toLowerCase();
+
+    // Filter bills for the same party/person
+    const partyBills = allBills.filter(b => {
+      if (!b.party) return false;
+      const bParty = b.party.trim();
+      const cleanBParty = bParty.toLowerCase().replace(/[-–—(),.]/g, ' ').replace(/\s+/g, ' ').trim();
+      const bPartyRoot = bParty.split('-')[0].trim().toLowerCase();
+
+      // Don't compare bill to current draft token if editing
+      if (b.token === String(header.tokenNo)) return false;
+
+      // Exact or clean match
+      if (bParty.toLowerCase() === currentParty.toLowerCase() || cleanBParty === cleanCurrentParty) {
+        return true;
+      }
+      // Station or prefix match (e.g., "Gourav" vs "Gourav - Kapurthala")
+      if (currentPartyRoot.length >= 3 && (bPartyRoot === currentPartyRoot || cleanBParty.includes(currentPartyRoot) || cleanCurrentParty.includes(bPartyRoot))) {
+        return true;
+      }
+      return false;
+    });
+
+    if (partyBills.length === 0) {
+      showToast(`No previous bill history found for "${currentParty}"`, 'info');
+      return;
+    }
+
+    // Sort bills strictly from LATEST/NEWEST to OLDEST:
+    // 1. Date (most recent first)
+    // 2. Token number (highest first)
+    // 3. UpdatedAt/CreatedAt (latest first)
+    const sortedBills = [...partyBills].sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+        return timeB - timeA;
+      }
+      const tokA = parseInt(a.token, 10);
+      const tokB = parseInt(b.token, 10);
+      if (!isNaN(tokA) && !isNaN(tokB) && tokA !== tokB) {
+        return tokB - tokA;
+      }
+      return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    });
+
+    // Check if finishedItems is already populated or if we should derive it from rawItems
+    let workingMoulds: FinishedItem[] = [];
+    const validExistingFinished = finishedItems.filter(f => f.mould && f.mould.trim() !== '' && f.mould !== 'Mould Name' && f.mould !== '-');
+
+    if (validExistingFinished.length > 0) {
+      workingMoulds = finishedItems.map(f => ({ ...f }));
+    } else {
+      // Build moulds from rawItems
+      const { itemSummary, groupSummary } = groupRawItemsForSummary(rawItems, dynamicCols);
+      let idCounter = 1;
+
+      const sortedItemEntries = Object.entries(itemSummary).sort(([nameA], [nameB]) => {
+        const baseA = nameA.replace(/\s*\([\d.]+(?:\s*ft)?\)/i, '').trim();
+        const baseB = nameB.replace(/\s*\([\d.]+(?:\s*ft)?\)/i, '').trim();
+        if (baseA !== baseB) return baseA.localeCompare(baseB);
+        const matchA = nameA.match(/([\d]+(?:\.[\d]+)?)/);
+        const matchB = nameB.match(/([\d]+(?:\.[\d]+)?)/);
+        const sA = matchA ? parseFloat(matchA[1]) : 0;
+        const sB = matchB ? parseFloat(matchB[1]) : 0;
+        return sB - sA;
+      });
+
+      sortedItemEntries.forEach(([mouldName, sumQty]) => {
+        workingMoulds.push({
+          id: 'fin-calc-' + idCounter++,
+          mould: mouldName,
+          qty: sumQty,
+          price: 0,
+          total: 0
+        });
+      });
+
+      Object.entries(groupSummary).forEach(([groupName, sumQty]) => {
+        workingMoulds.push({
+          id: 'fin-calc-' + idCounter++,
+          mould: groupName,
+          qty: sumQty,
+          price: 0,
+          total: 0
+        });
+      });
+
+      if (workingMoulds.length === 0) {
+        showToast('Please enter items in Left Table first!', 'warning');
+        return;
+      }
+    }
+
+    let updatedCount = 0;
+    const tokensUsed = new Set<string>();
+
+    const updatedFinishedItems = workingMoulds.map(item => {
+      const mouldName = (item.mould || '').trim();
+      if (!mouldName || mouldName === 'Mould Name' || mouldName === '-') {
+        return item;
+      }
+
+      const parsedTarget = parseProductAndSize(mouldName);
+      const targetNorm = parsedTarget.normalizedBase;
+      const targetSize = parsedTarget.size > 0 ? parsedTarget.size : 10;
+
+      let foundPrice: number | null = null;
+      let matchedToken: string | null = null;
+
+      // Scan through party's bills from LATEST (newest) to OLDEST
+      // As soon as we find a rate for this product in the nearest bill, we take it and STOP!
+      for (const bill of sortedBills) {
+        if (!bill.finishedItems || bill.finishedItems.length === 0) continue;
+
+        // 1. Exact match on mould name (e.g. "B.F.P (10)" or "Fluted Jointer" or "Jointer")
+        const exactMatch = bill.finishedItems.find(f => {
+          if (!f.mould || !((Number(f.price) || 0) > 0)) return false;
+          return f.mould.trim().toLowerCase() === mouldName.toLowerCase();
+        });
+
+        if (exactMatch) {
+          foundPrice = Number(exactMatch.price);
+          matchedToken = bill.token;
+          break; // LATEST RATE FOUND! Do NOT look at older bills!
+        }
+
+        // 2. Normalized product match with proportional size calculation
+        // e.g. historical bill had "B.F.P" (standard 10 FT) at 320, current item is "B.F.P (12)"
+        const baseMatch = bill.finishedItems.find(f => {
+          if (!f.mould || !((Number(f.price) || 0) > 0)) return false;
+          const parsed = parseProductAndSize(f.mould);
+          return parsed.normalizedBase === targetNorm && targetNorm.length > 0;
+        });
+
+        if (baseMatch) {
+          const matchParsed = parseProductAndSize(baseMatch.mould);
+          const matchSize = matchParsed.size > 0 ? matchParsed.size : 10;
+          foundPrice = calculateProportionalPrice(Number(baseMatch.price), matchSize, targetSize);
+          matchedToken = bill.token;
+          break; // LATEST RATE FOUND! Do NOT look at older bills!
+        }
+      }
+
+      if (foundPrice !== null && foundPrice > 0) {
+        updatedCount++;
+        if (matchedToken) tokensUsed.add(matchedToken);
+        const qty = Number(item.qty) || 0;
+        return {
+          ...item,
+          price: foundPrice,
+          total: qty * foundPrice
+        };
+      }
+
+      return item;
+    });
+
+    while (updatedFinishedItems.length < 10) {
+      updatedFinishedItems.push({
+        id: 'fin-empty-' + (updatedFinishedItems.length + 1),
+        mould: '',
+        qty: 0,
+        price: 0,
+        total: 0
+      });
+    }
+
+    setFinishedItems(updatedFinishedItems);
+
+    if (updatedCount > 0) {
+      macAudio.playSuccess();
+      const tokenList = Array.from(tokensUsed).map(t => `#${t}`).join(', ');
+      showToast(`⚡ Loaded latest rate(s) for "${currentParty}" (${updatedCount} items from Bill ${tokenList})`, 'success');
+    } else {
+      showToast(`Found history for "${currentParty}", but no previous rates recorded for these items`, 'info');
+    }
+  }, [header, finishedItems, rawItems, dynamicCols, groupRawItemsForSummary, showToast]);
+  loadOldPriceRef.current = handleLoadOldPriceFromHistory;
 
   const handleBulkPasteFinished = (rows: string[][], startRow?: number, startCol: number = 0) => {
     setFinishedItems(prev => {
@@ -802,8 +1538,35 @@ function AppContent() {
         flexDirection: 'column'
       }}
     >
-      {/* Dynamic Background: Wallpaper Image or Solid / Gradient Color */}
-      {bgType === 'image' ? (
+      {/* Dynamic Background: Wallpaper Image, Motion Video, or Solid / Gradient Color */}
+      {bgType === 'video' ? (
+        <video
+          key={bgVideo}
+          className="apple-wallpaper"
+          src={bgVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          onLoadedData={(e) => {
+            (e.target as HTMLVideoElement).play().catch(() => {});
+          }}
+          onError={(e) => {
+            console.warn('Background video load error:', bgVideo, e);
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: `blur(${blurAmount * 0.4}px)`,
+            transform: 'scale(1.05)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }}
+        />
+      ) : bgType === 'image' ? (
         <div 
           className="apple-wallpaper"
           style={{
@@ -851,12 +1614,16 @@ function AppContent() {
               onChange={(up) => setHeader(h => ({ ...h, ...up }))}
               onCloseApp={() => showToast('Apple App Session Active', 'info')}
               onAddNewParty={(name) => showToast(`Added "${name}" to Party Registry`, 'success')}
+              onSkipBill={handleTriggerEscapeClear}
+              onSaveBill={handleSaveCurrentBill}
             />
 
             {/* Center Workspace */}
             <div style={{ display: 'flex', flex: 1, gap: '12px', minHeight: 0, overflow: 'visible' }}>
               {/* Left Action Rail */}
               <LeftActionRail
+                onSummary={calculateRightGridFromLeft}
+                onLoadOldPrice={handleLoadOldPriceFromHistory}
                 onSave={handleSaveCurrentBill}
                 onPrintSlip={() => setIsSlipOpen(true)}
                 onAddRawRow={handleAddRawItem}
@@ -867,12 +1634,7 @@ function AppContent() {
                 onSpeakSelection={() => showToast('Voice: Reading Selection', 'info')}
                 onCombine={() => showToast('Items Combined', 'info')}
                 onExportJson={() => setIsJsonOpen(true)}
-                onReset={() => {
-                  setHeader(INITIAL_HEADER);
-                  setRawItems(INITIAL_RAW_ITEMS);
-                  setFinishedItems(INITIAL_FINISHED_ITEMS);
-                  showToast('Reset to Defaults', 'warning');
-                }}
+                onReset={handleTriggerEscapeClear}
                 onPrevRecord={handlePrevBill}
                 onNextRecord={handleNextBill}
               />
@@ -909,6 +1671,12 @@ function AppContent() {
                       onClearCells={handleClearRawCells}
                       onToast={showToast}
                       onJumpToRightGrid={handleJumpToRightGrid}
+                      onCalculateSummary={calculateRightGridFromLeft}
+                      onLoadOldPrice={handleLoadOldPriceFromHistory}
+                      dynamicCols={dynamicCols}
+                      onSetDynamicCols={setDynamicCols}
+                      hasPartyCodeCol={hasPartyCodeCol}
+                      onTogglePartyCodeCol={setHasPartyCodeCol}
                       enterDirection={enterDirection}
                       onSetEnterDirection={(dir) => {
                         setEnterDirection(dir);
@@ -943,6 +1711,7 @@ function AppContent() {
                       onClearCells={handleClearFinishedCells}
                       onToast={showToast}
                       onJumpToLeftGrid={handleJumpToLeftGrid}
+                      onLoadOldPrice={handleLoadOldPriceFromHistory}
                       enterDirection={enterDirection}
                       onSetEnterDirection={(dir) => {
                         setEnterDirection(dir);
@@ -985,7 +1754,7 @@ function AppContent() {
               <OtherTabsView
                 activeTab={activeTab}
                 onBackToBill={() => setActiveTab('F1')}
-                onLoadBillToEditor={(bill) => {
+                onLoadBillToEditor={(bill: any) => {
                   setHeader({
                     docType: bill.docType,
                     partyName: bill.party,
@@ -994,10 +1763,55 @@ function AppContent() {
                     date: bill.date,
                     tokenNo: bill.token
                   });
-                  setRawItems(bill.rawItems || []);
-                  setFinishedItems(bill.finishedItems || []);
+                  const loadedRaws = (bill.rawItems || []).map((r: any) => ({ ...r }));
+                  const padCount = Math.max(0, 10 - loadedRaws.length);
+                  for (let i = 0; i < padCount; i++) {
+                    loadedRaws.push({
+                      id: String(Date.now() + i),
+                      name: '',
+                      qty: 0,
+                      uCap: 0,
+                      lCap: 0
+                    });
+                  }
+                  setRawItems(loadedRaws);
+
+                  const loadedFinished = (bill.finishedItems || []).map((f: any) => ({ ...f }));
+                  const padFinishedCount = Math.max(0, 8 - loadedFinished.length);
+                  for (let i = 0; i < padFinishedCount; i++) {
+                    loadedFinished.push({
+                      id: String(Date.now() + 50 + i),
+                      mould: 'Mould Name',
+                      qty: 0,
+                      price: 0,
+                      total: 0
+                    });
+                  }
+                  setFinishedItems(loadedFinished);
+                  setDynamicCols(bill.dynamicCols || []);
+                  const partyCodeCol = Boolean(bill.hasPartyCodeCol || bill.rawItems?.some((r: any) => r.partyCode && r.partyCode.trim() !== ''));
+                  setHasPartyCodeCol(partyCodeCol);
+                  lastSavedSnapshotRef.current = getBillFingerprint(
+                    {
+                      docType: bill.docType,
+                      partyName: bill.party,
+                      typeSelection: bill.typeSelection || 'WHOLESALE',
+                      vehicleNo: bill.vehicle || '',
+                      date: bill.date,
+                      tokenNo: bill.token
+                    },
+                    loadedRaws,
+                    loadedFinished,
+                    bill.dynamicCols || [],
+                    partyCodeCol
+                  );
                   setActiveTab('F1');
                   showToast('Loaded Invoice #' + bill.token + ' into Bill UI', 'success');
+                }}
+                onSelectPartyForBill={(pName: string) => {
+                  setHeader(prev => ({ ...prev, partyName: pName }));
+                  setActiveTab('F1');
+                  showToast(`Selected Party "${pName}" for new bill`, 'success');
                 }}
                 bgType={bgType}
                 onChangeBgType={(t) => {
@@ -1008,6 +1822,11 @@ function AppContent() {
                 onSelectBgImage={(url) => {
                   setBgImage(url);
                   showToast('Wallpaper Updated', 'success');
+                }}
+                bgVideo={bgVideo}
+                onSelectBgVideo={(url) => {
+                  setBgVideo(url);
+                  showToast('Motion Video Wallpaper Updated', 'success');
                 }}
                 bgColor={bgColor}
                 onChangeBgColor={(c) => {
@@ -1097,6 +1916,233 @@ function AppContent() {
         }}
       />
 
+      {/* Keyboard-Friendly Confirm Clear / Skip Bill Modal */}
+      {confirmClearDialog?.isOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999999
+          }}
+          onClick={() => setConfirmClearDialog(null)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '540px',
+              maxWidth: '92vw',
+              background: 'rgba(18, 22, 30, 0.96)',
+              backdropFilter: 'blur(28px)',
+              WebkitBackdropFilter: 'blur(28px)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
+              borderRadius: '16px',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.1)',
+              padding: '24px 28px',
+              color: '#f8fafc',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div 
+                style={{ 
+                  width: '44px', 
+                  height: '44px', 
+                  borderRadius: '12px', 
+                  background: 'rgba(245, 158, 11, 0.15)', 
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <AlertTriangle size={22} color="#fbbf24" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#ffffff', letterSpacing: '-0.3px' }}>
+                    Unsaved Changes in Bill #{confirmClearDialog.tokenNo}
+                  </h3>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    padding: '2px 7px', 
+                    borderRadius: '999px', 
+                    background: 'rgba(239, 68, 68, 0.2)', 
+                    color: '#fca5a5', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    fontWeight: 600
+                  }}>
+                    MODIFIED
+                  </span>
+                </div>
+                <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#94a3b8', lineHeight: 1.5 }}>
+                  Aapne is bill me changes kiye hain. Kya aap ise <strong style={{ color: '#34d399' }}>SAVE</strong> karke new bill kholna chahte hain ya changes <strong style={{ color: '#f87171' }}>DISCARD</strong> karna chahte hain?
+                </p>
+              </div>
+            </div>
+
+            {/* Buttons Options Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '4px' }}>
+              {/* Save & Clear [Y] */}
+              <button
+                type="button"
+                onClick={handleConfirmSaveAndClear}
+                onMouseEnter={() => setDialogFocus('save')}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '14px 10px',
+                  borderRadius: '12px',
+                  background: dialogFocus === 'save' ? 'rgba(34, 197, 94, 0.22)' : 'rgba(34, 197, 94, 0.08)',
+                  border: dialogFocus === 'save' ? '2px solid #22c55e' : '1px solid rgba(34, 197, 94, 0.35)',
+                  boxShadow: dialogFocus === 'save' ? '0 0 18px rgba(34, 197, 94, 0.35)' : 'none',
+                  color: '#86efac',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  outline: 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Save size={16} />
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Save & Clear</span>
+                </div>
+                <kbd style={{
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                  borderRadius: '5px',
+                  background: 'rgba(0, 0, 0, 0.45)',
+                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                  color: '#4ade80',
+                  fontWeight: 700
+                }}>
+                  Press Y
+                </kbd>
+              </button>
+
+              {/* Discard & Clear [N] */}
+              <button
+                type="button"
+                onClick={handleConfirmDiscardAndClear}
+                onMouseEnter={() => setDialogFocus('discard')}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '14px 10px',
+                  borderRadius: '12px',
+                  background: dialogFocus === 'discard' ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.08)',
+                  border: dialogFocus === 'discard' ? '2px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.35)',
+                  boxShadow: dialogFocus === 'discard' ? '0 0 18px rgba(239, 68, 68, 0.35)' : 'none',
+                  color: '#fca5a5',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  outline: 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Trash2 size={16} />
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Discard & Clear</span>
+                </div>
+                <kbd style={{
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                  borderRadius: '5px',
+                  background: 'rgba(0, 0, 0, 0.45)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#f87171',
+                  fontWeight: 700
+                }}>
+                  Press N
+                </kbd>
+              </button>
+
+              {/* Cancel / Keep Editing [Esc] */}
+              <button
+                type="button"
+                onClick={() => setConfirmClearDialog(null)}
+                onMouseEnter={() => setDialogFocus('cancel')}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '14px 10px',
+                  borderRadius: '12px',
+                  background: dialogFocus === 'cancel' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  border: dialogFocus === 'cancel' ? '2px solid #94a3b8' : '1px solid rgba(255, 255, 255, 0.15)',
+                  boxShadow: dialogFocus === 'cancel' ? '0 0 18px rgba(255, 255, 255, 0.2)' : 'none',
+                  color: '#e2e8f0',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  outline: 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <X size={16} />
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Keep Editing</span>
+                </div>
+                <kbd style={{
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                  borderRadius: '5px',
+                  background: 'rgba(0, 0, 0, 0.45)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: '#cbd5e1',
+                  fontWeight: 700
+                }}>
+                  Press Esc
+                </kbd>
+              </button>
+            </div>
+
+            {/* Keyboard Footer Tip */}
+            <div 
+              style={{
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                paddingTop: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '11.5px',
+                color: '#64748b'
+              }}
+            >
+              <span>💡 Keyboard Fast Controls:</span>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <span><strong style={{ color: '#34d399' }}>[Y]</strong> Save</span>
+                <span><strong style={{ color: '#f87171' }}>[N]</strong> Discard</span>
+                <span><strong style={{ color: '#94a3b8' }}>[Esc]</strong> Cancel</span>
+                <span><strong style={{ color: '#38bdf8' }}>[← / →]</strong> Select</span>
+                <span><strong style={{ color: '#38bdf8' }}>[Enter]</strong> Apply</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NumPad Shortcut Navigator (Press '.' on NumPad) */}
+      <NumpadNavigator 
+        isActiveTabBill={activeTab === 'HOME' || activeTab === 'F1'} 
+        onToast={showToast} 
+      />
+
       {/* Apple Toast Capsule */}
       {toast && (
         <div 
@@ -1131,6 +2177,17 @@ function AppContent() {
 }
 
 export default function App() {
+  // Set to true temporarily to bypass login panel during development
+  const [isAuthenticated, setIsAuthenticated] = React.useState(true);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  if (!isAuthenticated) {
+    return <LoginPanel onLogin={handleLogin} />;
+  }
+
   return (
     <DatabaseProvider>
       <SettingsProvider>
@@ -1139,3 +2196,6 @@ export default function App() {
     </DatabaseProvider>
   );
 }
+
+
+ 
