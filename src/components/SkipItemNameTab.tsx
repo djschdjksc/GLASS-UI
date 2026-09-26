@@ -183,16 +183,16 @@ export const SkipItemNameTab: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', height: '100%' }}>
+    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', height: '100%', minHeight: 0, overflow: 'hidden' }}>
       {/* Left: Main Groups */}
-      <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleMainKeyDown}>
-        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between' }}>
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleMainKeyDown}>
+        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Sub Groups Configuration (Enter to Add)</span>
           <button className="mac-btn" onClick={() => { setEditingMainId(null); setMainFormData({ id: 'sg-' + Date.now(), mainGroupId: mainGroups[0]?.id || '', groupName: '', sumColumn: 'QTY' }); setIsMainModalOpen(true); macAudio.playClick(); }}>
             <Plus size={14} /> Add
           </button>
         </div>
-        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto' }}>
+        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           <table className="mac-table">
             <thead>
               <tr>
@@ -219,16 +219,17 @@ export const SkipItemNameTab: React.FC = () => {
               })}
             </tbody>
           </table>
+          <div style={{ height: '36px' }} />
         </div>
       </div>
 
       {/* Right: Items */}
-      <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleSubKeyDown}>
-        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleSubKeyDown}>
+        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>{selectedMainGroupId ? 'Items for Group (Enter to Add)' : 'Select a Group'}</span>
           {selectedMainGroupId && <button className="mac-btn" onClick={() => { setEditingSubId(null); setSubFormData({ id: 'si-' + Date.now(), subGroupId: selectedMainGroupId, itemPrefix: '' }); setIsSubModalOpen(true); macAudio.playClick(); }}><Plus size={14} /> Add Item</button>}
         </div>
-        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto' }}>
+        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {selectedMainGroupId ? (
             <table className="mac-table">
               <thead>
@@ -247,6 +248,7 @@ export const SkipItemNameTab: React.FC = () => {
               </tbody>
             </table>
           ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: '13px' }}>Select a group from the left panel</div>}
+          <div style={{ height: '36px' }} />
         </div>
       </div>
 

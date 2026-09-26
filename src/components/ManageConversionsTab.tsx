@@ -145,8 +145,8 @@ export const ManageConversionsTab: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '8px' }} tabIndex={0} onKeyDown={handleKeyDown} className="mac-focus-ring">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleKeyDown} className="mac-focus-ring">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <div className="mac-notched-field" style={{ margin: 0, padding: '6px 12px', minWidth: '300px' }}>
           <Search size={14} color="#94a3b8" />
           <input 
@@ -234,6 +234,7 @@ export const ManageConversionsTab: React.FC = () => {
             })}
           </tbody>
         </table>
+        <div style={{ height: '36px' }} />
       </div>
 
       {isModalOpen && (

@@ -2093,7 +2093,9 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* TAB F6: SYSTEM CONTROL & DIAGNOSTICS */}
       {/* ========================================================================= */}
       {activeTab === 'F6' && (
-        <ControlPanelView />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+          <ControlPanelView />
+        </div>
       )}
 
       {/* ========================================================================= */}

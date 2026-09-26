@@ -409,7 +409,7 @@ export const ControlPanelView: React.FC = () => {
   }, [activeTab, filteredGroups, selectedGroupId, groups, isModalOpen, groupToDelete]);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}>
       {/* ========================================================================= */}
       {/* TOP CONTROL BAR: CLEAN CUBE TAB BUTTONS & QUICK ACTIONS (NO CLUTTER)     */}
       {/* ========================================================================= */}
@@ -637,6 +637,7 @@ export const ControlPanelView: React.FC = () => {
                 })}
               </tbody>
             </table>
+            <div style={{ height: '36px' }} />
           </div>
         </div>
       )}
@@ -644,17 +645,29 @@ export const ControlPanelView: React.FC = () => {
       {/* ========================================================================= */}
       {/* TAB 2: SKIP ITEM NAME */}
       {/* ========================================================================= */}
-      {activeTab === 'SKIP_ITEM_NAME' && <SkipItemNameTab />}
+      {activeTab === 'SKIP_ITEM_NAME' && (
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <SkipItemNameTab />
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 3: BILL ITEM NAME */}
       {/* ========================================================================= */}
-      {activeTab === 'BILL_ITEM_NAME' && <BillItemNameTab />}
+      {activeTab === 'BILL_ITEM_NAME' && (
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <BillItemNameTab />
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 4: MANAGE CONVERSIONS */}
       {/* ========================================================================= */}
-      {activeTab === 'MANAGE_CONVERSIONS' && <ManageConversionsTab />}
+      {activeTab === 'MANAGE_CONVERSIONS' && (
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <ManageConversionsTab />
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* APPLE MACOS ANIMATED MODAL FORM (TRIGGERED VIA "+ ADD GROUP" OR "ENTER") */}

@@ -91,8 +91,8 @@ export const BillItemNameTab: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '8px' }} tabIndex={0} onKeyDown={handleKeyDown} className="mac-focus-ring">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }} tabIndex={0} onKeyDown={handleKeyDown} className="mac-focus-ring">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <GlassInput
           label="Search bill names..."
           value={search}
@@ -135,6 +135,7 @@ export const BillItemNameTab: React.FC = () => {
             ))}
           </tbody>
         </table>
+        <div style={{ height: '36px' }} />
       </div>
 
       {isModalOpen && (
