@@ -1,6 +1,7 @@
 export interface SqliteControlRow {
   shortcut: string;
   conversion: string;
+  size?: number | string;
   u_cap: string | number;
   l_cap: string | number;
   multiplication: number;

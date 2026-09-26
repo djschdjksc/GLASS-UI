@@ -1127,6 +1127,7 @@ function AppContent() {
 
       // Find matching conversion (longest conversion first)
       let matchedConv = '';
+      let matchedConvRule: any = null;
       let uGroup = '';
       let lGroup = '';
 
@@ -1151,6 +1152,7 @@ function AppContent() {
 
         if (matchByConv || matchByCode) {
           matchedConv = conv;
+          matchedConvRule = sc;
           const rawU = String(sc.u_cap !== undefined ? sc.u_cap : (sc.uCap || '')).trim();
           const rawL = String(sc.l_cap !== undefined ? sc.l_cap : (sc.lCap || '')).trim();
           uGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawU.toLowerCase())) ? rawU : '';
@@ -1158,6 +1160,17 @@ function AppContent() {
           break;
         }
       }
+
+      // Check if size is explicitly defined in Conversion rule (e.g. 10, 12, 9.5)
+      // If NOT defined (blank/0/undefined), do NOT append (10) in summary table!
+      const hasDefinedSize = Boolean(
+        matchedConvRule &&
+        matchedConvRule.size !== undefined &&
+        matchedConvRule.size !== null &&
+        String(matchedConvRule.size).trim() !== '' &&
+        parseFloat(String(matchedConvRule.size).replace(/[^\d.]/g, '')) > 0
+      );
+      const definedSize = hasDefinedSize ? (parseFloat(String(matchedConvRule.size).replace(/[^\d.]/g, '')) || 10) : 10;
 
       // 3. Check Skip Items (for special sub-group QTY summing)
       let isSkipQty = false;
@@ -1180,7 +1193,7 @@ function AppContent() {
           if (sumCol === 'QTY') {
             isSkipQty = true;
             if (qty10 > 0) {
-              const key10 = formatMouldWithSize(baseName, 10);
+              const key10 = hasDefinedSize ? formatMouldWithSize(baseName, definedSize) : baseName;
               itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
             }
             if (dynCols && dynCols.length > 0) {
@@ -1210,7 +1223,7 @@ function AppContent() {
         const baseMould = matchedConv || (name.includes(' ') ? name.split(' ')[0] : name);
 
         if (qty10 > 0) {
-          const key10 = formatMouldWithSize(baseMould, 10);
+          const key10 = hasDefinedSize ? formatMouldWithSize(baseMould, definedSize) : baseMould;
           itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
         }
 

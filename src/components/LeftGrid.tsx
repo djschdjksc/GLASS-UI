@@ -393,7 +393,7 @@ export const LeftGrid: React.FC<Props> = ({
     // 0. Resolve active shortcuts from Manage Conversions (SQLite DB / user updated)
     let activeShortcuts: any[] = SQLITE_SHORTCUTS;
     try {
-      const customRules = localStorage.getItem('ctrl_conv_rules_v3');
+      const customRules = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
       if (customRules) {
         const parsed = JSON.parse(customRules);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -404,10 +404,12 @@ export const LeftGrid: React.FC<Props> = ({
 
     // Check if already fully expanded conversion name
     let isFullConversion = false;
+    let matchedRule: any = null;
     for (const sc of activeShortcuts) {
       const conv = (sc.conversion || '').toLowerCase().trim();
       if (conv && (valLower === conv || valLower.startsWith(conv + ' '))) {
         isFullConversion = true;
+        matchedRule = sc;
         break;
       }
     }
@@ -424,6 +426,7 @@ export const LeftGrid: React.FC<Props> = ({
           const lVal = sc.lCap ?? sc.l_cap;
           if (uVal && !isNaN(Number(uVal))) autoUCap = Number(uVal);
           if (lVal && !isNaN(Number(lVal))) autoLCap = Number(lVal);
+          matchedRule = sc;
           break;
         }
       }
@@ -439,6 +442,39 @@ export const LeftGrid: React.FC<Props> = ({
           finalName = `${prefix} ${rawVal.trim()}`;
         } else {
           finalName = `${prevItem.name.trim()} ${rawVal.trim()}`;
+        }
+      }
+    }
+
+    // If still not matchedRule, look up by finalName
+    if (!matchedRule) {
+      const finalLower = finalName.toLowerCase().trim();
+      for (const sc of activeShortcuts) {
+        const conv = (sc.conversion || '').toLowerCase().trim();
+        const code = (sc.shortcut || '').toLowerCase().trim();
+        if (conv && (finalLower === conv || finalLower.startsWith(conv + ' ') || finalLower.startsWith(conv + '-'))) {
+          matchedRule = sc;
+          break;
+        }
+        if (code && (finalLower === code || finalLower.startsWith(code + ' '))) {
+          matchedRule = sc;
+          break;
+        }
+      }
+    }
+
+    // 3. Auto-Insert Size Column if matched rule specifies a size (e.g. 12, 9.5) and not default 10
+    if (matchedRule && matchedRule.size !== undefined && matchedRule.size !== null && String(matchedRule.size).trim() !== '') {
+      const parsedSize = parseFloat(String(matchedRule.size).replace(/[^\d.]/g, ''));
+      if (!isNaN(parsedSize) && parsedSize > 0 && parsedSize !== 10) {
+        const field = `qty_${String(parsedSize).replace('.', '_')}`;
+        const label = `(${parsedSize} FT)`;
+        if (!dynamicCols.some(c => c.field === field)) {
+          setDynamicCols(prev => {
+            if (prev.some(c => c.field === field)) return prev;
+            return [...prev, { field, label }];
+          });
+          onToast(`Auto-inserted (${parsedSize} FT) size column for ${matchedRule.conversion || finalName}`, 'info');
         }
       }
     }

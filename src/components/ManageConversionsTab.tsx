@@ -8,6 +8,7 @@ const CONV_COL_DEFAULTS = {
   srNo: 40,
   shortcut: 110,
   conversion: 200,
+  size: 75,
   uCap: 110,
   lCap: 110,
   multiplication: 80,
@@ -65,6 +66,7 @@ export const ManageConversionsTab: React.FC = () => {
     const newRow: SqliteControlRow = {
       shortcut: '',
       conversion: '',
+      size: '',
       u_cap: 0,
       l_cap: 0,
       multiplication: 1,
@@ -342,6 +344,9 @@ export const ManageConversionsTab: React.FC = () => {
               <th style={{ width: colWidths.conversion, position: 'relative' }}>
                 CONVERSION<div className="th-resizer" onMouseDown={e => startColResize('conversion', e)} />
               </th>
+              <th style={{ width: colWidths.size, textAlign: 'center', position: 'relative' }}>
+                SIZE (FT)<div className="th-resizer" onMouseDown={e => startColResize('size', e)} />
+              </th>
               <th style={{ width: colWidths.uCap, position: 'relative' }}>
                 U CAP<div className="th-resizer" onMouseDown={e => startColResize('uCap', e)} />
               </th>
@@ -417,6 +422,22 @@ export const ManageConversionsTab: React.FC = () => {
                     ) : (
                       <span style={{ ...cellTextStyle, fontWeight: 500, color: '#ffffff' }}>
                         {conv.conversion || '—'}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* SIZE (FT) */}
+                  <td style={{ padding: '1px' }}>
+                    {isEditing ? (
+                      <input
+                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
+                        value={conv.size !== undefined ? conv.size : ''}
+                        onChange={e => handleCellChange(originalIndex, 'size', e.target.value)}
+                        placeholder="e.g. 10 or 12"
+                      />
+                    ) : (
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
+                        {conv.size ? `${conv.size} FT` : '—'}
                       </span>
                     )}
                   </td>
