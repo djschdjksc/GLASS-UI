@@ -280,6 +280,28 @@ export const LeftGrid: React.FC<Props> = ({
   const [showDirMenu, setShowDirMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
+  // Local editing cache
+  const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
+
+  let filteredItems = useMemo(() => {
+    let list = items.filter(it =>
+      (it?.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
+    );
+    if (sortField) {
+      list = [...list].sort((a, b) => {
+        const valA = a[sortField];
+        const valB = b[sortField];
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        const numA = Number(valA) || 0;
+        const numB = Number(valB) || 0;
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      });
+    }
+    return list;
+  }, [items, searchQuery, sortField, sortOrder]);
+
   // Broadcast active row change to parent for Right Grid QTY highlighting
   useEffect(() => {
     if (activeCell && activeCell.r !== null && activeCell.r >= 0 && activeCell.r < filteredItems.length) {
@@ -288,26 +310,6 @@ export const LeftGrid: React.FC<Props> = ({
       onActiveRowChange?.(null, null);
     }
   }, [activeCell, filteredItems, onActiveRowChange]);
-
-  // Local editing cache
-  const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
-
-  let filteredItems = items.filter(it =>
-    (it?.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
-  );
-
-  if (sortField) {
-    filteredItems = [...filteredItems].sort((a, b) => {
-      const valA = a[sortField];
-      const valB = b[sortField];
-      if (typeof valA === 'string' && typeof valB === 'string') {
-        return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-      }
-      const numA = Number(valA) || 0;
-      const numB = Number(valB) || 0;
-      return sortOrder === 'asc' ? numA - numB : numB - numA;
-    });
-  }
 
   const totalQty = items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
   const totalUCap = items.reduce((acc, it) => acc + (Number(it.uCap) || 0), 0);
