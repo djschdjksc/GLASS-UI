@@ -354,6 +354,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         partyCodeCol
       );
       showToast(`Loaded Bill #${target.token}`, 'info');
+      setActiveTab('F1');
       playTapSound();
     }
   }, [header]);
@@ -393,6 +394,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         partyCodeCol
       );
       showToast(`Loaded Bill #${target.token}`, 'info');
+      setActiveTab('F1');
       playTapSound();
     }
   }, [header]);
@@ -484,15 +486,15 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
-      // Ctrl + Shift + ArrowLeft: Previous Bill
-      if (isCtrlOrCmd && e.shiftKey && e.key === 'ArrowLeft') {
+      // Ctrl + ArrowLeft: Previous Bill (Reverse / Rivis)
+      if (isCtrlOrCmd && e.key === 'ArrowLeft') {
         e.preventDefault();
         prevBillRef.current();
         return;
       }
 
-      // Ctrl + Shift + ArrowRight: Next Bill
-      if (isCtrlOrCmd && e.shiftKey && e.key === 'ArrowRight') {
+      // Ctrl + ArrowRight: Next Bill
+      if (isCtrlOrCmd && e.key === 'ArrowRight') {
         e.preventDefault();
         nextBillRef.current();
         return;

@@ -684,10 +684,10 @@ export const RightGrid: React.FC<Props> = ({
 
     if (e.key === 'ArrowRight') {
       const target = e.target as HTMLInputElement;
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
-        return; // Allow Ctrl+Shift+ArrowRight to bubble for Next Bill!
-      }
       if (e.ctrlKey || e.metaKey) {
+        return; // Allow Ctrl+ArrowRight and Ctrl+Shift+ArrowRight to bubble for Next Bill!
+      }
+      if (e.shiftKey) {
         e.preventDefault();
         commitCell(rowIndex, colIndex, field);
         expandSelectionTo(rowIndex, colIndex + 1);
@@ -710,10 +710,10 @@ export const RightGrid: React.FC<Props> = ({
       }
     } else if (e.key === 'ArrowLeft') {
       const target = e.target as HTMLInputElement;
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
-        return; // Allow Ctrl+Shift+ArrowLeft to bubble for Prev Bill!
-      }
       if (e.ctrlKey || e.metaKey) {
+        return; // Allow Ctrl+ArrowLeft and Ctrl+Shift+ArrowLeft to bubble for Prev Bill!
+      }
+      if (e.shiftKey) {
         e.preventDefault();
         commitCell(rowIndex, colIndex, field);
         expandSelectionTo(rowIndex, colIndex - 1);
