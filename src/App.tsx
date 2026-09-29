@@ -33,6 +33,7 @@ import { SpaceLoader } from './components/common/SpaceLoader';
 import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
 import { ChattingPanel } from './components/ChattingPanel';
 import { DigitalCalculatorModal } from './components/DigitalCalculatorModal';
+import { triggerCelebrationBlast } from './utils/celebration';
 
 const playTapSound = () => {
   try {
@@ -270,6 +271,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     showToast(`Bill #${billToSave.token} (${billToSave.party}) Saved Successfully!`, 'success');
     playTapSound();
+    triggerCelebrationBlast();
   }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol]);
 
   const handlePrevBill = useCallback(() => {
