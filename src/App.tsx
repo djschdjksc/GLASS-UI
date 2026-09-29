@@ -34,6 +34,7 @@ import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, e
 import { ChattingPanel } from './components/ChattingPanel';
 import { DigitalCalculatorModal } from './components/DigitalCalculatorModal';
 import { triggerCelebrationBlast } from './utils/celebration';
+import { normalizeDocType, getBillCategory } from './utils/billDocTypes';
 
 const playTapSound = () => {
   try {
@@ -52,15 +53,6 @@ const playTapSound = () => {
 };
 
 const LATEST_SQLITE_BILL = (SQLITE_BILLS && SQLITE_BILLS.length > 0) ? SQLITE_BILLS[0] : null;
-
-const normalizeDocType = (dt?: string): string => {
-  if (!dt) return 'SALE';
-  const u = dt.toUpperCase().trim();
-  if (u.includes('RETURN') || u.includes('CREDIT')) return 'SALE RETURN';
-  if (u.includes('ORDER') || u.includes('QUOTATION')) return 'ORDER';
-  if (u.includes('PURCHASE') || u.includes('INWARD')) return 'PURCHASE';
-  return 'SALE';
-};
 
 const INITIAL_HEADER: BillHeader = LATEST_SQLITE_BILL ? {
   docType: normalizeDocType(LATEST_SQLITE_BILL.docType),
@@ -219,6 +211,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   } | null>(null);
   const [dialogFocus, setDialogFocus] = useState<'save' | 'discard' | 'cancel'>('save');
 
+  // Notification toast disabled per user request
+  const showToast = (_message: string, _type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
+    // Disabled: no recurring top toast notifications
+  };
+
   // Database Save & Navigation Handlers
   const handleSaveCurrentBill = useCallback(async () => {
     // 0. Validation: Party Name must NOT be empty! (as requested: "CTRL + S DABATE AGER PARTY NAME FILL NAHI HAI TO PAHLE BOLE KI FILL KARO TAB JAYE CELEBRATION WALA OPTION AAYE AGER SAB KUCHH THEEK HAI")
@@ -316,8 +313,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
     const todayStr = new Date().toISOString().split('T')[0];
 
+    const currentDoc = normalizeDocType(header.docType);
     const blankHeader: BillHeader = {
-      docType: 'SALE',
+      docType: currentDoc,
       partyName: '',
       typeSelection: 'WHOLESALE',
       vehicleNo: '',
@@ -358,15 +356,113 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     }, 120);
   }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol]);
 
+  // Keyboard-Friendly Skip / Clear Bill Handler
+  const handleClearToNewBill = useCallback(() => {
+    const allBills = localDb.getBills();
+    const currentDoc = normalizeDocType(header.docType);
+    const categoryBills = allBills.filter(b => getBillCategory(b) === currentDoc);
+
+    let maxTokenNum = 0;
+    categoryBills.forEach(b => {
+      const n = parseInt(b.token, 10);
+      if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
+    });
+    const currentTokenNum = parseInt(String(header.tokenNo), 10);
+    if (!isNaN(currentTokenNum) && currentTokenNum > maxTokenNum) {
+      maxTokenNum = currentTokenNum;
+    }
+    if (maxTokenNum === 0) {
+      allBills.forEach(b => {
+        const n = parseInt(b.token, 10);
+        if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
+      });
+    }
+
+    const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const blankHeader: BillHeader = {
+      docType: currentDoc,
+      partyName: '',
+      typeSelection: 'WHOLESALE',
+      vehicleNo: '',
+      date: todayStr,
+      tokenNo: nextToken
+    };
+
+    const blankRaws: RawItem[] = Array.from({ length: 10 }, (_, i) => ({
+      id: String(Date.now() + i),
+      name: '',
+      qty: 0,
+      uCap: 0,
+      lCap: 0
+    }));
+
+    setHeader(blankHeader);
+    setRawItems(blankRaws);
+    setFinishedItems([]);
+    setDynamicCols([]);
+    setHasPartyCodeCol(false);
+
+    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], [], false);
+    setConfirmClearDialog(null);
+
+    showToast(`New Blank ${currentDoc} Bill #${nextToken} Ready (Panel Cleared)`, 'success');
+    playTapSound();
+
+    setActiveTab('F1');
+
+    // Automatically focus party input without requiring mouse
+    setTimeout(() => {
+      const partyInput = document.querySelector<HTMLInputElement>('[data-np-target="1-2"]');
+      if (partyInput) {
+        partyInput.focus();
+        partyInput.select();
+      }
+    }, 80);
+  }, [header.docType, header.tokenNo]);
+
   const handlePrevBill = useCallback(() => {
     const allBills = localDb.getBills();
-    if (allBills.length === 0) return;
-    const currentIdx = allBills.findIndex(b => b.token === String(header.tokenNo));
-    const targetIdx = currentIdx > 0 ? currentIdx - 1 : allBills.length - 1;
-    const target = allBills[targetIdx];
+    if (allBills.length === 0) {
+      showToast('No saved bills found in database', 'warning');
+      return;
+    }
+    const currentDoc = normalizeDocType(header.docType);
+    const categoryBills = allBills
+      .filter(b => getBillCategory(b) === currentDoc)
+      .sort((a, b) => {
+        const numA = parseInt(a.token, 10);
+        const numB = parseInt(b.token, 10);
+        if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+          return numB - numA; // Descending: 580, 570, 528...
+        }
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
+
+    if (categoryBills.length === 0) {
+      showToast(`No saved ${currentDoc} bills found`, 'warning');
+      return;
+    }
+
+    const currentIdx = categoryBills.findIndex(b => b.token === String(header.tokenNo));
+
+    let target: BillRecord;
+    if (currentIdx === -1) {
+      // Currently on new unsaved bill: load the very last saved bill (e.g. 580)
+      target = categoryBills[0];
+    } else if (currentIdx < categoryBills.length - 1) {
+      // Load next older bill (e.g. 580 -> 570)
+      target = categoryBills[currentIdx + 1];
+    } else {
+      // Already at the oldest bill
+      showToast(`Oldest saved ${currentDoc} bill reached (#${categoryBills[currentIdx].token})`, 'info');
+      return;
+    }
+
     if (target) {
       setHeader({
-        docType: target.docType,
+        docType: normalizeDocType(target.docType),
         partyName: target.party,
         typeSelection: target.typeSelection,
         vehicleNo: target.vehicle,
@@ -380,7 +476,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       setHasPartyCodeCol(partyCodeCol);
       lastSavedSnapshotRef.current = getBillFingerprint(
         {
-          docType: target.docType,
+          docType: normalizeDocType(target.docType),
           partyName: target.party,
           typeSelection: target.typeSelection,
           vehicleNo: target.vehicle,
@@ -392,7 +488,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         target.dynamicCols || [],
         partyCodeCol
       );
-      showToast(`Loaded Bill #${target.token}`, 'info');
+      showToast(`Loaded ${currentDoc} Bill #${target.token} (${target.party || 'No Party'})`, 'info');
       setActiveTab('F1');
       playTapSound();
     }
@@ -400,13 +496,46 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   const handleNextBill = useCallback(() => {
     const allBills = localDb.getBills();
-    if (allBills.length === 0) return;
-    const currentIdx = allBills.findIndex(b => b.token === String(header.tokenNo));
-    const targetIdx = (currentIdx >= 0 && currentIdx + 1 < allBills.length) ? currentIdx + 1 : 0;
-    const target = allBills[targetIdx];
+    if (allBills.length === 0) {
+      showToast('No saved bills found in database', 'warning');
+      return;
+    }
+    const currentDoc = normalizeDocType(header.docType);
+    const categoryBills = allBills
+      .filter(b => getBillCategory(b) === currentDoc)
+      .sort((a, b) => {
+        const numA = parseInt(a.token, 10);
+        const numB = parseInt(b.token, 10);
+        if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+          return numB - numA; // Descending: 580, 570, 528...
+        }
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
+
+    if (categoryBills.length === 0) {
+      showToast(`No saved ${currentDoc} bills found`, 'warning');
+      return;
+    }
+
+    const currentIdx = categoryBills.findIndex(b => b.token === String(header.tokenNo));
+
+    if (currentIdx === -1) {
+      // Currently on new unsaved bill
+      showToast(`Already on new ${currentDoc} bill entry`, 'info');
+      return;
+    }
+
+    if (currentIdx === 0) {
+      // At the latest saved bill: moving forward opens a fresh new blank bill!
+      handleClearToNewBill();
+      return;
+    }
+
+    // Move to newer bill (e.g. 570 -> 580)
+    const target = categoryBills[currentIdx - 1];
     if (target) {
       setHeader({
-        docType: target.docType,
+        docType: normalizeDocType(target.docType),
         partyName: target.party,
         typeSelection: target.typeSelection,
         vehicleNo: target.vehicle,
@@ -420,7 +549,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       setHasPartyCodeCol(partyCodeCol);
       lastSavedSnapshotRef.current = getBillFingerprint(
         {
-          docType: target.docType,
+          docType: normalizeDocType(target.docType),
           partyName: target.party,
           typeSelection: target.typeSelection,
           vehicleNo: target.vehicle,
@@ -432,11 +561,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         target.dynamicCols || [],
         partyCodeCol
       );
-      showToast(`Loaded Bill #${target.token}`, 'info');
+      showToast(`Loaded ${currentDoc} Bill #${target.token} (${target.party || 'No Party'})`, 'info');
       setActiveTab('F1');
       playTapSound();
     }
-  }, [header]);
+  }, [header, handleClearToNewBill]);
 
   const prevBillRef = useRef(handlePrevBill);
   prevBillRef.current = handlePrevBill;
@@ -764,65 +893,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   }, []);
   openPrintRef.current = handleOpenPrintModal;
 
-  // Notification toast disabled per user request
-  const showToast = (_message: string, _type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
-    // Disabled: no recurring top toast notifications
-  };
 
-  // Keyboard-Friendly Skip / Clear Bill Handlers
-  const handleClearToNewBill = useCallback(() => {
-    const allBills = localDb.getBills();
-    let maxTokenNum = 0;
-    allBills.forEach(b => {
-      const n = parseInt(b.token, 10);
-      if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
-    });
-    const currentTokenNum = parseInt(String(header.tokenNo), 10);
-    if (!isNaN(currentTokenNum) && currentTokenNum > maxTokenNum) {
-      maxTokenNum = currentTokenNum;
-    }
-    const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    const blankHeader: BillHeader = {
-      docType: 'SALE',
-      partyName: '',
-      typeSelection: 'WHOLESALE',
-      vehicleNo: '',
-      date: todayStr,
-      tokenNo: nextToken
-    };
-
-    const blankRaws: RawItem[] = Array.from({ length: 10 }, (_, i) => ({
-      id: String(Date.now() + i),
-      name: '',
-      qty: 0,
-      uCap: 0,
-      lCap: 0
-    }));
-
-    setHeader(blankHeader);
-    setRawItems(blankRaws);
-    setFinishedItems([]);
-    setDynamicCols([]);
-
-    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], []);
-    setConfirmClearDialog(null);
-
-    showToast(`New Blank Bill #${nextToken} Ready (Panel Cleared)`, 'success');
-    playTapSound();
-
-    setActiveTab('F1');
-
-    // Automatically focus party input without requiring mouse
-    setTimeout(() => {
-      const partyInput = document.querySelector<HTMLInputElement>('[data-np-target="1-2"]');
-      if (partyInput) {
-        partyInput.focus();
-        partyInput.select();
-      }
-    }, 80);
-  }, [header.tokenNo]);
 
   const handleConfirmSaveAndClear = useCallback(async () => {
     await handleSaveCurrentBill();
@@ -2195,6 +2266,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   isChatOpen={isChatOpen}
                   themeMode={themeMode}
                   onChangeThemeMode={onChangeThemeMode}
+                  activeDocType={header.docType}
                 />
               </div>
 

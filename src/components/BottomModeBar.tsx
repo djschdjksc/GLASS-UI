@@ -11,9 +11,10 @@ import {
   Moon,
   Sparkles
 } from 'lucide-react';
-import type { RawItem, FinishedItem } from '../types';
 import { localDb } from '../services/db/localDb';
+import type { RawItem, FinishedItem } from '../types';
 import { SQLITE_BILLS } from '../data/sqliteData';
+import { normalizeDocType, getBillCategory } from '../utils/billDocTypes';
 
 export type AppMode = 'ENTRY' | 'SEARCH_LOAD' | 'SUMMARY';
 
@@ -132,6 +133,7 @@ interface Props {
   isChatOpen?: boolean;
   themeMode?: 'dark' | 'glass';
   onChangeThemeMode?: (mode: 'dark' | 'glass') => void;
+  activeDocType?: string;
 }
 
 export const BottomModeBar: React.FC<Props> = ({
@@ -146,7 +148,8 @@ export const BottomModeBar: React.FC<Props> = ({
   onToggleChat,
   isChatOpen = false,
   themeMode = 'dark',
-  onChangeThemeMode
+  onChangeThemeMode,
+  activeDocType
 }) => {
   const [searchSlipQuery, setSearchSlipQuery] = useState('');
 
@@ -158,28 +161,56 @@ export const BottomModeBar: React.FC<Props> = ({
     }
     const cleanNum = rawQ.replace(/^(bill|slip|#)\s*/i, '').trim();
     const qLower = cleanNum.toLowerCase();
+    const currentDoc = normalizeDocType(activeDocType);
 
-    // 1. Search in localDb
+    // 1. Filter localDb bills by selected DocType
     const allBills = localDb.getBills();
-    let matched: any = allBills.find(b => 
-      b.token === cleanNum || 
-      b.token.toLowerCase() === qLower ||
-      b.party.toLowerCase().includes(rawQ.toLowerCase())
+    const categoryBills = allBills.filter(b => getBillCategory(b) === currentDoc);
+
+    // Priority 1: Match by token number within selected DocType
+    let matched: any = categoryBills.find(b => 
+      b.token === cleanNum || b.token.toLowerCase() === qLower
     );
 
-    // 2. If not found in localDb, search in real SQLITE_BILLS
-    if (!matched && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
-      matched = SQLITE_BILLS.find((b: any) => 
-        String(b.token) === cleanNum || 
-        String(b.token).toLowerCase() === qLower ||
-        (b.party && b.party.toLowerCase().includes(rawQ.toLowerCase()))
+    // Priority 2: Match by party name within selected DocType
+    if (!matched) {
+      matched = categoryBills.find(b => 
+        b.party && b.party.toLowerCase().includes(rawQ.toLowerCase())
       );
+    }
+
+    // Priority 3: Search in SQLITE_BILLS with selected DocType
+    if (!matched && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
+      const sqliteCategoryBills = SQLITE_BILLS.filter((b: any) => getBillCategory(b) === currentDoc);
+      matched = sqliteCategoryBills.find((b: any) => 
+        String(b.token) === cleanNum || String(b.token).toLowerCase() === qLower
+      ) || sqliteCategoryBills.find((b: any) => 
+        b.party && b.party.toLowerCase().includes(rawQ.toLowerCase())
+      );
+    }
+
+    // If not matched under current DocType, check if it exists in another DocType to give smart feedback
+    if (!matched) {
+      const otherMatch = allBills.find(b => 
+        b.token === cleanNum || String(b.token).toLowerCase() === qLower
+      ) || (SQLITE_BILLS || []).find((b: any) => 
+        String(b.token) === cleanNum || String(b.token).toLowerCase() === qLower
+      );
+
+      if (otherMatch) {
+        const otherDoc = getBillCategory(otherMatch);
+        onToast(`Bill #${cleanNum} exists under "${otherDoc}", not "${currentDoc}". Change Bill Type to load it.`, 'warning');
+        return;
+      }
+
+      onToast(`Bill #${rawQ} not found under ${currentDoc}!`, 'warning');
+      return;
     }
 
     if (matched) {
       const slipData: SavedSlipData = {
         tokenNo: String(matched.token),
-        docType: matched.docType || 'SALE BILL',
+        docType: currentDoc,
         partyName: matched.party || '',
         typeSelection: matched.typeSelection || 'WHOLESALE',
         vehicleNo: matched.vehicle || '',
@@ -189,10 +220,8 @@ export const BottomModeBar: React.FC<Props> = ({
         dynamicCols: matched.dynamicCols ? matched.dynamicCols.map((c: any) => ({ ...c })) : []
       };
       onLoadSlipData(slipData);
-      onToast(`Loaded Bill #${matched.token} — ${matched.party || 'No Party'}`, 'success');
+      onToast(`Loaded ${currentDoc} Bill #${matched.token} — ${matched.party || 'No Party'}`, 'success');
       setSearchSlipQuery('');
-    } else {
-      onToast(`Bill #${rawQ} not found in database!`, 'warning');
     }
   };
 
@@ -359,7 +388,7 @@ export const BottomModeBar: React.FC<Props> = ({
         <div 
           className="apple-search-pill" 
           style={{ 
-            width: '105px', 
+            width: '135px', 
             height: '34px',
             padding: '0 8px 0 28px',
             display: 'flex',
@@ -382,11 +411,11 @@ export const BottomModeBar: React.FC<Props> = ({
           <input
             data-np-target="5-4"
             type="text"
-            placeholder="Bill #..."
+            placeholder={`Bill # (${normalizeDocType(activeDocType)})`}
             value={searchSlipQuery}
             onChange={(e) => setSearchSlipQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            title="Type Bill # (e.g. 528) & press Enter"
+            title={`Type Bill # in ${normalizeDocType(activeDocType)} & press Enter to load`}
             style={{
               width: '100%',
               background: 'transparent',
