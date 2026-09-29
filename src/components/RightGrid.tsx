@@ -727,11 +727,15 @@ export const RightGrid: React.FC<Props> = ({
           setActiveCell({ r: rowIndex, c: colIndex - 1 });
           setAnchorCell({ r: rowIndex, c: colIndex - 1 });
           setSelectedCellKeys(new Set([rowIndex + '-' + (colIndex - 1)]));
-        } else if (rowIndex > 0) {
-          focusCell(rowIndex - 1, 2);
-          setActiveCell({ r: rowIndex - 1, c: 2 });
-          setAnchorCell({ r: rowIndex - 1, c: 2 });
-          setSelectedCellKeys(new Set([(rowIndex - 1) + '-2']));
+        } else {
+          if (onJumpToLeftGrid) {
+            onJumpToLeftGrid(rowIndex);
+          } else if (rowIndex > 0) {
+            focusCell(rowIndex - 1, 2);
+            setActiveCell({ r: rowIndex - 1, c: 2 });
+            setAnchorCell({ r: rowIndex - 1, c: 2 });
+            setSelectedCellKeys(new Set([(rowIndex - 1) + '-2']));
+          }
         }
       }
     } else if (e.key === 'ArrowDown') {
@@ -829,11 +833,15 @@ export const RightGrid: React.FC<Props> = ({
           setActiveCell({ r: rowIndex, c: colIndex - 1 });
           setAnchorCell({ r: rowIndex, c: colIndex - 1 });
           setSelectedCellKeys(new Set([`${rowIndex}-${colIndex - 1}`]));
-        } else if (rowIndex > 0) {
-          focusCell(rowIndex - 1, 2);
-          setActiveCell({ r: rowIndex - 1, c: 2 });
-          setAnchorCell({ r: rowIndex - 1, c: 2 });
-          setSelectedCellKeys(new Set([`${rowIndex - 1}-2`]));
+        } else {
+          if (onJumpToLeftGrid) {
+            onJumpToLeftGrid(rowIndex);
+          } else if (rowIndex > 0) {
+            focusCell(rowIndex - 1, 2);
+            setActiveCell({ r: rowIndex - 1, c: 2 });
+            setAnchorCell({ r: rowIndex - 1, c: 2 });
+            setSelectedCellKeys(new Set([`${rowIndex - 1}-2`]));
+          }
         }
       }
     }
@@ -855,7 +863,10 @@ export const RightGrid: React.FC<Props> = ({
         flexDirection: 'column', 
         height: '100%', 
         padding: '10px 14px',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        border: isActiveTable ? '1.5px solid rgba(59, 130, 246, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: isActiveTable ? '0 0 15px rgba(59, 130, 246, 0.15)' : 'none',
+        transition: 'border 0.2s ease, box-shadow 0.2s ease'
       }}
       onMouseUp={handleMouseUp}
       onMouseDownCapture={() => onActivateTable?.()}

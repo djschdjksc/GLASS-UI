@@ -1064,7 +1064,10 @@ export const LeftGrid: React.FC<Props> = ({
         flexDirection: 'column', 
         height: '100%', 
         padding: '10px 14px',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        border: isActiveTable ? '1.5px solid rgba(59, 130, 246, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: isActiveTable ? '0 0 15px rgba(59, 130, 246, 0.15)' : 'none',
+        transition: 'border 0.2s ease, box-shadow 0.2s ease'
       }}
       onMouseUp={handleMouseUp}
       onMouseDownCapture={() => onActivateTable?.()}

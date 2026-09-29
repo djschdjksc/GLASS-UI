@@ -1108,11 +1108,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const handleJumpToRightGrid = (row: number) => {
     setActiveTable('right');
     if (row >= finishedItems.length) {
-      const newId = 'fin-' + Date.now();
-      setFinishedItems(prev => [
-        ...prev,
-        { id: newId, mould: '', qty: 0, price: 0, total: 0 }
-      ]);
+      const needed = row - finishedItems.length + 1;
+      const newRows: FinishedItem[] = [];
+      for (let i = 0; i < needed; i++) {
+        newRows.push({ id: 'fin-' + Date.now() + '-' + i, mould: '', qty: 0, price: 0, total: 0 });
+      }
+      setFinishedItems(prev => [...prev, ...newRows]);
     }
     setTimeout(() => {
       const rightInput = document.getElementById(`right-cell-${row}-0`) as HTMLInputElement;
@@ -1126,15 +1127,22 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const handleJumpToLeftGrid = (row: number) => {
     setActiveTable('left');
     if (row >= rawItems.length) {
-      const newId = 'raw-' + Date.now();
-      setRawItems(prev => [
-        ...prev,
-        { id: newId, name: '', qty: 0, uCap: 0, lCap: 0 }
-      ]);
+      const needed = row - rawItems.length + 1;
+      const newRows: RawItem[] = [];
+      for (let i = 0; i < needed; i++) {
+        newRows.push({ id: 'raw-' + Date.now() + '-' + i, name: '', qty: 0, uCap: 0, lCap: 0 });
+      }
+      setRawItems(prev => [...prev, ...newRows]);
     }
-    const lastCol = (hasPartyCodeCol ? 3 : 2) + dynamicCols.length;
+    const lastCol = (hasPartyCodeCol ? 4 : 3) + dynamicCols.length;
     setTimeout(() => {
-      const leftInput = document.getElementById(`left-cell-${row}-${lastCol}`) as HTMLInputElement;
+      let leftInput = document.getElementById(`left-cell-${row}-${lastCol}`) as HTMLInputElement;
+      if (!leftInput) {
+        const rowInputs = document.querySelectorAll(`input[id^="left-cell-${row}-"]`);
+        if (rowInputs.length > 0) {
+          leftInput = rowInputs[rowInputs.length - 1] as HTMLInputElement;
+        }
+      }
       if (leftInput) {
         leftInput.focus();
         leftInput.select();
@@ -1969,6 +1977,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                         showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
                       highlightedCells={highlightedSourceCells}
+                      isActiveTable={activeTable === 'left'}
+                      onActivateTable={() => setActiveTable('left')}
                     />
                   </div>
 
@@ -2005,6 +2015,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                         showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
                       onActiveRowChange={(item) => setActiveRightMould(item?.mould ? item.mould.trim() : null)}
+                      isActiveTable={activeTable === 'right'}
+                      onActivateTable={() => setActiveTable('right')}
                     />
                   </div>
                 </div>
