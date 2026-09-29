@@ -1437,13 +1437,69 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const newMoulds: FinishedItem[] = [];
     let idCounter = 1;
 
-    // 1. Grouped Mould Items (Sorted by base mould name and descending by size)
+    // 1. Resolve Group Priority Map from Manage Groups (control_groups in SQLite / localStorage)
+    const groupRankMap = new Map<string, number>();
+    SQLITE_CONTROL_GROUPS.forEach(cg => {
+      const key = (cg.group_name || '').toUpperCase().trim();
+      if (key) groupRankMap.set(key, cg.group_index ?? 999);
+    });
+    try {
+      const rawSaved = localStorage.getItem('control_group_rules') || localStorage.getItem('modern_control_groups_data');
+      if (rawSaved) {
+        const parsed = JSON.parse(rawSaved);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((g: any, idx: number) => {
+            const key = String(g.groupName || g.group_name || '').toUpperCase().trim();
+            if (key) {
+              const parsedIdx = parseFloat(String(g.groupIndex || g.group_index || '').replace(/[^\d.]/g, ''));
+              const rank = !isNaN(parsedIdx) && parsedIdx > 0 ? parsedIdx : (idx + 1);
+              groupRankMap.set(key, rank);
+            }
+          });
+        }
+      }
+    } catch {}
+
+    // Resolve active conversions for mapping item to group_name
+    let activeConversions: any[] = SQLITE_CONTROL_CONVERSIONS;
+    try {
+      const saved = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) activeConversions = parsed;
+      }
+    } catch {}
+
+    const getGroupRank = (mouldName: string): number => {
+      const base = mouldName.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim().toLowerCase();
+      const rule = activeConversions.find(sc => {
+        const conv = String(sc.conversion || '').toLowerCase().trim();
+        return conv && (base === conv || base.startsWith(conv + ' ') || base.startsWith(conv + '-'));
+      });
+      let groupName = rule ? String(rule.group_name || rule.groupName || '').toUpperCase().trim() : '';
+      if (!groupName) {
+        if (base.includes('jointer')) groupName = 'JOINTER';
+        else if (base.includes('clip') || base.includes('screw') || base.includes('black')) groupName = 'HARWARE';
+        else groupName = base.toUpperCase();
+      }
+      return groupRankMap.has(groupName) ? (groupRankMap.get(groupName) ?? 999) : 999;
+    };
+
+    // 2. Sort Mould Items: Primary by Manage Groups position (1 is top, then 2, 3...), Secondary by item name, Tertiary by Size DESCENDING (12 FT -> 11 FT -> 10 FT)
     const sortedItemEntries = Object.entries(itemSummary).sort(([nameA], [nameB]) => {
-      const baseA = nameA.replace(/\s*\([\d.]+(?:\s*ft)?\)/i, '').trim();
-      const baseB = nameB.replace(/\s*\([\d.]+(?:\s*ft)?\)/i, '').trim();
-      if (baseA !== baseB) return baseA.localeCompare(baseB);
-      const matchA = nameA.match(/([\d]+(?:\.[\d]+)?)/);
-      const matchB = nameB.match(/([\d]+(?:\.[\d]+)?)/);
+      // 1. Group priority from Manage Groups
+      const rankA = getGroupRank(nameA);
+      const rankB = getGroupRank(nameB);
+      if (rankA !== rankB) return rankA - rankB;
+
+      // 2. Base item name
+      const baseA = nameA.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim();
+      const baseB = nameB.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim();
+      if (baseA.toLowerCase() !== baseB.toLowerCase()) return baseA.localeCompare(baseB);
+
+      // 3. For the same item name, sort size DESCENDING (e.g. 12 FT -> 11 FT -> 10 FT)
+      const matchA = nameA.match(/\(([\d]+(?:\.[\d]+)?)/);
+      const matchB = nameB.match(/\(([\d]+(?:\.[\d]+)?)/);
       const sA = matchA ? parseFloat(matchA[1]) : 0;
       const sB = matchB ? parseFloat(matchB[1]) : 0;
       return sB - sA;
