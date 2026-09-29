@@ -53,7 +53,7 @@ const playTapSound = () => {
 
 const LATEST_SQLITE_BILL = (SQLITE_BILLS && SQLITE_BILLS.length > 0) ? SQLITE_BILLS[0] : null;
 
-export const normalizeDocType = (dt?: string): string => {
+const normalizeDocType = (dt?: string): string => {
   if (!dt) return 'SALE';
   const u = dt.toUpperCase().trim();
   if (u.includes('RETURN') || u.includes('CREDIT')) return 'SALE RETURN';
