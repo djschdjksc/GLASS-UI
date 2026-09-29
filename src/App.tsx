@@ -212,6 +212,36 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Database Save & Navigation Handlers
   const handleSaveCurrentBill = useCallback(async () => {
+    // 0. Validation: Party Name must NOT be empty! (as requested: "CTRL + S DABATE AGER PARTY NAME FILL NAHI HAI TO PAHLE BOLE KI FILL KARO TAB JAYE CELEBRATION WALA OPTION AAYE AGER SAB KUCHH THEEK HAI")
+    const cleanPartyName = (header?.partyName || '').trim();
+    if (!cleanPartyName) {
+      showToast('⚠️ Please enter Party Name first! (Party Name bharna zaroori hai)', 'warning');
+      try {
+        macAudio.playPop();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance('Please enter Party Name first');
+          utter.rate = 1.05;
+          window.speechSynthesis.speak(utter);
+        }
+      } catch {}
+      setActiveTab('F1');
+      setTimeout(() => {
+        const partyInput = document.getElementById('header-party-name') as HTMLInputElement | null;
+        if (partyInput) {
+          partyInput.focus();
+          partyInput.select();
+          partyInput.style.borderColor = '#ef4444';
+          partyInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.45)';
+          setTimeout(() => {
+            partyInput.style.borderColor = '';
+            partyInput.style.boxShadow = '';
+          }, 2500);
+        }
+      }, 50);
+      return;
+    }
+
     // Filter out completely blank/dummy raw rows (keep only rows with actual name, qty, partyCode, dynamic feet qty, or caps)
     const validRawItems = rawItems
       .filter(r => {
@@ -241,7 +271,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       id: `B-${tokenStr}`,
       token: tokenStr,
       date: header.date || new Date().toISOString().split('T')[0],
-      party: (header?.partyName || '').trim() || 'Cash Sale',
+      party: cleanPartyName,
       docType: header.docType || 'SALE BILL',
       vehicle: header.vehicleNo || '',
       typeSelection: header.typeSelection || 'WHOLESALE',
