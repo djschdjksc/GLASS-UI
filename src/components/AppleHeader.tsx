@@ -19,6 +19,7 @@ interface Props {
   isChatOpen?: boolean;
   onToggleCalculator?: () => void;
   isCalculatorOpen?: boolean;
+  onNavigateToLeftGrid?: () => void;
 }
 
 const COMMON_PARTIES = [
@@ -51,7 +52,8 @@ export const AppleHeader: React.FC<Props> = ({
   onToggleChat,
   isChatOpen = false,
   onToggleCalculator,
-  isCalculatorOpen = false
+  isCalculatorOpen = false,
+  onNavigateToLeftGrid
 }) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
   const [partyList, setPartyList] = useState<string[]>(REAL_PARTIES);
@@ -92,11 +94,22 @@ export const AppleHeader: React.FC<Props> = ({
         {/* Document Type Dropdown */}
         <div style={{ position: 'relative', width: '130px' }}>
           <select
+            id="header-doc-type"
             data-np-target="1-1"
             className="apple-select"
             style={{ width: '100%', paddingRight: '22px', fontWeight: 600, color: '#38bdf8' }}
             value={header.docType}
             onChange={(e) => onChange({ docType: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const partyInput = document.getElementById('header-party-name') as HTMLInputElement | null;
+                if (partyInput) {
+                  partyInput.focus();
+                  partyInput.select();
+                }
+              }
+            }}
           >
             {DOC_TYPES.map(t => (
               <option key={t} value={t} style={{ background: '#161b22', color: '#ffffff' }}>
@@ -111,6 +124,7 @@ export const AppleHeader: React.FC<Props> = ({
         <div style={{ position: 'relative', flex: 1.5, display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <input
+              id="header-party-name"
               data-np-target="1-2"
               type="text"
               className="apple-input"
@@ -138,6 +152,12 @@ export const AppleHeader: React.FC<Props> = ({
                   } else {
                     handleQuickAdd();
                   }
+                  setTimeout(() => {
+                    const typeSelect = document.getElementById('header-type-selection') as HTMLSelectElement | null;
+                    if (typeSelect) {
+                      typeSelect.focus();
+                    }
+                  }, 40);
                 } else if (e.key === 'Escape' && showPartySuggestions) {
                   e.stopPropagation();
                   setShowPartySuggestions(false);
@@ -228,11 +248,22 @@ export const AppleHeader: React.FC<Props> = ({
         {/* Type Selection Dropdown */}
         <div style={{ position: 'relative', width: '110px' }}>
           <select
+            id="header-type-selection"
             data-np-target="1-3"
             className="apple-select"
             style={{ width: '100%', paddingRight: '20px' }}
             value={header.typeSelection}
             onChange={(e) => onChange({ typeSelection: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const vehicleInput = document.getElementById('header-vehicle-no') as HTMLInputElement | null;
+                if (vehicleInput) {
+                  vehicleInput.focus();
+                  vehicleInput.select();
+                }
+              }
+            }}
           >
             {TYPE_SELECTIONS.map(ts => (
               <option key={ts} value={ts}>
@@ -246,6 +277,7 @@ export const AppleHeader: React.FC<Props> = ({
         {/* Vehicle No Input */}
         <div style={{ width: '130px' }}>
           <input
+            id="header-vehicle-no"
             data-np-target="1-4"
             type="text"
             className="apple-input"
@@ -253,13 +285,24 @@ export const AppleHeader: React.FC<Props> = ({
             value={header.vehicleNo}
             onChange={(e) => onChange({ vehicleNo: e.target.value })}
             style={{ width: '100%' }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const dateBtn = document.getElementById('header-date-picker') as HTMLElement | null;
+                if (dateBtn) {
+                  dateBtn.focus();
+                }
+              }
+            }}
           />
         </div>
 
         {/* Modern Shadcn Date Picker */}
         <ShadcnDatePicker
+          id="header-date-picker"
           value={header.date}
           onChange={(newDate) => onChange({ date: newDate })}
+          onEnterNext={onNavigateToLeftGrid}
           placeholder="Bill Date"
         />
       </div>

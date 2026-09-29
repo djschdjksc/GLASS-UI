@@ -258,20 +258,65 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     };
 
     await localDb.saveBill(billToSave);
-    lastSavedSnapshotRef.current = getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol);
-
-    // Sync to localStorage
-    try {
-      localStorage.setItem('modern_app_header', JSON.stringify(header));
-      localStorage.setItem('modern_app_raw_items', JSON.stringify(rawItems));
-      localStorage.setItem('modern_app_finished_items', JSON.stringify(finishedItems));
-      localStorage.setItem('modern_left_dyncols', JSON.stringify(dynamicCols));
-      localStorage.setItem('modern_has_party_code_col', String(hasPartyCodeCol));
-    } catch {}
 
     showToast(`Bill #${billToSave.token} (${billToSave.party}) Saved Successfully!`, 'success');
     playTapSound();
     triggerCelebrationBlast();
+
+    // Clear everything for the next bill (as requested: "JAISE HI SAVE HO GYA BILL WAISE HI SAB KUCHH KHALI HO JAYE NA DUSRE BILL KE LIYE CTRL +S KARTE HI")
+    const allBills = localDb.getBills();
+    let maxTokenNum = 0;
+    allBills.forEach(b => {
+      const n = parseInt(b.token, 10);
+      if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
+    });
+    const currentTokenNum = parseInt(String(billToSave.token), 10);
+    if (!isNaN(currentTokenNum) && currentTokenNum > maxTokenNum) {
+      maxTokenNum = currentTokenNum;
+    }
+    const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const blankHeader: BillHeader = {
+      docType: 'SALE BILL',
+      partyName: '',
+      typeSelection: 'WHOLESALE',
+      vehicleNo: '',
+      date: todayStr,
+      tokenNo: nextToken
+    };
+
+    const blankRaws: RawItem[] = Array.from({ length: 10 }, (_, i) => ({
+      id: String(Date.now() + i),
+      name: '',
+      qty: 0,
+      uCap: 0,
+      lCap: 0
+    }));
+
+    setHeader(blankHeader);
+    setRawItems(blankRaws);
+    setFinishedItems([]);
+    setDynamicCols([]);
+    setActiveTable('left');
+
+    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], []);
+
+    // Sync clean new bill to localStorage
+    try {
+      localStorage.setItem('modern_app_header', JSON.stringify(blankHeader));
+      localStorage.setItem('modern_app_raw_items', JSON.stringify(blankRaws));
+      localStorage.setItem('modern_app_finished_items', JSON.stringify([]));
+      localStorage.setItem('modern_left_dyncols', JSON.stringify([]));
+    } catch {}
+
+    // Focus Bill Type dropdown so user can immediately press Home / Enter / continue typing next bill
+    setTimeout(() => {
+      const docTypeSelect = document.getElementById('header-doc-type') as HTMLSelectElement | null;
+      if (docTypeSelect) {
+        docTypeSelect.focus();
+      }
+    }, 120);
   }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol]);
 
   const handlePrevBill = useCallback(() => {
@@ -411,6 +456,23 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         if (activeTab === 'F1' || activeTab === 'HOME') {
           e.preventDefault();
           escapeClearRef.current();
+        }
+        return;
+      }
+
+      // Home Key: Instantly activate Bill Type dropdown in Header! (as requested: "HOME BUTTON DABATE HI BILL TYPE DROP DOWN ME ACTIVE HO JAYE")
+      if (e.key === 'Home' && !e.shiftKey && !isCtrlOrCmd) {
+        const activeEl = document.activeElement as HTMLInputElement | null;
+        const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+        if (isTextInput && activeEl.selectionStart !== null && activeEl.selectionStart > 0 && activeEl.selectionEnd !== activeEl.value.length) {
+          // Allow normal caret to reach 0
+          return;
+        }
+        e.preventDefault();
+        setActiveTab('F1');
+        const docTypeSelect = document.getElementById('header-doc-type') as HTMLSelectElement | null;
+        if (docTypeSelect) {
+          docTypeSelect.focus();
         }
         return;
       }
@@ -1149,6 +1211,20 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       }
     }, 45);
   };
+
+  const handleNavigateToLeftGrid = useCallback(() => {
+    setActiveTable('left');
+    if (rawItems.length === 0) {
+      setRawItems([{ id: 'raw-' + Date.now(), name: '', qty: 0, uCap: 0, lCap: 0 }]);
+    }
+    setTimeout(() => {
+      const firstInput = document.getElementById('left-cell-0-0') as HTMLInputElement | null;
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    }, 45);
+  }, [rawItems.length]);
 
   const handleClearFinishedCells = (cells: { rowIndex: number; colIndex: number }[]) => {
     setFinishedItems(prev => {
@@ -1909,6 +1985,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               isChatOpen={isChatOpen}
               onToggleCalculator={() => setIsCalculatorOpen(prev => !prev)}
               isCalculatorOpen={isCalculatorOpen}
+              onNavigateToLeftGrid={handleNavigateToLeftGrid}
             />
 
             {/* Center Workspace */}

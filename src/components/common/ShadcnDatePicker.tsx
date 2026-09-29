@@ -9,6 +9,8 @@ export interface ShadcnDatePickerProps {
   className?: string;
   style?: React.CSSProperties;
   placeholder?: string;
+  id?: string;
+  onEnterNext?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -48,7 +50,9 @@ export const ShadcnDatePicker: React.FC<ShadcnDatePickerProps> = ({
   disabled = false,
   className = '',
   style,
-  placeholder = 'Select date'
+  placeholder = 'Select date',
+  id,
+  onEnterNext
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -148,6 +152,7 @@ export const ShadcnDatePicker: React.FC<ShadcnDatePickerProps> = ({
     const iso = toIsoString(y, m, d);
     onChange(iso);
     setIsOpen(false);
+    onEnterNext?.();
   };
 
   // Quick preset actions
@@ -193,12 +198,25 @@ export const ShadcnDatePicker: React.FC<ShadcnDatePickerProps> = ({
     >
       {/* Trigger Button - Shadcn Input/Button look */}
       <button
+        id={id || 'header-date-picker'}
         type="button"
         disabled={disabled}
         onClick={() => {
           if (!disabled) {
             macAudio.playClick();
             setIsOpen(prev => !prev);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (isOpen) setIsOpen(false);
+            if (onEnterNext) {
+              onEnterNext();
+            }
+          } else if (e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            setIsOpen(true);
           }
         }}
         data-np-target="1-5"
