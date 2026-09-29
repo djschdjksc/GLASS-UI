@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ConfigProvider, theme as antdTheme } from 'antd';
-import { glassAntdTheme } from './theme/glassAntdTheme';
+import { getAntdTheme, type AppThemeMode } from './theme/glassAntdTheme';
 import './theme/antdGlassOverrides.css';
 import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
 import { SQLITE_CONTROL_CONVERSIONS } from './data/sqliteControlPanel';
@@ -31,6 +31,7 @@ import { loadMediaFromDB } from './services/mediaStorage';
 import { LoginPanel } from './components/LoginPanel';
 import { SpaceLoader } from './components/common/SpaceLoader';
 import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
+import { ChattingPanel } from './components/ChattingPanel';
 
 const playTapSound = () => {
   try {
@@ -137,8 +138,13 @@ const isBillEmpty = (h: BillHeader, raws: RawItem[], moulds: FinishedItem[]) => 
   return !hasParty && !hasRaws && !hasMoulds;
 };
 
-function AppContent() {
-  const [isGoodsModalOpen, setIsGoodsModalOpen] = useState(false);
+interface AppContentProps {
+  themeMode: AppThemeMode;
+  onChangeThemeMode: (mode: AppThemeMode) => void;
+}
+
+function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // 1. Persisted Header (fallback to real SQLite bill if empty or dummy)
   const [header, setHeader] = useState<BillHeader>(() => {
@@ -382,6 +388,13 @@ function AppContent() {
       }
 
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+      
+      // Ctrl + J: Toggle Chat Assistant & Billing Helper
+      if (isCtrlOrCmd && (e.key === 'j' || e.key === 'J')) {
+        e.preventDefault();
+        setIsChatOpen(prev => !prev);
+        return;
+      }
 
       // Ctrl + Shift + ArrowLeft: Previous Bill
       if (isCtrlOrCmd && e.shiftKey && e.key === 'ArrowLeft') {
@@ -535,47 +548,20 @@ function AppContent() {
   const [isDraggingSplitter, setIsDraggingSplitter] = useState<boolean>(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
-  // 5. Persisted Background & Styling Settings (Supports Image, Color, and Looping Motion Video)
-  const [bgType, setBgType] = useState<'image' | 'color' | 'video'>(() => loadStored('modern_app_bg_type', 'image'));
-  useEffect(() => {
-    localStorage.setItem('modern_app_bg_type', JSON.stringify(bgType));
-  }, [bgType]);
-
+  // 5. Persisted Wallpaper & Display Settings
   const [bgImage, setBgImage] = useState<string>(() => loadStored('modern_app_bg_image', '/panda_bg.jpg'));
   useEffect(() => {
     localStorage.setItem('modern_app_bg_image', JSON.stringify(bgImage));
   }, [bgImage]);
 
-  const [bgVideo, setBgVideo] = useState<string>(() => loadStored('modern_app_bg_video', '/custom_video.mp4'));
-  useEffect(() => {
-    try {
-      if (bgVideo && !bgVideo.startsWith('blob:') && !bgVideo.startsWith('data:')) {
-        localStorage.setItem('modern_app_bg_video', JSON.stringify(bgVideo));
-      }
-    } catch (e) {
-      console.warn('LocalStorage save skipped for large video URL:', e);
-    }
-  }, [bgVideo]);
-
-  // Load HD media from IndexedDB if previously uploaded by user
+  // Load custom wallpaper image from IndexedDB if previously uploaded by user
   useEffect(() => {
     loadMediaFromDB().then((media) => {
       if (media && media.url) {
-        if (media.type === 'video') {
-          setBgVideo(media.url);
-          setBgType('video');
-        } else {
-          setBgImage(media.url);
-          setBgType('image');
-        }
+        setBgImage(media.url);
       }
     }).catch((e) => console.warn('IndexedDB media load error:', e));
   }, []);
-
-  const [bgColor, setBgColor] = useState<string>(() => loadStored('modern_app_bg_color', 'linear-gradient(135deg, #070b14 0%, #0d1a30 50%, #080f1e 100%)'));
-  useEffect(() => {
-    localStorage.setItem('modern_app_bg_color', JSON.stringify(bgColor));
-  }, [bgColor]);
 
   const [blurAmount, setBlurAmount] = useState<number>(() => loadStored('modern_app_blur', 24));
   useEffect(() => {
@@ -606,13 +592,14 @@ function AppContent() {
 
   // Modals
   const [isSlipOpen, setIsSlipOpen] = useState<boolean>(false);
+  const [isGoodsModalOpen, setIsGoodsModalOpen] = useState<boolean>(false);
   const [isOcrOpen, setIsOcrOpen] = useState<boolean>(false);
   const [isNoteOpen, setIsNoteOpen] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(false);
   const [noteText, setNoteText] = useState<string>('Urgent delivery for Apex Industries scheduled by end of week.');
 
   // Notification toast disabled per user request
-  const showToast = (_message: string, _type: 'success' | 'info' | 'warning' = 'info') => {
+  const showToast = (_message: string, _type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
     // Disabled: no recurring top toast notifications
   };
 
@@ -1632,35 +1619,8 @@ function AppContent() {
         flexDirection: 'column'
       }}
     >
-      {/* Dynamic Background: Wallpaper Image, Motion Video, or Solid / Gradient Color */}
-      {bgType === 'video' ? (
-        <video
-          key={bgVideo}
-          className="apple-wallpaper"
-          src={bgVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          onLoadedData={(e) => {
-            (e.target as HTMLVideoElement).play().catch(() => {});
-          }}
-          onError={(e) => {
-            console.warn('Background video load error:', bgVideo, e);
-          }}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            filter: `blur(${blurAmount * 0.4}px)`,
-            transform: 'scale(1.05)',
-            pointerEvents: 'none',
-            zIndex: 0
-          }}
-        />
-      ) : bgType === 'image' ? (
+      {/* Dynamic Background: Wallpaper Image (Active in Glass Mode) */}
+      {themeMode === 'glass' && (
         <div 
           className="apple-wallpaper"
           style={{
@@ -1669,23 +1629,17 @@ function AppContent() {
             transform: 'scale(1.05)'
           }}
         />
-      ) : (
+      )}
+
+      {/* Background Overlay (in Glass Mode) */}
+      {themeMode === 'glass' && (
         <div 
-          className="apple-wallpaper"
+          className="apple-wallpaper-overlay"
           style={{
-            background: bgColor,
-            filter: `blur(${blurAmount * 0.4}px)`
+            backgroundColor: `rgba(5, 7, 12, ${dimOverlay / 100})`
           }}
         />
       )}
-
-      {/* Background Overlay */}
-      <div 
-        className="apple-wallpaper-overlay"
-        style={{
-          backgroundColor: `rgba(5, 7, 12, ${dimOverlay / 100})`
-        }}
-      />
 
       {/* Main App Container */}
       <div 
@@ -1710,6 +1664,10 @@ function AppContent() {
               onAddNewParty={(name) => showToast(`Added "${name}" to Party Registry`, 'success')}
               onSkipBill={handleTriggerEscapeClear}
               onSaveBill={handleSaveCurrentBill}
+              themeMode={themeMode}
+              onChangeThemeMode={onChangeThemeMode}
+              onToggleChat={() => setIsChatOpen(prev => !prev)}
+              isChatOpen={isChatOpen}
             />
 
             {/* Center Workspace */}
@@ -1851,6 +1809,8 @@ function AppContent() {
               <OtherTabsView
                 activeTab={activeTab}
                 onBackToBill={() => setActiveTab('F1')}
+                themeMode={themeMode}
+                onChangeThemeMode={onChangeThemeMode}
                 onLoadBillToEditor={(bill: any) => {
                   setHeader({
                     docType: bill.docType,
@@ -1910,25 +1870,10 @@ function AppContent() {
                   setActiveTab('F1');
                   showToast(`Selected Party "${pName}" for new bill`, 'success');
                 }}
-                bgType={bgType}
-                onChangeBgType={(t) => {
-                  setBgType(t);
-                  showToast(`Switched to ${t.toUpperCase()} Background`, 'info');
-                }}
                 bgImage={bgImage}
                 onSelectBgImage={(url) => {
                   setBgImage(url);
                   showToast('Wallpaper Updated', 'success');
-                }}
-                bgVideo={bgVideo}
-                onSelectBgVideo={(url) => {
-                  setBgVideo(url);
-                  showToast('Motion Video Wallpaper Updated', 'success');
-                }}
-                bgColor={bgColor}
-                onChangeBgColor={(c) => {
-                  setBgColor(c);
-                  showToast('Background Color Updated', 'success');
                 }}
                 blurAmount={blurAmount}
                 onChangeBlur={(val) => {
@@ -2029,11 +1974,30 @@ function AppContent() {
         onToast={showToast} 
       />
 
+      {/* AI Chatting & Billing Assistant */}
+      <ChattingPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        header={header}
+        rawItems={rawItems}
+        finishedItems={finishedItems}
+        onShowToast={showToast}
+      />
+
     </div>
   );
 }
 
 export default function App() {
+  const [themeMode, setThemeMode] = React.useState<AppThemeMode>(() => {
+    return (localStorage.getItem('modern_app_theme_mode') as AppThemeMode) || 'dark';
+  });
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeMode);
+    localStorage.setItem('modern_app_theme_mode', themeMode);
+  }, [themeMode]);
+
   // Set to true temporarily to bypass login panel during development
   const [isAuthenticated, setIsAuthenticated] = React.useState(true);
   const [isAppLoading, setIsAppLoading] = React.useState(true);
@@ -2056,10 +2020,10 @@ export default function App() {
   }
 
   return (
-    <ConfigProvider theme={{ ...glassAntdTheme, algorithm: antdTheme.darkAlgorithm }}>
+    <ConfigProvider theme={getAntdTheme(themeMode)}>
       <DatabaseProvider>
         <SettingsProvider>
-          <AppContent />
+          <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
         </SettingsProvider>
       </DatabaseProvider>
     </ConfigProvider>

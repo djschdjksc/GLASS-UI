@@ -22,22 +22,21 @@ import {
   SlidersHorizontal,
   Info,
   CheckCircle2,
-  FileText
+  FileText,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { saveMediaToDB, clearMediaFromDB } from '../services/mediaStorage';
 
 export type SettingsMainTab = 'THEME' | 'SHORTCUTS' | 'BACKUP' | 'GENERAL' | 'BARCODE';
 export type BarcodeSubTab = 'PAGE_SETUP' | 'LABEL_LAYOUT' | 'CONTENT_FIELDS' | 'ELEMENT_PLACEMENTS';
+export type AppThemeMode = 'dark' | 'white' | 'glass';
 
 interface Props {
-  bgType: 'image' | 'color' | 'video';
-  onChangeBgType: (type: 'image' | 'color' | 'video') => void;
+  themeMode?: AppThemeMode;
+  onChangeThemeMode?: (mode: AppThemeMode) => void;
   bgImage: string;
   onSelectBgImage: (url: string) => void;
-  bgVideo: string;
-  onSelectBgVideo: (url: string) => void;
-  bgColor: string;
-  onChangeBgColor: (color: string) => void;
   blurAmount: number;
   onChangeBlur: (blur: number) => void;
   overlayOpacity: number;
@@ -45,19 +44,14 @@ interface Props {
   glassOpacity: number;
   onChangeGlassOpacity: (opacity: number) => void;
   onShowToast?: (msg: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
+  // Compatibility props
+  bgType?: any;
+  onChangeBgType?: any;
+  bgVideo?: any;
+  onSelectBgVideo?: any;
+  bgColor?: any;
+  onChangeBgColor?: any;
 }
-
-// Curated Luxury Color Palettes
-const LUXURY_BG_COLORS = [
-  { name: 'Midnight Slate', val: '#0f172a', desc: 'Deep macOS Slate' },
-  { name: 'Obsidian Jet', val: '#090d16', desc: 'Pure Dark Glass' },
-  { name: 'Royal Dark Velvet', val: '#2e1065', desc: 'Plum & Indigo Violet' },
-  { name: 'Oceanic Abyss', val: '#0c4a6e', desc: 'Deep Marine Blue' },
-  { name: 'Emerald Forest', val: '#064e3b', desc: 'Dark Nordic Pine' },
-  { name: 'Crimson Wine', val: '#450a0a', desc: 'Luxury Bordeaux' },
-  { name: 'Warm Charcoal', val: '#1c1917', desc: 'Titanium Dark' },
-  { name: 'Pure Carbon', val: '#000000', desc: 'OLED Zero Black' }
-];
 
 // Curated macOS Wallpapers
 const WALLPAPERS = [
@@ -67,35 +61,6 @@ const WALLPAPERS = [
   { name: 'Neon Flow', url: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80' },
   { name: 'Mojave Night', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80' },
   { name: 'Dark Crystal Glass', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80' }
-];
-
-// Curated Luxury Looping Motion Videos
-const MOTION_VIDEOS = [
-  {
-    name: 'Your Video (165790)',
-    url: '/custom_video.mp4',
-    desc: '165790-833532137_medium.mp4'
-  },
-  {
-    name: 'Cyber Network Waves',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-dark-cyber-network-animation-43118-large.mp4',
-    desc: 'Deep Blue Cyber Nodes'
-  },
-  {
-    name: 'Liquid Neon Aurora',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-wavy-lines-of-light-with-blue-and-purple-tones-42617-large.mp4',
-    desc: 'Purple & Violet Waves'
-  },
-  {
-    name: 'Deep Oceanic Flow',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-underwater-surface-of-the-ocean-4156-large.mp4',
-    desc: 'Ambient Fluid Water'
-  },
-  {
-    name: 'Liquid Metal Chrome',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-waves-of-metal-liquid-43403-large.mp4',
-    desc: 'Silver Titanium Ripples'
-  }
 ];
 
 // PURE GRID & TABLE SHORTCUTS ONLY (All legacy keys eliminated)
@@ -207,14 +172,10 @@ const LuxuryToggle: React.FC<LuxuryToggleProps> = ({ checked, onChange, title, d
 );
 
 export const SettingsTabView: React.FC<Props> = ({
-  bgType,
-  onChangeBgType,
+  themeMode = 'dark',
+  onChangeThemeMode,
   bgImage,
   onSelectBgImage,
-  bgVideo,
-  onSelectBgVideo,
-  bgColor,
-  onChangeBgColor,
   blurAmount,
   onChangeBlur,
   overlayOpacity,
@@ -228,66 +189,48 @@ export const SettingsTabView: React.FC<Props> = ({
   // Active Tab
   const [activeTab, setActiveTab] = useState<SettingsMainTab>('THEME');
 
-  // Custom Color Input State
-  const [customHex, setCustomHex] = useState<string>(bgColor);
-  useEffect(() => {
-    setCustomHex(bgColor);
-  }, [bgColor]);
-
-  // User's custom file upload state & persistence (Supports Image & Video)
+  // User's custom wallpaper upload state & persistence
   const [customMediaName, setCustomMediaName] = useState<string>(() => localStorage.getItem('modern_app_custom_media_name') || '');
-  const [customMediaType, setCustomMediaType] = useState<'image' | 'video' | ''>(() => (localStorage.getItem('modern_app_custom_media_type') as any) || '');
-  const [manualVideoPath, setManualVideoPath] = useState<string>('/custom_video.mp4');
 
-  // Handle Custom Image or Video Upload from Disk using IndexedDB (bypasses 5MB localStorage limits)
+  // Handle Custom Wallpaper Image Upload from Disk using IndexedDB
   const handleMediaFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isVideo = file.type.startsWith('video/') || file.name.endsWith('.mp4') || file.name.endsWith('.webm') || file.name.endsWith('.mov');
     const isImage = file.type.startsWith('image/') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png') || file.name.endsWith('.webp');
 
-    if (!isVideo && !isImage) {
-      onShowToast?.('Please choose an image (PNG, JPG, WEBP) or video (MP4, WEBM, MOV)', 'warning');
+    if (!isImage) {
+      onShowToast?.('Please choose an image file (PNG, JPG, WEBP)', 'warning');
       return;
     }
 
     try {
       onShowToast?.(`Loading ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)...`, 'info');
-      const objectUrl = await saveMediaToDB(file, file.name, isVideo ? 'video' : 'image');
+      const objectUrl = await saveMediaToDB(file, file.name, 'image');
 
-      if (isVideo) {
-        onSelectBgVideo(objectUrl);
-        onChangeBgType('video');
-        localStorage.setItem('modern_app_custom_media_type', 'video');
-        setCustomMediaType('video');
-        onShowToast?.(`Loaded video "${file.name}"! Playing in background.`, 'success');
-      } else {
-        onSelectBgImage(objectUrl);
-        onChangeBgType('image');
-        localStorage.setItem('modern_app_custom_media_type', 'image');
-        setCustomMediaType('image');
-        onShowToast?.(`Loaded image "${file.name}"! Playing in background.`, 'success');
+      onSelectBgImage(objectUrl);
+      if (onChangeThemeMode && themeMode !== 'glass') {
+        onChangeThemeMode('glass');
       }
+      localStorage.setItem('modern_app_custom_media_type', 'image');
       localStorage.setItem('modern_app_custom_media_name', file.name);
       setCustomMediaName(file.name);
+      onShowToast?.(`Loaded wallpaper "${file.name}"! Applied to background.`, 'success');
       macAudio.playSuccess();
     } catch (err: any) {
       console.error('Failed to save media to IndexedDB:', err);
-      onShowToast?.('Failed to load media: ' + (err.message || 'unknown error'), 'error');
+      onShowToast?.('Failed to load wallpaper: ' + (err.message || 'unknown error'), 'error');
     }
   };
 
   const handleResetDefaultWallpaper = async () => {
     await clearMediaFromDB();
     onSelectBgImage('/panda_bg.jpg');
-    onChangeBgType('image');
     localStorage.removeItem('modern_app_custom_media_name');
     localStorage.removeItem('modern_app_custom_media_type');
     setCustomMediaName('');
-    setCustomMediaType('');
     macAudio.playClick();
-    onShowToast?.('Reset to default wallpaper & saved to localhost', 'info');
+    onShowToast?.('Reset to default macOS wallpaper', 'info');
   };
 
   // General Settings State
@@ -323,21 +266,6 @@ export const SettingsTabView: React.FC<Props> = ({
   const [printItemName, setPrintItemName] = useState<boolean>(true);
   const [printPrice, setPrintPrice] = useState<boolean>(true);
 
-  // Handle Custom Hex Submission
-  const handleApplyHex = (val: string) => {
-    let clean = val.trim();
-    if (!clean.startsWith('#')) clean = '#' + clean;
-    if (/^#[0-9A-Fa-f]{6}$/.test(clean) || /^#[0-9A-Fa-f]{3}$/.test(clean)) {
-      setCustomHex(clean);
-      onChangeBgColor(clean);
-      onChangeBgType('color');
-      onShowToast(`Applied custom background color ${clean}`, 'success');
-      macAudio.playClick();
-    } else {
-      setCustomHex(val);
-    }
-  };
-
   // Export JSON Backup
   const handleExportBackup = () => {
     macAudio.playClick();
@@ -351,8 +279,7 @@ export const SettingsTabView: React.FC<Props> = ({
     if (backupIncludeConfig) {
       exportBundle.data.slipPrefix = slipPrefix;
       exportBundle.data.slipHeaderTitle = slipHeaderTitle;
-      exportBundle.data.bgColor = bgColor;
-      exportBundle.data.bgType = bgType;
+      exportBundle.data.themeMode = themeMode;
       exportBundle.data.bgImage = bgImage;
     }
     if (backupIncludeParties) exportBundle.data.parties = parties;
@@ -386,7 +313,8 @@ export const SettingsTabView: React.FC<Props> = ({
         macAudio.playClick();
         if (window.confirm(`File "${file.name}" verified! Mode: ${restoreMode.toUpperCase()}.\nRestore now?`)) {
           if (parsed.data.slipPrefix) setSlipPrefix(parsed.data.slipPrefix);
-          if (parsed.data.bgColor) onChangeBgColor(parsed.data.bgColor);
+          if (parsed.data.themeMode && onChangeThemeMode) onChangeThemeMode(parsed.data.themeMode);
+          if (parsed.data.bgImage) onSelectBgImage(parsed.data.bgImage);
           onShowToast(`Database restored successfully from "${file.name}"!`, 'success');
         }
       } catch (err: any) {
@@ -457,7 +385,7 @@ export const SettingsTabView: React.FC<Props> = ({
       {/* ========================================================================= */}
       {activeTab === 'THEME' && (
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: Background Color & Wallpaper Selectors */}
+          {/* Left Column: 3-Mode Theme Selector & Wallpaper Gallery */}
           <div
             className="glass-panel"
             style={{
@@ -468,157 +396,122 @@ export const SettingsTabView: React.FC<Props> = ({
               overflowY: 'auto'
             }}
           >
-            {/* Background Mode Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block' }}>
-                  BACKGROUND RENDERING MODE
-                </span>
-                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                  Choose between Solid Luxury Color or High-Res Wallpaper
-                </span>
-              </div>
-
-              <Segmented
-                value={bgType}
-                onChange={(val: any) => {
-                  onChangeBgType(val as 'color' | 'image' | 'video');
-                  macAudio.playClick();
-                  onShowToast?.(`Active: ${val.toUpperCase()} Mode`, 'info');
-                }}
-                options={[
-                  { label: 'Solid Color', value: 'color' },
-                  { label: 'Wallpaper', value: 'image' },
-                  { label: 'Motion Video 🎬', value: 'video' }
-                ]}
-              />
-            </div>
-
-            {/* Solid Background Color Palettes */}
+            {/* 3-Mode Selector Header */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc' }}>
-                  CURATED LUXURY COLOR PALETTES
-                </span>
-                <span style={{ fontSize: '10px', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700 }}>
-                  CURRENT: {bgColor.toUpperCase()}
-                </span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                {LUXURY_BG_COLORS.map(col => {
-                  const isSelected = bgType === 'color' && bgColor.toLowerCase() === col.val.toLowerCase();
-                  return (
-                    <div
-                      key={col.val}
-                      onClick={() => {
-                        onChangeBgColor(col.val);
-                        onChangeBgType('color');
-                        macAudio.playClick();
-                        onShowToast(`Applied ${col.name}`, 'success');
-                      }}
-                      style={{
-                        background: col.val,
-                        border: isSelected ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
-                        boxShadow: isSelected ? '0 0 14px rgba(56, 189, 248, 0.6)' : '0 2px 8px rgba(0,0,0,0.4)',
-                        borderRadius: '8px',
-                        padding: '8px 10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        minHeight: '52px',
-                        transition: 'all 0.18s cubic-bezier(0.22, 1, 0.36, 1)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-                          {col.name}
-                        </span>
-                        {isSelected && <Check size={12} color="#38bdf8" />}
-                      </div>
-                      <span style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
-                        {col.val}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Custom Color Picker Input */}
-              <div
-                style={{
-                  marginTop: '10px',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 0, 0, 0.35)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}
-              >
-                <input
-                  type="color"
-                  value={bgColor}
-                  onChange={(e) => {
-                    onChangeBgColor(e.target.value);
-                    onChangeBgType('color');
-                    setCustomHex(e.target.value);
-                  }}
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    cursor: 'pointer',
-                    background: 'transparent'
-                  }}
-                  title="Pick Any Custom Color"
-                />
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#f8fafc', display: 'block' }}>
-                    Custom Color Picker
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--foreground, #f8fafc)', display: 'block' }}>
+                    SELECT APPLICATION MODE
                   </span>
-                  <span style={{ fontSize: '9px', color: '#94a3b8' }}>
-                    Click color box to open native gradient & hex palette
+                  <span style={{ fontSize: '10px', color: 'var(--muted-foreground, #94a3b8)' }}>
+                    Unified modern shadcn design system with 3 curated themes
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <input
-                    type="text"
-                    value={customHex}
-                    onChange={(e) => setCustomHex(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleApplyHex(customHex)}
-                    style={{
-                      width: '80px',
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      fontFamily: 'monospace',
-                      fontWeight: 800,
-                      fontSize: '11px',
-                      borderRadius: '6px',
-                      padding: '4px 8px',
-                      textAlign: 'center'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleApplyHex(customHex)}
-                    style={{
-                      background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                      color: '#090d16',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '5px 10px',
-                      fontSize: '10.5px',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Apply
-                  </button>
+                <Tag color={themeMode === 'white' ? 'blue' : themeMode === 'glass' ? 'cyan' : 'purple'}>
+                  {themeMode.toUpperCase()} MODE
+                </Tag>
+              </div>
+
+              {/* 3 Cards for Dark, White, and Glass */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                {/* 1. Dark Mode */}
+                <div
+                  onClick={() => {
+                    macAudio.playClick();
+                    onChangeThemeMode?.('dark');
+                    onShowToast?.('Dark Mode Activated (shadcn dark)', 'success');
+                  }}
+                  style={{
+                    background: '#09090b',
+                    border: themeMode === 'dark' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: themeMode === 'dark' ? '0 0 16px rgba(56, 189, 248, 0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '90px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Moon size={15} color="#38bdf8" />
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>Dark Mode</span>
+                    </div>
+                    {themeMode === 'dark' && <Check size={14} color="#38bdf8" />}
+                  </div>
+                  <span style={{ fontSize: '9.5px', color: '#a1a1aa', lineHeight: 1.3, marginTop: '6px' }}>
+                    Obsidian zinc canvas, neutral borders, high contrast & sleek.
+                  </span>
+                </div>
+
+                {/* 2. White Mode */}
+                <div
+                  onClick={() => {
+                    macAudio.playClick();
+                    onChangeThemeMode?.('white');
+                    onShowToast?.('White Mode Activated (shadcn white)', 'success');
+                  }}
+                  style={{
+                    background: '#ffffff',
+                    border: themeMode === 'white' ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                    boxShadow: themeMode === 'white' ? '0 0 16px rgba(2, 132, 199, 0.35)' : '0 2px 8px rgba(0,0,0,0.1)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '90px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sun size={15} color="#0284c7" />
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>White Mode</span>
+                    </div>
+                    {themeMode === 'white' && <Check size={14} color="#0284c7" />}
+                  </div>
+                  <span style={{ fontSize: '9.5px', color: '#475569', lineHeight: 1.3, marginTop: '6px' }}>
+                    Crisp white canvas, slate borders, light card elevation.
+                  </span>
+                </div>
+
+                {/* 3. Glass Mode */}
+                <div
+                  onClick={() => {
+                    macAudio.playClick();
+                    onChangeThemeMode?.('glass');
+                    onShowToast?.('Glass Mode Activated (Liquid Retina)', 'success');
+                  }}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(16px)',
+                    border: themeMode === 'glass' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
+                    boxShadow: themeMode === 'glass' ? '0 0 16px rgba(56, 189, 248, 0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '90px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkles size={15} color="#38bdf8" />
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>Glass Mode</span>
+                    </div>
+                    {themeMode === 'glass' && <Check size={14} color="#38bdf8" />}
+                  </div>
+                  <span style={{ fontSize: '9.5px', color: '#94a3b8', lineHeight: 1.3, marginTop: '6px' }}>
+                    Frosted translucent glassmorphism with HD wallpaper backing.
+                  </span>
                 </div>
               </div>
             </div>
@@ -626,25 +519,34 @@ export const SettingsTabView: React.FC<Props> = ({
             {/* Wallpaper Selection Gallery */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc' }}>
-                  OFFICIAL MACOS WALLPAPERS
-                </span>
-                <span style={{ fontSize: '9.5px', color: '#94a3b8' }}>
-                  Liquid Retina HD
-                </span>
+                <div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block' }}>
+                    MACOS WALLPAPERS (FOR GLASS MODE)
+                  </span>
+                  <span style={{ fontSize: '9.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
+                    Liquid Retina ultra HD wallpaper presets
+                  </span>
+                </div>
+                {themeMode !== 'glass' && (
+                  <span style={{ fontSize: '9.5px', color: '#f59e0b', fontStyle: 'italic' }}>
+                    (Active when Glass Mode is selected)
+                  </span>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                 {WALLPAPERS.map(wp => {
-                  const isSelected = bgType === 'image' && bgImage === wp.url;
+                  const isSelected = bgImage === wp.url;
                   return (
                     <div
                       key={wp.name}
                       onClick={() => {
                         onSelectBgImage(wp.url);
-                        onChangeBgType('image');
+                        if (onChangeThemeMode && themeMode !== 'glass') {
+                          onChangeThemeMode('glass');
+                        }
                         macAudio.playClick();
-                        onShowToast(`Wallpaper set: ${wp.name}`, 'success');
+                        onShowToast?.(`Wallpaper set: ${wp.name}`, 'success');
                       }}
                       style={{
                         position: 'relative',
@@ -652,8 +554,8 @@ export const SettingsTabView: React.FC<Props> = ({
                         borderRadius: '8px',
                         overflow: 'hidden',
                         cursor: 'pointer',
-                        border: isSelected ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
-                        boxShadow: isSelected ? '0 0 14px rgba(56, 189, 248, 0.6)' : '0 2px 8px rgba(0,0,0,0.4)',
+                        border: isSelected ? '2px solid #38bdf8' : '1px solid var(--border, rgba(255, 255, 255, 0.15))',
+                        boxShadow: isSelected ? '0 0 14px rgba(56, 189, 248, 0.5)' : '0 2px 6px rgba(0,0,0,0.3)',
                         transition: 'all 0.18s ease'
                       }}
                     >
@@ -687,195 +589,71 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Curated Luxury Motion Videos Gallery */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc' }}>
-                  CURATED MOTION VIDEOS (LOOPING CINEMATIC)
+            {/* Custom Image Upload Card */}
+            <div
+              style={{
+                background: 'var(--card, rgba(0, 0, 0, 0.3))',
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid var(--border, rgba(255, 255, 255, 0.08))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '2px' }}>
+                  UPLOAD CUSTOM WALLPAPER IMAGE
                 </span>
-                <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 600 }}>
-                  High-FPS Ambient
+                <span style={{ fontSize: '9.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
+                  {customMediaName ? `Current: ${customMediaName}` : 'Select PNG, JPG, or WEBP from your computer'}
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                {MOTION_VIDEOS.map(vid => {
-                  const isSelected = bgType === 'video' && bgVideo === vid.url;
-                  return (
-                    <div
-                      key={vid.name}
-                      onClick={() => {
-                        onSelectBgVideo(vid.url);
-                        onChangeBgType('video');
-                        macAudio.playClick();
-                        onShowToast?.(`Motion video set: ${vid.name}`, 'success');
-                      }}
-                      style={{
-                        position: 'relative',
-                        height: '66px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        border: isSelected ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
-                        boxShadow: isSelected ? '0 0 16px rgba(56, 189, 248, 0.6)' : '0 2px 8px rgba(0,0,0,0.4)',
-                        transition: 'all 0.18s ease',
-                        background: '#090d16'
-                      }}
-                    >
-                      <video
-                        src={vid.url}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)',
-                          display: 'flex',
-                          alignItems: 'flex-end',
-                          padding: '5px 8px',
-                          justifyContent: 'space-between'
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontSize: '9.5px', fontWeight: 800, color: '#ffffff' }}>
-                            {vid.name}
-                          </div>
-                          <div style={{ fontSize: '7.5px', color: '#94a3b8' }}>
-                            {vid.desc}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <div style={{ background: '#38bdf8', borderRadius: '50%', padding: '2px' }}>
-                            <Check size={10} color="#090d16" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 3D Animated Custom Image / Video Upload Card */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.3px' }}>
-                  UPLOAD CUSTOM IMAGE OR VIDEO (STORED IN LOCALHOST)
-                </span>
-                {customMediaName ? (
-                  <span style={{ fontSize: '9.5px', color: '#34d399', fontWeight: 800, fontFamily: 'monospace' }}>
-                    Active: {customMediaType === 'video' ? '🎬' : '🖼️'} {customMediaName}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '9px', color: '#94a3b8' }}>
-                    Browse Image or Video from PC
-                  </span>
-                )}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '10px', alignItems: 'center' }}>
-                {/* 3D Animated Folder Box from User's Spec */}
-                <div className="folder-upload-container">
-                  <div className="folder">
-                    <div className="front-side">
-                      <div className="tip" />
-                      <div className="cover" />
-                    </div>
-                    <div className="back-side cover" />
-                  </div>
-                  <label className="custom-file-upload">
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      onChange={handleMediaFileUpload}
-                    />
-                    <span>Choose Image/Video</span>
-                  </label>
-                </div>
-
-                {/* Information, Status & Reset */}
-                <div
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label
                   style={{
-                    background: 'rgba(0, 0, 0, 0.35)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '10px',
-                    padding: '10px 12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '110px'
+                    background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                    color: '#ffffff',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
                 >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                      <Sparkles size={12} color="#38bdf8" />
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc' }}>
-                        Localhost Storage Persistence
-                      </span>
-                    </div>
-                    <p style={{ fontSize: '9.5px', color: '#94a3b8', lineHeight: 1.35 }}>
-                      Aapki upload ki gayi image ya video browser ke persistent storage me save ho jati hai. App reload ya restart karne par bhi background me chalegi.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
-                    <span style={{ fontSize: '8.5px', color: '#64748b' }}>
-                      Supports: MP4, WebM, MOV, PNG, JPG, WEBP
-                    </span>
-
-                    {customMediaName && (
-                      <button
-                        type="button"
-                        onClick={handleResetDefaultWallpaper}
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.18)',
-                          border: '1px solid rgba(239, 68, 68, 0.35)',
-                          color: '#f87171',
-                          borderRadius: '6px',
-                          padding: '3px 8px',
-                          fontSize: '9.5px',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Reset Default
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Direct Local Video / URL Player */}
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#e2e8f0' }}>
-                    Or enter Direct Video File / URL:
-                  </span>
-                  <span style={{ fontSize: '9px', color: '#38bdf8', fontFamily: 'monospace' }}>
-                    Available: /custom_video.mp4
-                  </span>
-                </div>
-                <div>
-                  <Input.Search
-                    value={manualVideoPath}
-                    onChange={(e: any) => setManualVideoPath(e.target.value)}
-                    placeholder="/custom_video.mp4 or video web URL"
-                    enterButton="Play Video 🎬"
-                    onSearch={(val: string) => {
-                      if (val.trim()) {
-                        onSelectBgVideo(val.trim());
-                        onChangeBgType('video');
-                        macAudio.playSuccess();
-                        onShowToast?.(`Playing video from "${val}"`, 'success');
-                      }
-                    }}
+                  <Upload size={13} />
+                  <span>Browse Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleMediaFileUpload}
+                    style={{ display: 'none' }}
                   />
-                </div>
+                </label>
+
+                {customMediaName && (
+                  <button
+                    type="button"
+                    onClick={handleResetDefaultWallpaper}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#f87171',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -948,9 +726,14 @@ export const SettingsTabView: React.FC<Props> = ({
 
             {/* Mini Live Preview Window */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc' }}>
-                LIVE THEME PREVIEW
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)' }}>
+                  LIVE THEME PREVIEW
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--primary, #38bdf8)', fontWeight: 600 }}>
+                  Active: {themeMode.toUpperCase()}
+                </span>
+              </div>
               <div
                 style={{
                   flex: 1,
@@ -958,41 +741,37 @@ export const SettingsTabView: React.FC<Props> = ({
                   borderRadius: '10px',
                   position: 'relative',
                   overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                  background: bgType === 'color' ? bgColor : (bgType === 'image' ? `url(${bgImage}) center/cover no-repeat` : '#070b14')
+                  border: '1px solid var(--border, rgba(255,255,255,0.15))',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  background: themeMode === 'white'
+                    ? '#f8fafc'
+                    : themeMode === 'dark'
+                    ? '#09090b'
+                    : `url(${bgImage}) center/cover no-repeat`
                 }}
               >
-                {bgType === 'video' && bgVideo && (
-                  <video
-                    src={bgVideo}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      zIndex: 0
-                    }}
-                  />
-                )}
-                {/* Simulated Glass Window */}
+                {/* Simulated Window Card */}
                 <div
                   style={{
                     position: 'absolute',
                     inset: '12px',
                     borderRadius: '8px',
-                    background: `rgba(18, 22, 28, ${glassOpacity})`,
-                    backdropFilter: `blur(${blurAmount}px)`,
-                    border: '1px solid rgba(255,255,255,0.15)',
+                    background: themeMode === 'white'
+                      ? '#ffffff'
+                      : themeMode === 'dark'
+                      ? '#121215'
+                      : `rgba(18, 22, 28, ${glassOpacity})`,
+                    backdropFilter: themeMode === 'glass' ? `blur(${blurAmount}px)` : 'none',
+                    border: themeMode === 'white'
+                      ? '1px solid #e2e8f0'
+                      : themeMode === 'dark'
+                      ? '1px solid #27272a'
+                      : '1px solid rgba(255,255,255,0.15)',
                     padding: '8px 12px',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    boxShadow: themeMode === 'white' ? '0 2px 10px rgba(0,0,0,0.06)' : 'none'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1001,21 +780,21 @@ export const SettingsTabView: React.FC<Props> = ({
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e' }} />
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f' }} />
                     </div>
-                    <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '9px', fontWeight: 800, color: themeMode === 'white' ? '#0284c7' : '#38bdf8', fontFamily: 'monospace' }}>
                       SALE BILL #626
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontSize: '10px', fontWeight: 800, color: '#f8fafc' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 800, color: themeMode === 'white' ? '#0f172a' : '#f8fafc' }}>
                         Aluminium Ingot 6063
                       </div>
-                      <div style={{ fontSize: '8px', color: '#94a3b8' }}>
+                      <div style={{ fontSize: '8px', color: themeMode === 'white' ? '#64748b' : '#94a3b8' }}>
                         QTY: 120 • CAP: 95/80
                       </div>
                     </div>
-                    <span style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 900, color: '#10b981', fontFamily: 'monospace' }}>
                       ₹38,300
                     </span>
                   </div>

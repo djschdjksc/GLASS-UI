@@ -1,154 +1,198 @@
 import type { ThemeConfig } from 'antd';
+import { theme as antdTheme } from 'antd';
+
+export type AppThemeMode = 'dark' | 'white' | 'glass';
 
 /**
- * Ant Design Glass Morphism Dark Theme
- * Matches the project's Apple-style dark Glass UI
+ * Unified Ant Design Themes for Modern Summary App
+ * Supports:
+ * - 'dark': shadcn-inspired slick dark theme (obsidian / zinc canvas)
+ * - 'white': shadcn-inspired clean white theme (crisp surfaces, high contrast)
+ * - 'glass': frosted glassmorphism dark theme (liquid retina translucent)
  */
-export const glassAntdTheme: ThemeConfig = {
-  token: {
-    // Colors
-    colorPrimary: '#38bdf8',
-    colorBgBase: '#0a0c10',
-    colorBgContainer: 'rgba(15, 23, 42, 0.6)',
-    colorBgElevated: 'rgba(13, 21, 38, 0.96)',
-    colorBgLayout: '#0a0c10',
-    colorBgSpotlight: 'rgba(56, 189, 248, 0.15)',
-    colorBorder: 'rgba(255, 255, 255, 0.1)',
-    colorBorderSecondary: 'rgba(255, 255, 255, 0.06)',
-    colorText: '#f8fafc',
-    colorTextSecondary: '#94a3b8',
-    colorTextTertiary: '#64748b',
-    colorTextPlaceholder: '#475569',
-    colorTextDisabled: '#334155',
-    colorFill: 'rgba(255, 255, 255, 0.04)',
-    colorFillSecondary: 'rgba(255, 255, 255, 0.06)',
-    colorFillTertiary: 'rgba(255, 255, 255, 0.03)',
-    colorSuccess: '#34d399',
-    colorWarning: '#fbbf24',
-    colorError: '#f87171',
-    colorInfo: '#38bdf8',
+export function getAntdTheme(mode: AppThemeMode): ThemeConfig {
+  if (mode === 'white') {
+    return {
+      algorithm: antdTheme.defaultAlgorithm,
+      token: {
+        colorPrimary: '#0284c7',
+        colorBgBase: '#ffffff',
+        colorBgContainer: '#ffffff',
+        colorBgElevated: '#ffffff',
+        colorBgLayout: '#f8fafc',
+        colorBgSpotlight: 'rgba(2, 132, 199, 0.1)',
+        colorBorder: '#e2e8f0',
+        colorBorderSecondary: '#f1f5f9',
+        colorText: '#0f172a',
+        colorTextSecondary: '#475569',
+        colorTextTertiary: '#94a3b8',
+        colorTextPlaceholder: '#94a3b8',
+        colorTextDisabled: '#cbd5e1',
+        colorFill: '#f1f5f9',
+        colorFillSecondary: '#e2e8f0',
+        colorFillTertiary: '#f8fafc',
+        colorSuccess: '#10b981',
+        colorWarning: '#f59e0b',
+        colorError: '#ef4444',
+        colorInfo: '#0284c7',
 
-    // Typography
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    fontSize: 13,
-    fontSizeSM: 11,
-    fontSizeLG: 15,
-    fontWeightStrong: 700,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontSize: 13,
+        fontSizeSM: 11,
+        fontSizeLG: 15,
+        fontWeightStrong: 700,
 
-    // Borders
-    borderRadius: 10,
-    borderRadiusLG: 12,
-    borderRadiusSM: 8,
+        borderRadius: 8,
+        borderRadiusLG: 10,
+        borderRadiusSM: 6,
 
-    // Sizing
-    controlHeight: 36,
-    controlHeightLG: 40,
-    controlHeightSM: 28,
+        controlHeight: 34,
+        controlHeightLG: 38,
+        controlHeightSM: 26,
 
-    // Shadows
-    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-    boxShadowSecondary: '0 8px 32px rgba(0, 0, 0, 0.6)',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        boxShadowSecondary: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      },
+      components: {
+        Input: {
+          colorBgContainer: '#ffffff',
+          colorBorder: '#cbd5e1',
+          activeBorderColor: '#0284c7',
+          hoverBorderColor: '#94a3b8',
+          activeShadow: '0 0 0 2px rgba(2, 132, 199, 0.2)',
+          colorText: '#0f172a',
+          borderRadius: 8,
+        },
+        Select: {
+          colorBgContainer: '#ffffff',
+          colorBorder: '#cbd5e1',
+          colorBgElevated: '#ffffff',
+          optionActiveBg: '#f1f5f9',
+          optionSelectedBg: 'rgba(2, 132, 199, 0.1)',
+          optionSelectedColor: '#0284c7',
+          colorText: '#0f172a',
+          borderRadius: 8,
+        },
+        Button: {
+          colorPrimary: '#0284c7',
+          colorPrimaryHover: '#0369a1',
+          colorPrimaryActive: '#075985',
+          defaultBg: '#ffffff',
+          defaultBorderColor: '#e2e8f0',
+          defaultColor: '#0f172a',
+          borderRadius: 8,
+          fontWeight: 600,
+        },
+        Modal: {
+          contentBg: '#ffffff',
+          headerBg: '#ffffff',
+          titleColor: '#0f172a',
+          colorBgMask: 'rgba(15, 23, 42, 0.45)',
+          borderRadiusLG: 12,
+        },
+        Table: {
+          colorBgContainer: '#ffffff',
+          headerBg: '#f8fafc',
+          headerColor: '#475569',
+          rowHoverBg: 'rgba(2, 132, 199, 0.05)',
+          borderColor: '#e2e8f0',
+        },
+        Tag: {
+          defaultBg: '#f1f5f9',
+          defaultColor: '#0284c7',
+          borderRadiusSM: 4,
+        }
+      }
+    };
+  }
 
-    // Motion
-    motionDurationFast: '0.15s',
-    motionDurationMid: '0.3s',
-    motionDurationSlow: '0.45s',
-    motionEaseInOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
-  },
-  components: {
-    Input: {
-      colorBgContainer: 'rgba(15, 23, 42, 0.6)',
-      colorBorder: 'rgba(255, 255, 255, 0.1)',
-      activeBorderColor: '#38bdf8',
-      hoverBorderColor: 'rgba(255, 255, 255, 0.2)',
-      activeShadow: '0 0 0 3px rgba(56, 189, 248, 0.15)',
-      addonBg: 'rgba(15, 23, 42, 0.8)',
-      borderRadius: 12,
-      paddingInline: 14,
-      paddingBlock: 8,
-    },
-    Select: {
-      colorBgContainer: 'rgba(15, 23, 42, 0.6)',
-      colorBorder: 'rgba(255, 255, 255, 0.1)',
-      colorBgElevated: 'rgba(13, 21, 38, 0.98)',
-      optionActiveBg: 'rgba(56, 189, 248, 0.15)',
-      optionSelectedBg: 'rgba(56, 189, 248, 0.25)',
-      optionSelectedColor: '#38bdf8',
-      borderRadius: 12,
-      controlHeight: 36,
-    },
-    DatePicker: {
-      colorBgContainer: 'rgba(15, 23, 42, 0.6)',
-      colorBorder: 'rgba(255, 255, 255, 0.1)',
-      colorBgElevated: 'rgba(13, 21, 38, 0.98)',
-      activeBorderColor: '#38bdf8',
-      hoverBorderColor: 'rgba(255, 255, 255, 0.2)',
-      activeShadow: '0 0 0 3px rgba(56, 189, 248, 0.15)',
-      cellActiveWithRangeBg: 'rgba(56, 189, 248, 0.12)',
-      cellHoverBg: 'rgba(56, 189, 248, 0.1)',
-      borderRadius: 12,
-    },
-    Modal: {
-      contentBg: 'rgba(13, 21, 38, 0.96)',
-      headerBg: 'transparent',
-      titleColor: '#f8fafc',
-      colorBgMask: 'rgba(0, 0, 0, 0.7)',
-      borderRadiusLG: 16,
-    },
-    Button: {
-      colorPrimary: '#0ea5e9',
-      colorPrimaryHover: '#38bdf8',
-      colorPrimaryActive: '#0284c7',
-      defaultBg: 'rgba(255, 255, 255, 0.06)',
-      defaultBorderColor: 'rgba(255, 255, 255, 0.12)',
-      defaultColor: '#f8fafc',
-      borderRadius: 10,
-      fontWeight: 700,
-    },
-    Table: {
-      colorBgContainer: 'transparent',
-      headerBg: 'rgba(0, 0, 0, 0.3)',
-      headerColor: '#94a3b8',
-      rowHoverBg: 'rgba(56, 189, 248, 0.06)',
-      borderColor: 'rgba(255, 255, 255, 0.06)',
-      headerSplitColor: 'rgba(255, 255, 255, 0.06)',
-    },
-    Tooltip: {
-      colorBgSpotlight: 'rgba(13, 21, 38, 0.95)',
-      colorTextLightSolid: '#f8fafc',
-      borderRadius: 8,
-    },
-    Dropdown: {
-      colorBgElevated: 'rgba(13, 21, 38, 0.98)',
-      controlItemBgHover: 'rgba(56, 189, 248, 0.1)',
-      controlItemBgActive: 'rgba(56, 189, 248, 0.2)',
-      borderRadiusLG: 12,
-    },
-    Popover: {
-      colorBgElevated: 'rgba(13, 21, 38, 0.98)',
-      borderRadiusLG: 12,
-    },
-    Tag: {
-      defaultBg: 'rgba(56, 189, 248, 0.12)',
-      defaultColor: '#38bdf8',
-      borderRadiusSM: 6,
-    },
-    Switch: {
-      colorPrimary: '#0ea5e9',
-      colorPrimaryHover: '#38bdf8',
-    },
-    Checkbox: {
-      colorPrimary: '#0ea5e9',
-      colorPrimaryHover: '#38bdf8',
-      colorBgContainer: 'rgba(15, 23, 42, 0.6)',
-      colorBorder: 'rgba(255, 255, 255, 0.2)',
-    },
-    Notification: {
-      colorBgElevated: 'rgba(13, 21, 38, 0.96)',
+  // Dark or Glass
+  const isGlass = mode === 'glass';
+  return {
+    algorithm: antdTheme.darkAlgorithm,
+    token: {
+      colorPrimary: '#38bdf8',
+      colorBgBase: isGlass ? '#0a0c10' : '#09090b',
+      colorBgContainer: isGlass ? 'rgba(15, 23, 42, 0.6)' : '#121215',
+      colorBgElevated: isGlass ? 'rgba(13, 21, 38, 0.96)' : '#18181b',
+      colorBgLayout: isGlass ? '#0a0c10' : '#09090b',
+      colorBgSpotlight: 'rgba(56, 189, 248, 0.15)',
+      colorBorder: isGlass ? 'rgba(255, 255, 255, 0.1)' : '#27272a',
+      colorBorderSecondary: isGlass ? 'rgba(255, 255, 255, 0.06)' : '#1f1f23',
       colorText: '#f8fafc',
+      colorTextSecondary: '#94a3b8',
+      colorTextTertiary: '#64748b',
+      colorTextPlaceholder: '#475569',
+      colorTextDisabled: '#334155',
+      colorFill: 'rgba(255, 255, 255, 0.04)',
+      colorFillSecondary: 'rgba(255, 255, 255, 0.06)',
+      colorFillTertiary: 'rgba(255, 255, 255, 0.03)',
+      colorSuccess: '#34d399',
+      colorWarning: '#fbbf24',
+      colorError: '#f87171',
+      colorInfo: '#38bdf8',
+
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontSize: 13,
+      fontSizeSM: 11,
+      fontSizeLG: 15,
+      fontWeightStrong: 700,
+
+      borderRadius: 8,
+      borderRadiusLG: 12,
+      borderRadiusSM: 6,
+
+      controlHeight: 34,
+      controlHeightLG: 38,
+      controlHeightSM: 26,
+
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+      boxShadowSecondary: '0 8px 32px rgba(0, 0, 0, 0.6)',
     },
-    Message: {
-      contentBg: 'rgba(13, 21, 38, 0.96)',
-    },
-  },
-};
+    components: {
+      Input: {
+        colorBgContainer: isGlass ? 'rgba(15, 23, 42, 0.6)' : '#18181b',
+        colorBorder: isGlass ? 'rgba(255, 255, 255, 0.1)' : '#27272a',
+        activeBorderColor: '#38bdf8',
+        hoverBorderColor: 'rgba(255, 255, 255, 0.25)',
+        activeShadow: '0 0 0 2px rgba(56, 189, 248, 0.2)',
+        borderRadius: 8,
+      },
+      Select: {
+        colorBgContainer: isGlass ? 'rgba(15, 23, 42, 0.6)' : '#18181b',
+        colorBorder: isGlass ? 'rgba(255, 255, 255, 0.1)' : '#27272a',
+        colorBgElevated: isGlass ? 'rgba(13, 21, 38, 0.98)' : '#18181b',
+        optionActiveBg: 'rgba(56, 189, 248, 0.15)',
+        optionSelectedBg: 'rgba(56, 189, 248, 0.25)',
+        optionSelectedColor: '#38bdf8',
+        borderRadius: 8,
+      },
+      Modal: {
+        contentBg: isGlass ? 'rgba(13, 21, 38, 0.96)' : '#121215',
+        headerBg: 'transparent',
+        titleColor: '#f8fafc',
+        colorBgMask: 'rgba(0, 0, 0, 0.7)',
+        borderRadiusLG: 14,
+      },
+      Button: {
+        colorPrimary: '#0ea5e9',
+        colorPrimaryHover: '#38bdf8',
+        colorPrimaryActive: '#0284c7',
+        defaultBg: isGlass ? 'rgba(255, 255, 255, 0.06)' : '#18181b',
+        defaultBorderColor: isGlass ? 'rgba(255, 255, 255, 0.12)' : '#27272a',
+        defaultColor: '#f8fafc',
+        borderRadius: 8,
+        fontWeight: 600,
+      },
+      Table: {
+        colorBgContainer: 'transparent',
+        headerBg: isGlass ? 'rgba(0, 0, 0, 0.3)' : '#18181b',
+        headerColor: '#94a3b8',
+        rowHoverBg: 'rgba(56, 189, 248, 0.06)',
+        borderColor: isGlass ? 'rgba(255, 255, 255, 0.06)' : '#27272a',
+      }
+    }
+  };
+}
+
+export const glassAntdTheme = getAntdTheme('glass');

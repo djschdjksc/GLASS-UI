@@ -48,14 +48,16 @@ interface Props {
   onBackToBill: () => void;
   onLoadBillToEditor?: (bill: any) => void;
   onSelectPartyForBill?: (partyName: string) => void;
-  bgType: 'image' | 'color' | 'video';
-  onChangeBgType: (t: 'image' | 'color' | 'video') => void;
+  themeMode?: 'dark' | 'white' | 'glass';
+  onChangeThemeMode?: (m: 'dark' | 'white' | 'glass') => void;
+  bgType?: 'image' | 'color' | 'video';
+  onChangeBgType?: (t: 'image' | 'color' | 'video') => void;
   bgImage: string;
   onSelectBgImage: (url: string) => void;
   bgVideo?: string;
   onSelectBgVideo?: (url: string) => void;
-  bgColor: string;
-  onChangeBgColor: (c: string) => void;
+  bgColor?: string;
+  onChangeBgColor?: (c: string) => void;
   blurAmount: number;
   onChangeBlur: (val: number) => void;
   overlayOpacity: number;
@@ -107,6 +109,8 @@ export const OtherTabsView: React.FC<Props> = ({
   onBackToBill,
   onLoadBillToEditor,
   onSelectPartyForBill,
+  themeMode = 'dark',
+  onChangeThemeMode,
   bgType,
   onChangeBgType,
   bgImage,
@@ -2417,14 +2421,12 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* ========================================================================= */}
       {activeTab === 'F10' && (
         <SettingsTabView
+          themeMode={themeMode}
+          onChangeThemeMode={onChangeThemeMode}
           bgType={bgType}
           onChangeBgType={onChangeBgType}
           bgImage={bgImage}
           onSelectBgImage={onSelectBgImage}
-          bgVideo={bgVideo || ''}
-          onSelectBgVideo={onSelectBgVideo || (() => {})}
-          bgColor={bgColor}
-          onChangeBgColor={onChangeBgColor}
           blurAmount={blurAmount}
           onChangeBlur={onChangeBlur}
           overlayOpacity={overlayOpacity}

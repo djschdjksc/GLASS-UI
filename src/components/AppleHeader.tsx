@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import type { BillHeader } from '../types';
 import { AppleTrafficLights } from './AppleTrafficLights';
-import { Plus, Check, ChevronDown, Calendar } from 'lucide-react';
+import { Plus, Check, ChevronDown, Calendar, Moon, Sun, Sparkles, MessageSquare } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
+import { ShadcnDatePicker } from './common/ShadcnDatePicker';
+import { macAudio } from '../utils/macAudio';
 
 interface Props {
   header: BillHeader;
@@ -11,6 +13,10 @@ interface Props {
   onAddNewParty: (name: string) => void;
   onSkipBill?: () => void;
   onSaveBill?: () => void;
+  themeMode?: 'dark' | 'white' | 'glass';
+  onChangeThemeMode?: (mode: 'dark' | 'white' | 'glass') => void;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 const COMMON_PARTIES = [
@@ -37,7 +43,11 @@ export const AppleHeader: React.FC<Props> = ({
   onCloseApp, 
   onAddNewParty, 
   onSkipBill,
-  onSaveBill 
+  onSaveBill,
+  themeMode = 'dark',
+  onChangeThemeMode,
+  onToggleChat,
+  isChatOpen = false
 }) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
   const [partyList, setPartyList] = useState<string[]>(REAL_PARTIES);
@@ -246,38 +256,156 @@ export const AppleHeader: React.FC<Props> = ({
           />
         </div>
 
-        {/* Polished Apple Date Picker */}
-        <div style={{ position: 'relative', width: '135px' }}>
-          <input
-            data-np-target="1-5"
-            type="date"
-            className="apple-input"
-            value={header.date}
-            onChange={(e) => onChange({ date: e.target.value })}
-            style={{ 
-              width: '100%', 
-              cursor: 'pointer', 
-              colorScheme: 'dark', 
-              paddingLeft: '28px',
-              fontWeight: 500
-            }}
-          />
-          <Calendar 
-            size={13} 
-            style={{ 
-              position: 'absolute', 
-              left: '9px', 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              color: '#38bdf8', 
-              pointerEvents: 'none' 
-            }} 
-          />
-        </div>
+        {/* Modern Shadcn Date Picker */}
+        <ShadcnDatePicker
+          value={header.date}
+          onChange={(newDate) => onChange({ date: newDate })}
+          placeholder="Bill Date"
+        />
       </div>
 
-      {/* Red Token Badge */}
+      {/* Right Controls: 3-Mode Theme Switcher, Chat AI Button, Token Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* 3-Mode Theme Switcher (Dark / White / Glass) */}
+        {onChangeThemeMode && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'var(--secondary, rgba(255, 255, 255, 0.06))',
+              border: '1px solid var(--border, rgba(255, 255, 255, 0.1))',
+              borderRadius: '8px',
+              padding: '2px',
+              gap: '2px'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                macAudio.playClick();
+                onChangeThemeMode('dark');
+              }}
+              title="Dark Mode (shadcn dark)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: 'none',
+                background: themeMode === 'dark' ? 'var(--card, #1e1e24)' : 'transparent',
+                color: themeMode === 'dark' ? 'var(--primary, #38bdf8)' : 'var(--muted-foreground, #94a3b8)',
+                boxShadow: themeMode === 'dark' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Moon size={11} />
+              <span>Dark</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                macAudio.playClick();
+                onChangeThemeMode('white');
+              }}
+              title="White Mode (shadcn white)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: 'none',
+                background: themeMode === 'white' ? '#ffffff' : 'transparent',
+                color: themeMode === 'white' ? '#0284c7' : 'var(--muted-foreground, #94a3b8)',
+                boxShadow: themeMode === 'white' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Sun size={11} />
+              <span>White</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                macAudio.playClick();
+                onChangeThemeMode('glass');
+              }}
+              title="Glass Mode (Liquid Retina)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: 'none',
+                background: themeMode === 'glass' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                color: themeMode === 'glass' ? '#38bdf8' : 'var(--muted-foreground, #94a3b8)',
+                boxShadow: themeMode === 'glass' ? '0 0 8px rgba(56, 189, 248, 0.3)' : 'none',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Sparkles size={11} />
+              <span>Glass</span>
+            </button>
+          </div>
+        )}
+
+        {/* Chat Assistant Toggle Button */}
+        {onToggleChat && (
+          <button
+            type="button"
+            onClick={() => {
+              macAudio.playClick();
+              onToggleChat();
+            }}
+            title="Open Billing Assistant & Chat (Ctrl+J)"
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 10px',
+              borderRadius: '7px',
+              background: isChatOpen
+                ? 'linear-gradient(135deg, #0284c7, #38bdf8)'
+                : 'var(--card, rgba(255, 255, 255, 0.08))',
+              border: isChatOpen
+                ? '1px solid #38bdf8'
+                : '1px solid var(--border, rgba(255, 255, 255, 0.12))',
+              color: isChatOpen ? '#ffffff' : 'var(--foreground, #f8fafc)',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.18s ease',
+              boxShadow: isChatOpen ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none'
+            }}
+          >
+            <MessageSquare size={13} color={isChatOpen ? '#ffffff' : 'var(--primary, #38bdf8)'} />
+            <span>Chat AI</span>
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#10b981'
+              }}
+            />
+          </button>
+        )}
+
+        {/* Red Token Badge */}
         <div 
           data-np-target="1-6"
           className="apple-token-badge"
