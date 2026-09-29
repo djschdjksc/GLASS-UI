@@ -56,9 +56,6 @@ interface Props {
   onTogglePartyCodeCol?: (enabled: boolean) => void;
   onLoadOldPrice?: () => void;
   highlightedCells?: Set<string>;
-  highlightedRowIds?: Set<string>;
-  onActiveRowChange?: (rowIndex: number | null, item: RawItem | null) => void;
-  onHoverRowChange?: (rowIndex: number | null, item: RawItem | null) => void;
 }
 
 const DEFAULT_LEFT_COLS = {
@@ -97,10 +94,7 @@ export const LeftGrid: React.FC<Props> = ({
   hasPartyCodeCol: propsHasPartyCodeCol,
   onTogglePartyCodeCol,
   onLoadOldPrice,
-  highlightedCells,
-  highlightedRowIds,
-  onActiveRowChange,
-  onHoverRowChange
+  highlightedCells
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -301,15 +295,6 @@ export const LeftGrid: React.FC<Props> = ({
     }
     return list;
   }, [items, searchQuery, sortField, sortOrder]);
-
-  // Broadcast active row change to parent for Right Grid QTY highlighting
-  useEffect(() => {
-    if (activeCell && activeCell.r !== null && activeCell.r >= 0 && activeCell.r < filteredItems.length) {
-      onActiveRowChange?.(activeCell.r, filteredItems[activeCell.r]);
-    } else {
-      onActiveRowChange?.(null, null);
-    }
-  }, [activeCell, filteredItems, onActiveRowChange]);
 
   const totalQty = items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
   const totalUCap = items.reduce((acc, it) => acc + (Number(it.uCap) || 0), 0);
@@ -1442,23 +1427,18 @@ export const LeftGrid: React.FC<Props> = ({
               </th>
             </tr>
           </thead>
-          <tbody onMouseLeave={() => onHoverRowChange?.(null, null)}>
+          <tbody>
             {filteredItems.map((item, rIdx) => {
               const isRowSelected = isActiveTable && selectedRows.includes(rIdx);
               const isRowActive = isActiveTable && activeCell?.r === rIdx;
-              const isRowSourceHighlighted = Boolean(
-                highlightedRowIds && (highlightedRowIds.has(item.id) || highlightedRowIds.has(String(rIdx)))
-              );
 
               return (
                 <tr 
                   key={item.id} 
                   className={
                     (isRowSelected ? 'row-selected ' : '') + 
-                    (dragOverRowIndex === rIdx ? 'drag-over-active ' : '') +
-                    (isRowSourceHighlighted ? 'summary-row-highlight ' : '')
+                    (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')
                   }
-                  onMouseEnter={() => onHoverRowChange?.(rIdx, item)}
                   onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                 >
                   {/* Row Index */}
@@ -1471,8 +1451,7 @@ export const LeftGrid: React.FC<Props> = ({
                       cursor: 'pointer', 
                       userSelect: 'none',
                       position: 'relative',
-                      padding: 0,
-                      borderLeft: isRowSourceHighlighted ? '3px solid #38bdf8' : undefined
+                      padding: 0
                     }}
                     className={(isRowActive ? 'row-header-active ' : '') + (isRowSelected ? 'row-header-selected ' : '') + 'row-header-draggable'}
                     draggable
@@ -1520,46 +1499,38 @@ export const LeftGrid: React.FC<Props> = ({
                     />
                   </td>
 
-                  {/* Col 0: ITEM NAME */}
-                  {(() => {
-                    const isNameHighlighted = Boolean(
-                      highlightedCells && (highlightedCells.has(`${item.id}:name`) || highlightedCells.has(`${rIdx}:name`))
-                    );
-                    return (
-                      <td 
-                        style={{ width: `${colWidths.name}px`, height: `${rowHeight}px`, padding: 0 }}
-                        className={
-                          ((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + 
-                          ((isActiveTable && selectedCellKeys.has(rIdx + '-0')) ? 'cell-selected ' : '') +
-                          (isNameHighlighted ? 'summary-source-highlight ' : '')
-                        }
-                      >
-                        <input
-                          id={'left-cell-' + rIdx + '-0'}
-                          type="text"
-                          className="excel-cell-input"
-                          value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.name || '')}
-                          onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
-                          onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
-                          onPaste={(e) => handleInputPaste(rIdx, 0, e)}
-                          onFocus={() => {
-                            onActivateTable?.();
-                            setActiveCell({ r: rIdx, c: 0 });
-                            setAnchorCell({ r: rIdx, c: 0 });
-                            setSelectedCellKeys(new Set([`${rIdx}-0`]));
-                            setSelectedCol(null);
-                            setSelectedRows([]);
-                          }}
-                          onChange={(e) => {
-                            const rawVal = e.target.value;
-                            setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
-                          }}
-                          onBlur={() => commitCell(rIdx, 0, 'name')}
-                          onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
-                        />
-                      </td>
-                    );
-                  })()}
+                  {/* Col 0: ITEM NAME (Never highlighted, as requested: "OR ITEM COLUMN NA HO") */}
+                  <td 
+                    style={{ width: `${colWidths.name}px`, height: `${rowHeight}px`, padding: 0 }}
+                    className={
+                      ((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + 
+                      ((isActiveTable && selectedCellKeys.has(rIdx + '-0')) ? 'cell-selected ' : '')
+                    }
+                  >
+                    <input
+                      id={'left-cell-' + rIdx + '-0'}
+                      type="text"
+                      className="excel-cell-input"
+                      value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.name || '')}
+                      onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
+                      onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
+                      onPaste={(e) => handleInputPaste(rIdx, 0, e)}
+                      onFocus={() => {
+                        onActivateTable?.();
+                        setActiveCell({ r: rIdx, c: 0 });
+                        setAnchorCell({ r: rIdx, c: 0 });
+                        setSelectedCellKeys(new Set([`${rIdx}-0`]));
+                        setSelectedCol(null);
+                        setSelectedRows([]);
+                      }}
+                      onChange={(e) => {
+                        const rawVal = e.target.value;
+                        setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
+                      }}
+                      onBlur={() => commitCell(rIdx, 0, 'name')}
+                      onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
+                    />
+                  </td>
 
                   {/* Col 1 (Optional): PARTY CODE */}
                   {hasPartyCodeCol && (
