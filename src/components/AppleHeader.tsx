@@ -184,6 +184,7 @@ export const AppleHeader: React.FC<Props> = ({
                 {filteredParties.map((party, idx) => (
                   <div
                     key={party}
+                    className="anim-cascade"
                     onClick={() => {
                       onChange({ partyName: party });
                       setShowPartySuggestions(false);
@@ -196,10 +197,10 @@ export const AppleHeader: React.FC<Props> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      background: focusedIndex === idx ? 'rgba(0, 113, 227, 0.4)' : 'transparent'
+                      background: focusedIndex === idx ? 'rgba(0, 113, 227, 0.4)' : 'transparent',
+                      animationDelay: `${Math.min(idx, 10) * 0.025}s`
                     }}
                     onMouseEnter={() => setFocusedIndex(idx)}
-                    
                   >
                     <span>{party}</span>
                     {header.partyName === party && <Check size={12} color="#34c759" />}

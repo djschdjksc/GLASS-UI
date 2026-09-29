@@ -8,6 +8,12 @@ export interface UnsavedChangesModalProps {
   onDiscard?: () => void;
   onKeep?: () => void;
   onCancel?: () => void;
+  /** Custom label for the discard/action button */
+  discardLabel?: string;
+  /** Custom label for the modal title */
+  titleText?: string;
+  /** Custom description text */
+  descText?: string;
 }
 
 export default function UnsavedChangesModal({
@@ -16,6 +22,9 @@ export default function UnsavedChangesModal({
   onDiscard,
   onKeep,
   onCancel,
+  discardLabel,
+  titleText,
+  descText,
 }: UnsavedChangesModalProps) {
   const handleDiscardAction = onDiscard || onKeep;
 
@@ -27,17 +36,17 @@ export default function UnsavedChangesModal({
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
 
-      if (e.key === "1" || e.code === "Numpad1") {
+      if (onSave && (e.key === "1" || e.code === "Numpad1")) {
         e.preventDefault();
         e.stopPropagation();
         macAudio.playSuccess();
         onSave?.();
-      } else if (e.key === "2" || e.code === "Numpad2") {
+      } else if (e.key === "2" || e.code === "Numpad2" || (!onSave && (e.key === "1" || e.code === "Numpad1"))) {
         e.preventDefault();
         e.stopPropagation();
         macAudio.playClick();
         handleDiscardAction?.();
-      } else if (e.key === "3" || e.code === "Numpad3" || e.key === "Escape") {
+      } else if (e.key === "3" || e.code === "Numpad3" || e.key === "Escape" || (!onSave && (e.key === "2" || e.code === "Numpad2"))) {
         e.preventDefault();
         e.stopPropagation();
         macAudio.playClick();
@@ -61,7 +70,7 @@ export default function UnsavedChangesModal({
       }}
     >
       <div
-        className="unsaved-modal"
+        className="unsaved-modal anim-pop"
         role="dialog"
         aria-modal="true"
         aria-labelledby="unsaved-title"
@@ -84,48 +93,48 @@ export default function UnsavedChangesModal({
           {/* Text */}
           <div className="modal-text">
             <h2 id="unsaved-title">
-              Unsaved Changes in Bill #{billNumber}
+              {titleText || `Unsaved Changes in Bill #${billNumber}`}
             </h2>
 
             <p>
-              Aapne is bill me changes kiye hain.
-              <br />
-              Kya aap ise save karna chahte hain?
+              {descText ? descText : (<>Aapne is bill me changes kiye hain.<br />Kya aap ise save karna chahte hain?</>)}
             </p>
           </div>
         </div>
 
-        {/* Actions: Save & Clear [1] | Discard & Clear [2] | Keep Editing [3] */}
+        {/* Actions */}
         <div className="modal-actions">
-          {/* 1: Save & Clear */}
-          <button
-            type="button"
-            className="action-btn save-btn"
-            onClick={() => {
-              macAudio.playSuccess();
-              onSave?.();
-            }}
-            onMouseEnter={() => macAudio.playHover()}
-            autoFocus
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {/* 1: Save & Clear — only shown when onSave is provided */}
+          {onSave && (
+            <button
+              type="button"
+              className="action-btn save-btn"
+              onClick={() => {
+                macAudio.playSuccess();
+                onSave?.();
+              }}
+              onMouseEnter={() => macAudio.playHover()}
+              autoFocus={!!onSave}
             >
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
 
-            <span>Save &amp; Clear</span>
-            <kbd>1</kbd>
-          </button>
+              <span>Save &amp; Clear</span>
+              <kbd>1</kbd>
+            </button>
+          )}
 
-          {/* 2: Discard & Clear */}
+          {/* 2: Discard / Delete */}
           <button
             type="button"
             className="action-btn discard-btn"
@@ -134,6 +143,8 @@ export default function UnsavedChangesModal({
               handleDiscardAction?.();
             }}
             onMouseEnter={() => macAudio.playHover()}
+            autoFocus={!onSave}
+            style={!onSave ? { background: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.5)' } : undefined}
           >
             <svg
               viewBox="0 0 24 24"
@@ -149,11 +160,11 @@ export default function UnsavedChangesModal({
               <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
 
-            <span>Discard &amp; Clear</span>
-            <kbd>2</kbd>
+            <span>{discardLabel || 'Discard &amp; Clear'}</span>
+            <kbd>{onSave ? '2' : '1'}</kbd>
           </button>
 
-          {/* 3: Keep Editing */}
+          {/* 3: Keep Editing / Cancel */}
           <button
             type="button"
             className="action-btn cancel-btn"
@@ -175,8 +186,8 @@ export default function UnsavedChangesModal({
               <path d="M3 3v5h5" />
             </svg>
 
-            <span>Keep Editing</span>
-            <kbd>3</kbd>
+            <span>Cancel</span>
+            <kbd>{onSave ? '3' : '2'}</kbd>
           </button>
         </div>
       </div>

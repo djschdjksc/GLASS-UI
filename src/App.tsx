@@ -152,6 +152,43 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const isCalculatorOpenRef = useRef(false);
   isCalculatorOpenRef.current = isCalculatorOpen;
 
+  // Global Scroll Reveal via IntersectionObserver
+  // Any element with class "scroll-reveal" will animate when it enters the viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target); // Only animate once
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
+    );
+
+    // Observe existing elements + watch for new ones via MutationObserver
+    const observeAll = () => {
+      document.querySelectorAll('.scroll-reveal:not(.visible)').forEach((el) => {
+        observer.observe(el);
+      });
+    };
+
+    observeAll();
+
+    const mutationObserver = new MutationObserver(() => {
+      observeAll();
+    });
+
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, []);
+
+
   // 1. Persisted Header (fallback to real SQLite bill if empty or dummy)
   const [header, setHeader] = useState<BillHeader>(() => {
     const saved = loadStored('modern_app_header', INITIAL_HEADER);
@@ -245,6 +282,43 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           }, 2500);
         }
       }, 50);
+      return;
+    }
+
+    // 1. Validation: Left table must have at least one item with a name
+    const itemsWithName = (rawItems || []).filter(r => (r.name || '').trim() !== '');
+    if (itemsWithName.length === 0) {
+      showToast('⚠️ Left table mein kam se kam ek item ka naam hona chahiye!', 'warning');
+      try { macAudio.playPop(); } catch {}
+      setActiveTab('F1');
+      setActiveTable('left');
+      setTimeout(() => {
+        const firstCell = document.getElementById('left-cell-0-0') as HTMLInputElement | null;
+        if (firstCell) {
+          firstCell.focus();
+          firstCell.style.borderColor = '#ef4444';
+          firstCell.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.45)';
+          setTimeout(() => {
+            firstCell.style.borderColor = '';
+            firstCell.style.boxShadow = '';
+          }, 2500);
+        }
+      }, 50);
+      return;
+    }
+
+    // 2. Validation: At least one item must have a quantity > 0 in any column (qty, uCap, lCap, or any dynamic col)
+    const hasAnyQty = (rawItems || []).some(r => {
+      if ((Number(r.qty) || 0) > 0) return true;
+      if ((Number(r.uCap) || 0) > 0) return true;
+      if ((Number(r.lCap) || 0) > 0) return true;
+      return dynamicCols.some(dc => (Number((r as any)[dc.field]) || 0) > 0);
+    });
+    if (!hasAnyQty) {
+      showToast('⚠️ Kam se kam ek row mein koi quantity honi chahiye! (qty, uCap, lCap, ya koi bhi size column)', 'warning');
+      try { macAudio.playPop(); } catch {}
+      setActiveTab('F1');
+      setActiveTable('left');
       return;
     }
 

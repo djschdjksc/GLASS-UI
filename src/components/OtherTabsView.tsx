@@ -1,7 +1,7 @@
 import { ControlPanelView } from './ControlPanelView';
 import { SettingsTabView } from './SettingsTabView';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { NavKey } from '../types';
 import { macAudio } from '../utils/macAudio';
 import { extractSizeFromColLabel } from '../utils/mouldUtils';
@@ -45,6 +45,8 @@ import {
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { downloadCSV } from '../utils/exportCsv';
 import { BillPrintModal } from './BillPrintModal';
+import UnsavedChangesModal from './UnsavedChangesModal';
+import { LockScreenStack } from './LockScreenStack';
 
 interface Props {
   activeTab: NavKey;
@@ -134,7 +136,7 @@ export const OtherTabsView: React.FC<Props> = ({
   onSetTableFontSize: _onSetTableFontSize
 }) => {
   // Live reactive Database Context
-  const { bills, parties, stockItems, ledgerEntries, saveParty, deleteParty } = useDatabase();
+  const { bills, parties, stockItems, ledgerEntries, saveParty, deleteParty, deleteBill } = useDatabase();
   const { rowHeightPx } = useSettings();
 
   const activeRowHeight = propRowHeight || rowHeightPx || 28;
@@ -319,6 +321,7 @@ export const OtherTabsView: React.FC<Props> = ({
   const [selectedRawRowIdx, setSelectedRawRowIdx] = useState<number>(0);
   const [selectedFinishedRowIdx, setSelectedFinishedRowIdx] = useState<number>(0);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
+  const [deleteConfirmBillId, setDeleteConfirmBillId] = useState<string | null>(null);
 
   // Refs for auto-scrolling
   const billsListRef = useRef<HTMLDivElement>(null);
@@ -368,6 +371,51 @@ export const OtherTabsView: React.FC<Props> = ({
     }
   };
 
+  // Dynamic Real-time iOS Bottom Stack & Crawl Physics while scrolling
+  const updateCardStackEffects = useCallback(() => {
+    const container = billsListRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    const H = containerRect.height;
+    if (H <= 0) return;
+
+    billItemRefs.current.forEach((el) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const distFromBottom = rect.bottom - containerRect.bottom;
+
+      if (distFromBottom <= 2) {
+        // Fully inside view — normal full size card
+        el.style.transform = 'translateY(0px) scale(1)';
+        el.style.opacity = '1';
+        el.style.zIndex = '1';
+        el.style.filter = 'none';
+      } else {
+        // At or crossing bottom edge — smoothly stack & crawl!
+        const cardH = rect.height || 68;
+        const rel = distFromBottom / cardH;
+        const step = Math.min(rel, 3.5);
+
+        const translateY = -step * 16;
+        const scale = Math.max(0.85, 1 - step * 0.05);
+        const opacity = Math.max(0.18, 1 - step * 0.22);
+        const zIndex = Math.max(1, 100 - Math.round(step * 10));
+
+        el.style.transform = `translateY(${translateY}px) scale(${scale})`;
+        el.style.opacity = String(opacity);
+        el.style.zIndex = String(zIndex);
+        el.style.filter = 'none'; // NEVER BLUR! 100% Crisp
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateCardStackEffects();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [filteredBills, updateCardStackEffects]);
+
   // Continuous auto-scrolling when hovering near top/bottom of saved invoices list
   const handleBillsMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const container = billsListRef.current;
@@ -387,6 +435,7 @@ export const OtherTabsView: React.FC<Props> = ({
       const stepScroll = () => {
         if (container) {
           container.scrollTop += step;
+          updateCardStackEffects();
           autoScrollTimerRef.current = requestAnimationFrame(stepScroll);
         }
       };
@@ -397,7 +446,8 @@ export const OtherTabsView: React.FC<Props> = ({
       const step = Math.max(2, Math.round(ratio * 15));
       const stepScroll = () => {
         if (container) {
-          container.scrollTop += step;
+          container.scrollTop -= step;
+          updateCardStackEffects();
           autoScrollTimerRef.current = requestAnimationFrame(stepScroll);
         }
       };
@@ -493,6 +543,14 @@ export const OtherTabsView: React.FC<Props> = ({
           } else {
             onBackToBill();
           }
+          return;
+        }
+
+        // Delete key: open delete confirmation dialog for selected bill
+        if (e.key === 'Delete' && selectedBill && selectedBill.id !== 'empty') {
+          e.preventDefault();
+          macAudio.playPop();
+          setDeleteConfirmBillId(selectedBill.id);
           return;
         }
       }
@@ -1194,112 +1252,20 @@ export const OtherTabsView: React.FC<Props> = ({
                 />
               </div>
 
-            {/* Smooth Scroll Container with Top/Bottom Gradient Masks */}
-            <div className="scroll-list-container" style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-              <div className="top-gradient" />
-
-              <div 
-                ref={billsListRef}
-                className="scroll-list"
-                onMouseMove={handleBillsMouseMove}
-                onMouseLeave={handleBillsMouseLeave}
-                style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', scrollBehavior: 'smooth' }}
-              >
-              {filteredBills.length === 0 ? (
-                <div style={{
-                  padding: '36px 16px',
-                  textAlign: 'center',
-                  color: '#64748b',
-                  fontSize: '11px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}>
-                  <History size={28} style={{ opacity: 0.3 }} />
-                  <span>No {historySubTab.replace('_', ' ')} records found</span>
-                </div>
-              ) : (
-                filteredBills.map((b, idx) => {
-                  const isSelected = selectedBill.id === b.id;
-                  return (
-                    <div
-                      key={b.id}
-                      ref={el => { billItemRefs.current[idx] = el; }}
-                      onClick={() => {
-                        macAudio.playClick();
-                        setSelectedBillId(b.id);
-                        setF2FocusArea('bills');
-                      }}
-                      onMouseEnter={() => {
-                        macAudio.playHover();
-                        setSelectedBillId(b.id);
-                        setF2FocusArea('bills');
-                      }}
-                      onDoubleClick={() => {
-                        if (onLoadBillToEditor) onLoadBillToEditor(b);
-                      }}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        background: isSelected 
-                          ? 'rgba(0, 122, 255, 0.22)' 
-                          : 'rgba(255, 255, 255, 0.02)',
-                        border: isSelected 
-                          ? '1px solid rgba(56, 189, 248, 0.45)' 
-                          : '1px solid rgba(255, 255, 255, 0.04)',
-                        boxShadow: isSelected 
-                          ? '0 2px 10px rgba(0, 122, 255, 0.25), inset 2px 0 0 #007aff' 
-                          : 'none',
-                        transition: 'all 0.12s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-                        <span style={{ 
-                          fontSize: '11px', 
-                          fontWeight: 800, 
-                          color: isSelected ? '#ffffff' : '#38bdf8' 
-                        }}>
-                          #{b.token}
-                        </span>
-                        <span style={{ fontSize: '10px', color: '#e2e8f0' }}>{b.date}</span>
-                      </div>
-
-                      <div style={{ 
-                        fontSize: '12px', 
-                        fontWeight: 600, 
-                        color: isSelected ? '#ffffff' : '#f1f5f9',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {b.party}
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-                        <span style={{
-                          fontSize: '9px',
-                          fontWeight: 700,
-                          padding: '1px 5px',
-                          borderRadius: '3px',
-                          background: b.docType === 'SALE BILL' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(52, 211, 153, 0.15)',
-                          color: b.docType === 'SALE BILL' ? '#38bdf8' : '#34d399'
-                        }}>
-                          {b.docType}
-                        </span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
-                          ₹{b.total.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+              {/* iPhone 3D Notification Stack & Crawl View (LockScreenStack) */}
+              <div style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <LockScreenStack
+                  bills={filteredBills}
+                  selectedBillId={selectedBill.id}
+                  onSelectBill={(b) => {
+                    setSelectedBillId(b.id);
+                    setF2FocusArea('bills');
+                  }}
+                  onDoubleClickBill={(b) => {
+                    if (onLoadBillToEditor) onLoadBillToEditor(b);
+                  }}
+                />
               </div>
-              <div className="bottom-gradient" />
-            </div>
           </div>
 
           {/* RIGHT 74%: Selected Bill Header & Dual Tables */}
@@ -1390,6 +1356,27 @@ export const OtherTabsView: React.FC<Props> = ({
                 >
                   <FileSpreadsheet size={13} color="#10b981" />
                 </button>
+                {/* Delete Bill Button */}
+                {selectedBill && selectedBill.id !== 'empty' && (
+                  <button
+                    type="button"
+                    className="mac-btn"
+                    style={{
+                      width: '28px', height: '28px', padding: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      borderColor: 'rgba(239,68,68,0.4)',
+                      marginLeft: '4px'
+                    }}
+                    title="Delete This Bill (Delete key)"
+                    onClick={() => {
+                      macAudio.playPop();
+                      setDeleteConfirmBillId(selectedBill.id);
+                    }}
+                    onMouseEnter={() => macAudio.playHover()}
+                  >
+                    <Trash2 size={13} color="#ef4444" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2246,8 +2233,11 @@ export const OtherTabsView: React.FC<Props> = ({
                       return (
                         <tr
                           key={p.id || idx}
-                          className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                          style={{ height: `${activeRowHeight}px` }}
+                          className={`mac-table-row anim-row ${isSelected ? 'selected' : ''}`}
+                          style={{
+                            height: `${activeRowHeight}px`,
+                            animationDelay: `${Math.min(idx, 15) * 0.035}s`
+                          }}
                           onClick={() => setSelectedPartyId(p.id)}
                           onDoubleClick={() => setEditingPartyId(p.id)}
                         >
@@ -2719,6 +2709,45 @@ export const OtherTabsView: React.FC<Props> = ({
           billNo={selectedBill.token || selectedBill.id}
         />
       )}
+
+      {/* Delete Bill Confirmation Modal */}
+      {deleteConfirmBillId && (() => {
+        const billToDelete = filteredBills.find(b => b.id === deleteConfirmBillId);
+        if (!billToDelete) return null;
+        return (
+          <UnsavedChangesModal
+            billNumber={billToDelete.token}
+            titleText={`Delete Bill #${billToDelete.token}?`}
+            descText={`"${billToDelete.party}" ka yeh bill permanently delete ho jaayega. Kya aap sure hain?`}
+            discardLabel="Haan, Delete Karo"
+            onSave={undefined}
+            onDiscard={async () => {
+              // Confirmed: Delete the bill
+              const currentIdx = filteredBills.findIndex(b => b.id === deleteConfirmBillId);
+              try {
+                macAudio.playTrash();
+              } catch {
+                macAudio.playClick();
+              }
+              setDeleteConfirmBillId(null);
+              // Auto-select next or previous bill after deletion
+              setTimeout(() => {
+                const remaining = filteredBills.filter(b => b.id !== deleteConfirmBillId);
+                if (remaining.length > 0) {
+                  const nextIdx = Math.min(currentIdx, remaining.length - 1);
+                  setSelectedBillId(remaining[nextIdx]?.id || remaining[0]?.id || '');
+                } else {
+                  setSelectedBillId('');
+                }
+              }, 100);
+            }}
+            onCancel={() => {
+              macAudio.playHover();
+              setDeleteConfirmBillId(null);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };

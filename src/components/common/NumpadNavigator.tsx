@@ -257,7 +257,9 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
-      const isNumpadDel = e.code === 'NumpadDecimal' || e.key === '.';
+      // Only intercept the PHYSICAL NumPad Del key (NumpadDecimal), NOT the regular keyboard "." dot key
+      // This allows users to type "." freely in any input field
+      const isNumpadDel = e.code === 'NumpadDecimal';
 
       // TOGGLE OPEN / CLOSE VIA ".":
       if (isNumpadDel) {

@@ -1,0 +1,139 @@
+/* LockScreenStack.css — iPhone Notification Stack with lifted bottom crawl & space below */
+
+.lock-screen-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  background: transparent;
+}
+
+/* 3D Stack Viewport */
+.stack-wrap {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  perspective: 1200px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.stack-wrap:active {
+  cursor: grabbing;
+}
+
+.stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* Card absolute wrapper (centered via left: 50% and translate(-50%)) */
+.card-wrapper {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(100% - 14px);
+  max-width: 360px;
+  transform-origin: center top;
+  will-change: transform, opacity;
+  transition:
+    transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.14s ease-out;
+  backface-visibility: hidden;
+  pointer-events: auto;
+}
+
+/* CARD VISUAL — 100% SOLID OPAQUE (NO BLEED, NO TEXT OVERLAP) */
+.card {
+  width: 100%;
+  min-height: 70px;
+  background: #181b28; /* Solid opaque dark slate */
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.card:hover {
+  background: #212536;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+}
+
+.card.active-card {
+  background: #182846; /* Solid distinct active navy */
+  border: 1.5px solid rgba(56, 189, 248, 0.85);
+  box-shadow: 0 8px 26px rgba(0, 122, 255, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.12);
+}
+
+.card .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.card .content {
+  flex: 1;
+  min-width: 0;
+}
+
+.card .top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.card .app-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.card .time {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.card .title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card .message {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}

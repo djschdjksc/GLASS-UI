@@ -2006,9 +2006,9 @@ export const SettingsTabView: React.FC<Props> = ({
                 value={serverMode}
                 onChange={(val: any) => setServerMode(val as any)}
                 options={[
-                  { id: 'server', label: 'Host Server', value: 'server' },
-                  { id: 'client', label: 'Client Node', value: 'client' },
-                  { id: 'standalone', label: 'Standalone', value: 'standalone' }
+                  { label: 'Host Server', value: 'server' },
+                  { label: 'Client Node', value: 'client' },
+                  { label: 'Standalone', value: 'standalone' }
                 ]}
               />
             </div>

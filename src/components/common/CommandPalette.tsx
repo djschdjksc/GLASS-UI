@@ -232,6 +232,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               return (
                 <div
                   key={r.id}
+                  className="anim-cascade"
                   onClick={() => {
                     macAudio.playClick();
                     r.action();
@@ -250,7 +251,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     background: isSelected ? 'rgba(0, 122, 255, 0.25)' : 'transparent',
                     border: isSelected ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
                     transition: 'all 0.1s ease',
-                    marginBottom: '2px'
+                    marginBottom: '2px',
+                    animationDelay: `${Math.min(idx, 8) * 0.03}s`
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
