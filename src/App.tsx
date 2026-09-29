@@ -1799,6 +1799,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 onSelectTab={(t) => {
                   setActiveTab(t);
                 }}
+                onToggleChat={() => setIsChatOpen(prev => !prev)}
+                isChatOpen={isChatOpen}
               />
             </div>
           </div>
@@ -1903,6 +1905,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               onSelectTab={(t) => {
                 setActiveTab(t);
               }}
+              onToggleChat={() => setIsChatOpen(prev => !prev)}
+              isChatOpen={isChatOpen}
             />
           </div>
         )}

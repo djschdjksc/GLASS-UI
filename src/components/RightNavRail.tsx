@@ -11,19 +11,24 @@ import {
   Sliders, 
   Package, 
   BookOpen, 
-  Settings 
+  Settings,
+  MessageCircle
 } from 'lucide-react';
 
 interface Props {
   activeTab: NavKey;
   onSelectTab: (tab: NavKey) => void;
   onCloseApp: () => void;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 export const RightNavRail: React.FC<Props> = ({
   activeTab,
   onSelectTab,
-  onCloseApp
+  onCloseApp,
+  onToggleChat,
+  isChatOpen = false
 }) => {
   const TABS: { key: NavKey; name: string; icon: React.ReactNode; color: string }[] = [
     { key: 'F1', name: 'Bill UI', icon: <Receipt size={17} />, color: '#38bdf8' },
@@ -66,6 +71,9 @@ export const RightNavRail: React.FC<Props> = ({
     }
     return 1;
   };
+
+  const chatBtnIdx = TABS.length + 1; // Index after all tabs
+  const chatScale = getScale(chatBtnIdx);
 
   return (
     <div 
@@ -153,6 +161,45 @@ export const RightNavRail: React.FC<Props> = ({
           </button>
         );
       })}
+
+      {/* Spacer to push chat button to the bottom */}
+      <div style={{ flex: 1 }} />
+
+      {/* Bottom Separator */}
+      <div style={{ width: '28px', height: '1px', background: 'rgba(255, 255, 255, 0.12)', margin: '2px 0' }} />
+
+      {/* WhatsApp-Style Chatting & Assistant Button (SABSE NICHE) */}
+      {onToggleChat && (
+        <button
+          ref={(el) => { btnRefs.current[chatBtnIdx] = el; }}
+          type="button"
+          onMouseEnter={() => {
+            if (lastHoveredIndex !== chatBtnIdx) {
+              macAudio.playHover();
+              setLastHoveredIndex(chatBtnIdx);
+            }
+          }}
+          onClick={() => {
+            macAudio.playClick();
+            onToggleChat();
+          }}
+          className={'mac-dock-btn ' + (isChatOpen ? 'active' : '')}
+          style={{
+            transform: `scale(${chatScale}) translateX(${chatScale > 1.05 ? -(chatScale - 1) * 8 : 0}px)`,
+            zIndex: chatScale > 1.25 ? 70 : 15,
+            background: isChatOpen ? 'rgba(37, 211, 102, 0.22)' : 'rgba(37, 211, 102, 0.08)',
+            borderColor: isChatOpen ? '#25D366' : 'rgba(37, 211, 102, 0.35)',
+            boxShadow: isChatOpen ? '0 0 14px rgba(37, 211, 102, 0.55)' : 'none',
+            transition: mouseY === null 
+              ? 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s' 
+              : 'transform 0.08s ease-out, background 0.2s, box-shadow 0.2s'
+          }}
+          title="WhatsApp Team Chat & AI Assistant (Ctrl+J)"
+        >
+          <span className="box-tooltip-left">WhatsApp Chat & AI (Ctrl+J)</span>
+          <MessageCircle size={18} color="#25D366" />
+        </button>
+      )}
     </div>
   );
 };

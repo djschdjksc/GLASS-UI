@@ -262,142 +262,41 @@ export const AppleHeader: React.FC<Props> = ({
 
       {/* Right Controls: 3-Mode Theme Switcher, Chat AI Button, Token Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* 3-Mode Theme Switcher (Dark / White / Glass) */}
+        {/* Single Multi-Click Cycling Theme Mode Button */}
         {onChangeThemeMode && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: 'var(--secondary, rgba(255, 255, 255, 0.06))',
-              border: '1px solid var(--border, rgba(255, 255, 255, 0.1))',
-              borderRadius: '8px',
-              padding: '2px',
-              gap: '2px'
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                macAudio.playClick();
-                onChangeThemeMode('dark');
-              }}
-              title="Dark Mode (shadcn dark)"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: 'none',
-                background: themeMode === 'dark' ? 'var(--card, #1e1e24)' : 'transparent',
-                color: themeMode === 'dark' ? 'var(--primary, #38bdf8)' : 'var(--muted-foreground, #94a3b8)',
-                boxShadow: themeMode === 'dark' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Moon size={11} />
-              <span>Dark</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                macAudio.playClick();
-                onChangeThemeMode('white');
-              }}
-              title="White Mode (shadcn white)"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: 'none',
-                background: themeMode === 'white' ? '#ffffff' : 'transparent',
-                color: themeMode === 'white' ? '#0284c7' : 'var(--muted-foreground, #94a3b8)',
-                boxShadow: themeMode === 'white' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Sun size={11} />
-              <span>White</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                macAudio.playClick();
-                onChangeThemeMode('glass');
-              }}
-              title="Glass Mode (Liquid Retina)"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: 'none',
-                background: themeMode === 'glass' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
-                color: themeMode === 'glass' ? '#38bdf8' : 'var(--muted-foreground, #94a3b8)',
-                boxShadow: themeMode === 'glass' ? '0 0 8px rgba(56, 189, 248, 0.3)' : 'none',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Sparkles size={11} />
-              <span>Glass</span>
-            </button>
-          </div>
-        )}
-
-        {/* Chat Assistant Toggle Button */}
-        {onToggleChat && (
           <button
             type="button"
             onClick={() => {
               macAudio.playClick();
-              onToggleChat();
+              const nextMode = 
+                themeMode === 'dark' ? 'white' :
+                themeMode === 'white' ? 'glass' : 'dark';
+              onChangeThemeMode(nextMode);
             }}
-            title="Open Billing Assistant & Chat (Ctrl+J)"
+            className="apple-box-btn"
             style={{
-              position: 'relative',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px',
-              borderRadius: '7px',
-              background: isChatOpen
-                ? 'linear-gradient(135deg, #0284c7, #38bdf8)'
-                : 'var(--card, rgba(255, 255, 255, 0.08))',
-              border: isChatOpen
-                ? '1px solid #38bdf8'
-                : '1px solid var(--border, rgba(255, 255, 255, 0.12))',
-              color: isChatOpen ? '#ffffff' : 'var(--foreground, #f8fafc)',
-              fontSize: '11px',
-              fontWeight: 700,
+              justifyContent: 'center',
+              position: 'relative',
               cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              boxShadow: isChatOpen ? '0 0 12px rgba(56, 189, 248, 0.4)' : 'none'
+              flexShrink: 0
             }}
+            title={`Mode: ${themeMode?.toUpperCase()} (Click to switch to ${
+              themeMode === 'dark' ? 'White' : themeMode === 'white' ? 'Glass' : 'Dark'
+            })`}
           >
-            <MessageSquare size={13} color={isChatOpen ? '#ffffff' : 'var(--primary, #38bdf8)'} />
-            <span>Chat AI</span>
-            <span
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: '#10b981'
-              }}
-            />
+            <span className="box-tooltip-left">
+              {themeMode === 'dark' && 'Dark Mode → Click for White'}
+              {themeMode === 'white' && 'White Mode → Click for Glass'}
+              {themeMode === 'glass' && 'Glass Mode → Click for Dark'}
+            </span>
+            {themeMode === 'dark' && <Moon size={15} color="#38bdf8" />}
+            {themeMode === 'white' && <Sun size={15} color="#f59e0b" />}
+            {themeMode === 'glass' && <Sparkles size={15} color="#a855f7" />}
           </button>
         )}
 

@@ -24,11 +24,17 @@ import {
   CheckCircle2,
   FileText,
   Moon,
-  Sun
+  Sun,
+  User,
+  Camera,
+  MessageCircle,
+  Phone,
+  Smartphone,
+  ShieldCheck
 } from 'lucide-react';
 import { saveMediaToDB, clearMediaFromDB } from '../services/mediaStorage';
 
-export type SettingsMainTab = 'THEME' | 'SHORTCUTS' | 'BACKUP' | 'GENERAL' | 'BARCODE';
+export type SettingsMainTab = 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'GENERAL' | 'BARCODE';
 export type BarcodeSubTab = 'PAGE_SETUP' | 'LABEL_LAYOUT' | 'CONTENT_FIELDS' | 'ELEMENT_PLACEMENTS';
 export type AppThemeMode = 'dark' | 'white' | 'glass';
 
@@ -266,6 +272,46 @@ export const SettingsTabView: React.FC<Props> = ({
   const [printItemName, setPrintItemName] = useState<boolean>(true);
   const [printPrice, setPrintPrice] = useState<boolean>(true);
 
+  // User Profile & Chat DP State
+  const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
+  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Main Billing Counter');
+  const [userAvatar, setUserAvatar] = useState<string>(() => localStorage.getItem('modern_app_user_avatar') || '');
+  const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Counter #1');
+  const [userPhone, setUserPhone] = useState<string>(() => localStorage.getItem('modern_app_user_phone') || '+91 98765 43210');
+  const [userStatus, setUserStatus] = useState<string>(() => localStorage.getItem('modern_app_user_status') || 'Active on Billing Desk - Ready to Chat');
+  const dpInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      onShowToast?.('Please choose an image file (PNG, JPG, WEBP)', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setUserAvatar(dataUrl);
+      localStorage.setItem('modern_app_user_avatar', dataUrl);
+      window.dispatchEvent(new Event('storage'));
+      onShowToast?.('Profile Picture (DP) Updated!', 'success');
+      macAudio.playSuccess();
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = () => {
+    localStorage.setItem('modern_app_user_name', userName);
+    localStorage.setItem('modern_app_user_role', userRole);
+    localStorage.setItem('modern_app_user_avatar', userAvatar);
+    localStorage.setItem('modern_app_user_terminal', userTerminal);
+    localStorage.setItem('modern_app_user_phone', userPhone);
+    localStorage.setItem('modern_app_user_status', userStatus);
+    window.dispatchEvent(new Event('storage'));
+    onShowToast?.('User Profile & Chat Details Saved!', 'success');
+    macAudio.playSuccess();
+  };
+
   // Export JSON Backup
   const handleExportBackup = () => {
     macAudio.playClick();
@@ -362,7 +408,7 @@ export const SettingsTabView: React.FC<Props> = ({
         </div>
 
         {/* Ant Design Glass Segmented Navigation */}
-        <div style={{ maxWidth: '850px' }}>
+        <div style={{ maxWidth: '920px' }}>
           <Segmented
             value={activeTab}
             onChange={(val: any) => {
@@ -370,7 +416,8 @@ export const SettingsTabView: React.FC<Props> = ({
               setActiveTab(val as SettingsMainTab);
             }}
             options={[
-              { value: 'THEME', label: 'Theme & Background', icon: <Palette size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
+              { value: 'THEME', label: 'Theme & Wallpaper', icon: <Palette size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
+              { value: 'PROFILE', label: 'User Profile & Chat DP', icon: <User size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
               { value: 'SHORTCUTS', label: 'Shortcuts & NumPad', icon: <Keyboard size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
               { value: 'BACKUP', label: 'Backup & Restore', icon: <Database size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
               { value: 'GENERAL', label: 'General Preferences', icon: <SlidersHorizontal size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
@@ -806,7 +853,475 @@ export const SettingsTabView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: SHORTCUTS & NUMPAD GUIDE (GRID KEYS ONLY + FULL NUMPAD '.' ENGINE) */}
+      {/* TAB: USER PROFILE & CHAT DP (TEAM NETWORK CHAT IDENTIFICATION)            */}
+      {/* ========================================================================= */}
+      {activeTab === 'PROFILE' && (
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
+          {/* Left Column: Operator Identity & DP Editor */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              overflowY: 'auto'
+            }}
+          >
+            <div>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--foreground, #f8fafc)', letterSpacing: '0.3px', display: 'block' }}>
+                OPERATOR IDENTITY & CHAT DP
+              </span>
+              <span style={{ fontSize: '10.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
+                Customize your name, counter title, and profile picture (DP) visible to all colleagues in the chat panel
+              </span>
+            </div>
+
+            {/* Profile Picture (DP) Section */}
+            <div
+              style={{
+                background: 'var(--card, rgba(0, 0, 0, 0.28))',
+                border: '1px solid var(--border, rgba(255, 255, 255, 0.1))',
+                borderRadius: '10px',
+                padding: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px'
+              }}
+            >
+              {/* DP Circle with Online Dot */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div
+                  style={{
+                    width: '76px',
+                    height: '76px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '3px solid #25D366',
+                    boxShadow: '0 0 16px rgba(37, 211, 102, 0.35)',
+                    background: userAvatar ? 'transparent' : 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {userAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt="User DP"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff' }}>
+                      {userName.slice(0, 2).toUpperCase() || 'OP'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Online Indicator Badge */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '2px',
+                    right: '2px',
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    background: '#25D366',
+                    border: '2px solid #090d16',
+                    boxShadow: '0 0 8px #25D366'
+                  }}
+                  title="Online on Network"
+                />
+              </div>
+
+              {/* DP Controls */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  type="file"
+                  ref={dpInputRef}
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  style={{ display: 'none' }}
+                />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => dpInputRef.current?.click()}
+                    className="apple-box-btn"
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '7px',
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      border: 'none',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Camera size={13} color="#ffffff" />
+                    <span>Upload Custom DP</span>
+                  </button>
+
+                  {userAvatar && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserAvatar('');
+                        localStorage.removeItem('modern_app_user_avatar');
+                        window.dispatchEvent(new Event('storage'));
+                        onShowToast?.('Reset to default avatar initials', 'info');
+                        macAudio.playTrash();
+                      }}
+                      className="apple-box-btn"
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '7px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#ef4444'
+                      }}
+                    >
+                      Remove DP
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Avatar Emojis */}
+                <div>
+                  <span style={{ fontSize: '10px', color: 'var(--muted-foreground, #94a3b8)', display: 'block', marginBottom: '4px' }}>
+                    Or choose a quick preset avatar:
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {['👨‍💼', '👩‍💼', '🧑‍💻', '⚡', '👑', '💼', '🚀', '🏢'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => {
+                          // Generate canvas image from emoji
+                          const canvas = document.createElement('canvas');
+                          canvas.width = 120;
+                          canvas.height = 120;
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            ctx.fillStyle = '#0f172a';
+                            ctx.fillRect(0, 0, 120, 120);
+                            ctx.font = '64px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(emoji, 60, 65);
+                            const url = canvas.toDataURL('image/png');
+                            setUserAvatar(url);
+                            localStorage.setItem('modern_app_user_avatar', url);
+                            window.dispatchEvent(new Event('storage'));
+                            onShowToast?.(`Avatar updated to ${emoji}!`, 'success');
+                            macAudio.playSuccess();
+                          }
+                        }}
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border, rgba(255,255,255,0.12))',
+                          background: 'var(--secondary, rgba(255,255,255,0.06))',
+                          fontSize: '13px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
+                  Operator / User Display Name
+                </label>
+                <input
+                  type="text"
+                  className="apple-input"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="e.g. Rohit (Billing Desk)"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
+                    Counter Role / Department
+                  </label>
+                  <input
+                    type="text"
+                    className="apple-input"
+                    value={userRole}
+                    onChange={(e) => setUserRole(e.target.value)}
+                    placeholder="e.g. Main Billing Desk"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
+                    Terminal / Counter ID
+                  </label>
+                  <input
+                    type="text"
+                    className="apple-input"
+                    value={userTerminal}
+                    onChange={(e) => setUserTerminal(e.target.value)}
+                    placeholder="e.g. Counter #1"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
+                  Contact / WhatsApp Phone Number
+                </label>
+                <input
+                  type="text"
+                  className="apple-input"
+                  value={userPhone}
+                  onChange={(e) => setUserPhone(e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
+                  Live Status Message (Visible in Team Chat)
+                </label>
+                <input
+                  type="text"
+                  className="apple-input"
+                  value={userStatus}
+                  onChange={(e) => setUserStatus(e.target.value)}
+                  placeholder="e.g. Active on Billing Desk - Ready to Chat"
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                className="apple-box-btn"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                  cursor: 'pointer'
+                }}
+              >
+                <Check size={14} color="#ffffff" />
+                <span>Save Profile & Chat Identity</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Live Chat & Network Terminal Preview */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              overflowY: 'auto'
+            }}
+          >
+            <div>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--foreground, #f8fafc)', letterSpacing: '0.3px', display: 'block' }}>
+                LIVE TEAM CHAT PREVIEW
+              </span>
+              <span style={{ fontSize: '10.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
+                How other connected terminals and operators see your messages in real time
+              </span>
+            </div>
+
+            {/* WhatsApp Styled Chat Box Preview */}
+            <div
+              style={{
+                borderRadius: '10px',
+                border: '1px solid var(--border, rgba(255, 255, 255, 0.12))',
+                background: themeMode === 'white' ? '#f8fafc' : '#0b141a',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.3)'
+              }}
+            >
+              {/* WhatsApp Header Preview */}
+              <div
+                style={{
+                  padding: '10px 12px',
+                  background: themeMode === 'white' ? '#f0f2f5' : '#202c33',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  borderBottom: '1px solid var(--border, rgba(255,255,255,0.08))'
+                }}
+              >
+                <div
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: userAvatar ? 'transparent' : '#00a884',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  {userAvatar ? (
+                    <img src={userAvatar} alt="DP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>
+                      {userName.slice(0, 2).toUpperCase() || 'OP'}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: themeMode === 'white' ? '#111b21' : '#e9edef' }}>
+                    {userName || 'Operator Name'}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#25D366', fontWeight: 600 }}>
+                    Online • {userRole || 'Billing Desk'}
+                  </div>
+                </div>
+
+                <Tag color="success" style={{ margin: 0, fontSize: '9px', fontWeight: 700 }}>
+                  {userTerminal || 'Counter #1'}
+                </Tag>
+              </div>
+
+              {/* Chat Messages Body Preview */}
+              <div
+                style={{
+                  padding: '14px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  minHeight: '170px'
+                }}
+              >
+                {/* Incoming Message from Counter 2 */}
+                <div
+                  style={{
+                    alignSelf: 'flex-start',
+                    maxWidth: '82%',
+                    background: themeMode === 'white' ? '#ffffff' : '#202c33',
+                    padding: '8px 10px',
+                    borderRadius: '8px 8px 8px 2px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#53bdeb', marginBottom: '2px' }}>
+                    Counter 2 (Warehouse Dispatch)
+                  </div>
+                  <div style={{ fontSize: '11px', color: themeMode === 'white' ? '#111b21' : '#e9edef', lineHeight: 1.3 }}>
+                    📦 Token #626 stock materials are staged and verified ready for dispatch.
+                  </div>
+                  <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px' }}>
+                    10:45 AM
+                  </div>
+                </div>
+
+                {/* Outgoing Message from Current User */}
+                <div
+                  style={{
+                    alignSelf: 'flex-end',
+                    maxWidth: '82%',
+                    background: themeMode === 'white' ? '#d9fdd3' : '#005c4b',
+                    padding: '8px 10px',
+                    borderRadius: '8px 8px 2px 8px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <div style={{ fontSize: '11px', color: themeMode === 'white' ? '#111b21' : '#e9edef', lineHeight: 1.3 }}>
+                    👍 Got it! Invoice bill #{header.tokenNo || '1'} printed and handed to transport vehicle.
+                  </div>
+                  <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
+                    <span>10:46 AM</span>
+                    <span style={{ color: '#53bdeb', fontWeight: 800 }}>✓✓</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Terminals on Network Card */}
+            <div
+              style={{
+                background: 'var(--card, rgba(0,0,0,0.25))',
+                border: '1px solid var(--border, rgba(255,255,255,0.08))',
+                borderRadius: '8px',
+                padding: '10px 12px'
+              }}
+            >
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '6px' }}>
+                ACTIVE SOFTWARE COUNTERS
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#25D366' }} />
+                    <span style={{ fontWeight: 600 }}>{userName} (This Counter)</span>
+                  </div>
+                  <Tag color="cyan" style={{ margin: 0, fontSize: '9px' }}>Online</Tag>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#25D366' }} />
+                    <span style={{ fontWeight: 600 }}>Warehouse Dispatch (Counter 2)</span>
+                  </div>
+                  <Tag color="cyan" style={{ margin: 0, fontSize: '9px' }}>Online</Tag>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#25D366' }} />
+                    <span style={{ fontWeight: 600 }}>Accounts & Ledger Desk</span>
+                  </div>
+                  <Tag color="cyan" style={{ margin: 0, fontSize: '9px' }}>Online</Tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ========================================================================= */}
       {activeTab === 'SHORTCUTS' && (
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
