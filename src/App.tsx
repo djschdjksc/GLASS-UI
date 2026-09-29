@@ -1273,12 +1273,13 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
           if (sumCol === 'QTY') {
             isSkipQty = true;
+            const hasMultiCols = Boolean(dynCols && dynCols.length > 0);
             if (qty10 > 0) {
-              const key10 = hasDefinedSize ? formatMouldWithSize(baseName, definedSize) : baseName;
+              const key10 = hasMultiCols ? formatMouldWithSize(baseName, 10) : baseName;
               itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
               recordSource(key10, it.id, rIdx, 'qty', qty10);
             }
-            if (dynCols && dynCols.length > 0) {
+            if (hasMultiCols) {
               dynCols.forEach(col => {
                 const colQty = Number((it as any)[col.field]) || 0;
                 if (colQty > 0) {
@@ -1306,23 +1307,52 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       // 4. Normal Item QTY summing (when not overridden by skip sub-group)
       if (!isSkipQty) {
         const baseMould = matchedConv || (name.includes(' ') ? name.split(' ')[0] : name);
+        const ruleGroupName = String(matchedConvRule?.group_name || matchedConvRule?.groupName || '').toUpperCase().trim();
+        const isHardware = ruleGroupName === 'HARWARE' || ruleGroupName === 'HARDWARE' ||
+          /^(CLIP|SCREW|BLACK|ELFY|GATTI|RAJA|SILICON|BATTEN|BLACK-SCREW|GOLDEN-PATTI|GOLDEN-TAPE)$/i.test(baseMould.trim());
 
-        if (qty10 > 0) {
-          const key10 = hasDefinedSize ? formatMouldWithSize(baseMould, definedSize) : baseMould;
-          itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
-          recordSource(key10, it.id, rIdx, 'qty', qty10);
-        }
+        if (isHardware) {
+          // Hardware items NEVER have size/feet: sum all size columns together into baseMould without any size in brackets
+          let totalHardwareQty = 0;
+          if (qty10 > 0) {
+            totalHardwareQty += qty10;
+            recordSource(baseMould, it.id, rIdx, 'qty', qty10);
+          }
+          if (dynCols && dynCols.length > 0) {
+            dynCols.forEach(col => {
+              const colQty = Number((it as any)[col.field]) || 0;
+              if (colQty > 0) {
+                totalHardwareQty += colQty;
+                recordSource(baseMould, it.id, rIdx, col.field, colQty);
+              }
+            });
+          }
+          if (totalHardwareQty > 0) {
+            itemSummary[baseMould] = (itemSummary[baseMould] || 0) + totalHardwareQty;
+          }
+        } else {
+          // Regular profile items:
+          // If only 1 size column (10 FT only), do NOT append size (e.g. "C.M", not "C.M (10)")
+          // If multiple size columns exist, append size in brackets (e.g. "C.M (10)", "C.M (12)")
+          const hasMultiCols = Boolean(dynCols && dynCols.length > 0);
 
-        if (dynCols && dynCols.length > 0) {
-          dynCols.forEach(col => {
-            const colQty = Number((it as any)[col.field]) || 0;
-            if (colQty > 0) {
-              const size = extractSizeFromColLabel(col.label || col.field);
-              const keyCol = formatMouldWithSize(baseMould, size);
-              itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
-              recordSource(keyCol, it.id, rIdx, col.field, colQty);
-            }
-          });
+          if (qty10 > 0) {
+            const key10 = hasMultiCols ? formatMouldWithSize(baseMould, 10) : baseMould;
+            itemSummary[key10] = (itemSummary[key10] || 0) + qty10;
+            recordSource(key10, it.id, rIdx, 'qty', qty10);
+          }
+
+          if (hasMultiCols) {
+            dynCols.forEach(col => {
+              const colQty = Number((it as any)[col.field]) || 0;
+              if (colQty > 0) {
+                const size = extractSizeFromColLabel(col.label || col.field);
+                const keyCol = formatMouldWithSize(baseMould, size);
+                itemSummary[keyCol] = (itemSummary[keyCol] || 0) + colQty;
+                recordSource(keyCol, it.id, rIdx, col.field, colQty);
+              }
+            });
+          }
         }
       }
 
