@@ -1,5 +1,5 @@
-// Ultra-High-Speed Canvas Painter matching F:\SUMMARY\BillApp\main.py BillPainter
-// Renders pixel-perfect Bill / Estimate / Loading Slip in 2-5ms!
+// Ultra-High-Speed Canvas Painter matching F:\SUMMARY\BillApp\main.py BillPainter 1:1
+// Reproduces exact pixel-perfect layout of native Qt QPainter
 
 export interface PrintAdjustment {
   id: string;
@@ -9,7 +9,7 @@ export interface PrintAdjustment {
 }
 
 export interface BillPrintPayload {
-  docType: string; // "Bill", "Order", "Sale Return", "PURCHASE"
+  docType: string;
   billNo: string | number;
   date: string;
   partyName: string;
@@ -38,32 +38,47 @@ export interface BillPrintPayload {
 
 export function formatIndianCurrency(num: number): string {
   try {
-    const isNegative = num < 0;
-    const absVal = Math.abs(num);
-    const parts = absVal.toFixed(2).split('.');
-    let integerPart = parts[0];
+    const val = Number(num) || 0;
+    const s = Math.abs(val).toFixed(2);
+    const parts = s.split('.');
+    const integerPart = parts[0];
     const decimalPart = parts[1];
 
-    if (integerPart.length > 3) {
-      const lastThree = integerPart.substring(integerPart.length - 3);
-      const otherNumbers = integerPart.substring(0, integerPart.length - 3);
-      integerPart = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + lastThree;
+    if (integerPart.length <= 3) {
+      const res = `${integerPart}.${decimalPart}`;
+      return val >= 0 ? `₹ ${res}` : `-₹ ${res}`;
+    } else {
+      const lastThree = integerPart.slice(-3);
+      let remaining = integerPart.slice(0, -3);
+      const groups: string[] = [];
+      while (remaining.length > 0) {
+        groups.push(remaining.slice(-2));
+        remaining = remaining.slice(0, -2);
+      }
+      groups.reverse();
+      const res = groups.join(',') + ',' + lastThree + '.' + decimalPart;
+      return val >= 0 ? `₹ ${res}` : `-₹ ${res}`;
     }
-    return (isNegative ? '-' : '') + '₹ ' + integerPart + '.' + decimalPart;
   } catch {
-    return '₹ ' + num.toFixed(2);
+    return '₹ 0.00';
   }
 }
 
 export function formatDisplayDate(dateStr: string): string {
   if (!dateStr) return '';
   try {
+    const parts = String(dateStr).split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+    return dateStr;
   } catch {
     return dateStr;
   }
@@ -71,10 +86,10 @@ export function formatDisplayDate(dateStr: string): string {
 
 export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCanvasElement): HTMLCanvasElement {
   const canvas = targetCanvas || document.createElement('canvas');
-  // Matching F:\SUMMARY\BillApp\main.py exact dimensions: self.W = 1414, self.margin = 30
+
+  // Exact coordinates matching F:\SUMMARY\BillApp\main.py
   const W = 1414;
   const margin = 30;
-  const contentW = W - 2 * margin;
 
   const isEstimate = data.mode === 'estimate';
   const isSummaryOnly = data.mode === 'summary_only';
@@ -83,51 +98,27 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   const validItems = (data.items || []).filter(it => (it.name || '').trim() || Number(it.qty) > 0);
   const validGroups = (data.groups || []).filter(g => (g.mould || '').trim() || Number(g.qty) > 0 || Number(g.total) > 0);
 
-  // Exactly 27 rows for Loading Slip (matching F:\SUMMARY\BillApp\main.py rows_per_page = 27)
-  const FIXED_ROWS = 27;
-  const itemsToDraw: Array<{ name: string; partyCode?: string; qty: number | string; uCap?: number | string; lCap?: number | string }> = [...validItems];
-  if (isLoadingSlip && itemsToDraw.length < FIXED_ROWS) {
-    while (itemsToDraw.length < FIXED_ROWS) {
-      itemsToDraw.push({ name: '', qty: '', uCap: '', lCap: '', partyCode: '' });
-    }
+  // Exact row height from main.py
+  const rowH = 60;
+
+  // Calculate dynamic canvas height
+  let H = 2000;
+  if (isSummaryOnly) {
+    H = 450 + (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200;
+  } else if (isEstimate) {
+    H = 450 + (validItems.length * 60) + 200 + (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200;
+  } else if (isLoadingSlip) {
+    H = Math.max(400 + (validItems.length * 60) + 200, 2000);
   }
-
-  // Row height 56px matching desktop software
-  const rowH = 56;
-
-  // Dynamic Height calculation
-  let h = 30; // top padding
-  h += 170; // Header & Bill Info block
-
-  if (!isSummaryOnly) {
-    h += rowH; // Raw Items table header
-    const rowsCount = isLoadingSlip ? FIXED_ROWS : Math.max(itemsToDraw.length, 1);
-    h += rowsCount * rowH; // Raw Items rows
-    if (isLoadingSlip) {
-      h += rowH + 20; // Column totals row
-    }
-  }
-
-  if (isEstimate || isSummaryOnly) {
-    if (validGroups.length > 0) {
-      h += 70; // Group Summary title
-      h += rowH; // Group table header
-      h += validGroups.length * rowH; // Group rows
-    }
-    h += 60; // Subtotal gap
-    h += (data.adjustments || []).length * 52; // Adjustments
-    h += 110; // Final Balance
-  }
-
-  h += 60; // bottom margin
+  H = Math.min(Math.max(H, 1500), 30000);
 
   const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
-  const scale = Math.max(dpr, 1.5);
+  const scale = Math.max(dpr, 1);
 
   canvas.width = Math.round(W * scale);
-  canvas.height = Math.round(h * scale);
+  canvas.height = Math.round(H * scale);
   canvas.style.width = `${W}px`;
-  canvas.style.height = `${h}px`;
+  canvas.style.height = `${H}px`;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas;
@@ -135,347 +126,282 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   ctx.save();
   ctx.scale(scale, scale);
 
-  // 1. Pure White Background
+  // Pure White Background
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, W, h);
+  ctx.fillRect(0, 0, W, H);
 
-  let curY = 30;
-
-  // Title (Centered Bold 52px Segoe UI)
+  // 1. Header (Centered Bold Title, font size 60px)
   let title = 'ESTIMATE';
   const docUpper = (data.docType || 'Bill').toUpperCase();
+  const pfx = docUpper.includes('ORDER') ? 'ORDER ' : docUpper.includes('RETURN') ? 'RETURN ' : '';
   if (isLoadingSlip) {
-    title = docUpper.includes('ORDER') ? 'ORDER LOADING SLIP' : docUpper.includes('RETURN') ? 'RETURN LOADING SLIP' : 'LOADING SLIP';
+    title = `${pfx}LOADING SLIP`;
   } else if (isEstimate || isSummaryOnly) {
-    title = docUpper.includes('ORDER') ? 'ORDER ESTIMATE' : docUpper.includes('RETURN') ? 'RETURN ESTIMATE' : 'ESTIMATE';
+    title = `${pfx}ESTIMATE`;
   }
 
   ctx.fillStyle = '#000000';
-  ctx.font = 'bold 52px "Segoe UI", Arial, sans-serif';
+  ctx.font = 'bold 60px "Segoe UI", Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(title, W / 2, curY + 25);
+  ctx.textBaseline = 'top';
+  ctx.fillText(title, W / 2, 30);
 
-  curY += 75;
-
-  // Bill Info Line (Slip No Left, Date Right, 32px Bold)
-  ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
+  // 2. Info Block (y = 130)
+  ctx.font = 'normal 35px "Segoe UI", Arial, sans-serif';
   ctx.textAlign = 'left';
-  const slipPrefix = isLoadingSlip ? 'SLIP NO:' : 'BILL NO:';
-  ctx.fillText(`${slipPrefix} ${data.billNo || '0001'}`, margin, curY);
+  let y = 130;
+
+  const billLabel = isLoadingSlip ? `${pfx}SLIP NO:` : (pfx ? `${pfx}NO:` : 'BILL NO:');
+  ctx.fillText(`${billLabel} ${data.billNo || 'N/A'}`, margin, y);
 
   ctx.textAlign = 'right';
-  ctx.fillText(`DATE: ${formatDisplayDate(data.date)}`, W - margin, curY);
+  ctx.fillText(`DATE: ${formatDisplayDate(data.date)}`, W - 400, y);
 
-  curY += 44;
-
-  // Party Name Line (34px Bold)
+  y += 50;
   ctx.textAlign = 'left';
-  ctx.font = 'bold 34px "Segoe UI", Arial, sans-serif';
-  ctx.fillText(`PARTY: ${data.partyName || 'CASH SALE'}`, margin, curY);
+  ctx.fillText(`PARTY: ${data.partyName || 'N/A'}`, margin, y);
 
-  if (data.vehicleNo && data.vehicleNo.trim()) {
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
-    ctx.fillText(`VEHICLE: ${data.vehicleNo}`, W - margin, curY);
-  }
+  let curY = y + 70;
 
-  curY += 36;
-
-  // Horizontal divider line (2.5px solid black)
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(margin, curY);
-  ctx.lineTo(W - margin, curY);
-  ctx.stroke();
-
-  curY += 18;
-
-  // Helper for drawing cell borders (solid 2.5px black)
-  const drawCell = (x: number, y: number, w: number, hVal: number, bg?: string) => {
-    if (bg) {
-      ctx.fillStyle = bg;
-      ctx.fillRect(x, y, w, hVal);
-    }
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, w, hVal);
-  };
-
-  // 2. RAW ITEMS TABLE (Omitted if Summary Only)
+  // 3. Raw Items Table
   if (!isSummaryOnly) {
     const showPCode = Boolean(data.showPartyCode);
-    let cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right' }>;
+    const cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right' }> = showPCode
+      ? [
+          { title: 'SR.', w: 80, align: 'center' },
+          { title: 'ITEM NAME', w: 350, align: 'left' },
+          { title: 'PARTY CODE', w: 350, align: 'center' },
+          { title: 'QTY', w: 180, align: 'center' },
+          { title: 'U CAP', w: 180, align: 'center' },
+          { title: 'L CAP', w: 180, align: 'center' }
+        ]
+      : [
+          { title: 'SR.', w: 80, align: 'center' },
+          { title: 'ITEM NAME', w: 520, align: 'left' },
+          { title: 'QTY', w: 230, align: 'center' },
+          { title: 'U CAP', w: 230, align: 'center' },
+          { title: 'L CAP', w: 230, align: 'center' }
+        ];
 
-    if (showPCode) {
-      cols = [
-        { title: 'SR.', w: 90, align: 'center' },
-        { title: 'ITEM NAME', w: 464, align: 'left' },
-        { title: 'PARTY CODE', w: 260, align: 'center' },
-        { title: 'QTY', w: 180, align: 'center' },
-        { title: 'U CAP', w: 180, align: 'center' },
-        { title: 'L CAP', w: 180, align: 'center' }
-      ];
-    } else {
-      cols = [
-        { title: 'SR.', w: 94, align: 'center' },
-        { title: 'ITEM NAME', w: 660, align: 'left' },
-        { title: 'QTY', w: 200, align: 'center' },
-        { title: 'U CAP', w: 200, align: 'center' },
-        { title: 'L CAP', w: 200, align: 'center' }
-      ];
-    }
-
-    // Draw Header (Solid Black BG / White Bold Text)
-    let colX = margin;
-    ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+    // Column Headers (Black Rect with White Centered Bold Text)
+    let xHdr = margin;
+    ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
     cols.forEach(col => {
-      drawCell(colX, curY, col.w, rowH, '#000000');
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(xHdr, curY, col.w, rowH);
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(col.title, colX + col.w / 2, curY + rowH / 2);
-      colX += col.w;
+      ctx.fillText(col.title, xHdr + col.w / 2, curY + rowH / 2);
+      xHdr += col.w;
     });
-
     curY += rowH;
 
-    // Draw Data Rows
-    let totalQty = 0;
-    let totalUCap = 0;
-    let totalLCap = 0;
+    // Data Rows
+    let sumQty = 0;
+    let sumUCap = 0;
+    let sumLCap = 0;
 
-    itemsToDraw.forEach((item, idx) => {
-      const isActual = idx < validItems.length;
-      const qNum = isActual ? (Number(item.qty) || 0) : 0;
-      const uNum = isActual ? (Number(item.uCap) || 0) : 0;
-      const lNum = isActual ? (Number(item.lCap) || 0) : 0;
-      if (isActual) {
-        totalQty += qNum;
-        totalUCap += uNum;
-        totalLCap += lNum;
-      }
+    validItems.forEach((it, idx) => {
+      const qVal = parseFloat(String(it.qty)) || 0;
+      const uVal = parseFloat(String(it.uCap)) || 0;
+      const lVal = parseFloat(String(it.lCap)) || 0;
+      sumQty += qVal;
+      sumUCap += uVal;
+      sumLCap += lVal;
 
-      colX = margin;
-      const rowValues = showPCode
-        ? [
-            isActual ? String(idx + 1) : '',
-            isActual ? String(item.name || '').replace(/\./g, '').replace(/-/g, ' ') : '',
-            isActual ? String(item.partyCode || '') : '',
-            qNum > 0 ? String(qNum) : '',
-            uNum > 0 ? String(uNum) : '',
-            lNum > 0 ? String(lNum) : ''
-          ]
-        : [
-            isActual ? String(idx + 1) : '',
-            isActual ? String(item.name || '').replace(/\./g, '').replace(/-/g, ' ') : '',
-            qNum > 0 ? String(qNum) : '',
-            uNum > 0 ? String(uNum) : '',
-            lNum > 0 ? String(lNum) : ''
-          ];
+      const rawDesc = String(it.name || '');
+      const cleanDesc = rawDesc.replace(/\./g, '').replace(/-/g, ' ');
 
-      rowValues.forEach((val, i) => {
-        const col = cols[i];
-        drawCell(colX, curY, col.w, rowH, '#FFFFFF');
+      const rowData = showPCode
+        ? [String(idx + 1), cleanDesc, String(it.partyCode || ''), qVal !== 0 ? String(qVal) : '', uVal !== 0 ? String(uVal) : '', lVal !== 0 ? String(lVal) : '']
+        : [String(idx + 1), cleanDesc, qVal !== 0 ? String(qVal) : '', uVal !== 0 ? String(uVal) : '', lVal !== 0 ? String(lVal) : ''];
 
+      let xRow = margin;
+      rowData.forEach((val, i) => {
+        const w = cols[i].w;
+
+        // Draw 2px solid black border rect
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(xRow, curY, w, rowH);
+
+        const align = i === 1 ? 'left' : 'center';
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.textBaseline = 'middle';
 
-        if (col.align === 'left') {
-          ctx.textAlign = 'left';
-          ctx.fillText(val, colX + 16, curY + rowH / 2);
-        } else if (col.align === 'right') {
-          ctx.textAlign = 'right';
-          ctx.fillText(val, colX + col.w - 16, curY + rowH / 2);
+        if (i === 1) {
+          // Parse Note (e.g. "Fan Box (10 Ft)")
+          const noteMatch = val.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+          if (noteMatch) {
+            const baseText = noteMatch[1].trim();
+            const noteText = `(${noteMatch[2].trim()})`;
+
+            ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(baseText, xRow + 20, curY + rowH / 2);
+
+            const baseW = ctx.measureText(baseText).width;
+            ctx.font = 'italic 33px "Segoe UI", Arial, sans-serif';
+            ctx.fillText(noteText, xRow + 20 + baseW + 8, curY + rowH / 2);
+          } else {
+            ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(val, xRow + 20, curY + rowH / 2);
+          }
         } else {
+          ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(val, colX + col.w / 2, curY + rowH / 2);
+          ctx.fillText(val, xRow + w / 2, curY + rowH / 2);
         }
 
-        colX += col.w;
+        xRow += w;
       });
 
       curY += rowH;
     });
 
-    // If Loading Slip: Draw Column Totals directly under QTY, U CAP, L CAP (NO string labels!)
-    if (isLoadingSlip) {
-      let sumX = margin;
-      const srW = cols[0].w;
-      const nameW = cols[1].w;
-      const pCodeW = showPCode ? cols[2].w : 0;
-      const labelW = srW + nameW + pCodeW;
-      const qtyW = showPCode ? cols[3].w : cols[2].w;
-      const uCapW = showPCode ? cols[4].w : cols[3].w;
-      const lCapW = showPCode ? cols[5].w : cols[4].w;
-
-      // Label Cell "TOTAL"
-      drawCell(sumX, curY, labelW, rowH, '#FFFFFF');
+    // Loading Slip Footer (Pure Numbers under Columns matching main.py)
+    if (isLoadingSlip && !isEstimate) {
+      curY += 30;
+      ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
       ctx.fillStyle = '#000000';
-      ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
-      ctx.textAlign = 'right';
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('TOTAL', sumX + labelW - 20, curY + rowH / 2);
-      sumX += labelW;
 
-      // QTY Total Cell (Pure number)
-      drawCell(sumX, curY, qtyW, rowH, '#FFFFFF');
-      ctx.fillStyle = '#1D4ED8';
-      ctx.textAlign = 'center';
-      ctx.fillText(totalQty > 0 ? String(totalQty) : '', sumX + qtyW / 2, curY + rowH / 2);
-      sumX += qtyW;
+      const showPartyCode = Boolean(data.showPartyCode);
+      const xQty = showPartyCode ? (margin + 80 + 350 + 350) : (margin + 80 + 520);
+      const colW = showPartyCode ? 180 : 230;
 
-      // U CAP Total Cell (Pure number)
-      drawCell(sumX, curY, uCapW, rowH, '#FFFFFF');
-      ctx.fillStyle = '#1D4ED8';
-      ctx.textAlign = 'center';
-      ctx.fillText(totalUCap > 0 ? String(totalUCap) : '', sumX + uCapW / 2, curY + rowH / 2);
-      sumX += uCapW;
+      if (sumQty > 0) ctx.fillText(String(sumQty), xQty + colW / 2, curY + 30);
+      if (sumUCap > 0) ctx.fillText(String(sumUCap), xQty + colW + colW / 2, curY + 30);
+      if (sumLCap > 0) ctx.fillText(String(sumLCap), xQty + 2 * colW + colW / 2, curY + 30);
 
-      // L CAP Total Cell (Pure number)
-      drawCell(sumX, curY, lCapW, rowH, '#FFFFFF');
-      ctx.fillStyle = '#1D4ED8';
-      ctx.textAlign = 'center';
-      ctx.fillText(totalLCap > 0 ? String(totalLCap) : '', sumX + lCapW / 2, curY + rowH / 2);
-
-      curY += rowH + 20;
+      curY += 70;
     }
   }
 
-  // 3. GROUP SUMMARY / ESTIMATE TOTALS (Estimate & Summary Only)
+  // 4. Group Summary / Estimate Totals (Estimate & Summary Only)
   if ((isEstimate || isSummaryOnly) && validGroups.length > 0) {
-    curY += 20;
+    curY += 30;
 
     // Header Label
+    ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('GROUP SUMMARY / ESTIMATE TOTALS', margin, curY + 15);
+    ctx.textBaseline = 'top';
+    ctx.fillText('GROUP SUMMARY / ESTIMATE TOTALS', margin, curY);
 
-    curY += 45;
+    curY += 60;
 
-    const groupCols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right' }> = [
-      { title: 'MOULD NAME', w: 614, align: 'left' },
-      { title: 'QTY', w: 220, align: 'center' },
-      { title: 'PRICE', w: 240, align: 'right' },
-      { title: 'TOTAL', w: 280, align: 'right' }
+    const groupCols = [
+      { title: 'MOULD NAME', w: 520 },
+      { title: 'QTY', w: 230 },
+      { title: 'PRICE', w: 230 },
+      { title: 'TOTAL', w: 310 }
     ];
 
-    // Table Header
-    let colX = margin;
-    ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+    // Group Table Header (Black Rect, White Text)
+    let xGHdr = margin;
+    ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
     groupCols.forEach(col => {
-      drawCell(colX, curY, col.w, rowH, '#000000');
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(xGHdr, curY, col.w, rowH);
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(col.title, colX + col.w / 2, curY + rowH / 2);
-      colX += col.w;
+      ctx.fillText(col.title, xGHdr + col.w / 2, curY + rowH / 2);
+      xGHdr += col.w;
     });
-
     curY += rowH;
 
-    // Data Rows
-    validGroups.forEach((g) => {
-      colX = margin;
-      const qNum = Number(g.qty) || 0;
-      const pNum = Number(g.price) || 0;
-      const tNum = Number(g.total) || qNum * pNum;
+    // Group Rows
+    validGroups.forEach(g => {
+      let xGRow = margin;
+      const qVal = parseFloat(String(g.qty)) || 0;
+      const pVal = parseFloat(String(g.price)) || 0;
+      const tVal = parseFloat(String(g.total)) || (qVal * pVal);
       const cleanMould = String(g.mould || '').replace(/\./g, '').replace(/-/g, ' ');
 
       const rowVals = [
         cleanMould,
-        qNum > 0 ? String(qNum) : '',
-        `₹ ${pNum.toFixed(2)}`,
-        `₹ ${tNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        qVal > 0 ? String(qVal) : '',
+        pVal.toFixed(2),
+        tVal.toFixed(2)
       ];
 
       rowVals.forEach((val, i) => {
-        const col = groupCols[i];
-        drawCell(colX, curY, col.w, rowH, '#FFFFFF');
+        const w = groupCols[i].w;
 
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(xGRow, curY, w, rowH);
+
+        ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.textBaseline = 'middle';
 
-        if (col.align === 'left') {
+        if (i === 0) {
           ctx.textAlign = 'left';
-          ctx.fillText(val, colX + 16, curY + rowH / 2);
-        } else if (col.align === 'right') {
+          ctx.fillText(val, xGRow + 20, curY + rowH / 2);
+        } else if (i >= 2) {
           ctx.textAlign = 'right';
-          ctx.fillText(val, colX + col.w - 16, curY + rowH / 2);
+          ctx.fillText(val, xGRow + w - 20, curY + rowH / 2);
         } else {
           ctx.textAlign = 'center';
-          ctx.fillText(val, colX + col.w / 2, curY + rowH / 2);
+          ctx.fillText(val, xGRow + w / 2, curY + rowH / 2);
         }
 
-        colX += col.w;
+        xGRow += w;
       });
 
       curY += rowH;
     });
-  }
 
-  // 4. FOOTER: SUB-TOTAL, ADJUSTMENTS & FINAL BALANCE
-  if (isEstimate || isSummaryOnly) {
-    curY += 30;
-
+    // 5. Estimate Footer: SUB-TOTAL, Adjustments, BALANCE
+    curY += 40;
     const blockW = 700;
-    const xLabel = W - margin - blockW;
-    const xVal = W - margin;
+    const rightGap = 80;
+    const xLabel = W - margin - blockW - rightGap;
+    const xValue = W - margin - 300 - rightGap;
+    const valW = 300;
 
     // Sub-Total
-    ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
+    ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('SUB-TOTAL', xLabel, curY + 15);
+    ctx.fillText('SUB-TOTAL', xLabel, curY + 30);
 
     ctx.textAlign = 'right';
-    ctx.fillText(formatIndianCurrency(data.subTotal), xVal, curY + 15);
+    ctx.fillText(formatIndianCurrency(data.subTotal), xValue + valW, curY + 30);
 
-    curY += 45;
+    // Adjustments
+    let runningTotal = data.subTotal;
+    (data.adjustments || []).forEach(adj => {
+      const v = Number(adj.val) || 0;
+      const isSub = adj.type === 'sub';
+      if (isSub) runningTotal -= v;
+      else runningTotal += v;
 
-    // Dynamic Adjustments (+/-)
-    const adjs = data.adjustments || [];
-    adjs.forEach(adj => {
-      const prefix = adj.type === 'sub' ? '(-) ' : '(+) ';
-      ctx.font = 'italic bold 26px "Segoe UI", Arial, sans-serif';
-      ctx.fillStyle = adj.type === 'sub' ? '#B91C1C' : '#047857';
-
+      curY += 45;
+      ctx.font = 'italic 30px "Segoe UI", Arial, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(`${prefix}${adj.desc || 'Adjustment'}`, xLabel, curY + 12);
+      ctx.fillText(`${isSub ? '(-)' : '(+)'} ${adj.desc || 'Adjustment'}`, xLabel, curY + 25);
 
       ctx.textAlign = 'right';
-      ctx.fillText(formatIndianCurrency(adj.val || 0), xVal, curY + 12);
-
-      curY += 42;
+      ctx.fillText(formatIndianCurrency(v), xValue + valW, curY + 25);
     });
 
-    curY += 15;
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(xLabel, curY);
-    ctx.lineTo(xVal, curY);
-    ctx.stroke();
-
-    curY += 25;
-
-    // Final Balance with Custom Label
-    const bLabel = (data.balanceLabel || 'BALANCE').toUpperCase();
-    ctx.font = 'bold 38px "Segoe UI", Arial, sans-serif';
-    ctx.fillStyle = '#000000';
+    // Final Balance
+    curY += 65;
+    ctx.font = 'bold 48px "Segoe UI", Arial, sans-serif';
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(bLabel, xLabel, curY + 20);
+    const bLabel = (data.balanceLabel || 'BALANCE').toUpperCase();
+    ctx.fillText(bLabel, xLabel, curY + 40);
 
     ctx.textAlign = 'right';
-    ctx.fillText(formatIndianCurrency(data.finalBalance), xVal, curY + 20);
-
-    curY += 50;
+    ctx.fillText(formatIndianCurrency(data.finalBalance || runningTotal), xValue + valW, curY + 40);
   }
 
   ctx.restore();

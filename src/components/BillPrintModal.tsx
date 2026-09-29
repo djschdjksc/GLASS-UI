@@ -10,7 +10,8 @@ import {
   FileText,
   Truck,
   Layers,
-  Check
+  Check,
+  Zap
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
@@ -45,6 +46,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
   const [adjustments, setAdjustments] = useState<PrintAdjustment[]>([]);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
+  const [nativeImage, setNativeImage] = useState<string | null>(null);
+  const [isNativeServiceActive, setIsNativeServiceActive] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Sync initialMode when modal opens
@@ -125,10 +128,37 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     };
   }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance]);
 
-  // Live Canvas Rendering in < 5ms
+  // Live Canvas Rendering & Native PyQt6 Engine fetch
   useEffect(() => {
-    if (!isOpen || !canvasRef.current) return;
-    renderBillToCanvas(printPayload, canvasRef.current);
+    if (!isOpen) return;
+
+    if (canvasRef.current) {
+      renderBillToCanvas(printPayload, canvasRef.current);
+    }
+
+    let active = true;
+    fetch('http://127.0.0.1:5005/api/print/render-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(printPayload)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (active && data.success && data.dataUrl) {
+          setNativeImage(data.dataUrl);
+          setIsNativeServiceActive(true);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsNativeServiceActive(false);
+          setNativeImage(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, [isOpen, printPayload]);
 
   // Modal Keyboard Shortcuts
@@ -218,28 +248,73 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     saveAdjustmentsCache(adjustments, newLabel);
   };
 
-  const handleDirectPrint = () => {
+  const handleDirectPrint = async () => {
     macAudio.playSuccess();
+    if (isNativeServiceActive) {
+      try {
+        const resp = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(printPayload)
+        });
+        const res = await resp.json();
+        if (res.success) {
+          return;
+        }
+      } catch (err) {
+        console.warn('Native direct-print fallback:', err);
+      }
+    }
     directPrintBill(printPayload);
   };
 
   const handleCopyAsImage = async () => {
-    if (!canvasRef.current) return;
     macAudio.playClick();
-    const success = await copyBillCanvasToClipboard(canvasRef.current);
-    if (success) {
-      macAudio.playSuccess();
-      setCopiedSuccess(true);
-      setTimeout(() => setCopiedSuccess(false), 2500);
+    if (isNativeServiceActive) {
+      try {
+        const resp = await fetch('http://127.0.0.1:5005/api/print/copy-to-clipboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(printPayload)
+        });
+        const res = await resp.json();
+        if (res.success) {
+          macAudio.playSuccess();
+          setCopiedSuccess(true);
+          setTimeout(() => setCopiedSuccess(false), 2500);
+          return;
+        }
+      } catch {}
+    }
+
+    if (canvasRef.current) {
+      const success = await copyBillCanvasToClipboard(canvasRef.current);
+      if (success) {
+        macAudio.playSuccess();
+        setCopiedSuccess(true);
+        setTimeout(() => setCopiedSuccess(false), 2500);
+      }
     }
   };
 
   const handleSaveAsImage = () => {
-    if (!canvasRef.current) return;
     macAudio.playClick();
     const cleanParty = (header.partyName || 'SALE').replace(/[^a-zA-Z0-9_-]/g, '_');
     const filename = `${printMode.toUpperCase()}_${billNo}_${cleanParty}.png`;
-    downloadBillCanvasAsImage(canvasRef.current, filename);
+
+    if (nativeImage) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = nativeImage;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    if (canvasRef.current) {
+      downloadBillCanvasAsImage(canvasRef.current, filename);
+    }
   };
 
   return (
@@ -292,6 +367,15 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
             <span style={{ fontSize: '11px', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
               BILL NO: <strong style={{ color: '#38bdf8' }}>{billNo}</strong> • {header.partyName || 'CASH SALE'}
             </span>
+            {isNativeServiceActive ? (
+              <span style={{ fontSize: '10px', color: '#34d399', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Zap size={11} fill="#34d399" /> ⚡ PYTHON QPAINTER ACTIVE (F:\SUMMARY 1:1)
+              </span>
+            ) : (
+              <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                CANVAS ENGINE (LOCAL)
+              </span>
+            )}
           </div>
 
           {/* Mode Switcher Buttons */}
@@ -417,14 +501,27 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 borderRadius: '4px',
                 overflow: 'hidden',
                 background: '#ffffff',
-                maxWidth: '100%'
+                maxWidth: '100%',
+                width: '780px'
               }}
             >
+              {nativeImage && (
+                <img
+                  src={nativeImage}
+                  alt="Native Qt Print Preview"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: 'auto',
+                    imageRendering: 'crisp-edges'
+                  }}
+                />
+              )}
               <canvas
                 ref={canvasRef}
                 style={{
-                  display: 'block',
-                  maxWidth: '100%',
+                  display: nativeImage ? 'none' : 'block',
+                  width: '100%',
                   height: 'auto'
                 }}
               />
