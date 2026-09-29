@@ -37,7 +37,7 @@ const REAL_PARTIES: string[] = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
   ? Array.from(new Set(SQLITE_PARTIES.map((p: any) => p.party_name).filter(Boolean)))
   : COMMON_PARTIES;
 
-const DOC_TYPES = ['SALE BILL', 'PURCHASE BILL', 'TAX INVOICE', 'ESTIMATE', 'CHALLAN'];
+const DOC_TYPES = ['SALE', 'SALE RETURN', 'ORDER', 'PURCHASE'];
 const TYPE_SELECTIONS = ['RETAIL', 'WHOLESALE', 'JOB WORK', 'INTER-STATE', 'EXPORT'];
 
 export const AppleHeader: React.FC<Props> = ({ 

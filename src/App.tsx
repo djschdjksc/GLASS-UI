@@ -53,15 +53,24 @@ const playTapSound = () => {
 
 const LATEST_SQLITE_BILL = (SQLITE_BILLS && SQLITE_BILLS.length > 0) ? SQLITE_BILLS[0] : null;
 
+export const normalizeDocType = (dt?: string): string => {
+  if (!dt) return 'SALE';
+  const u = dt.toUpperCase().trim();
+  if (u.includes('RETURN') || u.includes('CREDIT')) return 'SALE RETURN';
+  if (u.includes('ORDER') || u.includes('QUOTATION')) return 'ORDER';
+  if (u.includes('PURCHASE') || u.includes('INWARD')) return 'PURCHASE';
+  return 'SALE';
+};
+
 const INITIAL_HEADER: BillHeader = LATEST_SQLITE_BILL ? {
-  docType: LATEST_SQLITE_BILL.docType || 'SALE BILL',
+  docType: normalizeDocType(LATEST_SQLITE_BILL.docType),
   partyName: LATEST_SQLITE_BILL.party || 'GOURAV - Kapurthala',
   typeSelection: LATEST_SQLITE_BILL.typeSelection || 'WHOLESALE',
   vehicleNo: LATEST_SQLITE_BILL.vehicle || '',
   date: LATEST_SQLITE_BILL.date || '2026-07-23',
   tokenNo: LATEST_SQLITE_BILL.token || '528'
 } : {
-  docType: 'SALE BILL',
+  docType: 'SALE',
   partyName: 'GOURAV - Kapurthala',
   typeSelection: 'WHOLESALE',
   vehicleNo: '',
@@ -272,7 +281,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       token: tokenStr,
       date: header.date || new Date().toISOString().split('T')[0],
       party: cleanPartyName,
-      docType: header.docType || 'SALE BILL',
+      docType: normalizeDocType(header.docType),
       vehicle: header.vehicleNo || '',
       typeSelection: header.typeSelection || 'WHOLESALE',
       total,
@@ -308,7 +317,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const todayStr = new Date().toISOString().split('T')[0];
 
     const blankHeader: BillHeader = {
-      docType: 'SALE BILL',
+      docType: 'SALE',
       partyName: '',
       typeSelection: 'WHOLESALE',
       vehicleNo: '',
@@ -776,7 +785,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const todayStr = new Date().toISOString().split('T')[0];
 
     const blankHeader: BillHeader = {
-      docType: 'SALE BILL',
+      docType: 'SALE',
       partyName: '',
       typeSelection: 'WHOLESALE',
       vehicleNo: '',
@@ -2212,7 +2221,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 onChangeThemeMode={onChangeThemeMode}
                 onLoadBillToEditor={(bill: any) => {
                   setHeader({
-                    docType: bill.docType,
+                    docType: normalizeDocType(bill.docType),
                     partyName: bill.party,
                     typeSelection: bill.typeSelection || 'WHOLESALE',
                     vehicleNo: bill.vehicle || '',
