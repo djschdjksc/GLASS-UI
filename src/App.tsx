@@ -832,39 +832,140 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     showToast(`Cleared ${cells.length} Cell(s)`, 'info');
   };
 
-  // Intelligent Excel Paste for Raw Items: Overwrites starting at (startRow, startCol) or appends
+  // Intelligent Excel Paste for Raw Items: Dynamically maps all columns (Name, PartyCode, all dynamic size columns, U Cap, L Cap)
   const handleBulkPasteRaw = (rows: string[][], startRow?: number, startCol: number = 0) => {
+    if (!rows || rows.length === 0) return;
+
+    let workingRows = rows.map(r => r.map(c => (c !== undefined && c !== null ? String(c).trim() : '')));
+    let updatedDynCols = [...dynamicCols];
+    let updatedHasPartyCode = hasPartyCodeCol;
+
+    // 1. Inspect first row to see if it is a header row from Excel
+    const firstRow = workingRows[0];
+    const isHeader = firstRow.some(col => 
+      /item|name|qty|cap|spec|mould|price|total|party|code|\bft\b|\bfeet\b/i.test(col) ||
+      /\b(?:12|14|16|18|20|9\.5)\b/i.test(col)
+    );
+
+    if (isHeader) {
+      // Parse header row to extract column definitions (e.g. "12 FT", "14 FT", "PARTY CODE")
+      firstRow.forEach((headerText) => {
+        const text = headerText.toLowerCase().trim();
+        if (/party|code/i.test(text)) {
+          updatedHasPartyCode = true;
+        } else if (/u\s*cap/i.test(text) || /l\s*cap/i.test(text) || /item|name/i.test(text)) {
+          // Standard fixed columns
+        } else {
+          // Check for size column (e.g. 12 FT, 14 FT, 9.5 FT)
+          const match = text.match(/([\d]+(?:\.[\d]+)?)\s*(?:ft|feet)?/i);
+          if (match) {
+            const size = parseFloat(match[1]);
+            if (!isNaN(size) && size > 0 && size !== 10) {
+              const field = `qty_${String(size).replace('.', '_')}`;
+              if (!updatedDynCols.some(dc => dc.field === field)) {
+                updatedDynCols.push({ field, label: `(${size} FT)` });
+              }
+            }
+          }
+        }
+      });
+      // Remove header row so only data rows are pasted
+      workingRows = workingRows.slice(1);
+    }
+
+    if (workingRows.length === 0) return;
+
+    // 2. Check if data rows have MORE columns than current table columns, auto-insert size columns if needed
+    const fixedColCount = 1 + (updatedHasPartyCode ? 1 : 0) + 2; // name, [partyCode], uCap, lCap
+    const maxColsInData = Math.max(...workingRows.map(r => r.length));
+
+    // If starting at col 0 and data has more columns than fixedColCount + updatedDynCols.length + 1:
+    const expectedSizeColsInData = maxColsInData - fixedColCount;
+    if (startCol === 0 && expectedSizeColsInData > (updatedDynCols.length + 1)) {
+      const commonSizes = [12, 14, 16, 18, 20, 9.5];
+      for (const sz of commonSizes) {
+        if (updatedDynCols.length >= expectedSizeColsInData - 1) break;
+        const field = `qty_${String(sz).replace('.', '_')}`;
+        if (!updatedDynCols.some(dc => dc.field === field)) {
+          updatedDynCols.push({ field, label: `(${sz} FT)` });
+        }
+      }
+    }
+
+    // 3. Update dynamicCols and partyCode state if changed
+    if (updatedDynCols.length !== dynamicCols.length || updatedHasPartyCode !== hasPartyCodeCol) {
+      setDynamicCols(updatedDynCols);
+      setHasPartyCodeCol(updatedHasPartyCode);
+      try {
+        localStorage.setItem('modern_left_dyncols', JSON.stringify(updatedDynCols));
+        localStorage.setItem('modern_has_party_code_col', String(updatedHasPartyCode));
+      } catch {}
+    }
+
+    // 4. Compute allSizeCols sorted descending by size (same order as displayed on screen)
+    const currentSizeCols = [
+      { field: 'qty', label: '(10 FT)', size: 10 },
+      ...updatedDynCols.map(c => ({
+        field: c.field,
+        label: c.label,
+        size: extractSizeFromColLabel(c.label || c.field)
+      }))
+    ].sort((a, b) => b.size - a.size);
+
+    // 5. Ordered list of grid column fields
+    const colFields = [
+      'name',
+      ...(updatedHasPartyCode ? ['partyCode'] : []),
+      ...currentSizeCols.map(sc => sc.field),
+      'uCap',
+      'lCap'
+    ];
+
+    const parseNum = (val: any): number => {
+      if (val === undefined || val === null || val === '') return 0;
+      const clean = String(val).replace(/,/g, '').replace(/[^\d.-]/g, '').trim();
+      const num = parseFloat(clean);
+      return isNaN(num) ? 0 : num;
+    };
+
     setRawItems(prev => {
       const next = [...prev];
       const actualStart = startRow !== undefined ? startRow : next.length;
 
-      rows.forEach((r, rIdx) => {
+      workingRows.forEach((r, rIdx) => {
         const targetRowIdx = actualStart + rIdx;
-        const nameVal = r[0] !== undefined ? r[0] : '';
-        const qtyVal = parseInt(r[1]) || 0;
-        const uCapVal = parseInt(r[2]) || 0;
-        const lCapVal = parseInt(r[3]) || 0;
+        const current = targetRowIdx < next.length ? { ...next[targetRowIdx] } : {
+          id: 'raw-paste-' + Date.now() + '-' + rIdx,
+          name: '',
+          qty: 0,
+          uCap: 0,
+          lCap: 0
+        };
+
+        r.forEach((cellVal, cIdx) => {
+          const colIdx = startCol + cIdx;
+          if (colIdx < colFields.length) {
+            const field = colFields[colIdx];
+            if (field === 'name') {
+              current.name = cellVal ? String(cellVal).trim() : (current.name || '');
+            } else if (field === 'partyCode') {
+              current.partyCode = cellVal ? String(cellVal).trim() : (current.partyCode || '');
+            } else {
+              (current as any)[field] = parseNum(cellVal);
+            }
+          }
+        });
 
         if (targetRowIdx < next.length) {
-          const current = { ...next[targetRowIdx] };
-          if (startCol <= 0 && r[0] !== undefined) current.name = nameVal;
-          if (startCol <= 1 && r[1] !== undefined) current.qty = qtyVal;
-          if (startCol <= 2 && r[2] !== undefined) current.uCap = uCapVal;
-          if (startCol <= 3 && r[3] !== undefined) current.lCap = lCapVal;
           next[targetRowIdx] = current;
         } else {
-          next.push({
-            id: 'raw-paste-' + Date.now() + '-' + rIdx,
-            name: nameVal || ('Item ' + (targetRowIdx + 1)),
-            qty: qtyVal,
-            uCap: uCapVal,
-            lCap: lCapVal
-          });
+          next.push(current);
         }
       });
       return next;
     });
-    showToast(`Pasted ${rows.length} row(s) into table!`, 'success');
+
+    showToast(`Pasted ${workingRows.length} row(s) across all columns!`, 'success');
   };
 
   // Handlers for Finished Items
@@ -1580,36 +1681,58 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   loadOldPriceRef.current = handleLoadOldPriceFromHistory;
 
   const handleBulkPasteFinished = (rows: string[][], startRow?: number, startCol: number = 0) => {
+    if (!rows || rows.length === 0) return;
+
+    let workingRows = rows.map(r => r.map(c => (c !== undefined && c !== null ? String(c).trim() : '')));
+    // Check if row 0 is header
+    if (workingRows.length > 0 && workingRows[0].some(c => /mould|item|qty|price|rate|total/i.test(c))) {
+      workingRows = workingRows.slice(1);
+    }
+    if (workingRows.length === 0) return;
+
+    const parseNum = (val: any): number => {
+      if (val === undefined || val === null || val === '') return 0;
+      const clean = String(val).replace(/,/g, '').replace(/[^\d.-]/g, '').trim();
+      const num = parseFloat(clean);
+      return isNaN(num) ? 0 : num;
+    };
+
     setFinishedItems(prev => {
       const next = [...prev];
       const actualStart = startRow !== undefined ? startRow : next.length;
 
-      rows.forEach((r, rIdx) => {
+      workingRows.forEach((r, rIdx) => {
         const targetRowIdx = actualStart + rIdx;
-        const mouldVal = r[0] !== undefined ? r[0] : '';
-        const qtyVal = parseInt(r[1]) || 0;
-        const priceVal = parseFloat(r[2]) || 0;
+        const current = targetRowIdx < next.length ? { ...next[targetRowIdx] } : {
+          id: 'fin-paste-' + Date.now() + '-' + rIdx,
+          mould: '',
+          qty: 0,
+          price: 0,
+          total: 0
+        };
+
+        r.forEach((cellVal, cIdx) => {
+          const colIdx = startCol + cIdx;
+          if (colIdx === 0) {
+            current.mould = cellVal ? String(cellVal).trim() : (current.mould || '');
+          } else if (colIdx === 1) {
+            current.qty = parseNum(cellVal);
+          } else if (colIdx === 2) {
+            current.price = parseNum(cellVal);
+          }
+        });
+        current.total = (current.qty || 0) * (current.price || 0);
 
         if (targetRowIdx < next.length) {
-          const current = { ...next[targetRowIdx] };
-          if (startCol <= 0 && r[0] !== undefined) current.mould = mouldVal;
-          if (startCol <= 1 && r[1] !== undefined) current.qty = qtyVal;
-          if (startCol <= 2 && r[2] !== undefined) current.price = priceVal;
-          current.total = current.qty * current.price;
           next[targetRowIdx] = current;
         } else {
-          next.push({
-            id: 'fin-paste-' + Date.now() + '-' + rIdx,
-            mould: mouldVal || ('Mould ' + (targetRowIdx + 1)),
-            qty: qtyVal,
-            price: priceVal,
-            total: qtyVal * priceVal
-          });
+          next.push(current);
         }
       });
       return next;
     });
-    showToast(`Pasted ${rows.length} mould(s) into table!`, 'success');
+
+    showToast(`Pasted ${workingRows.length} mould(s) into Right Panel!`, 'success');
   };
 
   // Quick Action Toggles

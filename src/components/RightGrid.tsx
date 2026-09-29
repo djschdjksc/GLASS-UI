@@ -369,6 +369,18 @@ export const RightGrid: React.FC<Props> = ({
         handleCopyGrid();
         return;
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        const target = e.target as HTMLElement;
+        if (!target || target.tagName !== 'INPUT') {
+          e.preventDefault();
+          navigator.clipboard.readText().then(text => {
+            if (text) executeGridPaste(text, activeCell?.r ?? 0, activeCell?.c ?? 0);
+          }).catch(() => {
+            onToast('Click in cell & press Ctrl+V to paste', 'info');
+          });
+          return;
+        }
+      }
 
       if (e.key === 'Insert') {
         e.preventDefault();
@@ -985,6 +997,13 @@ export const RightGrid: React.FC<Props> = ({
       {/* Excel Data Table */}
       <div 
         onWheel={handleTableWheel}
+        onPaste={(e) => {
+          const text = e.clipboardData.getData('text');
+          if (text) {
+            e.preventDefault();
+            executeGridPaste(text, activeCell?.r ?? 0, activeCell?.c ?? 0);
+          }
+        }}
         style={{ 
           flex: 1, 
           overflowY: 'auto', 

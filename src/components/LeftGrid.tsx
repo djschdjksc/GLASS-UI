@@ -568,6 +568,18 @@ export const LeftGrid: React.FC<Props> = ({
         handleCopyGrid();
         return;
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        const target = e.target as HTMLElement;
+        if (!target || target.tagName !== 'INPUT') {
+          e.preventDefault();
+          navigator.clipboard.readText().then(text => {
+            if (text) executeGridPaste(text, activeCell?.r ?? 0, activeCell?.c ?? 0);
+          }).catch(() => {
+            onToast('Click in cell & press Ctrl+V to paste', 'info');
+          });
+          return;
+        }
+      }
 
       if (e.key === 'Insert') {
         e.preventDefault();
@@ -674,11 +686,6 @@ export const LeftGrid: React.FC<Props> = ({
     if (!text || !text.trim()) return;
 
     let lines = text.trim().split(/\r?\n/).map(line => line.split('\t'));
-    
-    if (lines.length > 0 && lines[0].some(col => /item|name|qty|cap|spec|mould|price|total/i.test(col.trim()))) {
-      lines = lines.slice(1);
-    }
-
     if (lines.length === 0) return;
 
     onBulkPaste(lines, startR, startC);
@@ -1154,6 +1161,13 @@ export const LeftGrid: React.FC<Props> = ({
       {/* Excel Data Table */}
       <div 
         onWheel={handleTableWheel}
+        onPaste={(e) => {
+          const text = e.clipboardData.getData('text');
+          if (text) {
+            e.preventDefault();
+            executeGridPaste(text, activeCell?.r ?? 0, activeCell?.c ?? 0);
+          }
+        }}
         style={{ 
           flex: 1, 
           overflowY: 'auto', 
