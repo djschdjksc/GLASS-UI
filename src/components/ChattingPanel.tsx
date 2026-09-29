@@ -272,7 +272,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
         text: textToSend,
         timestamp: timeNow,
         isMine: true,
-        billToken: header.tokenNo
+        billToken: String(header.tokenNo || '')
       };
 
       setTeamMessages(prev => [...prev, newTeamMsg]);

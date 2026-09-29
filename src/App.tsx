@@ -440,6 +440,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   const calcSummaryRef = useRef<(() => void) | null>(null);
   const loadOldPriceRef = useRef<(() => void) | null>(null);
+  const openPrintRef = useRef<((mode: 'estimate' | 'summary_only' | 'loading_slip') => void) | null>(null);
 
   const escapeClearRef = useRef<() => void>(() => {});
   const confirmSaveAndClearRef = useRef<() => Promise<void>>(() => Promise.resolve());
@@ -548,6 +549,34 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       if ((e.altKey && (e.key === 'p' || e.key === 'P')) || (isCtrlOrCmd && e.shiftKey && (e.key === 'l' || e.key === 'L'))) {
         e.preventDefault();
         loadOldPriceRef.current?.();
+        return;
+      }
+
+      // Ctrl+P: Print Center (Estimate by default)
+      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        openPrintRef.current?.('estimate');
+        return;
+      }
+
+      // Ctrl+E: Print Estimate (Raw Items + Moulds + Adjustments + Final Balance)
+      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'e' || e.key === 'E')) {
+        e.preventDefault();
+        openPrintRef.current?.('estimate');
+        return;
+      }
+
+      // Alt+S: Print Summary Only (Moulds Summary + Adjustments + Final Balance, NO raw items)
+      if (e.altKey && !isCtrlOrCmd && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        openPrintRef.current?.('summary_only');
+        return;
+      }
+
+      // Ctrl+L (without Shift): Warehouse Loading Slip (Qty, U Cap, L Cap totals, NO pricing)
+      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        openPrintRef.current?.('loading_slip');
         return;
       }
 
@@ -712,11 +741,19 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Modals
   const [isSlipOpen, setIsSlipOpen] = useState<boolean>(false);
+  const [printModalMode, setPrintModalMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>('estimate');
   const [isGoodsModalOpen, setIsGoodsModalOpen] = useState<boolean>(false);
   const [isOcrOpen, setIsOcrOpen] = useState<boolean>(false);
   const [isNoteOpen, setIsNoteOpen] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(false);
   const [noteText, setNoteText] = useState<string>('Urgent delivery for Apex Industries scheduled by end of week.');
+
+  const handleOpenPrintModal = useCallback((mode: 'estimate' | 'summary_only' | 'loading_slip') => {
+    macAudio.playPop();
+    setPrintModalMode(mode);
+    setIsSlipOpen(true);
+  }, []);
+  openPrintRef.current = handleOpenPrintModal;
 
   // Notification toast disabled per user request
   const showToast = (_message: string, _type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
@@ -2027,7 +2064,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 onSummary={calculateRightGridFromLeft}
                 onLoadOldPrice={handleLoadOldPriceFromHistory}
                 onSave={handleSaveCurrentBill}
-                onPrintSlip={() => setIsSlipOpen(true)}
+                onPrintSlip={() => handleOpenPrintModal('estimate')}
                 onAddRawRow={handleAddRawItem}
                 onOpenOcr={() => setIsOcrOpen(true)}
                 onOpenNote={() => setIsNoteOpen(true)}
@@ -2288,6 +2325,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         header={header}
         rawItems={rawItems}
         finishedItems={finishedItems}
+        initialMode={printModalMode}
+        billNo={header.tokenNo || '0001'}
       />
 
       <OcrModal

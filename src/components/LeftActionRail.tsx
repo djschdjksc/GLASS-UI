@@ -60,7 +60,7 @@ export const LeftActionRail: React.FC<Props> = ({
     { id: 'oldprice', name: 'Load Old Price (Alt+P)', icon: <History size={17} color="#f59e0b" />, action: onLoadOldPrice },
     { id: 'calc', name: 'Numpad Calculator (F9)', icon: <Calculator size={17} color="#38bdf8" />, action: () => onOpenCalculator?.() },
     { id: 'save', name: 'Save Bill', icon: <Save size={17} color="currentColor" />, action: onSave },
-    { id: 'slip', name: 'Print Slip', icon: <Printer size={17} color="currentColor" />, action: onPrintSlip },
+    { id: 'slip', name: 'Print / Estimate / Loading Slip (Ctrl+P / Ctrl+E / Ctrl+L / Alt+S)', icon: <Printer size={17} color="#38bdf8" />, action: onPrintSlip },
     { id: 'add', name: 'Add Raw Item', icon: <PlusCircle size={17} color="currentColor" />, action: onAddRawRow },
     { id: 'ocr', name: 'AI Slip Scan', icon: <Camera size={17} color="currentColor" />, action: onOpenOcr },
     { id: 'note', name: 'Bill Notes', icon: <FileEdit size={17} color="currentColor" />, action: onOpenNote },

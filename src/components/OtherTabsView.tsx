@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { downloadCSV } from '../utils/exportCsv';
+import { BillPrintModal } from './BillPrintModal';
 
 interface Props {
   activeTab: NavKey;
@@ -317,6 +318,7 @@ export const OtherTabsView: React.FC<Props> = ({
   const [f2FocusArea, setF2FocusArea] = useState<'bills' | 'raw' | 'finished'>('bills');
   const [selectedRawRowIdx, setSelectedRawRowIdx] = useState<number>(0);
   const [selectedFinishedRowIdx, setSelectedFinishedRowIdx] = useState<number>(0);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
 
   // Refs for auto-scrolling
   const billsListRef = useRef<HTMLDivElement>(null);
@@ -675,16 +677,16 @@ export const OtherTabsView: React.FC<Props> = ({
   };
 
   const handleExportPartiesCsv = () => {
-    const headers = ['PARTY ID', 'NAME', 'CONTACT PERSON', 'PHONE', 'CITY', 'ADDRESS', 'PINCODE', 'BALANCE', 'TOTAL BILLS'];
+    const headers = ['PARTY ID', 'NAME', 'PHONE', 'STATION', 'DISTRICT', 'STATE', 'PINCODE', 'BALANCE', 'TOTAL BILLS'];
     const rows = parties.map(p => {
       const stat = partyBillStats[p.name.trim().toLowerCase()] || { count: 0, total: 0 };
       return [
         p.id,
         p.name || '',
-        p.contactPerson || '',
         p.phone || '',
-        p.city || '',
-        p.address || '',
+        p.station || p.city || '',
+        p.district || '',
+        p.state || '',
         p.pincode || '',
         p.balance || 0,
         stat.count
@@ -734,7 +736,7 @@ export const OtherTabsView: React.FC<Props> = ({
     const headers = ['DATE', 'VOUCHER NO', 'PARTICULARS', 'DEBIT (DR)', 'CREDIT (CR)', 'BALANCE'];
     const rows = ledgerEntries.map(e => [
       e.date,
-      e.ref,
+      e.voucher || '',
       e.particulars,
       e.debit || 0,
       e.credit || 0,
@@ -1353,8 +1355,11 @@ export const OtherTabsView: React.FC<Props> = ({
                   type="button"
                   className="mac-btn"
                   style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Print Bill"
-                  onClick={() => macAudio.playClick()}
+                  title="Print Bill (Ctrl+P / Ctrl+E / Ctrl+L / Alt+S)"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsPrintModalOpen(true);
+                  }}
                   onMouseEnter={() => macAudio.playHover()}
                 >
                   <Printer size={13} color="#38bdf8" />
@@ -1363,8 +1368,11 @@ export const OtherTabsView: React.FC<Props> = ({
                   type="button"
                   className="mac-btn"
                   style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Export PDF"
-                  onClick={() => macAudio.playClick()}
+                  title="Export PDF / Print Preview"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsPrintModalOpen(true);
+                  }}
                   onMouseEnter={() => macAudio.playHover()}
                 >
                   <Download size={13} color="#34d399" />
@@ -2490,6 +2498,7 @@ export const OtherTabsView: React.FC<Props> = ({
                 })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Barcode / QR Generator Preview Card (Dark Liquid Glass Theme) */}
@@ -2675,6 +2684,39 @@ export const OtherTabsView: React.FC<Props> = ({
           onChangeOpacity={onChangeOpacity}
           glassOpacity={glassOpacity}
           onChangeGlassOpacity={onChangeGlassOpacity}
+        />
+      )}
+
+      {/* Bill Print & Estimate Center Modal for Historical Bills */}
+      {isPrintModalOpen && selectedBill && (
+        <BillPrintModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          header={{
+            docType: (selectedBill as any).type || (selectedBill as any).docType || 'Bill',
+            partyName: selectedBill.party || 'CASH SALE',
+            typeSelection: 'Regular',
+            vehicleNo: selectedBill.vehicle,
+            date: selectedBill.date,
+            tokenNo: selectedBill.token || selectedBill.id
+          }}
+          rawItems={displayRawItems.map((r, i) => ({
+            id: String(i),
+            name: r.name,
+            partyCode: r.partyCode,
+            qty: r.qty || 0,
+            uCap: r.uCap || 0,
+            lCap: r.lCap || 0
+          }))}
+          finishedItems={displayFinishedItems.map((f, i) => ({
+            id: String(i),
+            mould: f.mould,
+            qty: f.qty,
+            price: f.price,
+            total: f.total
+          }))}
+          initialMode="estimate"
+          billNo={selectedBill.token || selectedBill.id}
         />
       )}
     </div>
