@@ -1,5 +1,6 @@
 import { ControlPanelView } from './ControlPanelView';
 import { SettingsTabView } from './SettingsTabView';
+import { CosmicSearchInput } from './common/CosmicSearchInput';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { NavKey } from '../types';
 import { macAudio } from '../utils/macAudio';
@@ -36,8 +37,11 @@ import {
   ShoppingCart,
   Truck,
   ShoppingBag,
-  History
+  History,
+  Package,
+  Layers
 } from 'lucide-react';
+import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 
 interface Props {
   activeTab: NavKey;
@@ -926,82 +930,75 @@ export const OtherTabsView: React.FC<Props> = ({
       {activeTab === 'F2' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', height: '100%', minHeight: 0 }}>
           {/* Sub-tabs bar: SALE, SALE RETURN, ORDER, PURCHASE */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '5px 8px',
-            background: 'rgba(15, 23, 42, 0.55)',
-            backdropFilter: 'blur(16px)',
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            flexShrink: 0
-          }}>
-            {(
-              [
-                { id: 'SALE', label: 'SALE', shortcut: 'Alt+1', icon: ShoppingBag, count: categoryCounts.SALE, color: '#38bdf8' },
-                { id: 'SALE_RETURN', label: 'SALE RETURN', shortcut: 'Alt+2', icon: RotateCcw, count: categoryCounts.SALE_RETURN, color: '#f87171' },
-                { id: 'ORDER', label: 'ORDER', shortcut: 'Alt+3', icon: ShoppingCart, count: categoryCounts.ORDER, color: '#fbbf24' },
-                { id: 'PURCHASE', label: 'PURCHASE', shortcut: 'Alt+4', icon: Truck, count: categoryCounts.PURCHASE, color: '#34d399' }
-              ] as const
-            ).map(tab => {
-              const IconComp = tab.icon;
-              const isActive = historySubTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    macAudio.playClick();
-                    setHistorySubTab(tab.id);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '5px 14px',
-                    borderRadius: '6px',
-                    border: isActive ? `1px solid ${tab.color}` : '1px solid rgba(255, 255, 255, 0.08)',
-                    background: isActive ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                    boxShadow: isActive ? `0 0 12px ${tab.color}33` : 'none',
-                    color: isActive ? '#ffffff' : '#94a3b8',
-                    fontSize: '11px',
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    userSelect: 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
-                      e.currentTarget.style.color = '#ffffff';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                      e.currentTarget.style.color = '#94a3b8';
-                    }
-                  }}
-                >
-                  <IconComp size={13} style={{ color: isActive ? tab.color : '#94a3b8' }} />
-                  <span>{tab.label}</span>
-                  <span style={{
-                    fontSize: '9px',
-                    padding: '1px 5px',
-                    borderRadius: '999px',
-                    background: isActive ? `${tab.color}26` : 'rgba(255, 255, 255, 0.06)',
-                    color: isActive ? tab.color : '#94a3b8',
-                    fontWeight: 700,
-                    marginLeft: '2px'
-                  }}>
-                    {tab.count}
-                  </span>
-                  <span style={{ fontSize: '9px', opacity: 0.6, marginLeft: '2px', color: '#cbd5e1' }}>
-                    ({tab.shortcut})
-                  </span>
-                </button>
-              );
-            })}
+          <div 
+            className="glass-panel"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              flexShrink: 0
+            }}
+          >
+            <IosSegmentedTabs<'SALE' | 'SALE_RETURN' | 'ORDER' | 'PURCHASE'>
+              activeKey={historySubTab}
+              onChange={setHistorySubTab}
+              width={680}
+              tabs={[
+                {
+                  key: 'SALE',
+                  label: 'SALE',
+                  shortcut: 'Alt+1',
+                  icon: ShoppingBag,
+                  count: categoryCounts.SALE,
+                  gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                  shadowColor: 'rgba(14, 165, 233, 0.35)'
+                },
+                {
+                  key: 'SALE_RETURN',
+                  label: 'SALE RETURN',
+                  shortcut: 'Alt+2',
+                  icon: RotateCcw,
+                  count: categoryCounts.SALE_RETURN,
+                  gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  shadowColor: 'rgba(239, 68, 68, 0.35)'
+                },
+                {
+                  key: 'ORDER',
+                  label: 'ORDER',
+                  shortcut: 'Alt+3',
+                  icon: ShoppingCart,
+                  count: categoryCounts.ORDER,
+                  gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  shadowColor: 'rgba(245, 158, 11, 0.35)'
+                },
+                {
+                  key: 'PURCHASE',
+                  label: 'PURCHASE',
+                  shortcut: 'Alt+4',
+                  icon: Truck,
+                  count: categoryCounts.PURCHASE,
+                  gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  shadowColor: 'rgba(16, 185, 129, 0.35)'
+                }
+              ]}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                color: '#94a3b8',
+                fontWeight: 600,
+                letterSpacing: '0.04em'
+              }}>
+                TOTAL: <strong style={{ color: '#ffffff' }}>{bills.length}</strong> INVOICES
+              </span>
+            </div>
           </div>
 
           {/* 3-Panel Layout Container */}
@@ -1037,13 +1034,10 @@ export const OtherTabsView: React.FC<Props> = ({
 
               {/* Quick Bill Search Filter Input */}
               <div style={{ padding: '6px 4px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <Search size={12} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
-                  <input
-                    type="text"
-                    placeholder={`Search ${historySubTab.replace('_', ' ')} Bill # or Party...`}
-                    value={billSearchQuery}
-                    onChange={e => setBillSearchQuery(e.target.value)}
+                <CosmicSearchInput
+                  value={billSearchQuery}
+                  onChange={setBillSearchQuery}
+                  width="100%"
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -1055,19 +1049,8 @@ export const OtherTabsView: React.FC<Props> = ({
                       }
                     }
                   }}
-                  style={{
-                    width: '100%',
-                    padding: '5px 8px 5px 24px',
-                    fontSize: '11px',
-                    borderRadius: '6px',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#ffffff',
-                    outline: 'none'
-                  }}
                 />
               </div>
-            </div>
 
             {/* Smooth Scroll Container with Top/Bottom Gradient Masks */}
             <div className="scroll-list-container" style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -1670,22 +1653,17 @@ export const OtherTabsView: React.FC<Props> = ({
       {activeTab === 'F4' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
           {/* Sub-tabs switch */}
-          <div className="glass-panel" style={{ padding: '4px 8px', display: 'flex', gap: '6px', alignItems: 'center', borderRadius: '8px' }}>
-            {(['SALES', 'RAW', 'MOULDS'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => {
-                  macAudio.playClick();
-                  setDataTab(tab);
-                }}
-                onMouseEnter={() => macAudio.playHover()}
-                className={'mac-btn ' + (dataTab === tab ? 'active' : '')}
-                style={{ fontSize: '11px', padding: '3px 10px', height: '24px' }}
-              >
-                {tab === 'SALES' ? 'Sales Log' : tab === 'RAW' ? 'Raw Materials' : 'Moulds Specs'}
-              </button>
-            ))}
+          <div className="glass-panel" style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', borderRadius: '8px' }}>
+            <IosSegmentedTabs<'SALES' | 'RAW' | 'MOULDS'>
+              activeKey={dataTab}
+              onChange={setDataTab}
+              width={450}
+              tabs={[
+                { key: 'SALES', label: 'Sales Log', icon: FileText },
+                { key: 'RAW', label: 'Raw Materials', icon: Package },
+                { key: 'MOULDS', label: 'Moulds Specs', icon: Layers }
+              ]}
+            />
           </div>
 
           {/* Sub-panel content */}
@@ -1911,31 +1889,15 @@ export const OtherTabsView: React.FC<Props> = ({
         >
           {/* Search & Action Bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', padding: '2px 4px' }}>
-            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-              <Search size={14} style={{ position: 'absolute', left: '8px', color: '#94a3b8', pointerEvents: 'none' }} />
-              <input
-                type="text"
-                placeholder="Search parties by Name, Phone, Station, District, State, Pincode... (Direct in-table editing)"
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <CosmicSearchInput
                 value={partySearchQuery}
-                onChange={(e) => {
-                  setPartySearchQuery(e.target.value);
+                onChange={(val) => {
+                  setPartySearchQuery(val);
                   setPartyCurrentPage(1);
                 }}
-                className="mac-input"
-                style={{ width: '100%', height: '28px', paddingLeft: '28px', paddingRight: partySearchQuery ? '26px' : '8px', fontSize: '11px' }}
+                width="100%"
               />
-              {partySearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPartySearchQuery('');
-                    setPartyCurrentPage(1);
-                  }}
-                  style={{ position: 'absolute', right: '6px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
-                  <X size={13} />
-                </button>
-              )}
             </div>
 
             {/* Total counter badge */}

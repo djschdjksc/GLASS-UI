@@ -167,7 +167,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   return (
     <div
       style={{
-        position: 'fixed', animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards", transformOrigin: "top center", backdropFilter: "blur(60px) saturate(200%)", background: "rgba(10, 15, 25, 0.98)",
+        position: 'fixed',
         inset: 0,
         background: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(16px)',

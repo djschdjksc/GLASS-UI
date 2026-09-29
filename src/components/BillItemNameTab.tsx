@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { macAudio } from '../utils/macAudio';
+import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Tag, Hash, FileText, Layers, Banknote } from 'lucide-react';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
 import type { BillNameMap } from '../data/billMapsData';
 
 const DEFAULT_BILL_COLS = { srNo: 40, on: 45, shortCode: 150, printName: 300, rate: 90, category: 140, actions: 50 };
 
-export const BillItemNameTab: React.FC = () => {
+export interface BillItemNameTabProps {
+  search?: string;
+  onAddRef?: React.MutableRefObject<(() => void) | null>;
+}
+
+export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
+  search: externalSearch,
+  onAddRef
+}) => {
   const [maps, setMaps] = useState<BillNameMap[]>([]);
-  const [search, setSearch] = useState('');
+  const [internalSearch, setInternalSearch] = useState('');
+  const search = externalSearch !== undefined ? externalSearch : internalSearch;
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
@@ -278,35 +288,37 @@ export const BillItemNameTab: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [filtered, selectedIdx, editingIdx, maps]);
 
+  useEffect(() => {
+    if (onAddRef) {
+      onAddRef.current = handleAddNewRow;
+    }
+  }, [onAddRef]);
+
   return (
     <div 
       style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}
       onPaste={handlePaste}
     >
-      {/* Top Search & Actions Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="mac-notched-field" style={{ margin: 0, padding: '5px 12px', minWidth: '280px' }}>
-            <Search size={14} color="#94a3b8" />
-            <input 
-              type="text" 
-              placeholder="Search bill names or categories..." 
+      {/* Top Search & Actions Bar (only when not embedded in Control Panel) */}
+      {externalSearch === undefined && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CosmicSearchInput
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mac-notched-input"
-              style={{ fontSize: '12px', width: '100%' }}
+              onChange={setInternalSearch}
+              width={260}
             />
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+              {filtered.length} names • Press Enter to Edit/Save • Del Key to Delete
+            </span>
           </div>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            {filtered.length} names • Press Enter to Edit/Save • Del Key to Delete
-          </span>
-        </div>
 
-        <button className="mac-btn primary" onClick={handleAddNewRow}>
-          <Plus size={14} />
-          <span>Add Row</span>
-        </button>
-      </div>
+          <button className="mac-btn primary" onClick={handleAddNewRow}>
+            <Plus size={14} />
+            <span>Add Row</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Full-Width In-Table Editor */}
       <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '4px' }}>

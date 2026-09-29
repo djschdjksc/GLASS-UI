@@ -76,12 +76,14 @@ export const TableSettingsDropdown: React.FC<Props> = ({
     <div
       ref={panelRef}
       style={{
-        position: 'absolute', animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards", transformOrigin: "top center", backdropFilter: "blur(60px) saturate(200%)", background: "rgba(10, 15, 25, 0.98)",
+        position: 'absolute',
+        animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards",
+        transformOrigin: "top center",
         top: 'calc(100% + 8px)',
         [align === 'right' ? 'right' : 'left']: 0,
         width: '280px',
         background: 'rgba(18, 22, 28, 0.94)',
-        backdropFilter: 'blur(30px)',
+        backdropFilter: 'blur(30px) saturate(200%)',
         border: '1px solid rgba(255, 255, 255, 0.18)',
         borderRadius: '12px',
         padding: '14px',

@@ -3,6 +3,7 @@ import type { FinishedItem, EnterDirection } from '../types';
 import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
+import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History } from 'lucide-react';
 
 const evaluateMathExpression = (val: string): number => {
@@ -972,16 +973,12 @@ export const RightGrid: React.FC<Props> = ({
             />
           </div>
 
-          {/* Spotlight Search Pill */}
-          <div className="apple-search-pill" style={{ width: '150px' }}>
-            <Search size={11} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: '#a1a1aa' }} />
-            <input
-              type="text"
-              placeholder="Search moulds..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          {/* Spotlight Cosmic Search Pill */}
+          <CosmicSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            width={150}
+          />
         </div>
       </div>
 

@@ -1,0 +1,253 @@
+/* ========================================================================= */
+/* COSMIC ANIMATED SEARCH INPUT (CLEAN - NO BACKGROUND CLUTTER / NO DOTS)   */
+/* ========================================================================= */
+
+.cosmic-search-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  background: transparent;
+}
+
+.cosmic-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  overflow: hidden; /* Clips all rotating conic gradients cleanly inside the search pill */
+  padding: 1px;
+  background: rgba(10, 14, 28, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Dynamic Animated Conic Borders (strictly inside container border) */
+.cosmic-stardust,
+.cosmic-ring,
+.cosmic-starfield {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+.cosmic-stardust::before {
+  content: "";
+  z-index: -2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(83deg);
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  background-repeat: no-repeat;
+  filter: brightness(1.4);
+  background-image: conic-gradient(
+    rgba(0, 0, 0, 0) 0%,
+    #4d6dff,
+    rgba(0, 0, 0, 0) 8%,
+    rgba(0, 0, 0, 0) 50%,
+    #6e8cff,
+    rgba(0, 0, 0, 0) 58%
+  );
+  transition: transform 2s ease;
+}
+
+.cosmic-ring {
+  filter: blur(0.5px);
+}
+
+.cosmic-ring::before {
+  content: "";
+  z-index: -2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(70deg);
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  filter: brightness(1.3);
+  background-repeat: no-repeat;
+  background-image: conic-gradient(
+    #05071b,
+    #4d6dff 5%,
+    #05071b 14%,
+    #05071b 50%,
+    #6e8cff 60%,
+    #05071b 64%
+  );
+  transition: transform 2s ease;
+}
+
+.cosmic-starfield::before {
+  content: "";
+  z-index: -2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(82deg);
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  background-repeat: no-repeat;
+  background-image: conic-gradient(
+    rgba(0, 0, 0, 0),
+    #1c2452,
+    rgba(0, 0, 0, 0) 10%,
+    rgba(0, 0, 0, 0) 50%,
+    #2a3875,
+    rgba(0, 0, 0, 0) 60%
+  );
+  transition: transform 2s ease;
+}
+
+/* Hover rotation states */
+.cosmic-search-container:hover > .cosmic-starfield::before {
+  transform: translate(-50%, -50%) rotate(-98deg);
+}
+
+.cosmic-search-container:hover > .cosmic-stardust::before {
+  transform: translate(-50%, -50%) rotate(-97deg);
+}
+
+.cosmic-search-container:hover > .cosmic-ring::before {
+  transform: translate(-50%, -50%) rotate(-110deg);
+}
+
+/* Focus-within deep rotation states */
+.cosmic-search-container:focus-within > .cosmic-starfield::before {
+  transform: translate(-50%, -50%) rotate(442deg);
+  transition: transform 3.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cosmic-search-container:focus-within > .cosmic-stardust::before {
+  transform: translate(-50%, -50%) rotate(443deg);
+  transition: transform 3.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cosmic-search-container:focus-within > .cosmic-ring::before {
+  transform: translate(-50%, -50%) rotate(430deg);
+  transition: transform 3.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Main Box */
+.cosmic-main {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.cosmic-input {
+  background-color: #060919;
+  border: none;
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding-left: 28px;
+  padding-right: 30px;
+  font-size: 11.5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.cosmic-input::placeholder {
+  color: transparent;
+}
+
+.cosmic-input:focus {
+  background-color: #040614;
+}
+
+/* Search Icon on the left */
+.cosmic-search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Right Filter Action Badge */
+.cosmic-filter-container,
+.cosmic-wormhole-container {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  cursor: pointer;
+}
+
+.cosmic-filter-border,
+.cosmic-wormhole-border {
+  position: absolute;
+  inset: -1px;
+  overflow: hidden;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.cosmic-filter-border::before,
+.cosmic-wormhole-border::before {
+  content: "";
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background-repeat: no-repeat;
+  filter: brightness(1.35);
+  background-image: conic-gradient(
+    rgba(0, 0, 0, 0),
+    #6e8cff,
+    rgba(0, 0, 0, 0) 50%,
+    rgba(0, 0, 0, 0) 50%,
+    #dfa2da,
+    rgba(0, 0, 0, 0) 100%
+  );
+  animation: cosmic-rotate 3.5s linear infinite;
+}
+
+.cosmic-filter-icon,
+.cosmic-wormhole-icon {
+  position: relative;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #161329, #05071b, #1d1b4b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(214, 214, 230, 0.25);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.cosmic-filter-container:hover .cosmic-filter-icon,
+.cosmic-wormhole-container:hover .cosmic-wormhole-icon {
+  transform: scale(1.08);
+  border-color: rgba(214, 214, 230, 0.8);
+}
+
+@keyframes cosmic-rotate {
+  100% {
+    transform: translate(-50%, -50%) rotate(450deg);
+  }
+}

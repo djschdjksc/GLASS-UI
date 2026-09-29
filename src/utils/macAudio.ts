@@ -159,6 +159,12 @@ class MacSoundEngine {
   public playPop() {
     this.playClick();
   }
+
+  // 6. Play trash / delete sound
+  public playTrash() {
+    this.playPop();
+  }
 }
 
 export const macAudio = new MacSoundEngine();
+

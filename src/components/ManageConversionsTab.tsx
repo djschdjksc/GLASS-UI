@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { macAudio } from '../utils/macAudio';
+import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Layers, Tag, Hash, Percent, FileText, Scale, Package, ClipboardPaste } from 'lucide-react';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import type { SqliteControlRow } from '../data/sqliteControlPanel';
@@ -20,9 +21,18 @@ const CONV_COL_DEFAULTS = {
   actions: 50
 };
 
-export const ManageConversionsTab: React.FC = () => {
+export interface ManageConversionsTabProps {
+  search?: string;
+  onAddRef?: React.MutableRefObject<(() => void) | null>;
+}
+
+export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
+  search: externalSearch,
+  onAddRef
+}) => {
   const [conversions, setConversions] = useState<SqliteControlRow[]>([]);
-  const [search, setSearch] = useState('');
+  const [internalSearch, setInternalSearch] = useState('');
+  const search = externalSearch !== undefined ? externalSearch : internalSearch;
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
@@ -300,35 +310,37 @@ export const ManageConversionsTab: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [filtered, selectedIdx, editingIdx, conversions]);
 
+  useEffect(() => {
+    if (onAddRef) {
+      onAddRef.current = handleAddNewRow;
+    }
+  }, [onAddRef]);
+
   return (
     <div 
       style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}
       onPaste={handlePaste}
     >
-      {/* Top Search & Actions Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="mac-notched-field" style={{ margin: 0, padding: '5px 12px', minWidth: '280px' }}>
-            <Search size={14} color="#94a3b8" />
-            <input 
-              type="text" 
-              placeholder="Search shortcuts, conversion or group..." 
+      {/* Top Search & Actions Bar (only when not embedded in Control Panel) */}
+      {externalSearch === undefined && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CosmicSearchInput
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mac-notched-input"
-              style={{ fontSize: '12px', width: '100%' }}
+              onChange={setInternalSearch}
+              width={260}
             />
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+              {filtered.length} conversions • In-Table Fast Edit • Bulk Paste Enabled (Ctrl+V)
+            </span>
           </div>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            {filtered.length} conversions • In-Table Fast Edit • Bulk Paste Enabled (Ctrl+V)
-          </span>
-        </div>
 
-        <button className="mac-btn primary" onClick={handleAddNewRow}>
-          <Plus size={14} />
-          <span>Add Row</span>
-        </button>
-      </div>
+          <button className="mac-btn primary" onClick={handleAddNewRow}>
+            <Plus size={14} />
+            <span>Add Row</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Full-Width In-Table Editor */}
       <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '4px' }}>

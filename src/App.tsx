@@ -20,7 +20,9 @@ import { OtherTabsView } from './components/OtherTabsView';
 import { BottomModeBar } from './components/BottomModeBar';
 import type { AppMode, SavedSlipData } from './components/BottomModeBar';
 import { NumpadNavigator } from './components/common/NumpadNavigator';
-import { CheckCircle2, Info, AlertTriangle, Save, Trash2, X } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, Save, Trash2, X, FileText, RotateCcw } from 'lucide-react';
+import { macAudio } from './utils/macAudio';
+import UnsavedChangesModal from './components/UnsavedChangesModal';
 import { DatabaseProvider } from './context/DatabaseContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { localDb } from './services/db/localDb';
@@ -365,40 +367,8 @@ function AppContent() {
 
     // 2. Intercept and block Chrome default keyboard shortcuts
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // 0. Confirm Clear Dialog Modal Controls (Y: Save & New, N: Discard & New, Esc: Cancel, Arrows/Tab: navigate, Enter: confirm)
+      // 0. Confirm Clear Dialog Modal Controls (Handled by UnsavedChangesModal)
       if (confirmClearDialogRef.current?.isOpen) {
-        if (e.key === 'y' || e.key === 'Y') {
-          e.preventDefault();
-          confirmSaveAndClearRef.current();
-          return;
-        }
-        if (e.key === 'n' || e.key === 'N') {
-          e.preventDefault();
-          confirmDiscardAndClearRef.current();
-          return;
-        }
-        if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
-          e.preventDefault();
-          setConfirmClearDialog(null);
-          return;
-        }
-        if (e.key === 'ArrowRight' || e.key === 'Tab') {
-          e.preventDefault();
-          setDialogFocus(prev => prev === 'save' ? 'discard' : prev === 'discard' ? 'cancel' : 'save');
-          return;
-        }
-        if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          setDialogFocus(prev => prev === 'save' ? 'cancel' : prev === 'cancel' ? 'discard' : 'save');
-          return;
-        }
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (dialogFocusRef.current === 'save') confirmSaveAndClearRef.current();
-          else if (dialogFocusRef.current === 'discard') confirmDiscardAndClearRef.current();
-          else setConfirmClearDialog(null);
-          return;
-        }
         return;
       }
 
@@ -742,7 +712,7 @@ function AppContent() {
         isOpen: true,
         tokenNo: String(header.tokenNo || 'Current')
       });
-      playTapSound();
+      macAudio.playPop();
     } else {
       // Clean or saved bill, clear directly to new blank bill
       handleClearToNewBill();
@@ -2043,225 +2013,14 @@ function AppContent() {
         }}
       />
 
-      {/* Keyboard-Friendly Confirm Clear / Skip Bill Modal */}
+      {/* Unsaved Changes in Bill Modal */}
       {confirmClearDialog?.isOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 99999999
-          }}
-          onClick={() => setConfirmClearDialog(null)}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: '540px',
-              maxWidth: '92vw',
-              background: 'rgba(18, 22, 30, 0.96)',
-              backdropFilter: 'blur(28px)',
-              WebkitBackdropFilter: 'blur(28px)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
-              borderRadius: '16px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.1)',
-              padding: '24px 28px',
-              color: '#f8fafc',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px'
-            }}
-          >
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-              <div 
-                style={{ 
-                  width: '44px', 
-                  height: '44px', 
-                  borderRadius: '12px', 
-                  background: 'rgba(245, 158, 11, 0.15)', 
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
-              >
-                <AlertTriangle size={22} color="#fbbf24" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#ffffff', letterSpacing: '-0.3px' }}>
-                    Unsaved Changes in Bill #{confirmClearDialog.tokenNo}
-                  </h3>
-                  <span style={{ 
-                    fontSize: '11px', 
-                    padding: '2px 7px', 
-                    borderRadius: '999px', 
-                    background: 'rgba(239, 68, 68, 0.2)', 
-                    color: '#fca5a5', 
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    fontWeight: 600
-                  }}>
-                    MODIFIED
-                  </span>
-                </div>
-                <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#94a3b8', lineHeight: 1.5 }}>
-                  Aapne is bill me changes kiye hain. Kya aap ise <strong style={{ color: '#34d399' }}>SAVE</strong> karke new bill kholna chahte hain ya changes <strong style={{ color: '#f87171' }}>DISCARD</strong> karna chahte hain?
-                </p>
-              </div>
-            </div>
-
-            {/* Buttons Options Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '4px' }}>
-              {/* Save & Clear [Y] */}
-              <button
-                type="button"
-                onClick={handleConfirmSaveAndClear}
-                onMouseEnter={() => setDialogFocus('save')}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '14px 10px',
-                  borderRadius: '12px',
-                  background: dialogFocus === 'save' ? 'rgba(34, 197, 94, 0.22)' : 'rgba(34, 197, 94, 0.08)',
-                  border: dialogFocus === 'save' ? '2px solid #22c55e' : '1px solid rgba(34, 197, 94, 0.35)',
-                  boxShadow: dialogFocus === 'save' ? '0 0 18px rgba(34, 197, 94, 0.35)' : 'none',
-                  color: '#86efac',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  outline: 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Save size={16} />
-                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Save & Clear</span>
-                </div>
-                <kbd style={{
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  borderRadius: '5px',
-                  background: 'rgba(0, 0, 0, 0.45)',
-                  border: '1px solid rgba(34, 197, 94, 0.4)',
-                  color: '#4ade80',
-                  fontWeight: 700
-                }}>
-                  Press Y
-                </kbd>
-              </button>
-
-              {/* Discard & Clear [N] */}
-              <button
-                type="button"
-                onClick={handleConfirmDiscardAndClear}
-                onMouseEnter={() => setDialogFocus('discard')}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '14px 10px',
-                  borderRadius: '12px',
-                  background: dialogFocus === 'discard' ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.08)',
-                  border: dialogFocus === 'discard' ? '2px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.35)',
-                  boxShadow: dialogFocus === 'discard' ? '0 0 18px rgba(239, 68, 68, 0.35)' : 'none',
-                  color: '#fca5a5',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  outline: 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Trash2 size={16} />
-                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Discard & Clear</span>
-                </div>
-                <kbd style={{
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  borderRadius: '5px',
-                  background: 'rgba(0, 0, 0, 0.45)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#f87171',
-                  fontWeight: 700
-                }}>
-                  Press N
-                </kbd>
-              </button>
-
-              {/* Cancel / Keep Editing [Esc] */}
-              <button
-                type="button"
-                onClick={() => setConfirmClearDialog(null)}
-                onMouseEnter={() => setDialogFocus('cancel')}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '14px 10px',
-                  borderRadius: '12px',
-                  background: dialogFocus === 'cancel' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                  border: dialogFocus === 'cancel' ? '2px solid #94a3b8' : '1px solid rgba(255, 255, 255, 0.15)',
-                  boxShadow: dialogFocus === 'cancel' ? '0 0 18px rgba(255, 255, 255, 0.2)' : 'none',
-                  color: '#e2e8f0',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  outline: 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <X size={16} />
-                  <span style={{ fontSize: '13px', fontWeight: 600 }}>Keep Editing</span>
-                </div>
-                <kbd style={{
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  borderRadius: '5px',
-                  background: 'rgba(0, 0, 0, 0.45)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  color: '#cbd5e1',
-                  fontWeight: 700
-                }}>
-                  Press Esc
-                </kbd>
-              </button>
-            </div>
-
-            {/* Keyboard Footer Tip */}
-            <div 
-              style={{
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                paddingTop: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '11.5px',
-                color: '#64748b'
-              }}
-            >
-              <span>💡 Keyboard Fast Controls:</span>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <span><strong style={{ color: '#34d399' }}>[Y]</strong> Save</span>
-                <span><strong style={{ color: '#f87171' }}>[N]</strong> Discard</span>
-                <span><strong style={{ color: '#94a3b8' }}>[Esc]</strong> Cancel</span>
-                <span><strong style={{ color: '#38bdf8' }}>[← / →]</strong> Select</span>
-                <span><strong style={{ color: '#38bdf8' }}>[Enter]</strong> Apply</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UnsavedChangesModal
+          billNumber={confirmClearDialog.tokenNo}
+          onSave={handleConfirmSaveAndClear}
+          onDiscard={handleConfirmDiscardAndClear}
+          onCancel={() => setConfirmClearDialog(null)}
+        />
       )}
 
       {/* NumPad Shortcut Navigator (Press '.' on NumPad) */}

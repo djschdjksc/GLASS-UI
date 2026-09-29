@@ -197,7 +197,7 @@ const LuxuryToggle: React.FC<LuxuryToggleProps> = ({ checked, onChange, title, d
     <div onClick={(e) => e.stopPropagation()}>
       <Switch
         checked={checked}
-        onChange={(val) => {
+        onChange={(val: boolean) => {
           onChange(val);
           macAudio.playClick();
         }}
@@ -437,7 +437,7 @@ export const SettingsTabView: React.FC<Props> = ({
         <div style={{ maxWidth: '850px' }}>
           <Segmented
             value={activeTab}
-            onChange={(val) => {
+            onChange={(val: any) => {
               macAudio.playClick();
               setActiveTab(val as SettingsMainTab);
             }}
@@ -481,7 +481,7 @@ export const SettingsTabView: React.FC<Props> = ({
 
               <Segmented
                 value={bgType}
-                onChange={(val) => {
+                onChange={(val: any) => {
                   onChangeBgType(val as 'color' | 'image' | 'video');
                   macAudio.playClick();
                   onShowToast?.(`Active: ${val.toUpperCase()} Mode`, 'info');
@@ -863,10 +863,10 @@ export const SettingsTabView: React.FC<Props> = ({
                 <div>
                   <Input.Search
                     value={manualVideoPath}
-                    onChange={(e) => setManualVideoPath(e.target.value)}
+                    onChange={(e: any) => setManualVideoPath(e.target.value)}
                     placeholder="/custom_video.mp4 or video web URL"
                     enterButton="Play Video 🎬"
-                    onSearch={(val) => {
+                    onSearch={(val: string) => {
                       if (val.trim()) {
                         onSelectBgVideo(val.trim());
                         onChangeBgType('video');
@@ -910,7 +910,7 @@ export const SettingsTabView: React.FC<Props> = ({
                 max={40}
                 value={blurAmount}
                 onChange={onChangeBlur}
-                tooltip={{ formatter: val => `${val}px` }}
+                tooltip={{ formatter: (val: any) => `${val}px` }}
               />
             </div>
 
@@ -925,8 +925,8 @@ export const SettingsTabView: React.FC<Props> = ({
                 max={90}
                 step={5}
                 value={Math.round(glassOpacity * 100)}
-                onChange={(val) => onChangeGlassOpacity(val / 100)}
-                tooltip={{ formatter: val => `${val}%` }}
+                onChange={(val: any) => onChangeGlassOpacity(val / 100)}
+                tooltip={{ formatter: (val: any) => `${val}%` }}
               />
             </div>
 
@@ -941,8 +941,8 @@ export const SettingsTabView: React.FC<Props> = ({
                 max={90}
                 step={5}
                 value={Math.round(overlayOpacity * 100)}
-                onChange={(val) => onChangeOpacity(val / 100)}
-                tooltip={{ formatter: val => `${val}%` }}
+                onChange={(val: any) => onChangeOpacity(val / 100)}
+                tooltip={{ formatter: (val: any) => `${val}%` }}
               />
             </div>
 
@@ -1496,7 +1496,7 @@ export const SettingsTabView: React.FC<Props> = ({
               <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#f8fafc' }}>Restore Conflict Policy</span>
               <Segmented
                 value={restoreMode}
-                onChange={(val) => setRestoreMode(val as 'merge' | 'overwrite')}
+                onChange={(val: any) => setRestoreMode(val as 'merge' | 'overwrite')}
                 options={[
                   { label: 'Merge Existing', value: 'merge' },
                   { label: 'Clean Overwrite', value: 'overwrite' }
@@ -1677,7 +1677,7 @@ export const SettingsTabView: React.FC<Props> = ({
               <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#cbd5e1' }}>Invoice Voucher Prefix</span>
               <Input
                 value={slipPrefix}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   setSlipPrefix(e.target.value);
                   localStorage.setItem('modern_setting_slip_prefix', e.target.value);
                 }}
@@ -1689,7 +1689,7 @@ export const SettingsTabView: React.FC<Props> = ({
               <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#cbd5e1' }}>Printed Slip Header Title</span>
               <Input
                 value={slipHeaderTitle}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   setSlipHeaderTitle(e.target.value);
                   localStorage.setItem('modern_setting_slip_title', e.target.value);
                 }}
@@ -1705,7 +1705,7 @@ export const SettingsTabView: React.FC<Props> = ({
               <Segmented
                 block
                 value={serverMode}
-                onChange={(val) => setServerMode(val as any)}
+                onChange={(val: any) => setServerMode(val as any)}
                 options={[
                   { id: 'server', label: 'Host Server', value: 'server' },
                   { id: 'client', label: 'Client Node', value: 'client' },

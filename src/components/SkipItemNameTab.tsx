@@ -7,7 +7,15 @@ import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/
 const DEFAULT_MAIN_COLS = { srNo: 35, mainGroup: 140, groupName: 200, sumCol: 85, items: 50, actions: 40 };
 const DEFAULT_SUB_COLS = { srNo: 40, itemName: 320, actions: 40 };
 
-export const SkipItemNameTab: React.FC = () => {
+export interface SkipItemNameTabProps {
+  search?: string;
+  onAddRef?: React.MutableRefObject<(() => void) | null>;
+}
+
+export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
+  search: externalSearch,
+  onAddRef
+}) => {
   const [mainGroups, setMainGroups] = useState<SkipMainGroupSeed[]>([]);
   const [subGroups, setSubGroups] = useState<SkipSubGroupSeed[]>([]);
   const [skipItems, setSkipItems] = useState<SkipItemSeed[]>([]);
@@ -16,7 +24,8 @@ export const SkipItemNameTab: React.FC = () => {
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [itemSearch, setItemSearch] = useState('');
+  const [internalItemSearch, setInternalItemSearch] = useState('');
+  const itemSearch = externalSearch !== undefined ? externalSearch : internalItemSearch;
 
   const [colWidths, setColWidths] = useState(() => {
     try { const saved = localStorage.getItem('modern_skip_cols'); return saved ? { ...DEFAULT_MAIN_COLS, ...JSON.parse(saved) } : DEFAULT_MAIN_COLS; } catch { return DEFAULT_MAIN_COLS; }
@@ -194,6 +203,29 @@ export const SkipItemNameTab: React.FC = () => {
       saveSkipItems(next);
     }
   };
+
+  useEffect(() => {
+    if (onAddRef) {
+      onAddRef.current = () => {
+        if (selectedMainGroupId) {
+          handleAddItem();
+        } else {
+          handleAddSubGroup();
+        }
+      };
+    }
+  }, [onAddRef, selectedMainGroupId, subGroups, skipItems, mainGroups]);
+
+  const filteredSubGroups = subGroups.filter(sg => {
+    if (!itemSearch.trim()) return true;
+    const q = itemSearch.toLowerCase();
+    const groupMatches = (sg.groupName || '').toLowerCase().includes(q) || (sg.mainGroup || '').toLowerCase().includes(q);
+    if (groupMatches) return true;
+    return skipItems.some(si => 
+      (si.subGroupId === sg.id || (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))) &&
+      (si.itemPrefix || '').toLowerCase().includes(q)
+    );
+  });
 
   const curSub = subGroups.find(s => s.id === selectedMainGroupId);
   const itemsForSelectedGroup = curSub ? skipItems.filter(si => 
@@ -395,7 +427,7 @@ export const SkipItemNameTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {subGroups.map((sg, idx) => {
+              {filteredSubGroups.map((sg, idx) => {
                 const isSelected = selectedMainGroupId === sg.id;
                 const isEditing = editingGroupId === sg.id;
                 const itemCount = skipItems.filter(si => si.subGroupId === sg.id || (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))).length;
@@ -513,12 +545,12 @@ export const SkipItemNameTab: React.FC = () => {
             <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
               {curSub ? `${curSub.groupName} (${itemsForSelectedGroup.length} Items)` : 'Select a Group'}
             </span>
-            {curSub && (
+            {externalSearch === undefined && curSub && (
               <input
                 type="text"
                 placeholder="Filter prefix..."
-                value={itemSearch}
-                onChange={e => setItemSearch(e.target.value)}
+                value={internalItemSearch}
+                onChange={e => setInternalItemSearch(e.target.value)}
                 style={{
                   background: 'rgba(0,0,0,0.3)',
                   border: '1px solid rgba(255,255,255,0.1)',

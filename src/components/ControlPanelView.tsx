@@ -5,11 +5,14 @@ import { BillItemNameTab } from './BillItemNameTab';
 import { macAudio } from '../utils/macAudio';
 import { useSettings } from '../context/SettingsContext';
 import { GlassInput, GlassSelect } from './common/GlassInput';
+import { IosSegmentedTabs } from './common/IosSegmentedTabs';
+import { CosmicSearchInput } from './common/CosmicSearchInput';
 import {
   Plus,
   Trash2,
   X,
   Check,
+  Search,
   Layers,
   SlidersHorizontal,
   Shuffle,
@@ -113,6 +116,48 @@ export const ControlPanelView: React.FC = () => {
 
   // Active Tab: 4 Root Tabs
   const [activeTab, setActiveTab] = useState<ControlTab>('MANAGE_GROUPS');
+
+  // Per-tab search state
+  const [tabSearch, setTabSearch] = useState<{ [key in ControlTab]: string }>({
+    MANAGE_GROUPS: '',
+    SKIP_ITEM_NAME: '',
+    BILL_ITEM_NAME: '',
+    MANAGE_CONVERSIONS: ''
+  });
+  const currentSearch = tabSearch[activeTab];
+  const handleSearchChange = (val: string) => {
+    setTabSearch(prev => ({ ...prev, [activeTab]: val }));
+  };
+
+  // Add Row/Item Refs for child tabs
+  const addSkipItemRef = useRef<(() => void) | null>(null);
+  const addBillItemRef = useRef<(() => void) | null>(null);
+  const addConversionRef = useRef<(() => void) | null>(null);
+
+  const getTabConfig = (tab: ControlTab) => {
+    switch (tab) {
+      case 'MANAGE_GROUPS':
+        return {
+          placeholder: 'Search groups, index, item name...',
+          addButtonText: 'ADD GROUP'
+        };
+      case 'SKIP_ITEM_NAME':
+        return {
+          placeholder: 'Search groups or prefix...',
+          addButtonText: 'ADD ITEM'
+        };
+      case 'BILL_ITEM_NAME':
+        return {
+          placeholder: 'Search bill names, codes, category...',
+          addButtonText: 'ADD ROW'
+        };
+      case 'MANAGE_CONVERSIONS':
+        return {
+          placeholder: 'Search conversions, shortcut, group...',
+          addButtonText: 'ADD ROW'
+        };
+    }
+  };
 
   // Groups Data with LocalStorage Persistence
   const [groups, setGroups] = useState<GroupRule[]>(() => {
@@ -280,8 +325,30 @@ export const ControlPanelView: React.FC = () => {
     }
   };
 
-  // Active Groups list
-  const filteredGroups = groups;
+  const handleAddForActiveTab = () => {
+    macAudio.playClick();
+    if (activeTab === 'MANAGE_GROUPS') {
+      handleAddNewGroup();
+    } else if (activeTab === 'SKIP_ITEM_NAME') {
+      addSkipItemRef.current?.();
+    } else if (activeTab === 'BILL_ITEM_NAME') {
+      addBillItemRef.current?.();
+    } else if (activeTab === 'MANAGE_CONVERSIONS') {
+      addConversionRef.current?.();
+    }
+  };
+
+  // Active Groups list filtered by search
+  const filteredGroups = React.useMemo(() => {
+    const q = (tabSearch.MANAGE_GROUPS || '').trim().toLowerCase();
+    if (!q) return groups;
+    return groups.filter(g =>
+      (g.groupName || '').toLowerCase().includes(q) ||
+      (g.groupIndex || '').toLowerCase().includes(q) ||
+      (g.realItemName || '').toLowerCase().includes(q) ||
+      (g.chainParent || '').toLowerCase().includes(q)
+    );
+  }, [groups, tabSearch.MANAGE_GROUPS]);
 
   // Auto-scroll selected row into view
   useEffect(() => {
@@ -486,120 +553,58 @@ export const ControlPanelView: React.FC = () => {
       <div 
         className="glass-panel" 
         style={{ 
-          padding: '6px 10px', 
+          padding: '6px 12px', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between',
+          gap: '12px',
           borderRadius: '8px'
         }}
       >
-                  {/* Animated iOS Tab Buttons */}
-          <div style={{ position: 'relative', flex: 1, display: 'flex' }}>
-            <style>{`
-              .cc-ios-tabs__control {
-                position: relative;
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                align-items: center;
-                width: 600px;
-                padding: 5px;
-                border-radius: 999px;
-                background: rgba(0, 0, 0, 0.4);
-                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 2px 8px rgba(0, 0, 0, 0.2);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-              }
-              .cc-ios-tabs__thumb {
-                position: absolute;
-                top: 5px;
-                left: 5px;
-                width: calc(25% - 4px);
-                height: calc(100% - 10px);
-                border-radius: 999px;
-                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 20px rgba(14, 165, 233, 0.2);
-                transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
-                will-change: transform;
-              }
-              .cc-ios-tabs__item {
-                position: relative;
-                z-index: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                height: 32px;
-                border-radius: 999px;
-                color: #94a3b8;
-                font-size: 11.5px;
-                font-weight: 700;
-                line-height: 1;
-                cursor: pointer;
-                user-select: none;
-                transition: color 260ms ease;
-              }
-              .cc-ios-tabs__item:hover { color: #f8fafc; }
-              .cc-ios-tabs__item.active { color: #ffffff; }
-            `}</style>
-            
-            <div className="cc-ios-tabs__control">
-              <div 
-                className="cc-ios-tabs__thumb" 
-                style={{ 
-                  transform: `translateX(${
-                    activeTab === 'MANAGE_GROUPS' ? 0 : 
-                    activeTab === 'SKIP_ITEM_NAME' ? 100 : 
-                    activeTab === 'BILL_ITEM_NAME' ? 200 : 
-                    300
-                  }%)` 
-                }} 
-              />
-              {(
-                [
-                  { key: 'MANAGE_GROUPS', label: 'MANAGE GROUPS', icon: Layers },
-                  { key: 'SKIP_ITEM_NAME', label: 'SKIP ITEM', icon: Shuffle },
-                  { key: 'BILL_ITEM_NAME', label: 'BILL ITEM', icon: Tag },
-                  { key: 'MANAGE_CONVERSIONS', label: 'CONVERSIONS', icon: SlidersHorizontal }
-                ] as const
-              ).map(tab => {
-                const isActive = activeTab === tab.key;
-                const Icon = tab.icon;
-                return (
-                  <div
-                    key={tab.key}
-                    onClick={() => { macAudio.playClick(); setActiveTab(tab.key); }}
-                    onMouseEnter={() => macAudio.playHover()}
-                    className={`cc-ios-tabs__item ${isActive ? 'active' : ''}`}
-                  >
-                    <Icon size={14} />
-                    <span>{tab.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* Animated iOS Tab Buttons */}
+        <IosSegmentedTabs<ControlTab>
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          width={540}
+          tabs={[
+            { key: 'MANAGE_GROUPS', label: 'MANAGE GROUPS', icon: Layers },
+            { key: 'SKIP_ITEM_NAME', label: 'SKIP ITEM', icon: Shuffle },
+            { key: 'BILL_ITEM_NAME', label: 'BILL ITEM', icon: Tag },
+            { key: 'MANAGE_CONVERSIONS', label: 'CONVERSIONS', icon: SlidersHorizontal }
+          ]}
+        />
 
-          {/* Right Action: + ADD GROUP for Manage Groups tab */}
-        {activeTab === 'MANAGE_GROUPS' && (
+        {/* Right Actions: Unified Search Input & Add Button in the exact same row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
+          {/* Cosmic Galaxy Animated Search Input (No placeholder, with right filter icon) */}
+          <CosmicSearchInput
+            value={currentSearch}
+            onChange={handleSearchChange}
+            width={260}
+          />
+
+          {/* Dynamic Add Button */}
           <button
             type="button"
-            onClick={handleAddNewGroup}
+            onClick={handleAddForActiveTab}
             onMouseEnter={() => macAudio.playHover()}
             className="mac-btn primary"
             style={{
               fontSize: '11px',
               fontWeight: 700,
-              padding: '5px 14px',
+              padding: '0 12px',
               height: '28px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '5px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0
             }}
           >
             <Plus size={14} />
-            <span>ADD GROUP</span>
+            <span>{getTabConfig(activeTab).addButtonText}</span>
           </button>
-        )}
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -817,7 +822,7 @@ export const ControlPanelView: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'SKIP_ITEM_NAME' && (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <SkipItemNameTab />
+          <SkipItemNameTab search={tabSearch.SKIP_ITEM_NAME} onAddRef={addSkipItemRef} />
         </div>
       )}
 
@@ -826,7 +831,7 @@ export const ControlPanelView: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'BILL_ITEM_NAME' && (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <BillItemNameTab />
+          <BillItemNameTab search={tabSearch.BILL_ITEM_NAME} onAddRef={addBillItemRef} />
         </div>
       )}
 
@@ -835,7 +840,7 @@ export const ControlPanelView: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'MANAGE_CONVERSIONS' && (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <ManageConversionsTab />
+          <ManageConversionsTab search={tabSearch.MANAGE_CONVERSIONS} onAddRef={addConversionRef} />
         </div>
       )}
 

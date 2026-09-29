@@ -53,12 +53,14 @@ export const RowContextMenu: React.FC<Props> = ({
     <div
       ref={menuRef}
       style={{
-        position: 'fixed', animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards", transformOrigin: "top center", backdropFilter: "blur(60px) saturate(200%)", background: "rgba(10, 15, 25, 0.98)",
+        position: 'fixed',
+        animation: "antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards",
+        transformOrigin: "top center",
         left: `${safeX}px`,
         top: `${safeY}px`,
         width: `${menuWidth}px`,
         background: 'rgba(20, 24, 32, 0.96)',
-        backdropFilter: 'blur(30px)',
+        backdropFilter: 'blur(30px) saturate(200%)',
         border: '1px solid rgba(255, 255, 255, 0.18)',
         borderRadius: '10px',
         boxShadow: '0 12px 32px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.25)',
