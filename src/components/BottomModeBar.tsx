@@ -219,7 +219,7 @@ export const BottomModeBar: React.FC<Props> = ({
           style={{ width: '36px', height: '36px' }}
         >
           <span className="box-tooltip-top">AUTO CONVERT</span>
-          <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : '#d4d4d8'} />
+          <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
         </button>
 
         {/* Button 2: AUTO ITEM */}
@@ -236,7 +236,7 @@ export const BottomModeBar: React.FC<Props> = ({
           style={{ width: '36px', height: '36px' }}
         >
           <span className="box-tooltip-top">AUTO ITEM</span>
-          <PackagePlus size={16} color={autoItem ? '#38bdf8' : '#d4d4d8'} />
+          <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
         </button>
 
         {/* Button 3: SIMPLE MODE */}
@@ -253,7 +253,7 @@ export const BottomModeBar: React.FC<Props> = ({
           style={{ width: '36px', height: '36px' }}
         >
           <span className="box-tooltip-top">SIMPLE MODE</span>
-          <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : '#d4d4d8'} />
+          <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
         </button>
       </div>
 
@@ -264,8 +264,6 @@ export const BottomModeBar: React.FC<Props> = ({
           style={{ 
             width: '95px', 
             height: '34px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid rgba(0, 113, 227, 0.35)',
             padding: '0 8px 0 26px',
             display: 'flex',
             alignItems: 'center',
@@ -297,7 +295,7 @@ export const BottomModeBar: React.FC<Props> = ({
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: '#ffffff',
+              color: 'inherit',
               fontSize: '12px',
               fontWeight: 600,
               fontFamily: 'inherit'

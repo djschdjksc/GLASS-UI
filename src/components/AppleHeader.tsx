@@ -144,18 +144,14 @@ export const AppleHeader: React.FC<Props> = ({
 
             {showPartySuggestions && (
               <div 
-                className="ant-dropdown-anim"
+                className="party-suggestions-dropdown ant-dropdown-anim"
                 style={{
                   position: 'absolute',
                   top: '100%',
                   left: 0,
                   right: 0,
                   marginTop: '4px',
-                  background: 'rgba(20, 24, 32, 0.96)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '7px',
-                  boxShadow: '0 10px 24px rgba(0, 0, 0, 0.5)',
                   zIndex: 99999999,
                   maxHeight: '180px',
                   overflowY: 'auto'
@@ -235,7 +231,7 @@ export const AppleHeader: React.FC<Props> = ({
             onChange={(e) => onChange({ typeSelection: e.target.value })}
           >
             {TYPE_SELECTIONS.map(ts => (
-              <option key={ts} value={ts} style={{ background: '#161b22', color: '#ffffff' }}>
+              <option key={ts} value={ts}>
                 {ts}
               </option>
             ))}

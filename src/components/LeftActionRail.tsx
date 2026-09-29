@@ -55,19 +55,19 @@ export const LeftActionRail: React.FC<Props> = ({
   const BUTTONS = [
     { id: 'summary', name: 'Calculate Summary (Ctrl+G)', icon: <Layers size={17} color="#10b981" />, action: onSummary },
     { id: 'oldprice', name: 'Load Old Price (Alt+P)', icon: <History size={17} color="#f59e0b" />, action: onLoadOldPrice },
-    { id: 'save', name: 'Save Bill', icon: <Save size={17} color="#ffffff" />, action: onSave },
-    { id: 'slip', name: 'Print Slip', icon: <Printer size={17} color="#ffffff" />, action: onPrintSlip },
-    { id: 'add', name: 'Add Raw Item', icon: <PlusCircle size={17} color="#ffffff" />, action: onAddRawRow },
-    { id: 'ocr', name: 'AI Slip Scan', icon: <Camera size={17} color="#ffffff" />, action: onOpenOcr },
-    { id: 'note', name: 'Bill Notes', icon: <FileEdit size={17} color="#ffffff" />, action: onOpenNote },
-    { id: 'partycode', name: 'Party Code', icon: <Key size={17} color="#ffffff" />, action: onPartyCode },
-    { id: 'recheck', name: 'Recheck Totals', icon: <CheckCircle2 size={17} color="#ffffff" />, action: onRecheck },
-    { id: 'speak', name: 'Voice Summary', icon: <Volume2 size={17} color="#ffffff" />, action: onSpeakSelection },
-    { id: 'combine', name: 'Combine Items', icon: <Layers size={17} color="#ffffff" />, action: onCombine },
-    { id: 'json', name: 'JSON Export', icon: <Code size={17} color="#ffffff" />, action: onExportJson },
-    { id: 'prev', name: 'Previous Bill', icon: <ChevronLeft size={17} color="#ffffff" />, action: onPrevRecord },
-    { id: 'next', name: 'Next Bill', icon: <ChevronRight size={17} color="#ffffff" />, action: onNextRecord },
-    { id: 'reset', name: 'Reset All', icon: <RotateCcw size={17} color="#ffffff" />, action: onReset }
+    { id: 'save', name: 'Save Bill', icon: <Save size={17} color="currentColor" />, action: onSave },
+    { id: 'slip', name: 'Print Slip', icon: <Printer size={17} color="currentColor" />, action: onPrintSlip },
+    { id: 'add', name: 'Add Raw Item', icon: <PlusCircle size={17} color="currentColor" />, action: onAddRawRow },
+    { id: 'ocr', name: 'AI Slip Scan', icon: <Camera size={17} color="currentColor" />, action: onOpenOcr },
+    { id: 'note', name: 'Bill Notes', icon: <FileEdit size={17} color="currentColor" />, action: onOpenNote },
+    { id: 'partycode', name: 'Party Code', icon: <Key size={17} color="currentColor" />, action: onPartyCode },
+    { id: 'recheck', name: 'Recheck Totals', icon: <CheckCircle2 size={17} color="currentColor" />, action: onRecheck },
+    { id: 'speak', name: 'Voice Summary', icon: <Volume2 size={17} color="currentColor" />, action: onSpeakSelection },
+    { id: 'combine', name: 'Combine Items', icon: <Layers size={17} color="currentColor" />, action: onCombine },
+    { id: 'json', name: 'JSON Export', icon: <Code size={17} color="currentColor" />, action: onExportJson },
+    { id: 'prev', name: 'Previous Bill', icon: <ChevronLeft size={17} color="currentColor" />, action: onPrevRecord },
+    { id: 'next', name: 'Next Bill', icon: <ChevronRight size={17} color="currentColor" />, action: onNextRecord },
+    { id: 'reset', name: 'Reset All', icon: <RotateCcw size={17} color="currentColor" />, action: onReset }
   ];
 
   const [mouseY, setMouseY] = useState<number | null>(null);
