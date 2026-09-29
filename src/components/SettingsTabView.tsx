@@ -1231,7 +1231,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   }}
                 >
                   <div style={{ fontSize: '11px', color: '#e9edef', lineHeight: 1.3 }}>
-                    👍 Got it! Invoice bill #{header.tokenNo || '1'} printed and handed to transport vehicle.
+                    👍 Got it! Invoice bill #001 printed and handed to transport vehicle.
                   </div>
                   <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
                     <span>10:46 AM</span>
