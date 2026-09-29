@@ -58,14 +58,30 @@ interface Props {
   onChangeBgColor?: any;
 }
 
-// Curated macOS Wallpapers
+// Curated Apple-Style Wallpapers
 const WALLPAPERS = [
-  { name: 'Sonoma Horizon', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Ventura Wave', url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Cyber Obsidian', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Neon Flow', url: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Mojave Night', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80' },
-  { name: 'Dark Crystal Glass', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80' }
+  // — Gradient / Color Field (Apple's signature abstract art)
+  { name: 'Sequoia Dusk',      url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Sonoma Blush',      url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Nebula Flow',       url: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Liquid Ink',        url: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Aurora Pulse',      url: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Cosmic Violet',     url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=90' },
+  // — Minimal Nature (Apple macOS landscape series)
+  { name: 'Big Sur Shore',     url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Yosemite Mist',     url: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Mojave Sand',       url: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Catalina Deep',     url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Sierra Snow',       url: 'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Midnight Forest',   url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1920&q=90' },
+  // — Space / Dark Cosmos (Apple Space Screensavers style)
+  { name: 'Deep Space',        url: 'https://images.unsplash.com/photo-1462332420958-a05d1e002413?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Milky Arc',         url: 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Obsidian Bloom',    url: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?auto=format&fit=crop&w=1920&q=90' },
+  // — Architecture / Glass / Geometry (Urban Apple style)
+  { name: 'Crystal Dome',      url: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Slate Lines',       url: 'https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?auto=format&fit=crop&w=1920&q=90' },
+  { name: 'Carbon Weave',      url: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&w=1920&q=90' },
 ];
 
 // PURE GRID & TABLE SHORTCUTS ONLY (All legacy keys eliminated)
@@ -531,24 +547,24 @@ export const SettingsTabView: React.FC<Props> = ({
 
             {/* Wallpaper Selection Gallery */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <div>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block' }}>
-                    MACOS WALLPAPERS (FOR GLASS MODE)
+                    APPLE-STYLE WALLPAPERS
                   </span>
                   <span style={{ fontSize: '9.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
-                    Liquid Retina ultra HD wallpaper presets
+                    18 curated HD presets — Gradients · Nature · Space · Geometry
                   </span>
                 </div>
                 {themeMode !== 'glass' && (
                   <span style={{ fontSize: '9.5px', color: '#f59e0b', fontStyle: 'italic' }}>
-                    (Active when Glass Mode is selected)
+                    (Active in Glass Mode)
                   </span>
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                {WALLPAPERS.map(wp => {
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
+                {WALLPAPERS.map((wp, idx) => {
                   const isSelected = bgImage === wp.url;
                   return (
                     <div
@@ -559,40 +575,68 @@ export const SettingsTabView: React.FC<Props> = ({
                           onChangeThemeMode('glass');
                         }
                         macAudio.playClick();
-                        onShowToast?.(`Wallpaper set: ${wp.name}`, 'success');
+                        onShowToast?.(`Wallpaper: ${wp.name}`, 'success');
                       }}
                       style={{
                         position: 'relative',
-                        height: '64px',
-                        borderRadius: '8px',
+                        height: '70px',
+                        borderRadius: '10px',
                         overflow: 'hidden',
                         cursor: 'pointer',
-                        border: isSelected ? '2px solid #38bdf8' : '1px solid var(--border, rgba(255, 255, 255, 0.15))',
-                        boxShadow: isSelected ? '0 0 14px rgba(56, 189, 248, 0.5)' : '0 2px 6px rgba(0,0,0,0.3)',
-                        transition: 'all 0.18s ease'
+                        border: isSelected
+                          ? '2px solid #38bdf8'
+                          : '1.5px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: isSelected
+                          ? '0 0 16px rgba(56, 189, 248, 0.6)'
+                          : '0 2px 8px rgba(0,0,0,0.4)',
+                        transform: isSelected ? 'scale(1.04)' : 'scale(1)',
+                        transition: 'all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)'
                       }}
                     >
                       <img
                         src={wp.url}
                         alt={wp.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        loading="lazy"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block'
+                        }}
                       />
+                      {/* Gradient overlay with name */}
                       <div
                         style={{
                           position: 'absolute',
                           inset: 0,
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)',
+                          background: isSelected
+                            ? 'linear-gradient(to top, rgba(14,165,233,0.55) 0%, transparent 55%)'
+                            : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%)',
                           display: 'flex',
                           alignItems: 'flex-end',
-                          padding: '5px 8px'
+                          padding: '4px 6px'
                         }}
                       >
-                        <span style={{ fontSize: '9.5px', fontWeight: 700, color: '#ffffff' }}>
+                        <span style={{
+                          fontSize: '8px',
+                          fontWeight: 700,
+                          color: '#ffffff',
+                          letterSpacing: '0.02em',
+                          textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                          lineHeight: 1.2,
+                          flex: 1
+                        }}>
                           {wp.name}
                         </span>
                         {isSelected && (
-                          <div style={{ marginLeft: 'auto', background: '#38bdf8', borderRadius: '50%', padding: '2px' }}>
-                            <Check size={10} color="#090d16" />
+                          <div style={{
+                            background: '#38bdf8',
+                            borderRadius: '50%',
+                            padding: '2px',
+                            flexShrink: 0,
+                            boxShadow: '0 0 8px rgba(56,189,248,0.8)'
+                          }}>
+                            <Check size={8} color="#090d16" />
                           </div>
                         )}
                       </div>
@@ -601,6 +645,7 @@ export const SettingsTabView: React.FC<Props> = ({
                 })}
               </div>
             </div>
+
 
             {/* Custom Image Upload Card */}
             <div
