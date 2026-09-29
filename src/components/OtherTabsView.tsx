@@ -39,9 +39,11 @@ import {
   ShoppingBag,
   History,
   Package,
-  Layers
+  Layers,
+  FileSpreadsheet
 } from 'lucide-react';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
+import { downloadCSV } from '../utils/exportCsv';
 
 interface Props {
   activeTab: NavKey;
@@ -633,6 +635,118 @@ export const OtherTabsView: React.FC<Props> = ({
     setTimeout(() => setPartyToast(null), 3000);
   };
 
+  const handleExportAllBillsCsv = () => {
+    const headers = ['TOKEN', 'DATE', 'PARTY', 'DOC TYPE', 'VEHICLE', 'TOTAL AMOUNT', 'STATUS'];
+    const rows = bills.map(b => [
+      b.token,
+      b.date,
+      b.party,
+      b.docType,
+      b.vehicle || '',
+      b.total || 0,
+      b.status || 'PAID'
+    ]);
+    const ok = downloadCSV(`All_Bills_Archive_${Date.now()}`, headers, rows);
+    if (ok) {
+      macAudio.playSuccess();
+      showPartyToast(`Exported ${bills.length} Bills in CSV (Excel format)!`);
+    }
+  };
+
+  const handleExportSelectedBillCsv = () => {
+    if (!selectedBill) return;
+    const headers = ['SECTION', 'SR NO', 'ITEM / MOULD', 'QTY', 'PRICE', 'TOTAL'];
+    const rows: (string | number)[][] = [];
+    if (selectedBill.rawItems && selectedBill.rawItems.length > 0) {
+      selectedBill.rawItems.forEach((r, idx) => {
+        rows.push(['RAW ITEM', idx + 1, r.name || '', r.qty || 0, 0, 0]);
+      });
+    }
+    if (selectedBill.finishedItems && selectedBill.finishedItems.length > 0) {
+      selectedBill.finishedItems.forEach((f, idx) => {
+        rows.push(['MOULD', idx + 1, f.mould || '', f.qty || 0, f.price || 0, f.total || 0]);
+      });
+    }
+    const ok = downloadCSV(`Bill_${selectedBill.token}_${(selectedBill.party || 'Customer').replace(/[^a-zA-Z0-9]/g, '_')}`, headers, rows);
+    if (ok) {
+      macAudio.playSuccess();
+      showPartyToast(`Exported Bill #${selectedBill.token} in CSV (Excel format)!`);
+    }
+  };
+
+  const handleExportPartiesCsv = () => {
+    const headers = ['PARTY ID', 'NAME', 'CONTACT PERSON', 'PHONE', 'CITY', 'ADDRESS', 'PINCODE', 'BALANCE', 'TOTAL BILLS'];
+    const rows = parties.map(p => {
+      const stat = partyBillStats[p.name.trim().toLowerCase()] || { count: 0, total: 0 };
+      return [
+        p.id,
+        p.name || '',
+        p.contactPerson || '',
+        p.phone || '',
+        p.city || '',
+        p.address || '',
+        p.pincode || '',
+        p.balance || 0,
+        stat.count
+      ];
+    });
+    const ok = downloadCSV(`Parties_Master_List_${Date.now()}`, headers, rows);
+    if (ok) {
+      macAudio.playSuccess();
+      showPartyToast('Exported Parties List in CSV (Excel format)!');
+    }
+  };
+
+  const handleExportEquationCsv = () => {
+    const headers = ['MOULD NAME', 'STD WT', 'U-CAP RATIO', 'L-CAP RATIO', 'YIELD'];
+    const rows = eqFormulas.map(eq => [
+      eq.mouldName,
+      eq.stdWt,
+      eq.uCapRatio,
+      eq.lCapRatio,
+      eq.recoveryRate
+    ]);
+    const ok = downloadCSV(`Mould_Equations_${Date.now()}`, headers, rows);
+    if (ok) {
+      macAudio.playSuccess();
+      showPartyToast('Exported Equations in CSV (Excel format)!');
+    }
+  };
+
+  const handleExportStockCsv = () => {
+    const headers = ['ITEM CODE', 'ITEM NAME', 'QTY', 'RACK LOCATION', 'STATUS'];
+    const rows = stockItems.map(s => [
+      s.code,
+      s.name,
+      s.qty,
+      s.rack,
+      s.status
+    ]);
+    const ok = downloadCSV(`Stock_Inventory_${Date.now()}`, headers, rows);
+    if (ok) {
+      macAudio.playSuccess();
+      showPartyToast('Exported Stock Inventory in CSV (Excel format)!');
+    }
+  };
+
+  const handleExportLedgerCsv = () => {
+    const partyObj = parties.find(p => p.id === selectedLedgerParty);
+    const headers = ['DATE', 'VOUCHER NO', 'PARTICULARS', 'DEBIT (DR)', 'CREDIT (CR)', 'BALANCE'];
+    const rows = ledgerEntries.map(e => [
+      e.date,
+      e.ref,
+      e.particulars,
+      e.debit || 0,
+      e.credit || 0,
+      e.balance || 0
+    ]);
+    const ok = downloadCSV(`Ledger_${(partyObj?.name || 'Party').replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`, headers, rows);
+    if (ok) {
+      macAudio.playSuccess();
+      showPartyToast('Exported Ledger Statement in CSV (Excel format)!');
+    }
+  };
+
   const [editingPartyId, setEditingPartyId] = useState<string | null>(null);
 
   // Bill stats per party (bill counts and total turnover)
@@ -1002,6 +1116,28 @@ export const OtherTabsView: React.FC<Props> = ({
               }}>
                 TOTAL: <strong style={{ color: '#ffffff' }}>{bills.length}</strong> INVOICES
               </span>
+              <button
+                type="button"
+                onClick={handleExportAllBillsCsv}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#34d399',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Download all bills as CSV / Excel"
+              >
+                <FileSpreadsheet size={13} />
+                <span>Export All Bills</span>
+              </button>
             </div>
           </div>
 
@@ -1232,6 +1368,19 @@ export const OtherTabsView: React.FC<Props> = ({
                   onMouseEnter={() => macAudio.playHover()}
                 >
                   <Download size={13} color="#34d399" />
+                </button>
+                <button
+                  type="button"
+                  className="mac-btn"
+                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Download This Bill as CSV"
+                  onClick={() => {
+                    macAudio.playClick();
+                    handleExportSelectedBillCsv();
+                  }}
+                  onMouseEnter={() => macAudio.playHover()}
+                >
+                  <FileSpreadsheet size={13} color="#10b981" />
                 </button>
               </div>
             </div>
@@ -1510,6 +1659,33 @@ export const OtherTabsView: React.FC<Props> = ({
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '8px', minHeight: 0 }}>
           {/* Equation Matrix */}
           <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px', borderRadius: '8px', minHeight: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.05em' }}>PRODUCTION EQUATIONS MATRIX</span>
+                <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>{eqFormulas.length} MOULDS</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleExportEquationCsv}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#34d399',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer'
+                }}
+                title="Download Equations as CSV / Excel"
+              >
+                <FileSpreadsheet size={13} />
+                <span>Export CSV</span>
+              </button>
+            </div>
             <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
               <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -1911,10 +2087,26 @@ export const OtherTabsView: React.FC<Props> = ({
                 : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
             </div>
 
-            {/* Bulk paste badge */}
-            <div style={{ fontSize: '10px', color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(167,139,250,0.2)', whiteSpace: 'nowrap' }}>
-              📋 Paste Excel Data (Ctrl+V) directly into table
-            </div>
+            {/* Export Parties CSV / Excel */}
+            <button
+              type="button"
+              onClick={handleExportPartiesCsv}
+              className="mac-btn secondary"
+              style={{
+                height: '26px',
+                padding: '0 10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#10b981',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+              title="Download Party List in CSV (Excel format)"
+            >
+              <FileSpreadsheet size={13} color="#10b981" />
+              <span>Export CSV</span>
+            </button>
 
             {/* Pagination controls */}
             {totalPartyPages > 1 && (
@@ -2204,8 +2396,36 @@ export const OtherTabsView: React.FC<Props> = ({
       {activeTab === 'F8' && (
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '8px', minHeight: 0 }}>
           {/* Stock Table */}
-          <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '6px' }}>
-            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="glass-panel" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '6px', borderRadius: '8px', padding: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '4px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.05em' }}>STOCK INVENTORY</span>
+                <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>{stockItems.length} ITEMS</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleExportStockCsv}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#34d399',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer'
+                }}
+                title="Download Stock Inventory as CSV / Excel"
+              >
+                <FileSpreadsheet size={13} />
+                <span>Export CSV</span>
+              </button>
+            </div>
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
                   <th style={{ width: `${tableCols.f8Stock.code}px`, position: 'relative', userSelect: 'none' }}>
@@ -2324,10 +2544,32 @@ export const OtherTabsView: React.FC<Props> = ({
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px' }}>
               <div><span style={{ color: '#e2e8f0' }}>Dr:</span> <strong style={{ color: '#38bdf8' }}>₹2,95,200</strong></div>
               <div><span style={{ color: '#e2e8f0' }}>Cr:</span> <strong style={{ color: '#34d399' }}>₹1,50,000</strong></div>
               <div><span style={{ color: '#e2e8f0' }}>Net:</span> <strong style={{ color: '#34d399' }}>₹1,45,200 Dr</strong></div>
+              <button
+                type="button"
+                onClick={handleExportLedgerCsv}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#34d399',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer',
+                  marginLeft: '6px'
+                }}
+                title="Download Ledger as CSV / Excel"
+              >
+                <FileSpreadsheet size={13} />
+                <span>Export CSV</span>
+              </button>
             </div>
           </div>
 

@@ -23,8 +23,13 @@ import {
   Percent,
   FileText,
   Filter,
-  GitBranch
+  GitBranch,
+  FileSpreadsheet
 } from 'lucide-react';
+import { downloadCSV } from '../utils/exportCsv';
+import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
+import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
+import { SQLITE_SKIP_ITEMS, SQLITE_SKIP_SUB_GROUPS } from '../data/sqliteSkipData';
 
 export type ControlTab = 'MANAGE_GROUPS' | 'SKIP_ITEM_NAME' | 'BILL_ITEM_NAME' | 'MANAGE_CONVERSIONS';
 
@@ -545,6 +550,82 @@ export const ControlPanelView: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, filteredGroups, selectedGroupId, editingGroupId, groups, groupToDelete]);
 
+  const handleExportActiveTabCsv = () => {
+    macAudio.playPop();
+    const today = new Date().toISOString().split('T')[0];
+    if (activeTab === 'MANAGE_GROUPS') {
+      const headers = ['SR NO', 'GROUP NAME', 'GROUP INDEX', 'WEIGHT PER PC (KGS)', 'PCS PER BOX', 'MULTIPLICATION', 'REAL ITEM NAME', 'SKIP EQ', 'CHAIN PARENT'];
+      const rows = filteredGroups.map((g, idx) => [
+        idx + 1,
+        g.groupName || '',
+        g.groupIndex || '',
+        g.weightPerPc || 0,
+        g.pcsPerBox || 1,
+        g.multiplication || 1,
+        g.realItemName || '',
+        g.skipEq ? 'YES' : 'NO',
+        g.chainParent || ''
+      ]);
+      downloadCSV(`control_panel_groups_${today}.csv`, headers, rows);
+    } else if (activeTab === 'SKIP_ITEM_NAME') {
+      try {
+        const savedItems = localStorage.getItem('billapp_skip_items');
+        const items = savedItems ? JSON.parse(savedItems) : SQLITE_SKIP_ITEMS;
+        const savedSubs = localStorage.getItem('billapp_skip_sub_groups');
+        const subs = savedSubs ? JSON.parse(savedSubs) : SQLITE_SKIP_SUB_GROUPS;
+        const subMap = new Map(subs.map((s: any) => [s.id, s.name]));
+        const headers = ['SR NO', 'SUB GROUP', 'ITEM NAME'];
+        const rows = items.map((it: any, idx: number) => [
+          idx + 1,
+          subMap.get(it.subGroupId) || it.subGroupId || '',
+          it.name || ''
+        ]);
+        downloadCSV(`control_panel_skip_items_${today}.csv`, headers, rows);
+      } catch (e) {
+        console.error('Failed to export skip items', e);
+      }
+    } else if (activeTab === 'BILL_ITEM_NAME') {
+      try {
+        const saved = localStorage.getItem('billapp_bill_maps');
+        const maps = saved ? JSON.parse(saved) : PREFILLED_BILL_MAPS;
+        const headers = ['SR NO', 'SHORT CODE', 'PRINT NAME', 'DEFAULT RATE (₹)', 'CATEGORY'];
+        const rows = maps.map((m: any, idx: number) => [
+          idx + 1,
+          m.shortCode || '',
+          m.printName || '',
+          m.defaultRate || 0,
+          m.category || ''
+        ]);
+        downloadCSV(`control_panel_bill_items_${today}.csv`, headers, rows);
+      } catch (e) {
+        console.error('Failed to export bill items', e);
+      }
+    } else if (activeTab === 'MANAGE_CONVERSIONS') {
+      try {
+        const saved = localStorage.getItem('billapp_conversions');
+        const list = saved ? JSON.parse(saved) : SQLITE_CONTROL_CONVERSIONS;
+        const headers = ['SR NO', 'SHORTCUT', 'CONVERSION / MOULD', 'SIZE', 'U-CAP', 'L-CAP', 'MULTIPLICATION', 'COLOR', 'BOX SIZE', 'WEIGHT', 'REAL ITEM NAME', 'GROUP NAME'];
+        const rows = list.map((c: any, idx: number) => [
+          idx + 1,
+          c.shortcut || '',
+          c.conversion || '',
+          c.size || '',
+          c.uCap || '',
+          c.lCap || '',
+          c.multiplication || 1,
+          c.color || '',
+          c.boxSize || '',
+          c.weight || '',
+          c.realItemName || '',
+          c.groupName || ''
+        ]);
+        downloadCSV(`control_panel_conversions_${today}.csv`, headers, rows);
+      } catch (e) {
+        console.error('Failed to export conversions', e);
+      }
+    }
+  };
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}>
       {/* ========================================================================= */}
@@ -574,7 +655,7 @@ export const ControlPanelView: React.FC = () => {
           ]}
         />
 
-        {/* Right Actions: Unified Search Input & Add Button in the exact same row */}
+        {/* Right Actions: Unified Search Input, Add Button & Export CSV */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
           {/* Cosmic Galaxy Animated Search Input (No placeholder, with right filter icon) */}
           <CosmicSearchInput
@@ -603,6 +684,33 @@ export const ControlPanelView: React.FC = () => {
           >
             <Plus size={14} />
             <span>{getTabConfig(activeTab).addButtonText}</span>
+          </button>
+
+          {/* Export CSV Button for Active Tab */}
+          <button
+            type="button"
+            onClick={handleExportActiveTabCsv}
+            onMouseEnter={() => macAudio.playHover()}
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              color: '#34d399',
+              padding: '0 10px',
+              height: '28px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              flexShrink: 0
+            }}
+            title="Download active tab data as CSV / Excel"
+          >
+            <FileSpreadsheet size={13} />
+            <span>Export CSV</span>
           </button>
         </div>
       </div>

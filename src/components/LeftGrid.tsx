@@ -5,7 +5,8 @@ import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History } from 'lucide-react';
+import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History, FileSpreadsheet } from 'lucide-react';
+import { downloadCSV } from '../utils/exportCsv';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -682,6 +683,29 @@ export const LeftGrid: React.FC<Props> = ({
     });
   };
 
+  const handleExportCsv = () => {
+    const headers = [
+      'SR NO',
+      'ITEM NAME',
+      ...(hasPartyCodeCol ? ['PARTY CODE'] : []),
+      ...allSizeCols.map(sc => sc.label || sc.field),
+      'U CAP',
+      'L CAP'
+    ];
+    const rows = filteredItems.map((item, idx) => [
+      idx + 1,
+      item.name || '',
+      ...(hasPartyCodeCol ? [item.partyCode || ''] : []),
+      ...allSizeCols.map(sc => (item as any)[sc.field] || 0),
+      item.uCap || 0,
+      item.lCap || 0
+    ]);
+    const ok = downloadCSV(`Raw_Items_List_${Date.now()}`, headers, rows);
+    if (ok) {
+      onToast('Downloaded Raw Items in CSV (Excel format)!', 'success');
+    }
+  };
+
   const executeGridPaste = (text: string, startR: number, startC: number) => {
     if (!text || !text.trim()) return;
 
@@ -1105,6 +1129,17 @@ export const LeftGrid: React.FC<Props> = ({
             title="Paste Table from Clipboard (Ctrl+V)"
           >
             <ClipboardPaste size={13} />
+          </button>
+
+          {/* Download CSV / Excel */}
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="apple-box-btn"
+            style={{ width: '28px', height: '28px', borderRadius: '6px', color: '#10b981' }}
+            title="Download Raw Items in CSV (Excel)"
+          >
+            <FileSpreadsheet size={14} />
           </button>
 
           {/* Load Old Price Button */}
