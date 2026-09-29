@@ -32,6 +32,7 @@ import { LoginPanel } from './components/LoginPanel';
 import { SpaceLoader } from './components/common/SpaceLoader';
 import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
 import { ChattingPanel } from './components/ChattingPanel';
+import { DigitalCalculatorModal } from './components/DigitalCalculatorModal';
 
 const playTapSound = () => {
   try {
@@ -145,6 +146,9 @@ interface AppContentProps {
 
 function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const isCalculatorOpenRef = useRef(false);
+  isCalculatorOpenRef.current = isCalculatorOpen;
 
   // 1. Persisted Header (fallback to real SQLite bill if empty or dummy)
   const [header, setHeader] = useState<BillHeader>(() => {
@@ -378,6 +382,28 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // F9 or Ctrl+Alt+C: Toggle Digital Retro Numpad Calculator
+      if (e.key === 'F9' || (isCtrlOrCmd && e.altKey && (e.key === 'c' || e.key === 'C'))) {
+        e.preventDefault();
+        setIsCalculatorOpen(prev => !prev);
+        return;
+      }
+
+      // If Calculator is Open: Intercept Escape to close calculator, and let numpad keys flow to calculator
+      if (isCalculatorOpenRef.current) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setIsCalculatorOpen(false);
+          return;
+        }
+        // Allow physical numpad & calculation keys to reach the calculator modal without triggering app shortcuts
+        if (e.code.startsWith('Numpad') || ['0','1','2','3','4','5','6','7','8','9','+','-','*','/','.','=','Enter','Backspace','Delete'].includes(e.key)) {
+          return;
+        }
+      }
+
       // Escape key: SKIP current loaded bill or clear panel to new blank bill (only in F1/HOME)
       if (e.key === 'Escape') {
         if (activeTab === 'F1' || activeTab === 'HOME') {
@@ -386,8 +412,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         }
         return;
       }
-
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       
       // Ctrl + J: Toggle Chat Assistant & Billing Helper
       if (isCtrlOrCmd && (e.key === 'j' || e.key === 'J')) {
@@ -1890,6 +1914,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               onChangeThemeMode={onChangeThemeMode}
               onToggleChat={() => setIsChatOpen(prev => !prev)}
               isChatOpen={isChatOpen}
+              onToggleCalculator={() => setIsCalculatorOpen(prev => !prev)}
+              isCalculatorOpen={isCalculatorOpen}
             />
 
             {/* Center Workspace */}
@@ -1911,6 +1937,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 onReset={handleTriggerEscapeClear}
                 onPrevRecord={handlePrevBill}
                 onNextRecord={handleNextBill}
+                onOpenCalculator={() => setIsCalculatorOpen(true)}
               />
 
               {/* Grids Area with Draggable Splitter & Bottom Mode Bar */}
@@ -2208,6 +2235,16 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         rawItems={rawItems}
         finishedItems={finishedItems}
         onShowToast={showToast}
+      />
+
+      {/* Retro Neumorphic Digital Calculator with 100% Physical Numpad Control */}
+      <DigitalCalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        onInsertValue={(val) => {
+          showToast(`Calculator Value: ${val}`, 'info');
+        }}
+        onToast={showToast}
       />
 
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { BillHeader } from '../types';
 import { AppleTrafficLights } from './AppleTrafficLights';
-import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare } from 'lucide-react';
+import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
@@ -17,6 +17,8 @@ interface Props {
   onChangeThemeMode?: (mode: 'dark' | 'glass') => void;
   onToggleChat?: () => void;
   isChatOpen?: boolean;
+  onToggleCalculator?: () => void;
+  isCalculatorOpen?: boolean;
 }
 
 const COMMON_PARTIES = [
@@ -47,7 +49,9 @@ export const AppleHeader: React.FC<Props> = ({
   themeMode = 'dark',
   onChangeThemeMode,
   onToggleChat,
-  isChatOpen = false
+  isChatOpen = false,
+  onToggleCalculator,
+  isCalculatorOpen = false
 }) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
   const [partyList, setPartyList] = useState<string[]>(REAL_PARTIES);
@@ -260,8 +264,70 @@ export const AppleHeader: React.FC<Props> = ({
         />
       </div>
 
-      {/* Right Controls: 2-Mode Theme Switcher (Dark & Glass), Token Badge */}
+      {/* Right Controls: Calculator, Chat, Theme Switcher, Token Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Digital Numpad Calculator Toggle Button */}
+        {onToggleCalculator && (
+          <button
+            type="button"
+            onClick={() => {
+              macAudio.playClick();
+              onToggleCalculator();
+            }}
+            className="apple-box-btn"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              cursor: 'pointer',
+              flexShrink: 0,
+              background: isCalculatorOpen ? 'rgba(2, 132, 199, 0.25)' : undefined,
+              borderColor: isCalculatorOpen ? 'rgba(56, 189, 248, 0.5)' : undefined
+            }}
+            title="Digital Numpad Calculator (F9)"
+          >
+            <span className="box-tooltip-left">
+              Calculator (Numpad Ready • F9)
+            </span>
+            <Calculator size={15} color={isCalculatorOpen ? '#38bdf8' : '#cbd5e1'} />
+          </button>
+        )}
+
+        {/* AI Chat Assistant Button */}
+        {onToggleChat && (
+          <button
+            type="button"
+            onClick={() => {
+              macAudio.playClick();
+              onToggleChat();
+            }}
+            className="apple-box-btn"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              cursor: 'pointer',
+              flexShrink: 0,
+              background: isChatOpen ? 'rgba(59, 130, 246, 0.25)' : undefined,
+              borderColor: isChatOpen ? 'rgba(59, 130, 246, 0.5)' : undefined
+            }}
+            title="Chat Assistant"
+          >
+            <span className="box-tooltip-left">
+              Chat Assistant
+            </span>
+            <MessageSquare size={15} color={isChatOpen ? '#38bdf8' : '#cbd5e1'} />
+          </button>
+        )}
+
         {/* Single Multi-Click Cycling Theme Mode Button */}
         {onChangeThemeMode && (
           <button
