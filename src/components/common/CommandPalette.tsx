@@ -47,7 +47,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       { key: 'F1' as NavKey, title: 'F1: Bill Editor & Calculator', subtitle: 'Main Billing screen' },
       { key: 'F2' as NavKey, title: 'F2: Bill History & Invoices', subtitle: 'Saved vouchers archive' },
       { key: 'F3' as NavKey, title: 'F3: Equation & Formulas', subtitle: 'Mould calculation parameters' },
-      { key: 'F4' as NavKey, title: 'F4: Master Data Panel', subtitle: 'Raw materials & specs' },
       { key: 'F5' as NavKey, title: 'F5: Party Directory', subtitle: 'Customer ledger & accounts' },
       { key: 'F8' as NavKey, title: 'F8: Stock Inventory', subtitle: 'Warehouse stock tracking' },
       { key: 'F9' as NavKey, title: 'F9: Financial Ledger', subtitle: 'Vouchers debit/credit audit' },

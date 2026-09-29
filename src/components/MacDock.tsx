@@ -42,7 +42,6 @@ export const MacDock: React.FC<Props> = ({
     { key: 'F1', label: 'F1: Bill UI', icon: <Receipt size={20} />, color: '#38bdf8' },
     { key: 'F2', label: 'F2: Bill History', icon: <History size={20} />, color: '#818cf8' },
     { key: 'F3', label: 'F3: Equation', icon: <Calculator size={20} />, color: '#fbbf24' },
-    { key: 'F4', label: 'F4: Data Panel', icon: <Database size={20} />, color: '#34d399' },
     { key: 'F5', label: 'F5: Party Panel', icon: <Users size={20} />, color: '#f472b6' },
     { key: 'F8', label: 'F8: Stock', icon: <Package size={20} />, color: '#fb923c' },
     { key: 'F9', label: 'F9: Ledger', icon: <BookOpen size={20} />, color: '#2dd4bf' },

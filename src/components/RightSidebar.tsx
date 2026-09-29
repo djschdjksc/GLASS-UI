@@ -51,7 +51,6 @@ export const RightSidebar: React.FC<Props> = ({
     { key: 'F1', label: 'F1 Bill UI', icon: <Receipt size={13} /> },
     { key: 'F2', label: 'F2 Bill History', icon: <History size={13} /> },
     { key: 'F3', label: 'F3 Equation', icon: <Calculator size={13} /> },
-    { key: 'F4', label: 'F4 Data Panel', icon: <Database size={13} /> },
     { key: 'F5', label: 'F5 Party Panel', icon: <Users size={13} /> },
     { key: 'F6', label: 'F6 Control Panel', icon: <Sliders size={13} /> },
     { key: 'F8', label: 'F8 Stock', icon: <Package size={13} /> },

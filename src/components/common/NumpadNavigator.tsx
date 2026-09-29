@@ -123,12 +123,11 @@ export const NUMPAD_ZONES: NavZone[] = [
       { num: 1, label: 'Bill UI', selector: '[data-np-target="6-1"]', type: 'button' },
       { num: 2, label: 'Bill History', selector: '[data-np-target="6-2"]', type: 'button' },
       { num: 3, label: 'Equation', selector: '[data-np-target="6-3"]', type: 'button' },
-      { num: 4, label: 'Data Panel', selector: '[data-np-target="6-4"]', type: 'button' },
-      { num: 5, label: 'Party Panel', selector: '[data-np-target="6-5"]', type: 'button' },
-      { num: 6, label: 'Control Panel', selector: '[data-np-target="6-6"]', type: 'button' },
-      { num: 7, label: 'Stock Inventory', selector: '[data-np-target="6-7"]', type: 'button' },
-      { num: 8, label: 'Ledger', selector: '[data-np-target="6-8"]', type: 'button' },
-      { num: 9, label: 'Settings', selector: '[data-np-target="6-9"]', type: 'button' }
+      { num: 4, label: 'Party Panel', selector: '[data-np-target="6-4"]', type: 'button' },
+      { num: 5, label: 'Control Panel', selector: '[data-np-target="6-5"]', type: 'button' },
+      { num: 6, label: 'Stock Inventory', selector: '[data-np-target="6-6"]', type: 'button' },
+      { num: 7, label: 'Ledger', selector: '[data-np-target="6-7"]', type: 'button' },
+      { num: 8, label: 'Settings', selector: '[data-np-target="6-8"]', type: 'button' }
     ]
   }
 ];
