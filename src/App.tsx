@@ -1098,26 +1098,21 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       let uGroup = '';
       let lGroup = '';
 
+      // Pass 1: Match by conversion name (longest conversion first, exactly like main.py line 8127-8133)
       for (const sc of sortedConversions) {
         const conv = String(sc.conversion || '').trim();
-        const code = String(sc.shortcut || '').trim();
         const convLower = conv.toLowerCase();
-        const codeLower = code.toLowerCase();
 
         const matchByConv = conv && (
           nameLower === convLower ||
           nameLower.startsWith(convLower + ' ') ||
           nameLower.startsWith(convLower + '-') ||
+          nameLower.startsWith(convLower + '.') ||
+          nameLower.startsWith(convLower + '/') ||
           nameLower.startsWith(convLower)
         );
 
-        const matchByCode = code && (
-          nameLower === codeLower ||
-          nameLower.startsWith(codeLower + ' ') ||
-          (nameLower.startsWith(codeLower) && name.length > code.length)
-        );
-
-        if (matchByConv || matchByCode) {
+        if (matchByConv) {
           matchedConv = conv;
           matchedConvRule = sc;
           const rawU = String(sc.u_cap !== undefined ? sc.u_cap : (sc.uCap || '')).trim();
@@ -1125,6 +1120,24 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           uGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawU.toLowerCase())) ? rawU : '';
           lGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawL.toLowerCase())) ? rawL : '';
           break;
+        }
+      }
+
+      // Pass 2: Fallback exact shortcut match ONLY (e.g. if user literally typed only "2" or "C")
+      if (!matchedConv) {
+        for (const sc of sortedConversions) {
+          const code = String(sc.shortcut || '').trim();
+          const codeLower = code.toLowerCase();
+
+          if (code && nameLower === codeLower) {
+            matchedConv = String(sc.conversion || '').trim();
+            matchedConvRule = sc;
+            const rawU = String(sc.u_cap !== undefined ? sc.u_cap : (sc.uCap || '')).trim();
+            const rawL = String(sc.l_cap !== undefined ? sc.l_cap : (sc.lCap || '')).trim();
+            uGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawU.toLowerCase())) ? rawU : '';
+            lGroup = (!['0', '0.0', 'none', 'null', 'undefined', ''].includes(rawL.toLowerCase())) ? rawL : '';
+            break;
+          }
         }
       }
 
