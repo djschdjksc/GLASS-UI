@@ -24,7 +24,6 @@ import {
   CheckCircle2,
   FileText,
   Moon,
-  Sun,
   User,
   Camera,
   MessageCircle,
@@ -36,7 +35,7 @@ import { saveMediaToDB, clearMediaFromDB } from '../services/mediaStorage';
 
 export type SettingsMainTab = 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'GENERAL' | 'BARCODE';
 export type BarcodeSubTab = 'PAGE_SETUP' | 'LABEL_LAYOUT' | 'CONTENT_FIELDS' | 'ELEMENT_PLACEMENTS';
-export type AppThemeMode = 'dark' | 'white' | 'glass';
+export type AppThemeMode = 'dark' | 'glass';
 
 interface Props {
   themeMode?: AppThemeMode;
@@ -451,22 +450,22 @@ export const SettingsTabView: React.FC<Props> = ({
                     SELECT APPLICATION MODE
                   </span>
                   <span style={{ fontSize: '10px', color: 'var(--muted-foreground, #94a3b8)' }}>
-                    Unified modern shadcn design system with 3 curated themes
+                    Dual UI modes: Obsidian Dark & Liquid Glass
                   </span>
                 </div>
-                <Tag color={themeMode === 'white' ? 'blue' : themeMode === 'glass' ? 'cyan' : 'purple'}>
+                <Tag color={themeMode === 'glass' ? 'cyan' : 'purple'}>
                   {themeMode.toUpperCase()} MODE
                 </Tag>
               </div>
 
-              {/* 3 Cards for Dark, White, and Glass */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              {/* 2 Cards for Dark and Glass */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                 {/* 1. Dark Mode */}
                 <div
                   onClick={() => {
                     macAudio.playClick();
                     onChangeThemeMode?.('dark');
-                    onShowToast?.('Dark Mode Activated (shadcn dark)', 'success');
+                    onShowToast?.('Dark Mode Activated (Obsidian dark)', 'success');
                   }}
                   style={{
                     background: '#09090b',
@@ -494,40 +493,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   </span>
                 </div>
 
-                {/* 2. White Mode */}
-                <div
-                  onClick={() => {
-                    macAudio.playClick();
-                    onChangeThemeMode?.('white');
-                    onShowToast?.('White Mode Activated (shadcn white)', 'success');
-                  }}
-                  style={{
-                    background: '#ffffff',
-                    border: themeMode === 'white' ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                    boxShadow: themeMode === 'white' ? '0 0 16px rgba(2, 132, 199, 0.35)' : '0 2px 8px rgba(0,0,0,0.1)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '90px',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Sun size={15} color="#0284c7" />
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>White Mode</span>
-                    </div>
-                    {themeMode === 'white' && <Check size={14} color="#0284c7" />}
-                  </div>
-                  <span style={{ fontSize: '9.5px', color: '#475569', lineHeight: 1.3, marginTop: '6px' }}>
-                    Crisp white canvas, slate borders, light card elevation.
-                  </span>
-                </div>
-
-                {/* 3. Glass Mode */}
+                {/* 2. Glass Mode */}
                 <div
                   onClick={() => {
                     macAudio.playClick();
@@ -790,9 +756,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   overflow: 'hidden',
                   border: '1px solid var(--border, rgba(255,255,255,0.15))',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                  background: themeMode === 'white'
-                    ? '#f8fafc'
-                    : themeMode === 'dark'
+                  background: themeMode === 'dark'
                     ? '#09090b'
                     : `url(${bgImage}) center/cover no-repeat`
                 }}
@@ -803,22 +767,18 @@ export const SettingsTabView: React.FC<Props> = ({
                     position: 'absolute',
                     inset: '12px',
                     borderRadius: '8px',
-                    background: themeMode === 'white'
-                      ? '#ffffff'
-                      : themeMode === 'dark'
+                    background: themeMode === 'dark'
                       ? '#121215'
                       : `rgba(18, 22, 28, ${glassOpacity})`,
                     backdropFilter: themeMode === 'glass' ? `blur(${blurAmount}px)` : 'none',
-                    border: themeMode === 'white'
-                      ? '1px solid #e2e8f0'
-                      : themeMode === 'dark'
+                    border: themeMode === 'dark'
                       ? '1px solid #27272a'
                       : '1px solid rgba(255,255,255,0.15)',
                     padding: '8px 12px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: themeMode === 'white' ? '0 2px 10px rgba(0,0,0,0.06)' : 'none'
+                    boxShadow: 'none'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -827,17 +787,17 @@ export const SettingsTabView: React.FC<Props> = ({
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e' }} />
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f' }} />
                     </div>
-                    <span style={{ fontSize: '9px', fontWeight: 800, color: themeMode === 'white' ? '#0284c7' : '#38bdf8', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>
                       SALE BILL #626
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontSize: '10px', fontWeight: 800, color: themeMode === 'white' ? '#0f172a' : '#f8fafc' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 800, color: '#f8fafc' }}>
                         Aluminium Ingot 6063
                       </div>
-                      <div style={{ fontSize: '8px', color: themeMode === 'white' ? '#64748b' : '#94a3b8' }}>
+                      <div style={{ fontSize: '8px', color: '#94a3b8' }}>
                         QTY: 120 • CAP: 95/80
                       </div>
                     </div>
@@ -1173,7 +1133,7 @@ export const SettingsTabView: React.FC<Props> = ({
               style={{
                 borderRadius: '10px',
                 border: '1px solid var(--border, rgba(255, 255, 255, 0.12))',
-                background: themeMode === 'white' ? '#f8fafc' : '#0b141a',
+                background: '#0b141a',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1184,7 +1144,7 @@ export const SettingsTabView: React.FC<Props> = ({
               <div
                 style={{
                   padding: '10px 12px',
-                  background: themeMode === 'white' ? '#f0f2f5' : '#202c33',
+                  background: '#202c33',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
@@ -1214,7 +1174,7 @@ export const SettingsTabView: React.FC<Props> = ({
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: themeMode === 'white' ? '#111b21' : '#e9edef' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#e9edef' }}>
                     {userName || 'Operator Name'}
                   </div>
                   <div style={{ fontSize: '10px', color: '#25D366', fontWeight: 600 }}>
@@ -1242,7 +1202,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   style={{
                     alignSelf: 'flex-start',
                     maxWidth: '82%',
-                    background: themeMode === 'white' ? '#ffffff' : '#202c33',
+                    background: '#202c33',
                     padding: '8px 10px',
                     borderRadius: '8px 8px 8px 2px',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
@@ -1251,7 +1211,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   <div style={{ fontSize: '10px', fontWeight: 700, color: '#53bdeb', marginBottom: '2px' }}>
                     Counter 2 (Warehouse Dispatch)
                   </div>
-                  <div style={{ fontSize: '11px', color: themeMode === 'white' ? '#111b21' : '#e9edef', lineHeight: 1.3 }}>
+                  <div style={{ fontSize: '11px', color: '#e9edef', lineHeight: 1.3 }}>
                     📦 Token #626 stock materials are staged and verified ready for dispatch.
                   </div>
                   <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px' }}>
@@ -1264,13 +1224,13 @@ export const SettingsTabView: React.FC<Props> = ({
                   style={{
                     alignSelf: 'flex-end',
                     maxWidth: '82%',
-                    background: themeMode === 'white' ? '#d9fdd3' : '#005c4b',
+                    background: '#005c4b',
                     padding: '8px 10px',
                     borderRadius: '8px 8px 2px 8px',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
                   }}
                 >
-                  <div style={{ fontSize: '11px', color: themeMode === 'white' ? '#111b21' : '#e9edef', lineHeight: 1.3 }}>
+                  <div style={{ fontSize: '11px', color: '#e9edef', lineHeight: 1.3 }}>
                     👍 Got it! Invoice bill #{header.tokenNo || '1'} printed and handed to transport vehicle.
                   </div>
                   <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>

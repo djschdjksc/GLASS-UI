@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { BillHeader } from '../types';
 import { AppleTrafficLights } from './AppleTrafficLights';
-import { Plus, Check, ChevronDown, Calendar, Moon, Sun, Sparkles, MessageSquare } from 'lucide-react';
+import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
@@ -13,8 +13,8 @@ interface Props {
   onAddNewParty: (name: string) => void;
   onSkipBill?: () => void;
   onSaveBill?: () => void;
-  themeMode?: 'dark' | 'white' | 'glass';
-  onChangeThemeMode?: (mode: 'dark' | 'white' | 'glass') => void;
+  themeMode?: 'dark' | 'glass';
+  onChangeThemeMode?: (mode: 'dark' | 'glass') => void;
   onToggleChat?: () => void;
   isChatOpen?: boolean;
 }
@@ -260,7 +260,7 @@ export const AppleHeader: React.FC<Props> = ({
         />
       </div>
 
-      {/* Right Controls: 3-Mode Theme Switcher, Chat AI Button, Token Badge */}
+      {/* Right Controls: 2-Mode Theme Switcher (Dark & Glass), Token Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Single Multi-Click Cycling Theme Mode Button */}
         {onChangeThemeMode && (
@@ -268,9 +268,7 @@ export const AppleHeader: React.FC<Props> = ({
             type="button"
             onClick={() => {
               macAudio.playClick();
-              const nextMode = 
-                themeMode === 'dark' ? 'white' :
-                themeMode === 'white' ? 'glass' : 'dark';
+              const nextMode: 'dark' | 'glass' = themeMode === 'dark' ? 'glass' : 'dark';
               onChangeThemeMode(nextMode);
             }}
             className="apple-box-btn"
@@ -285,18 +283,14 @@ export const AppleHeader: React.FC<Props> = ({
               cursor: 'pointer',
               flexShrink: 0
             }}
-            title={`Mode: ${themeMode?.toUpperCase()} (Click to switch to ${
-              themeMode === 'dark' ? 'White' : themeMode === 'white' ? 'Glass' : 'Dark'
+            title={`Theme: ${themeMode?.toUpperCase()} (Click to switch to ${
+              themeMode === 'dark' ? 'Glass' : 'Dark'
             })`}
           >
             <span className="box-tooltip-left">
-              {themeMode === 'dark' && 'Dark Mode → Click for White'}
-              {themeMode === 'white' && 'White Mode → Click for Glass'}
-              {themeMode === 'glass' && 'Glass Mode → Click for Dark'}
+              {themeMode === 'dark' ? 'Dark Mode → Click for Glass' : 'Glass Mode → Click for Dark'}
             </span>
-            {themeMode === 'dark' && <Moon size={15} color="#38bdf8" />}
-            {themeMode === 'white' && <Sun size={15} color="#f59e0b" />}
-            {themeMode === 'glass' && <Sparkles size={15} color="#a855f7" />}
+            {themeMode === 'dark' ? <Moon size={15} color="#38bdf8" /> : <Sparkles size={15} color="#a855f7" />}
           </button>
         )}
 

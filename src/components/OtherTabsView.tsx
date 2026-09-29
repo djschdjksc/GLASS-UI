@@ -48,8 +48,8 @@ interface Props {
   onBackToBill: () => void;
   onLoadBillToEditor?: (bill: any) => void;
   onSelectPartyForBill?: (partyName: string) => void;
-  themeMode?: 'dark' | 'white' | 'glass';
-  onChangeThemeMode?: (m: 'dark' | 'white' | 'glass') => void;
+  themeMode?: 'dark' | 'glass';
+  onChangeThemeMode?: (m: 'dark' | 'glass') => void;
   bgType?: 'image' | 'color' | 'video';
   onChangeBgType?: (t: 'image' | 'color' | 'video') => void;
   bgImage: string;

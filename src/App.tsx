@@ -1994,7 +1994,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
 export default function App() {
   const [themeMode, setThemeMode] = React.useState<AppThemeMode>(() => {
-    return (localStorage.getItem('modern_app_theme_mode') as AppThemeMode) || 'dark';
+    const saved = localStorage.getItem('modern_app_theme_mode');
+    return saved === 'glass' ? 'glass' : 'dark';
   });
 
   React.useEffect(() => {

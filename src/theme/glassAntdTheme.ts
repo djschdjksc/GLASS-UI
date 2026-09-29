@@ -1,113 +1,15 @@
 import type { ThemeConfig } from 'antd';
 import { theme as antdTheme } from 'antd';
 
-export type AppThemeMode = 'dark' | 'white' | 'glass';
+export type AppThemeMode = 'dark' | 'glass';
 
 /**
  * Unified Ant Design Themes for Modern Summary App
  * Supports:
  * - 'dark': shadcn-inspired slick dark theme (obsidian / zinc canvas)
- * - 'white': shadcn-inspired clean white theme (crisp surfaces, high contrast)
  * - 'glass': frosted glassmorphism dark theme (liquid retina translucent)
  */
 export function getAntdTheme(mode: AppThemeMode): ThemeConfig {
-  if (mode === 'white') {
-    return {
-      algorithm: antdTheme.defaultAlgorithm,
-      token: {
-        colorPrimary: '#0284c7',
-        colorBgBase: '#ffffff',
-        colorBgContainer: '#ffffff',
-        colorBgElevated: '#ffffff',
-        colorBgLayout: '#f8fafc',
-        colorBgSpotlight: 'rgba(2, 132, 199, 0.1)',
-        colorBorder: '#e2e8f0',
-        colorBorderSecondary: '#f1f5f9',
-        colorText: '#000000',
-        colorTextSecondary: '#000000',
-        colorTextTertiary: '#1e293b',
-        colorTextPlaceholder: '#64748b',
-        colorTextHeading: '#000000',
-        colorTextDisabled: '#94a3b8',
-        colorFill: '#f1f5f9',
-        colorFillSecondary: '#e2e8f0',
-        colorFillTertiary: '#f8fafc',
-        colorSuccess: '#10b981',
-        colorWarning: '#f59e0b',
-        colorError: '#ef4444',
-        colorInfo: '#0284c7',
-
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        fontSize: 13,
-        fontSizeSM: 11,
-        fontSizeLG: 15,
-        fontWeightStrong: 700,
-
-        borderRadius: 8,
-        borderRadiusLG: 10,
-        borderRadiusSM: 6,
-
-        controlHeight: 34,
-        controlHeightLG: 38,
-        controlHeightSM: 26,
-
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
-        boxShadowSecondary: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      },
-      components: {
-        Input: {
-          colorBgContainer: '#ffffff',
-          colorBorder: '#cbd5e1',
-          activeBorderColor: '#0284c7',
-          hoverBorderColor: '#94a3b8',
-          activeShadow: '0 0 0 2px rgba(2, 132, 199, 0.2)',
-          colorText: '#000000',
-          borderRadius: 8,
-        },
-        Select: {
-          colorBgContainer: '#ffffff',
-          colorBorder: '#cbd5e1',
-          colorBgElevated: '#ffffff',
-          optionActiveBg: '#f1f5f9',
-          optionSelectedBg: 'rgba(2, 132, 199, 0.1)',
-          optionSelectedColor: '#0284c7',
-          colorText: '#000000',
-          borderRadius: 8,
-        },
-        Button: {
-          colorPrimary: '#0284c7',
-          colorPrimaryHover: '#0369a1',
-          colorPrimaryActive: '#075985',
-          defaultBg: '#ffffff',
-          defaultBorderColor: '#e2e8f0',
-          defaultColor: '#000000',
-          borderRadius: 8,
-          fontWeight: 600,
-        },
-        Modal: {
-          contentBg: '#ffffff',
-          headerBg: '#ffffff',
-          titleColor: '#000000',
-          colorBgMask: 'rgba(15, 23, 42, 0.45)',
-          borderRadiusLG: 12,
-        },
-        Table: {
-          colorBgContainer: '#ffffff',
-          headerBg: '#f8fafc',
-          headerColor: '#000000',
-          colorText: '#000000',
-          rowHoverBg: 'rgba(2, 132, 199, 0.05)',
-          borderColor: '#e2e8f0',
-        },
-        Tag: {
-          defaultBg: '#f1f5f9',
-          defaultColor: '#0284c7',
-          borderRadiusSM: 4,
-        }
-      }
-    };
-  }
-
   // Dark or Glass
   const isGlass = mode === 'glass';
   return {
