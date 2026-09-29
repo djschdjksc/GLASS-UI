@@ -5,7 +5,11 @@ import {
   PackagePlus, 
   SlidersHorizontal, 
   Search, 
-  Download 
+  Download,
+  Calculator,
+  MessageSquare,
+  Moon,
+  Sparkles
 } from 'lucide-react';
 import type { RawItem, FinishedItem } from '../types';
 import { localDb } from '../services/db/localDb';
@@ -122,6 +126,12 @@ interface Props {
   onChangeMode?: (mode: AppMode) => void;
   onLoadSlipData: (slip: SavedSlipData) => void;
   onToast: (msg: string, type?: 'success' | 'info' | 'warning') => void;
+  onToggleCalculator?: () => void;
+  isCalculatorOpen?: boolean;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
+  themeMode?: 'dark' | 'glass';
+  onChangeThemeMode?: (mode: 'dark' | 'glass') => void;
 }
 
 export const BottomModeBar: React.FC<Props> = ({
@@ -130,7 +140,13 @@ export const BottomModeBar: React.FC<Props> = ({
   simpleMode,
   onToggle,
   onLoadSlipData,
-  onToast
+  onToast,
+  onToggleCalculator,
+  isCalculatorOpen = false,
+  onToggleChat,
+  isChatOpen = false,
+  themeMode = 'dark',
+  onChangeThemeMode
 }) => {
   const [searchSlipQuery, setSearchSlipQuery] = useState('');
 
@@ -257,14 +273,95 @@ export const BottomModeBar: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* RIGHT: Compact Slip Search Input (sized for ~15415, press Enter to Load) */}
-      <div style={{ display: 'flex', alignItems: 'center', overflow: 'visible' }}>
+      {/* RIGHT: Tools (Calculator, Chat, Theme Mode) + Bill Search */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'visible' }}>
+        
+        {/* Calculator Button */}
+        {onToggleCalculator && (
+          <button
+            type="button"
+            onMouseEnter={() => macAudio.playHover()}
+            onClick={() => {
+              macAudio.playClick();
+              onToggleCalculator();
+            }}
+            className={`apple-box-btn ${isCalculatorOpen ? 'active' : ''}`}
+            style={{ 
+              width: '36px', 
+              height: '36px',
+              borderRadius: '8px',
+              background: isCalculatorOpen ? 'rgba(56, 189, 248, 0.25)' : undefined,
+              borderColor: isCalculatorOpen ? '#38bdf8' : undefined
+            }}
+            title="Calculator (Numpad Ready • F9)"
+          >
+            <span className="box-tooltip-top">Calculator (F9)</span>
+            <Calculator size={16} color={isCalculatorOpen ? '#38bdf8' : 'currentColor'} />
+          </button>
+        )}
+
+        {/* AI Chat Assistant Button */}
+        {onToggleChat && (
+          <button
+            type="button"
+            onMouseEnter={() => macAudio.playHover()}
+            onClick={() => {
+              macAudio.playClick();
+              onToggleChat();
+            }}
+            className={`apple-box-btn ${isChatOpen ? 'active' : ''}`}
+            style={{ 
+              width: '36px', 
+              height: '36px',
+              borderRadius: '8px',
+              background: isChatOpen ? 'rgba(59, 130, 246, 0.25)' : undefined,
+              borderColor: isChatOpen ? '#3b82f6' : undefined
+            }}
+            title="Chat Assistant (Ctrl+J)"
+          >
+            <span className="box-tooltip-top">Chat Assistant (Ctrl+J)</span>
+            <MessageSquare size={16} color={isChatOpen ? '#38bdf8' : 'currentColor'} />
+          </button>
+        )}
+
+        {/* Theme Mode Button (Dark / Glass) */}
+        {onChangeThemeMode && (
+          <button
+            type="button"
+            onMouseEnter={() => macAudio.playHover()}
+            onClick={() => {
+              macAudio.playClick();
+              const nextMode: 'dark' | 'glass' = themeMode === 'dark' ? 'glass' : 'dark';
+              onChangeThemeMode(nextMode);
+              onToast(`Theme switched to ${nextMode.toUpperCase()}`, 'info');
+            }}
+            className="apple-box-btn"
+            style={{ 
+              width: '36px', 
+              height: '36px',
+              borderRadius: '8px'
+            }}
+            title={`Theme: ${themeMode?.toUpperCase()} (Click to toggle)`}
+          >
+            <span className="box-tooltip-top">{themeMode === 'dark' ? 'Switch to Glass' : 'Switch to Dark'}</span>
+            {themeMode === 'dark' ? (
+              <Moon size={16} color="#38bdf8" />
+            ) : (
+              <Sparkles size={16} color="#a855f7" />
+            )}
+          </button>
+        )}
+
+        {/* Subtle Separator */}
+        <div style={{ width: '1px', height: '20px', background: 'rgba(255, 255, 255, 0.12)', margin: '0 2px' }} />
+
+        {/* Compact Slip Search Input (sized for ~15415, press Enter to Load) */}
         <div 
           className="apple-search-pill" 
           style={{ 
-            width: '95px', 
+            width: '105px', 
             height: '34px',
-            padding: '0 8px 0 26px',
+            padding: '0 8px 0 28px',
             display: 'flex',
             alignItems: 'center',
             borderRadius: '8px',
@@ -272,10 +369,10 @@ export const BottomModeBar: React.FC<Props> = ({
           }}
         >
           <Search 
-            size={12} 
+            size={13} 
             style={{ 
               position: 'absolute', 
-              left: '8px', 
+              left: '9px', 
               top: '50%', 
               transform: 'translateY(-50%)', 
               color: '#38bdf8',

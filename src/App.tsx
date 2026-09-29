@@ -2084,7 +2084,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   </div>
                 </div>
 
-                {/* Bottom Mode Bar: 3 Modes + Instant Slip Search to Load */}
+                {/* Bottom Mode Bar: 3 Modes + Calculator + Chat + Theme Mode + Bill Search */}
                 <BottomModeBar
                   autoConvert={autoConvert}
                   autoItem={autoItem}
@@ -2097,6 +2097,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   }}
                   onLoadSlipData={handleLoadSlip}
                   onToast={showToast}
+                  onToggleCalculator={() => setIsCalculatorOpen(prev => !prev)}
+                  isCalculatorOpen={isCalculatorOpen}
+                  onToggleChat={() => setIsChatOpen(prev => !prev)}
+                  isChatOpen={isChatOpen}
+                  themeMode={themeMode}
+                  onChangeThemeMode={onChangeThemeMode}
                 />
               </div>
 
