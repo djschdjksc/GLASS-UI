@@ -1404,6 +1404,56 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   // Summary Mapping Cache & Highlight State
   const [summarySourceMap, setSummarySourceMap] = useState<Record<string, { rowId: string; rowIndex: number; field: string; qty: number }[]>>({});
   const [activeRightMould, setActiveRightMould] = useState<string | null>(null);
+  const [leftHoveredRow, setLeftHoveredRow] = useState<{ index: number; id: string } | null>(null);
+  const [leftActiveRow, setLeftActiveRow] = useState<{ index: number; id: string } | null>(null);
+
+  // Left Grid (Hover/Active) -> Right Grid (Highlight ONLY QTY column, NOT Item Name)
+  const highlightedRightQtyRows = useMemo(() => {
+    const target = leftHoveredRow || leftActiveRow;
+    if (!target) return new Set<number>();
+
+    const targetRowId = target.id;
+    const targetRowIndex = target.index;
+
+    // Find all mould names in summarySourceMap that this raw row contributed to
+    const matchingMouldNames = new Set<string>();
+
+    for (const [mKey, contributions] of Object.entries(summarySourceMap)) {
+      const hasContrib = contributions.some(c => 
+        c.rowId === targetRowId || c.rowIndex === targetRowIndex
+      );
+      if (hasContrib) {
+        matchingMouldNames.add(mKey.trim().toLowerCase());
+      }
+    }
+
+    // Direct fallback matching for rawItem name
+    const rawItem = rawItems.find(r => r.id === targetRowId) || rawItems[targetRowIndex];
+    if (rawItem && rawItem.name && rawItem.name.trim()) {
+      const rawClean = rawItem.name.trim().toLowerCase();
+      matchingMouldNames.add(rawClean);
+      if (rawClean.includes(' ')) {
+        matchingMouldNames.add(rawClean.split(' ')[0]);
+      }
+    }
+
+    // Find matching row indices in finishedItems
+    const resultRowIndices = new Set<number>();
+    finishedItems.forEach((f, idx) => {
+      if (!f.mould) return;
+      const fLower = f.mould.trim().toLowerCase();
+      if (matchingMouldNames.has(fLower)) {
+        resultRowIndices.add(idx);
+      } else {
+        const fBase = fLower.replace(/\s*\(\d+(\.\d+)?\s*(ft)?\)$/i, '').trim();
+        if (matchingMouldNames.has(fBase)) {
+          resultRowIndices.add(idx);
+        }
+      }
+    });
+
+    return resultRowIndices;
+  }, [leftHoveredRow, leftActiveRow, summarySourceMap, rawItems, finishedItems]);
 
   // Automatically keep summary mapping cache fresh whenever rawItems or dynamicCols change
   useEffect(() => {
@@ -1985,6 +2035,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       }}
                       highlightedCells={highlightedSourceCells}
                       highlightedRowIds={highlightedSourceRows}
+                      onHoverRowChange={(idx, item) => {
+                        setLeftHoveredRow(idx !== null && item ? { index: idx, id: item.id } : null);
+                      }}
+                      onActiveRowChange={(idx, item) => {
+                        setLeftActiveRow(idx !== null && item ? { index: idx, id: item.id } : null);
+                      }}
                     />
                   </div>
 
@@ -2021,6 +2077,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                         showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
                       onActiveRowChange={(item) => setActiveRightMould(item?.mould ? item.mould.trim() : null)}
+                      highlightedQtyRowIndices={highlightedRightQtyRows}
                     />
                   </div>
                 </div>

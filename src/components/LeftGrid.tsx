@@ -57,6 +57,8 @@ interface Props {
   onLoadOldPrice?: () => void;
   highlightedCells?: Set<string>;
   highlightedRowIds?: Set<string>;
+  onActiveRowChange?: (rowIndex: number | null, item: RawItem | null) => void;
+  onHoverRowChange?: (rowIndex: number | null, item: RawItem | null) => void;
 }
 
 const DEFAULT_LEFT_COLS = {
@@ -96,7 +98,9 @@ export const LeftGrid: React.FC<Props> = ({
   onTogglePartyCodeCol,
   onLoadOldPrice,
   highlightedCells,
-  highlightedRowIds
+  highlightedRowIds,
+  onActiveRowChange,
+  onHoverRowChange
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -275,6 +279,15 @@ export const LeftGrid: React.FC<Props> = ({
   const [selectedCol, setSelectedCol] = useState<number | null>(null);
   const [showDirMenu, setShowDirMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Broadcast active row change to parent for Right Grid QTY highlighting
+  useEffect(() => {
+    if (activeCell && activeCell.r !== null && activeCell.r >= 0 && activeCell.r < filteredItems.length) {
+      onActiveRowChange?.(activeCell.r, filteredItems[activeCell.r]);
+    } else {
+      onActiveRowChange?.(null, null);
+    }
+  }, [activeCell, filteredItems, onActiveRowChange]);
 
   // Local editing cache
   const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
@@ -1427,7 +1440,7 @@ export const LeftGrid: React.FC<Props> = ({
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody onMouseLeave={() => onHoverRowChange?.(null, null)}>
             {filteredItems.map((item, rIdx) => {
               const isRowSelected = isActiveTable && selectedRows.includes(rIdx);
               const isRowActive = isActiveTable && activeCell?.r === rIdx;
@@ -1443,6 +1456,7 @@ export const LeftGrid: React.FC<Props> = ({
                     (dragOverRowIndex === rIdx ? 'drag-over-active ' : '') +
                     (isRowSourceHighlighted ? 'summary-row-highlight ' : '')
                   }
+                  onMouseEnter={() => onHoverRowChange?.(rIdx, item)}
                   onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                 >
                   {/* Row Index */}

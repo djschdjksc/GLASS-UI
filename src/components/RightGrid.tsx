@@ -50,6 +50,7 @@ interface Props {
   onActivateTable?: () => void;
   onLoadOldPrice?: () => void;
   onActiveRowChange?: (item: FinishedItem | null) => void;
+  highlightedQtyRowIndices?: Set<number>;
 }
 
 const DEFAULT_RIGHT_COLS = {
@@ -82,7 +83,8 @@ export const RightGrid: React.FC<Props> = ({
   isActiveTable = false,
   onActivateTable,
   onLoadOldPrice,
-  onActiveRowChange
+  onActiveRowChange,
+  highlightedQtyRowIndices
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -1252,38 +1254,51 @@ export const RightGrid: React.FC<Props> = ({
                     />
                   </td>
 
-                  {/* Col 1: QTY */}
-                  <td 
-                    style={{ width: `${colWidths.qty}px`, height: `${rowHeight}px`, padding: 0 }}
-                    className={((isActiveTable && selectedCol === 1) ? 'col-selected ' : '') + ((isActiveTable && selectedCellKeys.has(rIdx + '-1')) ? 'cell-selected' : '')}
-                  >
-                    <input
-                      id={'right-cell-' + rIdx + '-1'}
-                      type="text"
-                      inputMode="decimal"
-                      className="excel-cell-input"
-                      style={{ textAlign: 'center', fontWeight: 600 }}
-                      value={cellDrafts[rIdx + '-1'] !== undefined ? cellDrafts[rIdx + '-1'] : (item.qty === 0 ? '' : item.qty)}
-                      onMouseDown={(e) => handleInputMouseDown(rIdx, 1, e)}
-                      onMouseEnter={() => handleInputMouseEnter(rIdx, 1)}
-                      onPaste={(e) => handleInputPaste(rIdx, 1, e)}
-                      onFocus={() => {
-                        onActivateTable?.();
-                        setActiveCell({ r: rIdx, c: 1 });
-                        setAnchorCell({ r: rIdx, c: 1 });
-                        setSelectedCellKeys(new Set([`${rIdx}-1`]));
-                        setSelectedCol(null);
-                        setSelectedRows([]);
-                        setCellDrafts(prev => ({ ...prev, [rIdx + '-1']: item.qty === 0 ? '' : String(item.qty) }));
-                      }}
-                      onChange={(e) => {
-                        const clean = e.target.value.replace(/[^0-9+\-*/.()\s=]/g, '');
-                        setCellDrafts(prev => ({ ...prev, [rIdx + '-1']: clean }));
-                      }}
-                      onBlur={() => commitNumericCell(rIdx, 1, 'qty')}
-                      onKeyDown={(e) => handleCellKeyDown(e, rIdx, 1, 'qty')}
-                    />
-                  </td>
+                  {/* Col 1: QTY (Only this cell is highlighted when Left Grid row is active/hovered) */}
+                  {(() => {
+                    const isQtyHighlighted = Boolean(highlightedQtyRowIndices?.has(rIdx));
+                    return (
+                      <td 
+                        style={{ width: `${colWidths.qty}px`, height: `${rowHeight}px`, padding: 0 }}
+                        className={
+                          ((isActiveTable && selectedCol === 1) ? 'col-selected ' : '') + 
+                          ((isActiveTable && selectedCellKeys.has(rIdx + '-1')) ? 'cell-selected ' : '') +
+                          (isQtyHighlighted ? 'summary-qty-highlight ' : '')
+                        }
+                      >
+                        <input
+                          id={'right-cell-' + rIdx + '-1'}
+                          type="text"
+                          inputMode="decimal"
+                          className="excel-cell-input"
+                          style={{ 
+                            textAlign: 'center', 
+                            fontWeight: isQtyHighlighted ? 800 : 600,
+                            color: isQtyHighlighted ? '#38bdf8' : undefined
+                          }}
+                          value={cellDrafts[rIdx + '-1'] !== undefined ? cellDrafts[rIdx + '-1'] : (item.qty === 0 ? '' : item.qty)}
+                          onMouseDown={(e) => handleInputMouseDown(rIdx, 1, e)}
+                          onMouseEnter={() => handleInputMouseEnter(rIdx, 1)}
+                          onPaste={(e) => handleInputPaste(rIdx, 1, e)}
+                          onFocus={() => {
+                            onActivateTable?.();
+                            setActiveCell({ r: rIdx, c: 1 });
+                            setAnchorCell({ r: rIdx, c: 1 });
+                            setSelectedCellKeys(new Set([`${rIdx}-1`]));
+                            setSelectedCol(null);
+                            setSelectedRows([]);
+                            setCellDrafts(prev => ({ ...prev, [rIdx + '-1']: item.qty === 0 ? '' : String(item.qty) }));
+                          }}
+                          onChange={(e) => {
+                            const clean = e.target.value.replace(/[^0-9+\-*/.()\s=]/g, '');
+                            setCellDrafts(prev => ({ ...prev, [rIdx + '-1']: clean }));
+                          }}
+                          onBlur={() => commitNumericCell(rIdx, 1, 'qty')}
+                          onKeyDown={(e) => handleCellKeyDown(e, rIdx, 1, 'qty')}
+                        />
+                      </td>
+                    );
+                  })()}
 
                   {/* Col 2: PRICE */}
                   <td 

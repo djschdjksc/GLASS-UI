@@ -736,6 +736,20 @@ body {
   text-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
 }
 
+/* Summary QTY Cell Highlight (Left Grid Hover/Active -> Right Grid QTY ONLY, Item Name Unchanged) */
+.apple-table td.summary-qty-highlight {
+  background: rgba(14, 165, 233, 0.32) !important;
+  box-shadow: inset 0 0 0 2px #38bdf8, 0 0 14px rgba(56, 189, 248, 0.5) !important;
+  position: relative;
+  z-index: 3;
+}
+
+.apple-table td.summary-qty-highlight input {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+}
+
 /* Resizable Column Headers */
 .apple-table th {
   position: relative !important;
