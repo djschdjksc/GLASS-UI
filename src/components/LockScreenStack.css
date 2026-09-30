@@ -44,8 +44,10 @@
   max-width: 360px;
   transform-origin: center top;
   will-change: transform, opacity;
-  /* NO CSS transition here — JS rAF lerp IS the animation.
-     CSS transition would fight the rAF loop and cause lag/stutter. */
+  /* Start hidden & off-screen — JS applyStyles sets real position.
+     Prevents "top-right flash" before the rAF loop runs on first render. */
+  transform: translate(-50%, -9999px);
+  opacity: 0;
   backface-visibility: hidden;
   pointer-events: auto;
 }

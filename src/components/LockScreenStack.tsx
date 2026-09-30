@@ -139,10 +139,13 @@ export const LockScreenStack: React.FC<Props> = ({
     return () => cancelAnimationFrame(animId);
   }, [applyStyles]); // NO bills.length dep — avoids rAF restart flicker
 
-  /* Initial layout apply after first render */
+  /* Initial layout apply — run immediately on next tick after DOM paint */
   useEffect(() => {
-    const timer = setTimeout(() => applyStyles(0), 60);
-    return () => clearTimeout(timer);
+    // Try immediately (DOM may already have size)
+    applyStyles(0);
+    // Also retry after 1 frame in case clientHeight was 0 on first call
+    const id = requestAnimationFrame(() => applyStyles(0));
+    return () => cancelAnimationFrame(id);
   }, [applyStyles]);
 
   /* ============================================================
