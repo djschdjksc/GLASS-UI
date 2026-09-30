@@ -271,7 +271,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
           body: JSON.stringify({ ...printPayload, showDialog: true })
         });
         const res = await resp.json();
-        if (res.success) {
+        if (res.success || res.message === 'Print cancelled by user') {
           return;
         }
       } catch (err) {
@@ -279,17 +279,16 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       }
     }
 
-    // High-resolution native vector image print (NEVER fallback to bad HTML table)
-    if (nativeImage) {
+    // High-resolution image print (Native PyQt6 or Canvas fallback)
+    const imgToPrint = nativeImage || (canvasRef.current ? canvasRef.current.toDataURL('image/png') : null);
+    if (imgToPrint) {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        printWindow.document.write(`<!DOCTYPE html><html><head><title>Print - ${header.partyName || 'Bill'}</title><style>@page{size:A4 portrait;margin:0;}body{margin:0;padding:0;display:flex;justify-content:center;background:#fff;}img{width:100%;max-width:210mm;height:auto;display:block;}</style></head><body><img src="${nativeImage}" onload="window.print();setTimeout(()=>window.close(),1200);"/></body></html>`);
+        printWindow.document.write(`<!DOCTYPE html><html><head><title>Print - ${header.partyName || 'Bill'}</title><style>@page{size:A4 portrait;margin:0;}body{margin:0;padding:0;display:flex;justify-content:center;background:#fff;}img{width:100%;max-width:210mm;height:auto;display:block;}</style></head><body><img src="${imgToPrint}" onload="window.print();setTimeout(()=>window.close(),1200);"/></body></html>`);
         printWindow.document.close();
         return;
       }
     }
-
-    alert("⚠️ Python PyQt6 Print Server offline hai!\nKripya 'run_app.bat' chalayein ya 'python server/native_print_server.py' start karein.");
   };
 
   const handleCopyAsImage = async () => {
