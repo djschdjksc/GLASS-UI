@@ -23,7 +23,9 @@ import {
   X,
   RefreshCw,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  PlusCircle,
+  Columns
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
@@ -36,16 +38,23 @@ import { macAudio } from '../utils/macAudio';
 
 export type StockInnerTab = 'entry' | 'inward' | 'outward' | 'balance' | 'barcode';
 
+export interface StockDynamicCol {
+  field: string;
+  label: string;
+  sizeNum: number;
+}
+
 export interface StockVoucherItem {
   id: string;
   name: string;
-  qty: number;
+  qty: number; // Main column (10 FT)
   uCap: number;
   lCap: number;
   price?: number;
   total?: number;
   uom?: string;
   partyCode?: string;
+  [key: string]: any; // Allow dynamic size columns like col_12ft, col_9_5ft, etc.
 }
 
 export interface StockVoucher {
@@ -55,6 +64,7 @@ export interface StockVoucher {
   partyName: string;
   remarks: string;
   items: StockVoucherItem[];
+  dynamicCols?: StockDynamicCol[];
   createdAt: number;
   updatedAt: number;
 }
@@ -104,6 +114,7 @@ export interface BarcodeItemState {
 // Storage keys
 const STOCK_VOUCHERS_KEY = 'modern_stock_vouchers';
 const STOCK_COUNTER_KEY = 'modern_stock_voucher_counter';
+const STOCK_DYNCOLS_KEY = 'modern_stock_dyncols';
 
 // Helper: Normalize item name with size e.g. "C M 161 (10FT)"
 export function formatItemWithSize(rawName: string, sizeLabel?: string): string {
@@ -118,6 +129,11 @@ export function formatItemWithSize(rawName: string, sizeLabel?: string): string 
   const size = (sizeLabel || '10FT').trim().toUpperCase().replace(/\s+/g, '');
   const cleanSize = size.endsWith('FT') ? size : `${size}FT`;
   return `${trimmed} (${cleanSize})`;
+}
+
+// Helper: Extract clean base name without size e.g. "C M 161 (10FT)" -> "C M 161"
+export function extractBaseItemName(name: string): string {
+  return (name || '').replace(/\(\s*\d+(\.\d+)?\s*(ft|feet)?\s*\)/i, '').trim();
 }
 
 // Helper: Extract category prefix (first word)
@@ -153,6 +169,28 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const [voucherRemarks, setVoucherRemarks] = useState<string>('');
   const [loadVoucherIdInput, setLoadVoucherIdInput] = useState<string>('');
   const [barcodeScanInput, setBarcodeScanInput] = useState<string>('');
+
+  // Multi-Column Dynamic Size Columns for Enter Stock (Just like Bill UI!)
+  const [dynamicCols, setDynamicCols] = useState<StockDynamicCol[]>(() => {
+    try {
+      const saved = localStorage.getItem(STOCK_DYNCOLS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      { field: 'col_12ft', label: '(12 FT)', sizeNum: 12 }
+    ];
+  });
+
+  // Save dynamic columns layout
+  useEffect(() => {
+    try {
+      localStorage.setItem(STOCK_DYNCOLS_KEY, JSON.stringify(dynamicCols));
+    } catch {}
+  }, [dynamicCols]);
+
+  // Modal / Popup state to add a custom size column
+  const [isAddColModalOpen, setIsAddColModalOpen] = useState<boolean>(false);
+  const [newColSizeInput, setNewColSizeInput] = useState<string>('');
 
   // Smart Toggles (Auto-Convert, Auto-Item, Simple Mode)
   const [autoConvert, setAutoConvert] = useState<boolean>(true);
@@ -204,10 +242,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         remarks: 'Opening Production Stock',
         items: [
           { id: '1', name: 'C M 161 (10FT)', qty: 150, uCap: 150, lCap: 150 },
-          { id: '2', name: 'C M 161 (12FT)', qty: 80, uCap: 80, lCap: 80 },
+          { id: '2', name: 'C M 161 (12FT)', qty: 80, uCap: 0, lCap: 0 },
           { id: '3', name: 'B.F.P-(G) (10FT)', qty: 200, uCap: 200, lCap: 200 },
           { id: '4', name: 'LOUVER-801 (10FT)', qty: 100, uCap: 0, lCap: 0 }
         ],
+        dynamicCols: [{ field: 'col_12ft', label: '(12 FT)', sizeNum: 12 }],
         createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 86400000
       }
@@ -259,11 +298,10 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     const list: OutwardStockItem[] = [];
 
     bills.forEach((bill) => {
-      // Outward applies to Bill, Order, Sale Bill, etc. (Exclude Purchase which is inward)
       const docTypeUpper = (bill.docType || 'SALE BILL').toUpperCase();
       if (docTypeUpper.includes('PURCHASE')) return;
 
-      const dynamicCols = bill.dynamicCols || [];
+      const bDynamicCols = bill.dynamicCols || [];
 
       (bill.rawItems || []).forEach((item, itemIdx) => {
         const baseName = (item.name || '').trim();
@@ -288,7 +326,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         }
 
         // 2. Dynamic multi-columns (e.g. 12FT, 9.5FT, 11FT, etc.)
-        dynamicCols.forEach((col) => {
+        bDynamicCols.forEach((col) => {
           const colQty = Number((item as any)[col.field]) || 0;
           if (colQty > 0) {
             list.push({
@@ -309,7 +347,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
         // 3. Fallback check for any extra fields starting with 'col_' or 'qty_'
         Object.keys(item).forEach((k) => {
-          if (k.startsWith('col_') && !dynamicCols.some((dc) => dc.field === k)) {
+          if (k.startsWith('col_') && !bDynamicCols.some((dc) => dc.field === k)) {
             const extraQty = Number((item as any)[k]) || 0;
             if (extraQty > 0) {
               const guessedSize = k.replace('col_', '').toUpperCase();
@@ -481,12 +519,41 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     return result.sort((a, b) => a.itemName.localeCompare(b.itemName));
   }, [inwardItems, outwardItems]);
 
-  // Live balance lookup helper for Enter Stock rows
-  const getLiveItemBalance = (name: string): number => {
-    if (!name.trim()) return 0;
-    const formatted = formatItemWithSize(name).toLowerCase();
-    const found = stockBalanceList.find((b) => b.itemName.toLowerCase() === formatted);
-    return found ? found.balanceQty : 0;
+  // =========================================================================
+  // LIVE BALANCE TRACKER FOR ENTER STOCK ROWS (QTY, U-CAP, L-CAP)
+  // =========================================================================
+  // Computes the live balance for any row item:
+  // - Qty Balance: total live balance across sizes or exact item
+  // - U Cap Balance: total live balance of U Cap for this item
+  // - L Cap Balance: total live balance of L Cap for this item
+  const getLiveBalancesForRow = (rawName: string) => {
+    const trimmed = (rawName || '').trim();
+    if (!trimmed) {
+      return { qtyBal: null, uCapBal: null, lCapBal: null, hasItem: false };
+    }
+
+    const baseName = extractBaseItemName(trimmed).toLowerCase();
+    let totalQty = 0;
+    let totalU = 0;
+    let totalL = 0;
+    let matchFound = false;
+
+    stockBalanceList.forEach((b) => {
+      const bBase = extractBaseItemName(b.itemName).toLowerCase();
+      if (bBase === baseName || b.itemName.toLowerCase() === trimmed.toLowerCase()) {
+        matchFound = true;
+        totalQty += b.balanceQty;
+        totalU += b.balanceUCap;
+        totalL += b.balanceLCap;
+      }
+    });
+
+    return {
+      qtyBal: matchFound ? totalQty : 0,
+      uCapBal: matchFound ? totalU : 0,
+      lCapBal: matchFound ? totalL : 0,
+      hasItem: true
+    };
   };
 
   // Distinct Categories for filters
@@ -516,13 +583,49 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   // TAB 1: ENTER STOCK INTERACTIONS & HELPERS
   // =========================================================================
 
+  // Add Dynamic Size Column (e.g. 12 FT, 9.5 FT)
+  const handleAddDynamicCol = (sizeNumber: number | string) => {
+    const num = parseFloat(String(sizeNumber).replace(/[^0-9.]/g, ''));
+    if (isNaN(num) || num <= 0) {
+      showToast('Please enter a valid numeric size (e.g. 12, 9.5, 14)', 'warning');
+      return;
+    }
+
+    if (num === 10) {
+      showToast('(10 FT) is already the default primary column!', 'info');
+      return;
+    }
+
+    const field = `col_${String(num).replace('.', '_')}ft`;
+    const label = `(${num} FT)`;
+
+    if (dynamicCols.some((dc) => dc.field === field || dc.sizeNum === num)) {
+      showToast(`Size (${num} FT) column already exists!`, 'info');
+      return;
+    }
+
+    macAudio.playPop();
+    const newCol: StockDynamicCol = { field, label, sizeNum: num };
+    setDynamicCols((prev) => [...prev, newCol]);
+    setIsAddColModalOpen(false);
+    setNewColSizeInput('');
+    showToast(`Added multi-column size: ${label}`, 'success');
+  };
+
+  // Remove Dynamic Size Column
+  const handleRemoveDynamicCol = (field: string, label: string) => {
+    macAudio.playTrash();
+    setDynamicCols((prev) => prev.filter((dc) => dc.field !== field));
+    showToast(`Removed size column ${label}`, 'info');
+  };
+
   // Duplicate items detection
   const duplicateItemSummary = useMemo(() => {
     const counts = new Map<string, number>();
     stockRows.forEach((r) => {
-      const name = r.name.trim().toLowerCase();
-      if (name) {
-        counts.set(name, (counts.get(name) || 0) + 1);
+      const base = extractBaseItemName(r.name).toLowerCase();
+      if (base) {
+        counts.set(base, (counts.get(base) || 0) + 1);
       }
     });
 
@@ -538,9 +641,15 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     return { count: dupCount, names: dupNames };
   }, [stockRows]);
 
-  // Stock rows live totals
+  // Stock rows live totals (including all dynamic size columns!)
   const entryTotals = useMemo(() => {
-    let qty = 0;
+    let main10Qty = 0;
+    const dynamicQtyTotals: Record<string, number> = {};
+    dynamicCols.forEach((dc) => {
+      dynamicQtyTotals[dc.field] = 0;
+    });
+
+    let totalPcs = 0;
     let uCap = 0;
     let lCap = 0;
     let validItems = 0;
@@ -548,14 +657,23 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     stockRows.forEach((r) => {
       if (r.name.trim()) {
         validItems++;
-        qty += Number(r.qty) || 0;
+        const m10 = Number(r.qty) || 0;
+        main10Qty += m10;
+        totalPcs += m10;
+
+        dynamicCols.forEach((dc) => {
+          const dVal = Number(r[dc.field]) || 0;
+          dynamicQtyTotals[dc.field] = (dynamicQtyTotals[dc.field] || 0) + dVal;
+          totalPcs += dVal;
+        });
+
         uCap += Number(r.uCap) || 0;
         lCap += Number(r.lCap) || 0;
       }
     });
 
-    return { qty, uCap, lCap, validItems };
-  }, [stockRows]);
+    return { main10Qty, dynamicQtyTotals, totalPcs, uCap, lCap, validItems };
+  }, [stockRows, dynamicCols]);
 
   // Autocomplete suggestions generator
   const currentSuggestions = useMemo(() => {
@@ -573,18 +691,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         const u = Number(c.u_cap) || (c.u_cap && c.u_cap !== '0' ? 1 : 0);
         const l = Number(c.l_cap) || (c.l_cap && c.l_cap !== '0' ? 1 : 0);
         
-        // Add 10FT and 12FT variants
         matches.push({
-          name: formatItemWithSize(c.conversion || c.shortcut, '10FT'),
+          name: c.conversion || c.shortcut,
           uCap: u,
           lCap: l,
           desc: `Shortcut [${c.shortcut}]`
-        });
-        matches.push({
-          name: formatItemWithSize(c.conversion || c.shortcut, '12FT'),
-          uCap: u,
-          lCap: l,
-          desc: `12FT Variant`
         });
       }
       if (matches.length >= 8) break;
@@ -594,7 +705,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   }, [suggestQuery, conversions]);
 
   // Handle row field change
-  const handleStockRowChange = (index: number, field: keyof StockVoucherItem, value: any) => {
+  const handleStockRowChange = (index: number, field: string, value: any) => {
     setStockRows((prev) => {
       const updated = [...prev];
       const row = { ...updated[index], [field]: value };
@@ -607,7 +718,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         // Check if exact match to a shortcut and autoConvert is ON
         if (autoConvert && conversionMap.has(lower)) {
           const match = conversionMap.get(lower);
-          row.name = formatItemWithSize(match.conversion || match.shortcut, '10FT');
+          row.name = match.conversion || match.shortcut;
           if (autoItem) {
             row.uCap = Number(match.u_cap) || 0;
             row.lCap = Number(match.l_cap) || 0;
@@ -623,16 +734,27 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   // Add blank row
   const handleAddStockRow = () => {
     macAudio.playPop();
-    setStockRows((prev) => [
-      ...prev,
-      { id: `row-${Date.now()}-${prev.length + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
-    ]);
+    const blankRow: StockVoucherItem = {
+      id: `row-${Date.now()}-${stockRows.length + 1}`,
+      name: '',
+      qty: 0,
+      uCap: 0,
+      lCap: 0
+    };
+    dynamicCols.forEach((dc) => {
+      blankRow[dc.field] = 0;
+    });
+    setStockRows((prev) => [...prev, blankRow]);
   };
 
   // Delete row
   const handleDeleteStockRow = (index: number) => {
     if (stockRows.length === 1) {
-      setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+      const freshRow: StockVoucherItem = { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 };
+      dynamicCols.forEach((dc) => {
+        freshRow[dc.field] = 0;
+      });
+      setStockRows([freshRow]);
       return;
     }
     macAudio.playTrash();
@@ -647,9 +769,8 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       if (!code) return;
 
       macAudio.playSuccess();
-      const formatted = formatItemWithSize(code, '10FT');
+      const baseName = extractBaseItemName(code);
       
-      // Auto fill cap info if shortcut exists
       let u = 0;
       let l = 0;
       const match = conversionMap.get(code.toLowerCase());
@@ -659,13 +780,12 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       }
 
       setStockRows((prev) => {
-        // If last row is empty, fill it, else append
         const lastRow = prev[prev.length - 1];
         if (lastRow && !lastRow.name) {
           const updated = [...prev];
           updated[prev.length - 1] = {
             ...lastRow,
-            name: formatted,
+            name: baseName,
             qty: 1,
             uCap: u,
             lCap: l
@@ -674,28 +794,57 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         } else {
           return [
             ...prev,
-            { id: `row-${Date.now()}`, name: formatted, qty: 1, uCap: u, lCap: l },
+            { id: `row-${Date.now()}`, name: baseName, qty: 1, uCap: u, lCap: l },
             { id: `row-${Date.now() + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
           ];
         }
       });
 
       setBarcodeScanInput('');
-      showToast(`Scanned item: ${formatted}`, 'success');
+      showToast(`Scanned item: ${baseName}`, 'success');
     }
   };
 
-  // Save or Update Stock Voucher
+  // Save or Update Stock Voucher (Supports Multi-Column sizes!)
   const handleSaveVoucher = () => {
-    const validRows = stockRows
-      .filter((r) => r.name.trim() && (Number(r.qty) > 0 || Number(r.uCap) > 0 || Number(r.lCap) > 0))
-      .map((r) => ({
-        ...r,
-        name: formatItemWithSize(r.name)
-      }));
+    const flatItemsToSave: StockVoucherItem[] = [];
 
-    if (validRows.length === 0) {
-      macAudio.playWarning();
+    stockRows.forEach((r, rIdx) => {
+      const baseName = extractBaseItemName(r.name);
+      if (!baseName) return;
+
+      const main10 = Number(r.qty) || 0;
+      const u = Number(r.uCap) || 0;
+      const l = Number(r.lCap) || 0;
+
+      // 1. If has quantity in (10 FT)
+      if (main10 > 0 || (u > 0 || l > 0)) {
+        flatItemsToSave.push({
+          id: `row-${rIdx}-10ft`,
+          name: formatItemWithSize(baseName, '10FT'),
+          qty: main10,
+          uCap: u,
+          lCap: l
+        });
+      }
+
+      // 2. Multi-column sizes: (12 FT), (9.5 FT), etc.
+      dynamicCols.forEach((dc) => {
+        const dQty = Number(r[dc.field]) || 0;
+        if (dQty > 0) {
+          flatItemsToSave.push({
+            id: `row-${rIdx}-${dc.field}`,
+            name: formatItemWithSize(baseName, dc.label),
+            qty: dQty,
+            uCap: 0,
+            lCap: 0
+          });
+        }
+      });
+    });
+
+    if (flatItemsToSave.length === 0) {
+      macAudio.playBeep();
       showToast('Please enter at least one item with valid quantity or caps!', 'warning');
       return;
     }
@@ -709,7 +858,8 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 ...v,
                 date: voucherDate,
                 remarks: voucherRemarks,
-                items: validRows,
+                items: flatItemsToSave,
+                dynamicCols: [...dynamicCols],
                 updatedAt: Date.now()
               }
             : v
@@ -733,7 +883,8 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         date: voucherDate,
         partyName: 'FACTORY INWARD ENTRY',
         remarks: voucherRemarks,
-        items: validRows,
+        items: flatItemsToSave,
+        dynamicCols: [...dynamicCols],
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
@@ -745,14 +896,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
     // Reset table for next entry
     setVoucherRemarks('');
-    setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+    const freshRow: StockVoucherItem = { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 };
+    dynamicCols.forEach((dc) => {
+      freshRow[dc.field] = 0;
+    });
+    setStockRows([freshRow]);
   };
 
-  // Load Voucher into Enter Stock for editing
+  // Load Voucher into Enter Stock for editing (Re-groups multi-column sizes!)
   const handleLoadVoucherForEdit = (voucherId: number) => {
     const found = vouchers.find((v) => v.id === voucherId);
     if (!found) {
-      macAudio.playError();
+      macAudio.playBeep();
       showToast(`Stock Voucher #${voucherId} NOT FOUND!`, 'error');
       return;
     }
@@ -761,12 +916,50 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     setEditingVoucherId(found.id);
     setVoucherDate(found.date);
     setVoucherRemarks(found.remarks || '');
-    setStockRows(
-      found.items.map((it, idx) => ({
-        ...it,
-        id: `edit-row-${idx}`
-      }))
-    );
+
+    // Restore any dynamic cols from voucher
+    if (found.dynamicCols && found.dynamicCols.length > 0) {
+      setDynamicCols((prev) => {
+        const merged = [...prev];
+        found.dynamicCols!.forEach((fdc) => {
+          if (!merged.some((m) => m.field === fdc.field)) {
+            merged.push(fdc);
+          }
+        });
+        return merged;
+      });
+    }
+
+    // Group items by base name into multi-column rows!
+    const groupedRows = new Map<string, StockVoucherItem>();
+    found.items.forEach((item, idx) => {
+      const base = extractBaseItemName(item.name);
+      if (!groupedRows.has(base)) {
+        groupedRows.set(base, {
+          id: `edit-row-${idx}`,
+          name: base,
+          qty: 0,
+          uCap: Number(item.uCap) || 0,
+          lCap: Number(item.lCap) || 0
+        });
+      }
+
+      const row = groupedRows.get(base)!;
+      // Check size from name e.g. (10FT), (12FT), (9.5FT)
+      const sizeMatch = item.name.match(/\(\s*(\d+(\.\d+)?)\s*(ft|feet)?\s*\)/i);
+      const sizeNum = sizeMatch ? parseFloat(sizeMatch[1]) : 10;
+
+      if (sizeNum === 10 || isNaN(sizeNum)) {
+        row.qty = Number(item.qty) || 0;
+        if (Number(item.uCap)) row.uCap = Number(item.uCap);
+        if (Number(item.lCap)) row.lCap = Number(item.lCap);
+      } else {
+        const fieldKey = `col_${String(sizeNum).replace('.', '_')}ft`;
+        row[fieldKey] = Number(item.qty) || 0;
+      }
+    });
+
+    setStockRows(Array.from(groupedRows.values()));
     setActiveTab('entry');
     showToast(`Loaded Voucher #${voucherId} for Editing`, 'info');
   };
@@ -775,7 +968,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const handleCancelEdit = () => {
     setEditingVoucherId(null);
     setVoucherRemarks('');
-    setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+    const freshRow: StockVoucherItem = { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 };
+    dynamicCols.forEach((dc) => {
+      freshRow[dc.field] = 0;
+    });
+    setStockRows([freshRow]);
     showToast('Cancelled Voucher Edit Mode', 'info');
   };
 
@@ -1074,7 +1271,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               STOCK INVENTORY
             </div>
             <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 500 }}>
-              Multi-Column Length Tracker • F8 Shortcut
+              Multi-Column Length Tracker • Live Balances (Qty, U-Cap, L-Cap) • F8
             </div>
           </div>
         </div>
@@ -1203,17 +1400,17 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* =========================================================== */}
-        {/* TAB 1: ENTER STOCK (INWARD ENTRY) */}
+        {/* TAB 1: ENTER STOCK (INWARD ENTRY WITH MULTI-COLUMNS & 3 BALANCES) */}
         {/* =========================================================== */}
         {activeTab === 'entry' && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
             
-            {/* Header: Date, Remarks, Voucher Load */}
+            {/* Header: Date, Remarks, Voucher Load & Quick Size Column Bar */}
             <div 
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
+                flexDirection: 'column',
+                gap: '6px',
                 background: 'rgba(26, 31, 44, 0.7)',
                 padding: '6px 10px',
                 borderRadius: '8px',
@@ -1221,93 +1418,223 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Date:</span>
-                <input
-                  type="date"
-                  value={voucherDate}
-                  onChange={(e) => setVoucherDate(e.target.value)}
-                  style={{
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#f8fafc',
-                    padding: '3px 8px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    outline: 'none'
-                  }}
-                />
+              {/* Row 1: Date, Remarks, Load by ID */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Date:</span>
+                  <input
+                    type="date"
+                    value={voucherDate}
+                    onChange={(e) => setVoucherDate(e.target.value)}
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      color: '#f8fafc',
+                      padding: '3px 8px',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Remarks:</span>
+                  <input
+                    type="text"
+                    placeholder="Remarks / Supplier Invoice / Reference No (Optional)"
+                    value={voucherRemarks}
+                    onChange={(e) => setVoucherRemarks(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      color: '#f8fafc',
+                      padding: '3px 10px',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Load Voucher by ID */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <input
+                    type="number"
+                    placeholder="Voucher ID..."
+                    value={loadVoucherIdInput}
+                    onChange={(e) => setLoadVoucherIdInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && loadVoucherIdInput) {
+                        handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
+                      }
+                    }}
+                    style={{
+                      width: '90px',
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38bdf8',
+                      padding: '3px 8px',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      outline: 'none'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (loadVoucherIdInput) {
+                        handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
+                      }
+                    }}
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      color: '#38bdf8',
+                      padding: '3px 8px',
+                      borderRadius: '5px',
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Load
+                  </button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Remarks:</span>
-                <input
-                  type="text"
-                  placeholder="Remarks / Supplier Invoice / Reference No (Optional)"
-                  value={voucherRemarks}
-                  onChange={(e) => setVoucherRemarks(e.target.value)}
-                  style={{
-                    flex: 1,
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#f8fafc',
-                    padding: '3px 10px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+              {/* Row 2: Multi-Column Size Manager Bar (Quick Add Size Buttons!) */}
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '4px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                  gap: '8px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#38bdf8', fontSize: '10.5px', fontWeight: 700 }}>
+                    <Columns size={13} />
+                    <span>MULTI-COLUMNS:</span>
+                  </div>
 
-              {/* Load Voucher by ID */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <input
-                  type="number"
-                  placeholder="Voucher ID..."
-                  value={loadVoucherIdInput}
-                  onChange={(e) => setLoadVoucherIdInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && loadVoucherIdInput) {
-                      handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
-                    }
-                  }}
-                  style={{
-                    width: '90px',
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    color: '#38bdf8',
-                    padding: '3px 8px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (loadVoucherIdInput) {
-                      handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
-                    }
-                  }}
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    color: '#38bdf8',
-                    padding: '3px 8px',
-                    borderRadius: '5px',
-                    fontSize: '10.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Load
-                </button>
+                  {/* Base Primary Size Pill */}
+                  <span
+                    style={{
+                      background: 'rgba(52, 211, 153, 0.15)',
+                      border: '1px solid rgba(52, 211, 153, 0.35)',
+                      color: '#34d399',
+                      padding: '1px 7px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 700
+                    }}
+                  >
+                    (10 FT) Base
+                  </span>
+
+                  {/* Active Dynamic Columns with Delete Button */}
+                  {dynamicCols.map((dc) => (
+                    <span
+                      key={dc.field}
+                      style={{
+                        background: 'rgba(56, 189, 248, 0.15)',
+                        border: '1px solid rgba(56, 189, 248, 0.35)',
+                        color: '#38bdf8',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span>{dc.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDynamicCol(dc.field, dc.label)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#f87171',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          padding: 0
+                        }}
+                        title={`Remove ${dc.label} column`}
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  ))}
+
+                  {/* Quick Add Size Presets */}
+                  <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>Quick Add:</span>
+                  {[
+                    { label: '+ 12 FT', val: 12 },
+                    { label: '+ 9.5 FT', val: 9.5 },
+                    { label: '+ 11 FT', val: 11 },
+                    { label: '+ 14 FT', val: 14 },
+                    { label: '+ 8 FT', val: 8 }
+                  ].map((preset) => {
+                    const alreadyHas = dynamicCols.some((dc) => dc.sizeNum === preset.val);
+                    return (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        disabled={alreadyHas}
+                        onClick={() => handleAddDynamicCol(preset.val)}
+                        style={{
+                          background: alreadyHas ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)',
+                          border: `1px solid ${alreadyHas ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.12)'}`,
+                          color: alreadyHas ? '#475569' : '#e2e8f0',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontSize: '9.5px',
+                          fontWeight: 600,
+                          cursor: alreadyHas ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+
+                  {/* Add Custom Size Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      macAudio.playPop();
+                      setIsAddColModalOpen(true);
+                    }}
+                    style={{
+                      background: 'rgba(168, 85, 247, 0.15)',
+                      border: '1px solid rgba(168, 85, 247, 0.35)',
+                      color: '#c084fc',
+                      padding: '1px 8px',
+                      borderRadius: '4px',
+                      fontSize: '9.5px',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={10} />
+                    <span>Custom Size</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Inward Items Entry Table */}
+            {/* Inward Items Entry Table with MULTI-COLUMNS and 3 LIVE BALANCE COLUMNS */}
             <div 
               style={{
                 flex: 1,
@@ -1322,22 +1649,137 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
                   <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
                     <th style={{ width: '38px', padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>#</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME (WITH SIZE)</th>
-                    <th style={{ width: '100px', padding: '6px 8px', textAlign: 'right', color: '#34d399' }}>QTY (PCS)</th>
+                    <th style={{ minWidth: '180px', padding: '6px 8px', textAlign: 'left', color: '#38bdf8' }}>
+                      ITEM NAME
+                    </th>
+
+                    {/* Primary Base Column (10 FT) with "+" in header */}
+                    <th style={{ width: '85px', padding: '6px 6px', textAlign: 'right', color: '#34d399', background: 'rgba(52, 211, 153, 0.08)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                        <span>(10 FT)</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddColModalOpen(true)}
+                          style={{
+                            background: 'rgba(52, 211, 153, 0.25)',
+                            border: 'none',
+                            color: '#34d399',
+                            borderRadius: '3px',
+                            width: '15px',
+                            height: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 900
+                          }}
+                          title="Add new size column"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </th>
+
+                    {/* Dynamic Multi-Columns: (12 FT), (9.5 FT) etc. */}
+                    {dynamicCols.map((dc) => (
+                      <th 
+                        key={dc.field} 
+                        style={{
+                          width: '85px',
+                          padding: '6px 6px',
+                          textAlign: 'right',
+                          color: '#38bdf8',
+                          background: 'rgba(56, 189, 248, 0.08)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                          <span>{dc.label}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDynamicCol(dc.field, dc.label)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              padding: 0,
+                              display: 'flex'
+                            }}
+                            title={`Remove ${dc.label} column`}
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </th>
+                    ))}
+
+                    {/* U CAP & L CAP (Hidden in Simple Mode) */}
                     {!simpleMode && (
                       <>
-                        <th style={{ width: '90px', padding: '6px 8px', textAlign: 'right', color: '#818cf8' }}>U CAP</th>
-                        <th style={{ width: '90px', padding: '6px 8px', textAlign: 'right', color: '#fb923c' }}>L CAP</th>
+                        <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#818cf8', background: 'rgba(129, 140, 248, 0.06)' }}>
+                          U CAP
+                        </th>
+                        <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#fb923c', background: 'rgba(251, 146, 60, 0.06)' }}>
+                          L CAP
+                        </th>
                       </>
                     )}
-                    <th style={{ width: '120px', padding: '6px 8px', textAlign: 'center', color: '#a78bfa' }}>LIVE BALANCE</th>
-                    <th style={{ width: '45px', padding: '6px 4px', textAlign: 'center', color: '#64748b' }}>DEL</th>
+
+                    {/* ======================================================= */}
+                    {/* 3 DEDICATED LIVE BALANCE TRACKING COLUMNS */}
+                    {/* ======================================================= */}
+                    <th 
+                      style={{ 
+                        width: '100px', 
+                        padding: '6px 8px', 
+                        textAlign: 'right', 
+                        color: '#34d399', 
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                      }}
+                      title="Current live net balance of this item's Qty"
+                    >
+                      QTY BAL
+                    </th>
+
+                    {!simpleMode && (
+                      <>
+                        <th 
+                          style={{ 
+                            width: '100px', 
+                            padding: '6px 8px', 
+                            textAlign: 'right', 
+                            color: '#818cf8', 
+                            background: 'rgba(129, 140, 248, 0.12)' 
+                          }}
+                          title="Current live net balance of this item's U-Cap"
+                        >
+                          U-CAP BAL
+                        </th>
+
+                        <th 
+                          style={{ 
+                            width: '100px', 
+                            padding: '6px 8px', 
+                            textAlign: 'right', 
+                            color: '#fb923c', 
+                            background: 'rgba(251, 146, 60, 0.12)' 
+                          }}
+                          title="Current live net balance of this item's L-Cap"
+                        >
+                          L-CAP BAL
+                        </th>
+                      </>
+                    )}
+
+                    <th style={{ width: '40px', padding: '6px 4px', textAlign: 'center', color: '#64748b' }}>DEL</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stockRows.map((row, idx) => {
-                    const liveBal = getLiveItemBalance(row.name);
-                    const isDuplicate = duplicateItemSummary.names.includes(row.name.trim().toLowerCase());
+                    const balances = getLiveBalancesForRow(row.name);
+                    const isDuplicate = duplicateItemSummary.names.includes(extractBaseItemName(row.name).toLowerCase());
 
                     return (
                       <tr 
@@ -1354,7 +1796,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         <td style={{ padding: '4px 6px', position: 'relative' }}>
                           <input
                             type="text"
-                            placeholder="Type item or shortcut (e.g. CM 161 (10FT), G1)..."
+                            placeholder="Type item or shortcut (e.g. CM 161, G1)..."
                             value={row.name}
                             onChange={(e) => {
                               handleStockRowChange(idx, 'name', e.target.value);
@@ -1369,7 +1811,6 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               }
                             }}
                             onBlur={() => {
-                              // Small timeout to allow click on suggestion
                               setTimeout(() => setActiveSuggestRow(null), 200);
                             }}
                             onKeyDown={(e) => {
@@ -1401,8 +1842,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                               if (e.key === 'Enter') {
                                 e.preventDefault();
-                                // Move to Qty field
-                                const nextInput = document.getElementById(`stock-qty-${idx}`);
+                                const nextInput = document.getElementById(`stock-qty-10-${idx}`);
                                 if (nextInput) nextInput.focus();
                               }
                             }}
@@ -1426,7 +1866,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                 left: 6,
                                 top: '100%',
                                 zIndex: 100,
-                                width: '320px',
+                                width: '300px',
                                 background: '#111827',
                                 border: '1px solid rgba(56, 189, 248, 0.4)',
                                 borderRadius: '6px',
@@ -1470,23 +1910,24 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           )}
                         </td>
 
-                        {/* Qty Input */}
-                        <td style={{ padding: '4px 6px' }}>
+                        {/* Primary Base Column (10 FT) Qty Input */}
+                        <td style={{ padding: '4px 6px', background: 'rgba(52, 211, 153, 0.02)' }}>
                           <input
-                            id={`stock-qty-${idx}`}
+                            id={`stock-qty-10-${idx}`}
                             type="number"
                             value={row.qty || ''}
                             onChange={(e) => handleStockRowChange(idx, 'qty', parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
-                                if (!simpleMode) {
+                                if (dynamicCols.length > 0) {
+                                  const nextDyn = document.getElementById(`stock-${dynamicCols[0].field}-${idx}`);
+                                  if (nextDyn) nextDyn.focus();
+                                } else if (!simpleMode) {
                                   const next = document.getElementById(`stock-ucap-${idx}`);
                                   if (next) next.focus();
                                 } else {
-                                  if (idx === stockRows.length - 1) {
-                                    handleAddStockRow();
-                                  }
+                                  if (idx === stockRows.length - 1) handleAddStockRow();
                                 }
                               }
                             }}
@@ -1504,9 +1945,46 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           />
                         </td>
 
+                        {/* Dynamic Multi-Column Inputs: (12 FT), (9.5 FT) etc. */}
+                        {dynamicCols.map((dc, dcIdx) => (
+                          <td key={dc.field} style={{ padding: '4px 6px', background: 'rgba(56, 189, 248, 0.02)' }}>
+                            <input
+                              id={`stock-${dc.field}-${idx}`}
+                              type="number"
+                              value={row[dc.field] || ''}
+                              onChange={(e) => handleStockRowChange(idx, dc.field, parseFloat(e.target.value) || 0)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (dcIdx < dynamicCols.length - 1) {
+                                    const next = document.getElementById(`stock-${dynamicCols[dcIdx + 1].field}-${idx}`);
+                                    if (next) next.focus();
+                                  } else if (!simpleMode) {
+                                    const next = document.getElementById(`stock-ucap-${idx}`);
+                                    if (next) next.focus();
+                                  } else {
+                                    if (idx === stockRows.length - 1) handleAddStockRow();
+                                  }
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'right',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#38bdf8',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                outline: 'none',
+                                padding: '2px 4px'
+                              }}
+                            />
+                          </td>
+                        ))}
+
                         {/* U Cap Input */}
                         {!simpleMode && (
-                          <td style={{ padding: '4px 6px' }}>
+                          <td style={{ padding: '4px 6px', background: 'rgba(129, 140, 248, 0.02)' }}>
                             <input
                               id={`stock-ucap-${idx}`}
                               type="number"
@@ -1536,7 +2014,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                         {/* L Cap Input */}
                         {!simpleMode && (
-                          <td style={{ padding: '4px 6px' }}>
+                          <td style={{ padding: '4px 6px', background: 'rgba(251, 146, 60, 0.02)' }}>
                             <input
                               id={`stock-lcap-${idx}`}
                               type="number"
@@ -1565,21 +2043,59 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           </td>
                         )}
 
-                        {/* Live Stock Balance Badge */}
-                        <td style={{ textAlign: 'center' }}>
-                          <span 
+                        {/* =================================================== */}
+                        {/* 3 LIVE BALANCE TRACKING CELLS (UNEDITABLE DISPLAY) */}
+                        {/* =================================================== */}
+
+                        {/* QTY BALANCE CELL */}
+                        <td 
+                          style={{
+                            padding: '6px 8px',
+                            textAlign: 'right',
+                            fontWeight: 800,
+                            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+                            background: 'rgba(16, 185, 129, 0.03)',
+                            color: balances.hasItem
+                              ? (balances.qtyBal! > 0 ? '#34d399' : balances.qtyBal! < 0 ? '#f87171' : '#94a3b8')
+                              : '#475569'
+                          }}
+                        >
+                          {balances.hasItem ? `${balances.qtyBal! > 0 ? '+' : ''}${balances.qtyBal} pcs` : '-'}
+                        </td>
+
+                        {/* U CAP BALANCE CELL */}
+                        {!simpleMode && (
+                          <td 
                             style={{
-                              fontSize: '10px',
+                              padding: '6px 8px',
+                              textAlign: 'right',
                               fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              background: liveBal > 0 ? 'rgba(52, 211, 153, 0.15)' : liveBal < 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(148, 163, 184, 0.1)',
-                              color: liveBal > 0 ? '#34d399' : liveBal < 0 ? '#f87171' : '#94a3b8'
+                              background: 'rgba(129, 140, 248, 0.03)',
+                              color: balances.hasItem
+                                ? (balances.uCapBal! > 0 ? '#818cf8' : balances.uCapBal! < 0 ? '#f87171' : '#94a3b8')
+                                : '#475569'
                             }}
                           >
-                            {liveBal} pcs
-                          </span>
-                        </td>
+                            {balances.hasItem ? `${balances.uCapBal! > 0 ? '+' : ''}${balances.uCapBal}` : '-'}
+                          </td>
+                        )}
+
+                        {/* L CAP BALANCE CELL */}
+                        {!simpleMode && (
+                          <td 
+                            style={{
+                              padding: '6px 8px',
+                              textAlign: 'right',
+                              fontWeight: 700,
+                              background: 'rgba(251, 146, 60, 0.03)',
+                              color: balances.hasItem
+                                ? (balances.lCapBal! > 0 ? '#fb923c' : balances.lCapBal! < 0 ? '#f87171' : '#94a3b8')
+                                : '#475569'
+                            }}
+                          >
+                            {balances.hasItem ? `${balances.lCapBal! > 0 ? '+' : ''}${balances.lCapBal}` : '-'}
+                          </td>
+                        )}
 
                         {/* Delete Row Button */}
                         <td style={{ textAlign: 'center' }}>
@@ -1606,7 +2122,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               </table>
             </div>
 
-            {/* Entry Summary Bar: Stats + Duplicate Count */}
+            {/* Entry Summary Bar: Multi-Column Totals + Duplicate Count */}
             <div 
               style={{
                 display: 'flex',
@@ -1619,9 +2135,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11.5px', fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '11.5px', fontWeight: 600, flexWrap: 'wrap' }}>
                 <span style={{ color: '#94a3b8' }}>Items: <strong style={{ color: '#f8fafc' }}>{entryTotals.validItems}</strong></span>
-                <span style={{ color: '#94a3b8' }}>Total Qty: <strong style={{ color: '#34d399' }}>{entryTotals.qty}</strong></span>
+                <span style={{ color: '#94a3b8' }}>10 FT: <strong style={{ color: '#34d399' }}>{entryTotals.main10Qty}</strong></span>
+
+                {/* Show totals for each dynamic size column */}
+                {dynamicCols.map((dc) => (
+                  <span key={dc.field} style={{ color: '#94a3b8' }}>
+                    {dc.label.replace(/[()]/g, '')}: <strong style={{ color: '#38bdf8' }}>{entryTotals.dynamicQtyTotals[dc.field] || 0}</strong>
+                  </span>
+                ))}
+
+                <span style={{ color: '#94a3b8', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
+                  Total Pcs: <strong style={{ color: '#34d399', fontSize: '12px' }}>{entryTotals.totalPcs}</strong>
+                </span>
+
                 {!simpleMode && (
                   <>
                     <span style={{ color: '#94a3b8' }}>Total U Cap: <strong style={{ color: '#818cf8' }}>{entryTotals.uCap}</strong></span>
@@ -1768,7 +2296,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   type="button"
                   onClick={() => {
                     macAudio.playPop();
-                    setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+                    const freshRow: StockVoucherItem = { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 };
+                    dynamicCols.forEach((dc) => {
+                      freshRow[dc.field] = 0;
+                    });
+                    setStockRows([freshRow]);
                     setVoucherRemarks('');
                     setEditingVoucherId(null);
                   }}
@@ -2847,6 +3379,125 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* =========================================================== */}
+      {/* MODAL: ADD CUSTOM MULTI-COLUMN SIZE */}
+      {/* =========================================================== */}
+      {isAddColModalOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div 
+            style={{
+              width: '340px',
+              background: '#0f172a',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: '12px',
+              padding: '16px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Columns size={16} style={{ color: '#38bdf8' }} />
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>Add Size Column</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddColModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+              Enter the length/feet size to add as a new column in Stock Entry:
+            </p>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="number"
+                step="0.5"
+                placeholder="e.g. 12, 9.5, 11, 14..."
+                autoFocus
+                value={newColSizeInput}
+                onChange={(e) => setNewColSizeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newColSizeInput) {
+                    handleAddDynamicCol(newColSizeInput);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: '#f8fafc',
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  outline: 'none'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newColSizeInput) handleAddDynamicCol(newColSizeInput);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.5)',
+                  color: '#ffffff',
+                  padding: '7px 14px',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Quick Suggestions */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', paddingTop: '4px' }}>
+              {[12, 9.5, 11, 13, 14, 8, 7].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => handleAddDynamicCol(s)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#e2e8f0',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  +{s} FT
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =========================================================== */}
       {/* BARCODE PRINT PREVIEW MODAL */}
