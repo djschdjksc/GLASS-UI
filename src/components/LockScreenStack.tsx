@@ -82,9 +82,14 @@ export const LockScreenStack: React.FC<Props> = ({
     const H = el.clientHeight;
     if (H < 60) return;
 
-    // Center the active card around middle-top (32% from container top)
-    const baseActiveY = Math.round(H * 0.32);
+    // Lift active card up so bottom fold roll stays inside container view
+    // Start active card near top (approx 12% to 15% from top or 60px)
+    const baseActiveY = Math.max(50, Math.round(H * 0.12));
     const intTarget = targetPos.current;
+
+    // How many cards can fully fit vertically before folding at the bottom
+    const availableHeight = H - baseActiveY - 110; 
+    const dynamicVisible = Math.max(3, Math.min(VISIBLE_COUNT, Math.floor(availableHeight / CARD_HEIGHT)));
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
@@ -99,30 +104,30 @@ export const LockScreenStack: React.FC<Props> = ({
       let scale = 1;
       let opacity = 1;
 
-      if (rel >= 0 && rel < VISIBLE_COUNT) {
+      if (rel >= 0 && rel < dynamicVisible) {
         // CARDS IN FORWARD VIEW (Active + next cards down)
-        // Spaced clearly so user can see all ~8 cards
         ty = baseActiveY + rel * CARD_HEIGHT;
         scale = Math.max(0.88, 1 - (rel * 0.016));
         opacity = rel === 0 ? 1 : Math.max(0.45, 1 - (rel * 0.08));
-      } else if (rel >= VISIBLE_COUNT) {
-        // BOTTOM OVERFLOW: Fold together like a deck roll at the bottom
-        const overflow = rel - VISIBLE_COUNT;
+      } else if (rel >= dynamicVisible) {
+        // BOTTOM OVERFLOW: Fold into a visible deck stack at the bottom
+        const overflow = rel - dynamicVisible;
         const foldStep = Math.min(overflow, 4);
-        ty = baseActiveY + (VISIBLE_COUNT * CARD_HEIGHT) + (foldStep * STACK_PEEK);
-        scale = Math.max(0.80, 0.88 - (foldStep * 0.025));
-        opacity = Math.max(0, 0.40 - (overflow * 0.20));
-      } else if (rel < 0 && rel >= -3) {
+        const bottomBaseY = baseActiveY + (dynamicVisible * CARD_HEIGHT);
+        ty = bottomBaseY + (foldStep * STACK_PEEK);
+        scale = Math.max(0.78, 0.88 - (foldStep * 0.03));
+        opacity = Math.max(0.20, 0.65 - (foldStep * 0.12));
+      } else if (rel < 0 && rel >= -4) {
         // TOP OVERFLOW: Fold upwards gracefully
         const upRel = Math.abs(rel);
-        ty = baseActiveY - (upRel * STACK_PEEK * 2.2);
-        scale = Math.max(0.84, 1 - (upRel * 0.04));
-        opacity = Math.max(0.15, 0.85 - (upRel * 0.25));
+        ty = baseActiveY - (upRel * STACK_PEEK * 1.8);
+        scale = Math.max(0.82, 1 - (upRel * 0.04));
+        opacity = Math.max(0.15, 0.85 - (upRel * 0.20));
       } else {
         // Deeply folded off-screen cards
         const deepUp = Math.abs(rel);
-        ty = baseActiveY - (3 * STACK_PEEK * 2.2) - (deepUp * 4);
-        scale = 0.80;
+        ty = baseActiveY - (4 * STACK_PEEK * 1.8) - (deepUp * 4);
+        scale = 0.78;
         opacity = 0;
       }
 
