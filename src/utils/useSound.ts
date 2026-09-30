@@ -17,7 +17,7 @@ export default function useSound() {
     }
   }, []);
 
-  // Authentic iPhone Haptic / Tock Click (crisp wood tap)
+  // Authentic iPhone Haptic / Tock Click (crisp wood tap, loud & punchy)
   const playIPhoneClick = useCallback(() => {
     try {
       initAudio();
@@ -25,35 +25,35 @@ export default function useSound() {
       if (!ctx) return;
       const t = ctx.currentTime;
 
-      // 1. Sharp high-frequency transient click (the "tick")
+      // 1. Sharp high-frequency transient click (Boosted to 0.45)
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = "sine";
       osc1.frequency.setValueAtTime(1950, t);
       osc1.frequency.exponentialRampToValueAtTime(800, t + 0.007);
       gain1.gain.setValueAtTime(0.001, t);
-      gain1.gain.exponentialRampToValueAtTime(0.22, t + 0.002);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
+      gain1.gain.exponentialRampToValueAtTime(0.45, t + 0.002);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.015);
       osc1.connect(gain1).connect(ctx.destination);
       osc1.start(t);
-      osc1.stop(t + 0.015);
+      osc1.stop(t + 0.018);
 
-      // 2. Warm acoustic body resonance (the "tock")
+      // 2. Warm acoustic body resonance (Boosted to 0.38)
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(360, t);
-      osc2.frequency.exponentialRampToValueAtTime(120, t + 0.022);
+      osc2.frequency.setValueAtTime(380, t);
+      osc2.frequency.exponentialRampToValueAtTime(120, t + 0.025);
       gain2.gain.setValueAtTime(0.001, t);
-      gain2.gain.exponentialRampToValueAtTime(0.18, t + 0.003);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+      gain2.gain.exponentialRampToValueAtTime(0.38, t + 0.003);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
       osc2.connect(gain2).connect(ctx.destination);
       osc2.start(t);
-      osc2.stop(t + 0.03);
+      osc2.stop(t + 0.035);
     } catch {}
   }, [initAudio]);
 
-  // iOS Pop Chime
+  // iOS Pop Chime (Boosted to 0.40)
   const playPop = useCallback(() => {
     try {
       initAudio();
@@ -66,10 +66,10 @@ export default function useSound() {
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(900, t);
-      osc.frequency.exponentialRampToValueAtTime(1450, t + 0.04);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.16, t + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(1450, t + 0.045);
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.40, t + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
       osc.connect(gain).connect(ctx.destination);
       osc.start(t);
       osc.stop(t + 0.12);
@@ -79,16 +79,16 @@ export default function useSound() {
       const g2 = ctx.createGain();
       osc2.type = "triangle";
       osc2.frequency.setValueAtTime(2600, t);
-      g2.gain.setValueAtTime(0.0001, t);
-      g2.gain.exponentialRampToValueAtTime(0.04, t + 0.004);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      g2.gain.setValueAtTime(0.001, t);
+      g2.gain.exponentialRampToValueAtTime(0.12, t + 0.004);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
       osc2.connect(g2).connect(ctx.destination);
       osc2.start(t);
-      osc2.stop(t + 0.06);
+      osc2.stop(t + 0.07);
     } catch {}
   }, [initAudio]);
 
-  // Soft airy iOS Whoosh
+  // Soft airy iOS Whoosh (Boosted to 0.20)
   const playSoftWhoosh = useCallback(() => {
     try {
       initAudio();
@@ -98,11 +98,11 @@ export default function useSound() {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(360, t);
+      osc.frequency.setValueAtTime(380, t);
       osc.frequency.exponentialRampToValueAtTime(160, t + 0.12);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.035, t + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.20, t + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
       osc.connect(gain).connect(ctx.destination);
       osc.start(t);
       osc.stop(t + 0.16);
