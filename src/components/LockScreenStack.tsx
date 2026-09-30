@@ -16,14 +16,14 @@ interface Props {
   onDoubleClickBill?: (bill: BillRecord) => void;
 }
 
-// ─── Tuning ──────────────────────────────────────────────────────────────────
-const COOLDOWN     = 35;    // ms between advances — very snappy
-const MIN_SWIPE    = 22;    // px drag threshold
-const CARD_H       = 70;    // card height + gap
-const MAX_PEEK     = 4;     // cards visible in bottom stack
-// Spring: stiffness↑ = faster, damping↑ = less bounce
-const STIFFNESS    = 0.48;
-const DAMPING      = 0.72;
+// ─── Physics & Layout ────────────────────────────────────────────────────────
+const COOLDOWN   = 32;    // ms between advances
+const MIN_SWIPE  = 20;    // px drag threshold
+const STIFFNESS  = 0.52;  // spring pull force — higher = faster
+const DAMPING    = 0.68;  // velocity decay — lower = more bounce (Apple-like)
+const PEEK       = 18;    // px each card peeks out from behind the one in front
+const MAX_SHOW   = 3;     // visible cards on each side of active
+const CARD_H_EST = 70;    // estimated card height for off-screen calc
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export const LockScreenStack: React.FC<Props> = ({
@@ -34,32 +34,32 @@ export const LockScreenStack: React.FC<Props> = ({
 }) => {
   const { initAudio, playIPhoneClick, playSoftWhoosh } = useSound();
 
-  const [activeIndex, setActiveIndex]   = useState(0);
-  const activeIndexRef = useRef(0);
-  const isInternalRef  = useRef(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef  = useRef(0);
+  const isInternalRef   = useRef(false);
+  const containerRef    = useRef<HTMLDivElement | null>(null);
+  const cardRefs        = useRef<(HTMLDivElement | null)[]>([]);
+  const lastAdvance     = useRef(0);
 
-  const containerRef   = useRef<HTMLDivElement | null>(null);
-  const cardRefs       = useRef<(HTMLDivElement | null)[]>([]);
-  const lastAdvance    = useRef(0);
-
-  // Spring state
+  // Spring state (single scroll axis)
   const springPos = useRef(0);
   const springVel = useRef(0);
   const targetPos = useRef(0);
 
-  // Entrance flag — per bills identity (not a ref that persists forever)
-  const enteredBillsRef = useRef<BillRecord[] | null>(null);
+  // Entrance tracking — one-shot per bills identity
+  const enteredRef   = useRef<BillRecord[] | null>(null);
+  const isEnteringRef = useRef(false); // true while CSS opacity is handling entrance
 
-  // ── sync active ref with state ─────────────────────────────────────────
+  // ── Sync active ref ────────────────────────────────────────────────────
   useEffect(() => {
     activeIndexRef.current = activeIndex;
     targetPos.current      = activeIndex;
   }, [activeIndex]);
 
-  // ── reset on bills change ──────────────────────────────────────────────
+  // ── Reset on bills change ──────────────────────────────────────────────
   useEffect(() => {
     isInternalRef.current = true;
-    enteredBillsRef.current = null; // allow entrance again for new list
+    enteredRef.current    = null;
     setActiveIndex(0);
     targetPos.current = 0;
     springPos.current = 0;
@@ -67,10 +67,9 @@ export const LockScreenStack: React.FC<Props> = ({
     setTimeout(() => { isInternalRef.current = false; }, 80);
   }, [bills]);
 
-  // ── sync from parent (arrow keys) ─────────────────────────────────────
+  // ── Sync from parent (arrow keys, external select) ─────────────────────
   useEffect(() => {
-    if (!selectedBillId || bills.length === 0) return;
-    if (isInternalRef.current) return;
+    if (!selectedBillId || bills.length === 0 || isInternalRef.current) return;
     const found = bills.findIndex(b => b.id === selectedBillId);
     if (found >= 0) {
       setActiveIndex(found);
@@ -79,11 +78,14 @@ export const LockScreenStack: React.FC<Props> = ({
   }, [selectedBillId, bills]);
 
   /* ════════════════════════════════════════════════════════════════════════
-     STYLE ENGINE — drum-wheel layout
-     • Slot-machine / drum-scroll feel: active card in centre, others fan out
-     • rel > 0 = below active (peek stack going DOWN visually)
-     • rel < 0 = above active (list going UP visually)
-     • z-index locked to INTEGER target so new card always stays on top
+     STYLE ENGINE — Symmetric drum-wheel fan
+     ─────────────────────────────────────────────────────────────────────
+     Layout principle (like a physical card holder):
+       • Active card is front-and-center
+       • Each card above/below peeks PEEK px from behind the card in front
+       • Same PEEK distance in BOTH directions → identical feel up and down
+       • Z-index driven by INTEGER target (not lerp) so transitions never
+         push new card behind old card
      ════════════════════════════════════════════════════════════════════════ */
   const applyStyles = useCallback((pos: number) => {
     const el = containerRef.current;
@@ -91,48 +93,53 @@ export const LockScreenStack: React.FC<Props> = ({
     const H = el.clientHeight;
     if (H < 80) return;
 
-    // Active card anchor: 70% from top
-    const anchorY  = Math.round(H * 0.70);
-    const intTgt   = targetPos.current; // INTEGER — drives z-index
+    // Active card top-edge sits at 45% of container height
+    const anchorY = Math.round(H * 0.45 - CARD_H_EST / 2);
+    const intTgt  = targetPos.current; // integer — drives z-index
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
 
-      const rel    = i - pos;       // fractional — drives position/scale
-      const relZ   = i - intTgt;    // integer — drives z-index (no flicker)
+      const rel    = i - pos;       // fractional (spring position) → visual placement
+      const absRel = Math.abs(rel);
+      const relZ   = i - intTgt;    // integer → z-index (never flickers during transition)
+      const absRelZ = Math.abs(relZ);
 
-      // ── Z-index: destination card always on top ──
-      let zIndex: number;
-      if      (relZ === 0) zIndex = 1000;
-      else if (relZ  >  0) zIndex = 1000 - Math.min(relZ, MAX_PEEK) * 9;
-      else                 zIndex = 900  + relZ; // negative → 899, 898 …
+      // ── Z-index: card closest to target index = frontmost ──
+      // Destination card always gets z=1000, others fall back linearly
+      const zIndex = Math.max(2, 1000 - Math.round(absRelZ * 12));
 
-      // ── Position / Scale / Opacity ──
+      // ── Position & Scale ──
       let ty: number, scale: number, opacity: number;
 
-      if (rel >= 0) {
-        // BELOW or AT active — bottom peek stack
-        const s  = Math.min(rel, MAX_PEEK + 1);
-        ty       = anchorY + s * 12;
-        scale    = Math.max(0.78, 1 - s * 0.055);
-        opacity  = s === 0 ? 1 : Math.max(0.40, 1 - s * 0.18);
+      if (absRel <= MAX_SHOW) {
+        // VISIBLE RANGE — symmetric drum fan
+        // rel is signed: negative = above active, positive = below active
+        ty      = anchorY + rel * PEEK;
+        scale   = Math.max(0.80, 1 - absRel * 0.055);
+        opacity = Math.max(0.30, 1 - absRel * 0.23);
       } else {
-        // ABOVE active — upward list
-        const up = Math.abs(rel);
-        ty       = anchorY - up * CARD_H;
-        scale    = 1;
-        opacity  = up <= 1 ? 1 : Math.max(0.25, 1 - (up - 1) * 0.22);
+        // BEYOND FAN — off-screen, invisible
+        // Continue linearly so spring has a smooth path to animate through
+        ty      = anchorY + rel * PEEK;
+        scale   = Math.max(0.70, 0.80 - (absRel - MAX_SHOW) * 0.04);
+        opacity = 0;
       }
 
       card.style.transform = `translate(-50%, ${ty}px) scale(${scale})`;
-      card.style.opacity   = String(Math.max(0, Math.min(1, opacity)));
       card.style.zIndex    = String(zIndex);
+
+      // Only overwrite opacity when NOT in the CSS entrance phase
+      // (CSS handles opacity during entrance to avoid transition vs spring fight)
+      if (!isEnteringRef.current) {
+        card.style.opacity = String(Math.max(0, Math.min(1, opacity)));
+      }
     });
   }, []);
 
   /* ════════════════════════════════════════════════════════════════════════
-     SPRING rAF LOOP — runs once, never restarts
-     High stiffness + moderate damping = fast & slightly bouncy (Apple feel)
+     SPRING rAF LOOP — single loop, never restarts
+     Apple-tuned: STIFFNESS=0.52, DAMPING=0.68 → fast with slight bounce
      ════════════════════════════════════════════════════════════════════════ */
   useEffect(() => {
     let id: number;
@@ -140,63 +147,68 @@ export const LockScreenStack: React.FC<Props> = ({
       const diff = targetPos.current - springPos.current;
       springVel.current  = springVel.current * DAMPING + diff * STIFFNESS;
       springPos.current += springVel.current;
-      if (Math.abs(diff) < 0.001 && Math.abs(springVel.current) < 0.001) {
+
+      // Snap to rest when close
+      if (Math.abs(diff) < 0.0008 && Math.abs(springVel.current) < 0.0008) {
         springPos.current = targetPos.current;
         springVel.current = 0;
       }
+
       applyStyles(springPos.current);
       id = requestAnimationFrame(tick);
     };
     id = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(id);
-  }, [applyStyles]); // stable — never re-creates
+  }, [applyStyles]); // stable ref, never re-creates
 
   /* ════════════════════════════════════════════════════════════════════════
-     ENTRANCE ANIMATION — staggered crawl-up, runs ONCE per bills array
-     Cards crawl up from below with spring cascade (gol gol feel)
+     ENTRANCE — staggered opacity-only crawl (no transform conflict)
+     CSS transition handles opacity. Spring handles transform from frame 1.
+     These are completely independent properties → ZERO shake/conflict.
      ════════════════════════════════════════════════════════════════════════ */
   useEffect(() => {
-    // Guard: only run once per bills identity
-    if (enteredBillsRef.current === bills) return;
-    if (bills.length === 0) return;
+    if (enteredRef.current === bills || bills.length === 0) return;
     const el = containerRef.current;
     if (!el) return;
 
-    enteredBillsRef.current = bills;
+    enteredRef.current  = bills;
+    isEnteringRef.current = true;
 
-    const H = el.clientHeight || 500;
-
-    // 1. Snap all cards off-screen below (no transition)
+    // Start all cards invisible (spring immediately positions them via transform)
     cardRefs.current.forEach(card => {
-      if (!card) return;
-      card.style.transition = 'none';
-      card.style.transform  = `translate(-50%, ${H + 100}px) scale(0.88)`;
-      card.style.opacity    = '0';
+      if (card) card.style.opacity = '0';
     });
 
-    // 2. Stagger crawl-up with CSS spring transition (first appearance only)
-    //    After transition completes the rAF loop takes over seamlessly
+    // Stagger opacity fade-in ONLY (spring handles transform throughout)
     const handles: ReturnType<typeof setTimeout>[] = [];
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
       const h = setTimeout(() => {
         if (!card) return;
-        card.style.transition = 'transform 0.46s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.32s ease-out';
+        // CSS transition on opacity ONLY — transform is NOT transitioned
+        card.style.transition = 'opacity 0.32s ease-out';
         card.style.opacity    = '1';
-        // Hand off to spring loop after transition
+        // Remove transition after fade so spring can write opacity unimpeded
         const h2 = setTimeout(() => {
-          if (card) card.style.transition = 'none';
-        }, 480);
+          if (card) card.style.transition = '';
+        }, 340);
         handles.push(h2);
-      }, i * 32 + 30);
+      }, i * 30 + 25);
       handles.push(h);
     });
 
+    // Hand opacity back to rAF loop after all cards have faded in
+    const totalMs = bills.length * 30 + 380;
+    const endH = setTimeout(() => {
+      isEnteringRef.current = false;
+    }, totalMs);
+    handles.push(endH);
+
     return () => handles.forEach(clearTimeout);
-  }, [bills]); // runs whenever bills identity changes
+  }, [bills]);
 
   /* ════════════════════════════════════════════════════════════════════════
-     ADVANCE — instant target snap, spring does the visual work
+     ADVANCE — instant target, spring does the motion
      ════════════════════════════════════════════════════════════════════════ */
   const tryAdvance = useCallback((dir: number) => {
     const now = performance.now();
@@ -255,7 +267,8 @@ export const LockScreenStack: React.FC<Props> = ({
   }, [tryAdvance]);
 
   const onTouchEnd = useCallback(() => {
-    touchRef.current.active = false; touchRef.current.consumed = false;
+    touchRef.current.active = false;
+    touchRef.current.consumed = false;
   }, []);
 
   // ── Mouse Drag ───────────────────────────────────────────────────────────
@@ -270,17 +283,19 @@ export const LockScreenStack: React.FC<Props> = ({
     const onMove = (e: MouseEvent) => {
       const m = mouseRef.current;
       if (!m.down || m.consumed) return;
-      if (Math.abs(m.startY - e.clientY) >= MIN_SWIPE) {
-        if (tryAdvance(m.startY - e.clientY > 0 ? 1 : -1)) m.consumed = true;
-      }
+      const dy = m.startY - e.clientY;
+      if (Math.abs(dy) >= MIN_SWIPE && tryAdvance(dy > 0 ? 1 : -1)) m.consumed = true;
     };
     const onUp = () => { mouseRef.current.down = false; mouseRef.current.consumed = false; };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
   }, [tryAdvance]);
 
-  // ── Empty ────────────────────────────────────────────────────────────────
+  // ── Empty state ──────────────────────────────────────────────────────────
   if (bills.length === 0) {
     return (
       <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748b', fontSize: '11px' }}>
