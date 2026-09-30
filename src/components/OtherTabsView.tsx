@@ -52,6 +52,7 @@ import { BillPrintModal } from './BillPrintModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { LockScreenStack } from './LockScreenStack';
 import { PartyDetailStackModal } from './PartyDetailStackModal';
+import { BillAuditHistoryModal } from './BillAuditHistoryModal';
 
 interface Props {
   activeTab: NavKey;
@@ -78,6 +79,7 @@ interface Props {
   onSetRowHeight?: (h: number) => void;
   tableFontSize?: number;
   onSetTableFontSize?: (s: number) => void;
+  onOpenUserProfile?: () => void;
 }
 
 interface AllTableCols {
@@ -138,7 +140,8 @@ export const OtherTabsView: React.FC<Props> = ({
   rowHeight: propRowHeight,
   onSetRowHeight,
   tableFontSize: _propTableFontSize,
-  onSetTableFontSize: _onSetTableFontSize
+  onSetTableFontSize: _onSetTableFontSize,
+  onOpenUserProfile
 }) => {
   // Live reactive Database Context
   const { bills, parties, stockItems, ledgerEntries, saveParty, deleteParty, deleteBill } = useDatabase();
@@ -330,6 +333,7 @@ export const OtherTabsView: React.FC<Props> = ({
   const [selectedRawRowIdx, setSelectedRawRowIdx] = useState<number>(0);
   const [selectedFinishedRowIdx, setSelectedFinishedRowIdx] = useState<number>(0);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
   const [deleteConfirmBillId, setDeleteConfirmBillId] = useState<string | null>(null);
 
   // Throttle timer ref for smooth arrow navigation without lag
@@ -1365,6 +1369,19 @@ export const OtherTabsView: React.FC<Props> = ({
                   title="Load Bill into F1"
                 >
                   <ExternalLink size={13} color="#38bdf8" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsAuditModalOpen(true);
+                  }}
+                  onMouseEnter={() => macAudio.playHover()}
+                  className="mac-btn"
+                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="View Cell-Level Edit & Audit History"
+                >
+                  <History size={13} color="#c084fc" />
                 </button>
                 <button
                   type="button"
@@ -3028,6 +3045,15 @@ export const OtherTabsView: React.FC<Props> = ({
           setViewingPartyForStack(null);
         }}
         onSelectPartyForBill={onSelectPartyForBill}
+      />
+
+      {/* Real-time Bill Cell & Edit Audit History Modal */}
+      <BillAuditHistoryModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        billId={selectedBill?.id || ''}
+        billToken={String(selectedBill?.token || selectedBill?.id || '')}
+        partyName={selectedBill?.party}
       />
     </div>
   );

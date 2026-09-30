@@ -20,6 +20,7 @@ interface Props {
   onCloseApp: () => void;
   onToggleChat?: () => void;
   isChatOpen?: boolean;
+  unreadChatCount?: number;
 }
 
 export const RightNavRail: React.FC<Props> = ({
@@ -27,7 +28,8 @@ export const RightNavRail: React.FC<Props> = ({
   onSelectTab,
   onCloseApp,
   onToggleChat,
-  isChatOpen = false
+  isChatOpen = false,
+  unreadChatCount = 0
 }) => {
   const TABS: { key: NavKey; name: string; icon: React.ReactNode; color: string }[] = [
     { key: 'F1', name: 'Bill UI', icon: <Receipt size={17} />, color: '#38bdf8' },
@@ -196,6 +198,30 @@ export const RightNavRail: React.FC<Props> = ({
         >
           <span className="box-tooltip-left">WhatsApp Chat & AI (Ctrl+J)</span>
           <MessageCircle size={18} color="#25D366" />
+          {unreadChatCount > 0 && !isChatOpen && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                minWidth: '16px',
+                height: '16px',
+                padding: '0 4px',
+                borderRadius: '8px',
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '9.5px',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(239, 68, 68, 0.7)',
+                zIndex: 10
+              }}
+            >
+              {unreadChatCount > 9 ? '9+' : unreadChatCount}
+            </span>
+          )}
         </button>
       )}
     </div>

@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   History,
-  Calculator
+  Calculator,
+  User
 } from 'lucide-react';
 
 interface Props {
@@ -35,6 +36,8 @@ interface Props {
   onSummary: () => void;
   onLoadOldPrice: () => void;
   onOpenCalculator?: () => void;
+  onOpenAuditHistory?: () => void;
+  onOpenUserProfile?: () => void;
 }
 
 export const LeftActionRail: React.FC<Props> = ({
@@ -53,12 +56,16 @@ export const LeftActionRail: React.FC<Props> = ({
   onNextRecord,
   onSummary,
   onLoadOldPrice,
-  onOpenCalculator
+  onOpenCalculator,
+  onOpenAuditHistory,
+  onOpenUserProfile
 }) => {
   const BUTTONS = [
     { id: 'summary', name: 'Calculate Summary (Ctrl+G)', icon: <Layers size={17} color="#10b981" />, action: onSummary },
     { id: 'oldprice', name: 'Load Old Price (Alt+P)', icon: <History size={17} color="#f59e0b" />, action: onLoadOldPrice },
     { id: 'calc', name: 'Numpad Calculator (F9)', icon: <Calculator size={17} color="#38bdf8" />, action: () => onOpenCalculator?.() },
+    { id: 'audit', name: 'Bill Cell Audit History (Kisne kya badla)', icon: <History size={17} color="#c084fc" />, action: () => onOpenAuditHistory?.() },
+    { id: 'operator', name: 'Operator Profile & Multi-Device Sync', icon: <User size={17} color="#34d399" />, action: () => onOpenUserProfile?.() },
     { id: 'save', name: 'Save Bill', icon: <Save size={17} color="currentColor" />, action: onSave },
     { id: 'slip', name: 'Print / Estimate / Loading Slip (Ctrl+P / Ctrl+E / Ctrl+L / Alt+S)', icon: <Printer size={17} color="#38bdf8" />, action: onPrintSlip },
     { id: 'add', name: 'Add Raw Item', icon: <PlusCircle size={17} color="currentColor" />, action: onAddRawRow },

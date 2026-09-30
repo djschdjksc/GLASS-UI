@@ -35,6 +35,11 @@ import { ChattingPanel } from './components/ChattingPanel';
 import { DigitalCalculatorModal } from './components/DigitalCalculatorModal';
 import { triggerCelebrationBlast } from './utils/celebration';
 import { normalizeDocType, getBillCategory } from './utils/billDocTypes';
+import { supabaseSyncService, setSyncNotificationListener } from './services/supabaseSync';
+import { getUserProfile, getNextUserToken } from './services/supabaseClient';
+import { UserIdentityModal } from './components/UserIdentityModal';
+import { BillAuditHistoryModal } from './components/BillAuditHistoryModal';
+import { CloudBillNotification, type CloudNotificationData } from './components/CloudBillNotification';
 
 const playTapSound = () => {
   try {
@@ -240,6 +245,62 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     localStorage.setItem('modern_has_party_code_col', String(hasPartyCodeCol));
   }, [hasPartyCodeCol]);
 
+  // Multi-device User Identity & Audit History state
+  const [isUserIdentityOpen, setIsUserIdentityOpen] = useState(false);
+  const [isInitialIdentitySetup, setIsInitialIdentitySetup] = useState(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [auditTarget, setAuditTarget] = useState<{ id: string; token: string; party?: string } | null>(null);
+  const loadedBillSnapshotRef = useRef<BillRecord | null>(null);
+
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+  const [incomingCloudBill, setIncomingCloudBill] = useState<CloudNotificationData | null>(null);
+
+  // Initialize Supabase Multi-device Cloud Sync
+  useEffect(() => {
+    supabaseSyncService.init();
+
+    setSyncNotificationListener((notif) => {
+      console.log(`[Cloud Sync] ${notif.title}: ${notif.body}`);
+    });
+
+    // Real-time listener for incoming bills from other computers
+    const handleCloudBillEvent = (e: any) => {
+      const b = e.detail;
+      if (b) {
+        setIncomingCloudBill({
+          id: b.id,
+          token: b.token,
+          party: b.party,
+          total: b.total,
+          fromUser: b.last_modified_by || 'Team Member',
+          docType: b.header?.docType,
+          billData: b
+        });
+      }
+    };
+    window.addEventListener('cloud_bill_received', handleCloudBillEvent);
+
+    // Real-time listener for incoming team chat messages
+    const handleChatReceived = () => {
+      if (!isChatOpen) {
+        setUnreadChatCount(prev => prev + 1);
+      }
+    };
+    window.addEventListener('team_chat_message_received', handleChatReceived);
+
+    return () => {
+      window.removeEventListener('cloud_bill_received', handleCloudBillEvent);
+      window.removeEventListener('team_chat_message_received', handleChatReceived);
+    };
+  }, [isChatOpen]);
+
+  // Clear unread count when chat opens
+  useEffect(() => {
+    if (isChatOpen) {
+      setUnreadChatCount(0);
+    }
+  }, [isChatOpen]);
+
   // Dirty tracking snapshot and modal state
   const lastSavedSnapshotRef = useRef<string>(getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol));
   const [confirmClearDialog, setConfirmClearDialog] = useState<{
@@ -378,8 +439,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     const total = validFinishedItems.reduce((acc, f) => acc + (Number(f.total) || 0), 0);
     const tokenStr = String(header.tokenNo || '1');
+    const existingId = loadedBillSnapshotRef.current?.id;
     const billToSave: BillRecord = {
-      id: `B-${tokenStr}`,
+      id: existingId || (tokenStr.startsWith('B-') ? tokenStr : `B-${tokenStr}`),
       token: tokenStr,
       date: header.date || new Date().toISOString().split('T')[0],
       party: cleanPartyName,
@@ -392,30 +454,24 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       finishedItems: validFinishedItems,
       dynamicCols: dynamicCols.map(c => ({ ...c })),
       hasPartyCodeCol: Boolean(hasPartyCodeCol),
-      createdAt: Date.now(),
+      createdAt: loadedBillSnapshotRef.current?.createdAt || Date.now(),
       updatedAt: Date.now(),
       synced: false,
-      version: 1
+      version: (loadedBillSnapshotRef.current?.version || 0) + 1
     };
 
-    await localDb.saveBill(billToSave);
+    const previousBill = loadedBillSnapshotRef.current || localDb.getBillById(billToSave.id);
+    await supabaseSyncService.saveAndSyncBill(billToSave, previousBill);
+    loadedBillSnapshotRef.current = null;
 
     showToast(`Bill #${billToSave.token} (${billToSave.party}) Saved Successfully!`, 'success');
     playTapSound();
     triggerCelebrationBlast();
 
-    // Clear everything for the next bill (as requested: "JAISE HI SAVE HO GYA BILL WAISE HI SAB KUCHH KHALI HO JAYE NA DUSRE BILL KE LIYE CTRL +S KARTE HI")
+    // Clear everything for the next bill using user's unique prefix (e.g. ROHIT-2)
     const allBills = localDb.getBills();
-    let maxTokenNum = 0;
-    allBills.forEach(b => {
-      const n = parseInt(b.token, 10);
-      if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
-    });
-    const currentTokenNum = parseInt(String(billToSave.token), 10);
-    if (!isNaN(currentTokenNum) && currentTokenNum > maxTokenNum) {
-      maxTokenNum = currentTokenNum;
-    }
-    const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
+    const profile = getUserProfile();
+    const nextToken = getNextUserToken(allBills, profile.prefix);
     const todayStr = new Date().toISOString().split('T')[0];
 
     const currentDoc = normalizeDocType(header.docType);
@@ -463,27 +519,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Keyboard-Friendly Skip / Clear Bill Handler
   const handleClearToNewBill = useCallback(() => {
+    loadedBillSnapshotRef.current = null;
     const allBills = localDb.getBills();
+    const profile = getUserProfile();
+    const nextToken = getNextUserToken(allBills, profile.prefix);
     const currentDoc = normalizeDocType(header.docType);
-    const categoryBills = allBills.filter(b => getBillCategory(b) === currentDoc);
-
-    let maxTokenNum = 0;
-    categoryBills.forEach(b => {
-      const n = parseInt(b.token, 10);
-      if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
-    });
-    const currentTokenNum = parseInt(String(header.tokenNo), 10);
-    if (!isNaN(currentTokenNum) && currentTokenNum > maxTokenNum) {
-      maxTokenNum = currentTokenNum;
-    }
-    if (maxTokenNum === 0) {
-      allBills.forEach(b => {
-        const n = parseInt(b.token, 10);
-        if (!isNaN(n) && n > maxTokenNum) maxTokenNum = n;
-      });
-    }
-
-    const nextToken = maxTokenNum > 0 ? String(maxTokenNum + 1) : '1';
     const todayStr = new Date().toISOString().split('T')[0];
 
     const blankHeader: BillHeader = {
@@ -2268,10 +2308,24 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
             {/* Center Workspace */}
             <div style={{ display: 'flex', flex: 1, gap: '12px', minHeight: 0, overflow: 'visible' }}>
-              {/* Left Action Rail */}
+              {/* Left Action Rail with Cube-Type Magnified Dock Buttons */}
               <LeftActionRail
                 onSummary={calculateRightGridFromLeft}
                 onLoadOldPrice={handleLoadOldPriceFromHistory}
+                onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onOpenAuditHistory={() => {
+                  const currentBill = loadedBillSnapshotRef.current || localDb.getBills().find(b => String(b.token) === String(header.tokenNo));
+                  setAuditTarget({
+                    id: currentBill?.id || `B-${header.tokenNo}`,
+                    token: String(header.tokenNo),
+                    party: header.partyName
+                  });
+                  setIsAuditModalOpen(true);
+                }}
+                onOpenUserProfile={() => {
+                  setIsInitialIdentitySetup(false);
+                  setIsUserIdentityOpen(true);
+                }}
                 onSave={handleSaveCurrentBill}
                 onPrintSlip={() => handleOpenPrintModal('estimate')}
                 onAddRawRow={handleAddRawItem}
@@ -2285,7 +2339,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 onReset={handleTriggerEscapeClear}
                 onPrevRecord={handlePrevBill}
                 onNextRecord={handleNextBill}
-                onOpenCalculator={() => setIsCalculatorOpen(true)}
               />
 
               {/* Grids Area with Draggable Splitter & Bottom Mode Bar */}
@@ -2393,6 +2446,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   isCalculatorOpen={isCalculatorOpen}
                   onToggleChat={() => setIsChatOpen(prev => !prev)}
                   isChatOpen={isChatOpen}
+                  unreadChatCount={unreadChatCount}
                   themeMode={themeMode}
                   onChangeThemeMode={onChangeThemeMode}
                   activeDocType={header.docType}
@@ -2408,6 +2462,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 }}
                 onToggleChat={() => setIsChatOpen(prev => !prev)}
                 isChatOpen={isChatOpen}
+                unreadChatCount={unreadChatCount}
               />
             </div>
           </div>
@@ -2418,9 +2473,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               <OtherTabsView
                 activeTab={activeTab}
                 onBackToBill={() => setActiveTab('F1')}
+                onOpenUserProfile={() => setIsUserIdentityOpen(true)}
                 themeMode={themeMode}
                 onChangeThemeMode={onChangeThemeMode}
                 onLoadBillToEditor={(bill: any) => {
+                  loadedBillSnapshotRef.current = bill;
                   setHeader({
                     docType: normalizeDocType(bill.docType),
                     partyName: bill.party,
@@ -2514,6 +2571,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               }}
               onToggleChat={() => setIsChatOpen(prev => !prev)}
               isChatOpen={isChatOpen}
+              unreadChatCount={unreadChatCount}
             />
           </div>
         )}
@@ -2597,6 +2655,30 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         rawItems={rawItems}
         finishedItems={finishedItems}
         onShowToast={showToast}
+        onOpenUserProfile={() => setIsUserIdentityOpen(true)}
+      />
+
+      {/* Cloud Incoming Bill Floating Banner Notification */}
+      <CloudBillNotification
+        notification={incomingCloudBill}
+        onClose={() => setIncomingCloudBill(null)}
+        onViewBill={(billData) => {
+          if (billData) {
+            handleLoadSlip({
+              tokenNo: billData.token,
+              docType: billData.docType || 'SALE BILL',
+              partyName: billData.party,
+              typeSelection: billData.typeSelection || 'WHOLESALE',
+              vehicleNo: billData.vehicle || '',
+              date: billData.date || new Date().toISOString().slice(0, 10),
+              rawItems: billData.rawItems || [],
+              finishedItems: billData.finishedItems || [],
+              dynamicCols: billData.dynamicCols || []
+            });
+            setActiveTab('F1');
+          }
+          setIncomingCloudBill(null);
+        }}
       />
 
       {/* Retro Neumorphic Digital Calculator with 100% Physical Numpad Control */}
@@ -2607,6 +2689,22 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           showToast(`Calculator Value: ${val}`, 'info');
         }}
         onToast={showToast}
+      />
+
+      {/* Operator Identity Setup for Multi-device Cloud Sync */}
+      <UserIdentityModal
+        isOpen={isUserIdentityOpen}
+        onClose={() => setIsUserIdentityOpen(false)}
+        isInitialSetup={isInitialIdentitySetup}
+      />
+
+      {/* Real-time Bill Cell & Edit Audit History Modal */}
+      <BillAuditHistoryModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        billId={auditTarget?.id || ''}
+        billToken={auditTarget?.token || ''}
+        partyName={auditTarget?.party}
       />
 
     </div>

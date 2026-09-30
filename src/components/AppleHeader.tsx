@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import type { BillHeader } from '../types';
 import { AppleTrafficLights } from './AppleTrafficLights';
-import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator } from 'lucide-react';
+import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
 import { DOC_TYPES } from '../utils/billDocTypes';
+import { getUserProfile } from '../services/supabaseClient';
 
 interface Props {
   header: BillHeader;
@@ -21,6 +22,8 @@ interface Props {
   onToggleCalculator?: () => void;
   isCalculatorOpen?: boolean;
   onNavigateToLeftGrid?: () => void;
+  onOpenUserProfile?: () => void;
+  onOpenAuditHistory?: () => void;
 }
 
 const COMMON_PARTIES = [
@@ -53,7 +56,9 @@ export const AppleHeader: React.FC<Props> = ({
   isChatOpen = false,
   onToggleCalculator,
   isCalculatorOpen = false,
-  onNavigateToLeftGrid
+  onNavigateToLeftGrid,
+  onOpenUserProfile,
+  onOpenAuditHistory
 }) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
   const [partyList, setPartyList] = useState<string[]>(REAL_PARTIES);

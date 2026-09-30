@@ -131,6 +131,7 @@ interface Props {
   isCalculatorOpen?: boolean;
   onToggleChat?: () => void;
   isChatOpen?: boolean;
+  unreadChatCount?: number;
   themeMode?: 'dark' | 'glass';
   onChangeThemeMode?: (mode: 'dark' | 'glass') => void;
   activeDocType?: string;
@@ -147,6 +148,7 @@ export const BottomModeBar: React.FC<Props> = ({
   isCalculatorOpen = false,
   onToggleChat,
   isChatOpen = false,
+  unreadChatCount = 0,
   themeMode = 'dark',
   onChangeThemeMode,
   activeDocType
@@ -340,6 +342,7 @@ export const BottomModeBar: React.FC<Props> = ({
             }}
             className={`apple-box-btn ${isChatOpen ? 'active' : ''}`}
             style={{ 
+              position: 'relative',
               width: '36px', 
               height: '36px',
               borderRadius: '8px',
@@ -350,6 +353,30 @@ export const BottomModeBar: React.FC<Props> = ({
           >
             <span className="box-tooltip-top">Chat Assistant (Ctrl+J)</span>
             <MessageSquare size={16} color={isChatOpen ? '#38bdf8' : 'currentColor'} />
+            {unreadChatCount > 0 && !isChatOpen && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '9.5px',
+                  fontWeight: 800,
+                  minWidth: '16px',
+                  height: '16px',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 3px',
+                  boxShadow: '0 2px 6px rgba(239, 68, 68, 0.6)',
+                  border: '1.5px solid #000'
+                }}
+              >
+                {unreadChatCount}
+              </span>
+            )}
           </button>
         )}
 
