@@ -1,4 +1,4 @@
-/* LockScreenStack.css — iPhone Notification Stack with lifted bottom crawl & space below */
+/* LockScreenStack.css — iPhone Notification Stack Physics */
 
 .lock-screen-container {
   position: relative;
@@ -35,7 +35,7 @@
   transform-style: preserve-3d;
 }
 
-/* Card absolute wrapper (centered via left: 50% and translate(-50%)) */
+/* Card absolute wrapper (centered via left: 50% + translate(-50%,...)) */
 .card-wrapper {
   position: absolute;
   top: 0;
@@ -44,18 +44,17 @@
   max-width: 360px;
   transform-origin: center top;
   will-change: transform, opacity;
-  transition:
-    transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.14s ease-out;
+  /* NO CSS transition here — JS rAF lerp IS the animation.
+     CSS transition would fight the rAF loop and cause lag/stutter. */
   backface-visibility: hidden;
   pointer-events: auto;
 }
 
-/* CARD VISUAL — 100% SOLID OPAQUE (NO BLEED, NO TEXT OVERLAP) */
+/* CARD VISUAL — Solid opaque, zero blur */
 .card {
   width: 100%;
   min-height: 70px;
-  background: #181b28; /* Solid opaque dark slate */
+  background: #181b28;
   border-radius: 12px;
   padding: 8px 12px;
   display: flex;
@@ -75,7 +74,7 @@
 }
 
 .card.active-card {
-  background: #182846; /* Solid distinct active navy */
+  background: #182846;
   border: 1.5px solid rgba(56, 189, 248, 0.85);
   box-shadow: 0 8px 26px rgba(0, 122, 255, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.12);
 }

@@ -1,11 +1,12 @@
 import React, { memo } from "react";
 import type { BillRecord } from "../services/db/schema";
+import { macAudio } from "../utils/macAudio";
 
 interface NotificationCardProps {
   bill: BillRecord;
   isActive: boolean;
   timeText?: string;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   onDoubleClick?: () => void;
 }
 
@@ -22,7 +23,7 @@ const NotificationCard = memo(function NotificationCard({
       ? '#0a84ff'
       : docType === 'ORDER'
       ? '#ff9f0a'
-      : docType === 'RETURN'
+      : docType === 'RETURN' || docType === 'SALE RETURN'
       ? '#ff375f'
       : '#30d158';
 
@@ -31,6 +32,7 @@ const NotificationCard = memo(function NotificationCard({
       className={`card ${isActive ? 'active-card' : ''}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
+      onMouseEnter={() => macAudio.playHover()}
     >
       <div className="icon" style={{ background: docColor }}>
         🧾
