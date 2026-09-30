@@ -20,14 +20,31 @@ export function directPrintBill(data: BillPrintPayload): void {
   const showPCode = Boolean(data.showPartyCode);
   const slipPrefix = isLoadingSlip ? 'SLIP NO:' : 'BILL NO:';
 
-  let totalQty = 0;
-  let totalUCap = 0;
-  let totalLCap = 0;
+  const dynCols = Array.isArray(data.dynamicCols) ? data.dynamicCols : [];
+  const parseFeetSize = (labelOrField: string): number => {
+    if (labelOrField === 'qty') return 10;
+    const match = String(labelOrField).match(/(\d+(\.\d+)?)/);
+    return match ? parseFloat(match[1]) : 10;
+  };
+
+  const sizeCols = [
+    { field: 'qty', label: '(10 FT)', size: 10 },
+    ...dynCols.map(dc => ({
+      field: dc.field,
+      label: dc.label || dc.field,
+      size: parseFeetSize(dc.label || dc.field)
+    }))
+  ].sort((a, b) => b.size - a.size);
+
+  const colSums: Record<string, number> = { uCap: 0, lCap: 0 };
+  sizeCols.forEach(sc => { colSums[sc.field] = 0; });
 
   validItems.forEach(it => {
-    totalQty += Number(it.qty) || 0;
-    totalUCap += Number(it.uCap) || 0;
-    totalLCap += Number(it.lCap) || 0;
+    colSums.uCap += Number(it.uCap) || 0;
+    colSums.lCap += Number(it.lCap) || 0;
+    sizeCols.forEach(sc => {
+      colSums[sc.field] += Number((it as any)[sc.field]) || 0;
+    });
   });
 
   // Exactly 27 rows per page for Loading Slip (matching F:\SUMMARY\BillApp\main.py rows_per_page = 27)
@@ -41,7 +58,6 @@ export function directPrintBill(data: BillPrintPayload): void {
 
   const rawRowsHtml = itemsToRender.map((it, idx) => {
     const isActual = idx < validItems.length;
-    const q = isActual ? (Number(it.qty) || 0) : 0;
     const u = isActual ? (Number(it.uCap) || 0) : 0;
     const l = isActual ? (Number(it.lCap) || 0) : 0;
     const cleanName = isActual ? (it.name || '').replace(/\./g, '').replace(/-/g, ' ') : '';
@@ -52,9 +68,12 @@ export function directPrintBill(data: BillPrintPayload): void {
         <td style="text-align: center; font-weight: 700; width: 50px;">${isActual ? idx + 1 : ''}</td>
         <td style="text-align: left; font-weight: 700; padding-left: 10px; font-size: 14.5px;">${cleanName}</td>
         ${showPCode ? `<td style="text-align: center; font-weight: 700; width: 130px;">${pCode}</td>` : ''}
-        <td style="text-align: center; font-weight: 800; font-size: 15px; width: 90px;">${q > 0 ? q : ''}</td>
-        <td style="text-align: center; font-weight: 800; font-size: 15px; width: 90px;">${u > 0 ? u : ''}</td>
-        <td style="text-align: center; font-weight: 800; font-size: 15px; width: 90px;">${l > 0 ? l : ''}</td>
+        ${sizeCols.map(sc => {
+          const val = isActual ? (Number((it as any)[sc.field]) || 0) : 0;
+          return `<td style="text-align: center; font-weight: 800; font-size: 15px; width: 80px;">${val > 0 ? val : ''}</td>`;
+        }).join('')}
+        <td style="text-align: center; font-weight: 800; font-size: 15px; width: 80px;">${u > 0 ? u : ''}</td>
+        <td style="text-align: center; font-weight: 800; font-size: 15px; width: 80px;">${l > 0 ? l : ''}</td>
       </tr>
     `;
   }).join('');
@@ -214,9 +233,9 @@ export function directPrintBill(data: BillPrintPayload): void {
                 <th style="width: 50px;">SR.</th>
                 <th>ITEM NAME</th>
                 ${showPCode ? '<th style="width: 130px;">PARTY CODE</th>' : ''}
-                <th style="width: 90px;">QTY</th>
-                <th style="width: 90px;">U CAP</th>
-                <th style="width: 90px;">L CAP</th>
+                ${sizeCols.map(sc => `<th style="width: 80px;">${sc.label}</th>`).join('')}
+                <th style="width: 80px;">U CAP</th>
+                <th style="width: 80px;">L CAP</th>
               </tr>
             </thead>
             <tbody>
@@ -224,9 +243,12 @@ export function directPrintBill(data: BillPrintPayload): void {
               ${isLoadingSlip ? `
                 <tr class="total-row" style="height: 36px;">
                   <td colspan="${showPCode ? 3 : 2}" style="text-align: right; font-size: 15px; font-weight: 900; padding-right: 14px; letter-spacing: 0.5px;">TOTAL</td>
-                  <td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${totalQty > 0 ? totalQty : ''}</td>
-                  <td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${totalUCap > 0 ? totalUCap : ''}</td>
-                  <td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${totalLCap > 0 ? totalLCap : ''}</td>
+                  ${sizeCols.map(sc => {
+                    const sum = colSums[sc.field] || 0;
+                    return `<td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${sum > 0 ? sum : ''}</td>`;
+                  }).join('')}
+                  <td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${colSums.uCap > 0 ? colSums.uCap : ''}</td>
+                  <td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${colSums.lCap > 0 ? colSums.lCap : ''}</td>
                 </tr>
               ` : ''}
             </tbody>

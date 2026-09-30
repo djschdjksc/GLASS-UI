@@ -114,7 +114,12 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             self._send_cors_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({'status': 'ok', 'engine': 'PyQt6 BillPainter Native'}).encode('utf-8'))
+            default_printer = QPrinter().printerName()
+            self.wfile.write(json.dumps({
+                'status': 'ok',
+                'engine': 'PyQt6 BillPainter Native',
+                'printer': default_printer
+            }).encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
@@ -167,6 +172,19 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 printer.setPageOrientation(QPageLayout.Orientation.Portrait)
                 printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
 
+                show_dialog = bool(payload.get('showDialog', False))
+                if show_dialog:
+                    from PyQt6.QtPrintSupport import QPrintDialog
+                    dialog = QPrintDialog(printer)
+                    dialog.setWindowTitle(f"Print - {bill_data.get('party', 'Bill')}")
+                    if dialog.exec() != QPrintDialog.DialogCode.Accepted:
+                        self.send_response(200)
+                        self._send_cors_headers()
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({'success': False, 'message': 'Print cancelled by user'}).encode('utf-8'))
+                        return
+
                 p = QPainter(printer)
                 bp = BillPainter(bill_data)
                 rect = printer.pageRect(QPrinter.Unit.DevicePixel).toRect()
@@ -177,11 +195,17 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                     bp.paint(p, rect, page_num=pg)
                 p.end()
 
+                printer_name = printer.printerName() or 'Default Printer'
                 self.send_response(200)
                 self._send_cors_headers()
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({'success': True, 'message': 'Native print job sent successfully!'}).encode('utf-8'))
+                self.wfile.write(json.dumps({
+                    'success': True,
+                    'message': f"Sent to {printer_name} ({total_p} page{'s' if total_p > 1 else ''}) in High-Resolution Vector mode!",
+                    'printer': printer_name,
+                    'totalPages': total_p
+                }).encode('utf-8'))
             except Exception as ex:
                 self.send_response(500)
                 self._send_cors_headers()

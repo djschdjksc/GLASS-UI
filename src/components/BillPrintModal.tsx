@@ -28,6 +28,7 @@ import {
   downloadBillCanvasAsImage,
   formatIndianCurrency
 } from '../utils/billCanvasPainter';
+import { directPrintBill } from '../utils/printHtmlHelper';
 
 export interface BillPrintModalProps {
   isOpen: boolean;
@@ -62,6 +63,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [nativeImage, setNativeImage] = useState<string | null>(null);
   const [isNativeServiceActive, setIsNativeServiceActive] = useState<boolean>(false);
+  const [detectedPrinter, setDetectedPrinter] = useState<string | null>(null);
+  const [isPrintingNative, setIsPrintingNative] = useState<boolean>(false);
+  const [printStatusMessage, setPrintStatusMessage] = useState<string | null>(null);
   const [retryTrigger, setRetryTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -168,6 +172,23 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     }
 
     let active = true;
+
+    // Detect default Windows printer & status
+    fetch('http://127.0.0.1:5005/api/status')
+      .then(res => res.json())
+      .then(statusData => {
+        if (active && statusData.status === 'ok') {
+          setIsNativeServiceActive(true);
+          if (statusData.printer) setDetectedPrinter(statusData.printer);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsNativeServiceActive(false);
+          setDetectedPrinter(null);
+        }
+      });
+
     fetch('http://127.0.0.1:5005/api/print/render-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -207,10 +228,17 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         return;
       }
 
-      // Ctrl+P: Direct Print
-      if (isCtrlOrCmd && (e.key === 'p' || e.key === 'P')) {
+      // Ctrl+Shift+P: Windows Print Dialog
+      if (isCtrlOrCmd && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
-        handleDirectPrint();
+        handleDirectPrint(true);
+        return;
+      }
+
+      // Ctrl+P: Direct Vector Print
+      if (isCtrlOrCmd && !e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        handleDirectPrint(false);
         return;
       }
 
@@ -301,19 +329,41 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     saveAdjustmentsCache(adjustments, newLabel);
   };
 
-  const handleDirectPrint = async () => {
+  const handleDirectPrint = async (showDialog = false) => {
     macAudio.playSuccess();
 
-    // High-resolution image print (Native PyQt6 or Canvas fallback)
-    const imgToPrint = nativeImage || (canvasRef.current ? canvasRef.current.toDataURL('image/png') : null);
-    if (imgToPrint) {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`<!DOCTYPE html><html><head><title>Print - ${header.partyName || 'Bill'}</title><style>@page{size:A4 portrait;margin:0;}body{margin:0;padding:0;display:flex;justify-content:center;background:#fff;}img{width:100%;max-width:210mm;height:auto;display:block;}</style></head><body><img src="${imgToPrint}" onload="window.print();setTimeout(()=>window.close(),1200);"/></body></html>`);
-        printWindow.document.close();
-        return;
+    if (isNativeServiceActive) {
+      setIsPrintingNative(true);
+      setPrintStatusMessage('🖨️ Preparing high-resolution vector print job...');
+      try {
+        const res = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...printPayload, showDialog })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setPrintStatusMessage(`✅ ${data.message || 'Print job sent successfully!'}`);
+          setTimeout(() => setPrintStatusMessage(null), 4500);
+          return;
+        } else if (data.message && data.message.includes('cancelled')) {
+          setPrintStatusMessage('ℹ️ Print cancelled');
+          setTimeout(() => setPrintStatusMessage(null), 2500);
+          return;
+        } else {
+          console.warn('Native direct-print returned error:', data.error);
+        }
+      } catch (err) {
+        console.warn('Native direct-print network error, falling back to vector browser print:', err);
+      } finally {
+        setIsPrintingNative(false);
       }
     }
+
+    // High-resolution Vector HTML Browser Print Fallback (NEVER blurry image print!)
+    setPrintStatusMessage('📄 Opening browser vector print...');
+    directPrintBill(printPayload);
+    setTimeout(() => setPrintStatusMessage(null), 2000);
   };
 
   const handleCopyAsImage = async () => {
@@ -928,32 +978,123 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               overflowY: 'auto'
             }}
           >
-            {/* 1. DIRECT PRINT BUTTON */}
+            {/* STATUS BANNER */}
+            {printStatusMessage && (
+              <div
+                style={{
+                  background: printStatusMessage.startsWith('✅')
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : 'rgba(56, 189, 248, 0.15)',
+                  border: `1px solid ${printStatusMessage.startsWith('✅') ? '#10b981' : '#38bdf8'}`,
+                  color: printStatusMessage.startsWith('✅') ? '#6ee7b7' : '#bae6fd',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                }}
+              >
+                {printStatusMessage}
+              </div>
+            )}
+
+            {/* 1. DIRECT VECTOR PRINT BUTTON */}
             <button
               type="button"
-              onClick={handleDirectPrint}
+              disabled={isPrintingNative}
+              onClick={() => handleDirectPrint(false)}
               onMouseEnter={() => macAudio.playHover()}
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: isPrintingNative
+                  ? 'rgba(16, 185, 129, 0.5)'
+                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 color: '#ffffff',
                 border: 'none',
-                height: '46px',
+                minHeight: '48px',
                 borderRadius: '8px',
                 fontWeight: 800,
                 fontSize: '13px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: '2px',
+                padding: '6px 12px',
                 boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
-                cursor: 'pointer',
+                cursor: isPrintingNative ? 'wait' : 'pointer',
                 transition: 'all 0.15s ease'
               }}
               title="Shortcut: Ctrl+P"
             >
-              <Printer size={18} />
-              <span>DIRECT PRINT (Ctrl+P)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Printer size={18} />
+                <span>{isPrintingNative ? 'PRINTING VECTOR...' : 'DIRECT PRINT (Ctrl+P)'}</span>
+              </div>
+              {detectedPrinter && isNativeServiceActive && (
+                <span style={{ fontSize: '10px', opacity: 0.92, fontWeight: 600 }}>
+                  🖨️ {detectedPrinter} (High-Res Vector 600 DPI)
+                </span>
+              )}
             </button>
+
+            {/* 1B. WINDOWS PRINT DIALOG / BROWSER PRINT */}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {isNativeServiceActive ? (
+                <button
+                  type="button"
+                  onClick={() => handleDirectPrint(true)}
+                  onMouseEnter={() => macAudio.playHover()}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    color: '#94a3b8',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    height: '32px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    fontSize: '10.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Select another printer or print to PDF via Windows dialog (Ctrl+Shift+P)"
+                >
+                  <span>Windows Dialog... (Ctrl+Shift+P)</span>
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => {
+                  macAudio.playClick();
+                  directPrintBill(printPayload);
+                }}
+                onMouseEnter={() => macAudio.playHover()}
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: '#94a3b8',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  height: '32px',
+                  borderRadius: '6px',
+                  fontWeight: 700,
+                  fontSize: '10.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Open browser print preview (Vector HTML / PDF)"
+              >
+                <span>Browser Vector Print...</span>
+              </button>
+            </div>
 
             {/* 2. COPY AS IMAGE TO CLIPBOARD */}
             <button
