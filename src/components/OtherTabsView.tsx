@@ -42,7 +42,8 @@ import {
   Layers,
   FileSpreadsheet,
   Grid,
-  List
+  List,
+  MessageCircle
 } from 'lucide-react';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { downloadCSV } from '../utils/exportCsv';
