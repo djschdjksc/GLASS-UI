@@ -1,0 +1,3060 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { 
+  Package, 
+  ArrowDownLeft, 
+  ArrowUpRight, 
+  Scale, 
+  Barcode, 
+  Plus, 
+  Trash2, 
+  Save, 
+  RotateCcw, 
+  Search, 
+  FileSpreadsheet, 
+  Printer, 
+  Eye, 
+  CheckSquare, 
+  Square, 
+  Sparkles, 
+  Layers, 
+  CheckCircle2, 
+  AlertCircle,
+  Calendar,
+  X,
+  RefreshCw,
+  ExternalLink,
+  ChevronRight
+} from 'lucide-react';
+import { localDb } from '../services/db/localDb';
+import type { BillRecord } from '../services/db/schema';
+import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
+import { macAudio } from '../utils/macAudio';
+
+// =========================================================================
+// TYPES & DATA CONTRACTS
+// =========================================================================
+
+export type StockInnerTab = 'entry' | 'inward' | 'outward' | 'balance' | 'barcode';
+
+export interface StockVoucherItem {
+  id: string;
+  name: string;
+  qty: number;
+  uCap: number;
+  lCap: number;
+  price?: number;
+  total?: number;
+  uom?: string;
+  partyCode?: string;
+}
+
+export interface StockVoucher {
+  id: number;
+  voucherNo: string;
+  date: string;
+  partyName: string;
+  remarks: string;
+  items: StockVoucherItem[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface OutwardStockItem {
+  id: string;
+  billId: string;
+  token: string;
+  docType: string;
+  date: string;
+  party: string;
+  name: string;
+  qty: number;
+  uCap: number;
+  lCap: number;
+  sizeLabel: string;
+}
+
+export interface StockBalanceRow {
+  itemName: string;
+  category: string;
+  inwardQty: number;
+  outwardQty: number;
+  balanceQty: number;
+  inwardUCap: number;
+  outwardUCap: number;
+  balanceUCap: number;
+  inwardLCap: number;
+  outwardLCap: number;
+  balanceLCap: number;
+  status: 'IN STOCK' | 'LOW STOCK' | 'NEGATIVE' | 'ZERO';
+}
+
+export interface BarcodeItemState {
+  itemName: string;
+  category: string;
+  qty: number;
+  qtyChecked: boolean;
+  uCapName: string;
+  uCapQty: number;
+  uCapChecked: boolean;
+  lCapName: string;
+  lCapQty: number;
+  lCapChecked: boolean;
+}
+
+// Storage keys
+const STOCK_VOUCHERS_KEY = 'modern_stock_vouchers';
+const STOCK_COUNTER_KEY = 'modern_stock_voucher_counter';
+
+// Helper: Normalize item name with size e.g. "C M 161 (10FT)"
+export function formatItemWithSize(rawName: string, sizeLabel?: string): string {
+  const trimmed = (rawName || '').trim();
+  if (!trimmed) return '';
+  
+  // If already contains (XXFT) or (XX FT) or (XX)
+  if (/\(\s*\d+(\.\d+)?\s*(ft|feet)?\s*\)/i.test(trimmed)) {
+    return trimmed;
+  }
+  
+  const size = (sizeLabel || '10FT').trim().toUpperCase().replace(/\s+/g, '');
+  const cleanSize = size.endsWith('FT') ? size : `${size}FT`;
+  return `${trimmed} (${cleanSize})`;
+}
+
+// Helper: Extract category prefix (first word)
+export function getCategoryPrefix(name: string): string {
+  const parts = name.trim().split(' ');
+  return parts.length > 0 && parts[0] ? parts[0].toUpperCase() : 'GENERAL';
+}
+
+// =========================================================================
+// MAIN STOCK INVENTORY COMPONENT
+// =========================================================================
+
+interface StockInventoryViewProps {
+  onBackToBill?: () => void;
+  onOpenBillDetails?: (billId: string) => void;
+  showToast?: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
+}
+
+export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
+  onBackToBill,
+  onOpenBillDetails,
+  showToast = (msg) => console.log(msg)
+}) => {
+  // Navigation & Sub-Tabs
+  const [activeTab, setActiveTab] = useState<StockInnerTab>('entry');
+
+  // --- TAB 1: ENTER STOCK STATE ---
+  const [editingVoucherId, setEditingVoucherId] = useState<number | null>(null);
+  const [voucherDate, setVoucherDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [voucherRemarks, setVoucherRemarks] = useState<string>('');
+  const [loadVoucherIdInput, setLoadVoucherIdInput] = useState<string>('');
+  const [barcodeScanInput, setBarcodeScanInput] = useState<string>('');
+
+  // Smart Toggles (Auto-Convert, Auto-Item, Simple Mode)
+  const [autoConvert, setAutoConvert] = useState<boolean>(true);
+  const [autoItem, setAutoItem] = useState<boolean>(true);
+  const [simpleMode, setSimpleMode] = useState<boolean>(false);
+
+  // Dynamic Item Rows for Voucher
+  const [stockRows, setStockRows] = useState<StockVoucherItem[]>([
+    { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }
+  ]);
+
+  // Autocomplete dropdown state
+  const [activeSuggestRow, setActiveSuggestRow] = useState<number | null>(null);
+  const [suggestQuery, setSuggestQuery] = useState<string>('');
+  const [suggestIndex, setSuggestIndex] = useState<number>(0);
+
+  // --- TAB 2: INWARD HISTORY STATE ---
+  const [inwardSearch, setInwardSearch] = useState<string>('');
+  const [inwardTypeFilter, setInwardTypeFilter] = useState<string>('ALL TYPES');
+
+  // --- TAB 3: SALE (OUTWARD) STATE ---
+  const [outwardSearch, setOutwardSearch] = useState<string>('');
+  const [outwardTypeFilter, setOutwardTypeFilter] = useState<string>('ALL TYPES');
+
+  // --- TAB 4: STOCK BALANCE STATE ---
+  const [balanceSearch, setBalanceSearch] = useState<string>('');
+  const [balanceFilter, setBalanceFilter] = useState<string>('All Items');
+  const [balanceCategory, setBalanceCategory] = useState<string>('All Categories');
+
+  // --- TAB 5: PRINT BARCODE STATE ---
+  const [barcodeSearch, setBarcodeSearch] = useState<string>('');
+  const [barcodeCategory, setBarcodeCategory] = useState<string>('All Categories');
+  const [barcodeStates, setBarcodeStates] = useState<Record<string, BarcodeItemState>>({});
+  const [isBarcodePreviewOpen, setIsBarcodePreviewOpen] = useState<boolean>(false);
+
+  // --- REPOSITORIES & DATA STORAGE ---
+  const [vouchers, setVouchers] = useState<StockVoucher[]>(() => {
+    try {
+      const saved = localStorage.getItem(STOCK_VOUCHERS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // Seed initial voucher if completely empty
+    return [
+      {
+        id: 1,
+        voucherNo: 'VOUCHER-1',
+        date: new Date().toISOString().split('T')[0],
+        partyName: 'FACTORY INWARD ENTRY',
+        remarks: 'Opening Production Stock',
+        items: [
+          { id: '1', name: 'C M 161 (10FT)', qty: 150, uCap: 150, lCap: 150 },
+          { id: '2', name: 'C M 161 (12FT)', qty: 80, uCap: 80, lCap: 80 },
+          { id: '3', name: 'B.F.P-(G) (10FT)', qty: 200, uCap: 200, lCap: 200 },
+          { id: '4', name: 'LOUVER-801 (10FT)', qty: 100, uCap: 0, lCap: 0 }
+        ],
+        createdAt: Date.now() - 86400000,
+        updatedAt: Date.now() - 86400000
+      }
+    ];
+  });
+
+  // Sync vouchers to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STOCK_VOUCHERS_KEY, JSON.stringify(vouchers));
+    } catch (e) {
+      console.warn('Failed to save stock vouchers to localStorage', e);
+    }
+  }, [vouchers]);
+
+  // Master conversions & shortcuts lookup
+  const conversions = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('billapp_conversions');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return SQLITE_CONTROL_CONVERSIONS;
+  }, []);
+
+  // Quick lookup dictionary from shortcuts/conversions
+  const conversionMap = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const c of conversions) {
+      if (c.shortcut) map.set(c.shortcut.toLowerCase(), c);
+      if (c.conversion) map.set(c.conversion.toLowerCase(), c);
+    }
+    return map;
+  }, [conversions]);
+
+  // Bills loaded from reactive localDb
+  const [bills, setBills] = useState<BillRecord[]>(() => localDb.getBills());
+
+  useEffect(() => {
+    const unsubscribe = localDb.subscribe<BillRecord[]>('bills', (updatedBills) => {
+      setBills(updatedBills);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // =========================================================================
+  // DYNAMIC OUTWARD STOCK AGGREGATION (WITH MULTI-COLUMN SIZES)
+  // =========================================================================
+  const outwardItems = useMemo<OutwardStockItem[]>(() => {
+    const list: OutwardStockItem[] = [];
+
+    bills.forEach((bill) => {
+      // Outward applies to Bill, Order, Sale Bill, etc. (Exclude Purchase which is inward)
+      const docTypeUpper = (bill.docType || 'SALE BILL').toUpperCase();
+      if (docTypeUpper.includes('PURCHASE')) return;
+
+      const dynamicCols = bill.dynamicCols || [];
+
+      (bill.rawItems || []).forEach((item, itemIdx) => {
+        const baseName = (item.name || '').trim();
+        if (!baseName) return;
+
+        // 1. Main column (10 FT standard)
+        const mainQty = Number(item.qty) || 0;
+        if (mainQty > 0) {
+          list.push({
+            id: `${bill.id}-raw-${itemIdx}-main`,
+            billId: bill.id,
+            token: String(bill.token || bill.id),
+            docType: bill.docType || 'Bill',
+            date: bill.date || '',
+            party: bill.party || 'Standard Party',
+            name: formatItemWithSize(baseName, '10FT'),
+            qty: mainQty,
+            uCap: Number(item.uCap) || 0,
+            lCap: Number(item.lCap) || 0,
+            sizeLabel: '10FT'
+          });
+        }
+
+        // 2. Dynamic multi-columns (e.g. 12FT, 9.5FT, 11FT, etc.)
+        dynamicCols.forEach((col) => {
+          const colQty = Number((item as any)[col.field]) || 0;
+          if (colQty > 0) {
+            list.push({
+              id: `${bill.id}-raw-${itemIdx}-${col.field}`,
+              billId: bill.id,
+              token: String(bill.token || bill.id),
+              docType: bill.docType || 'Bill',
+              date: bill.date || '',
+              party: bill.party || 'Standard Party',
+              name: formatItemWithSize(baseName, col.label || '12FT'),
+              qty: colQty,
+              uCap: 0,
+              lCap: 0,
+              sizeLabel: col.label || '12FT'
+            });
+          }
+        });
+
+        // 3. Fallback check for any extra fields starting with 'col_' or 'qty_'
+        Object.keys(item).forEach((k) => {
+          if (k.startsWith('col_') && !dynamicCols.some((dc) => dc.field === k)) {
+            const extraQty = Number((item as any)[k]) || 0;
+            if (extraQty > 0) {
+              const guessedSize = k.replace('col_', '').toUpperCase();
+              list.push({
+                id: `${bill.id}-raw-${itemIdx}-${k}`,
+                billId: bill.id,
+                token: String(bill.token || bill.id),
+                docType: bill.docType || 'Bill',
+                date: bill.date || '',
+                party: bill.party || 'Standard Party',
+                name: formatItemWithSize(baseName, guessedSize),
+                qty: extraQty,
+                uCap: 0,
+                lCap: 0,
+                sizeLabel: guessedSize
+              });
+            }
+          }
+        });
+      });
+    });
+
+    return list;
+  }, [bills]);
+
+  // =========================================================================
+  // DYNAMIC INWARD STOCK AGGREGATION
+  // =========================================================================
+  const inwardItems = useMemo(() => {
+    const list: {
+      id: string;
+      voucherId: string;
+      voucherType: 'STOCK VOUCHER' | 'PURCHASE';
+      date: string;
+      party: string;
+      name: string;
+      qty: number;
+      uCap: number;
+      lCap: number;
+      rawVoucherId: number | null;
+    }[] = [];
+
+    // 1. Stock vouchers
+    vouchers.forEach((v) => {
+      v.items.forEach((item, idx) => {
+        if (!item.name) return;
+        list.push({
+          id: `V-${v.id}-${idx}`,
+          voucherId: `VOUCHER-${v.id}`,
+          voucherType: 'STOCK VOUCHER',
+          date: v.date,
+          party: v.remarks ? `${v.partyName || 'Inward'} (${v.remarks})` : v.partyName || 'Stock Entry',
+          name: formatItemWithSize(item.name),
+          qty: Number(item.qty) || 0,
+          uCap: Number(item.uCap) || 0,
+          lCap: Number(item.lCap) || 0,
+          rawVoucherId: v.id
+        });
+      });
+    });
+
+    // 2. Purchase Bills from localDb
+    bills.forEach((b) => {
+      const docTypeUpper = (b.docType || '').toUpperCase();
+      if (!docTypeUpper.includes('PURCHASE')) return;
+
+      (b.rawItems || []).forEach((item, idx) => {
+        if (!item.name) return;
+        list.push({
+          id: `B-${b.id}-${idx}`,
+          voucherId: `BILL-${b.id}`,
+          voucherType: 'PURCHASE',
+          date: b.date,
+          party: b.party || 'Supplier',
+          name: formatItemWithSize(item.name, '10FT'),
+          qty: Number(item.qty) || 0,
+          uCap: Number(item.uCap) || 0,
+          lCap: Number(item.lCap) || 0,
+          rawVoucherId: null
+        });
+      });
+    });
+
+    return list;
+  }, [vouchers, bills]);
+
+  // =========================================================================
+  // STOCK BALANCE CALCULATION (PER EXACT ITEM + SIZE)
+  // =========================================================================
+  const stockBalanceList = useMemo<StockBalanceRow[]>(() => {
+    const map = new Map<string, {
+      itemName: string;
+      category: string;
+      inwardQty: number;
+      outwardQty: number;
+      inwardUCap: number;
+      outwardUCap: number;
+      inwardLCap: number;
+      outwardLCap: number;
+    }>();
+
+    // Helper to get or init item
+    const getOrInit = (rawName: string) => {
+      const cleanName = formatItemWithSize(rawName);
+      const key = cleanName.toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, {
+          itemName: cleanName,
+          category: getCategoryPrefix(cleanName),
+          inwardQty: 0,
+          outwardQty: 0,
+          inwardUCap: 0,
+          outwardUCap: 0,
+          inwardLCap: 0,
+          outwardLCap: 0
+        });
+      }
+      return map.get(key)!;
+    };
+
+    // Aggregate Inwards
+    inwardItems.forEach((inw) => {
+      const row = getOrInit(inw.name);
+      row.inwardQty += inw.qty;
+      row.inwardUCap += inw.uCap;
+      row.inwardLCap += inw.lCap;
+    });
+
+    // Aggregate Outwards
+    outwardItems.forEach((outw) => {
+      const row = getOrInit(outw.name);
+      row.outwardQty += outw.qty;
+      row.outwardUCap += outw.uCap;
+      row.outwardLCap += outw.lCap;
+    });
+
+    // Compute balances and status
+    const result: StockBalanceRow[] = [];
+    map.forEach((item) => {
+      const balQty = item.inwardQty - item.outwardQty;
+      const balUCap = item.inwardUCap - item.outwardUCap;
+      const balLCap = item.inwardLCap - item.outwardLCap;
+
+      let status: 'IN STOCK' | 'LOW STOCK' | 'NEGATIVE' | 'ZERO' = 'ZERO';
+      if (balQty > 20) {
+        status = 'IN STOCK';
+      } else if (balQty > 0) {
+        status = 'LOW STOCK';
+      } else if (balQty < 0) {
+        status = 'NEGATIVE';
+      }
+
+      result.push({
+        itemName: item.itemName,
+        category: item.category,
+        inwardQty: item.inwardQty,
+        outwardQty: item.outwardQty,
+        balanceQty: balQty,
+        inwardUCap: item.inwardUCap,
+        outwardUCap: item.outwardUCap,
+        balanceUCap: balUCap,
+        inwardLCap: item.inwardLCap,
+        outwardLCap: item.outwardLCap,
+        balanceLCap: balLCap,
+        status
+      });
+    });
+
+    return result.sort((a, b) => a.itemName.localeCompare(b.itemName));
+  }, [inwardItems, outwardItems]);
+
+  // Live balance lookup helper for Enter Stock rows
+  const getLiveItemBalance = (name: string): number => {
+    if (!name.trim()) return 0;
+    const formatted = formatItemWithSize(name).toLowerCase();
+    const found = stockBalanceList.find((b) => b.itemName.toLowerCase() === formatted);
+    return found ? found.balanceQty : 0;
+  };
+
+  // Distinct Categories for filters
+  const uniqueCategories = useMemo(() => {
+    const set = new Set<string>();
+    stockBalanceList.forEach((b) => set.add(b.category));
+    return ['All Categories', ...Array.from(set).sort()];
+  }, [stockBalanceList]);
+
+  // Overall KPI Balances
+  const totalStats = useMemo(() => {
+    let totalItems = stockBalanceList.length;
+    let totalQty = 0;
+    let totalUCap = 0;
+    let totalLCap = 0;
+
+    stockBalanceList.forEach((r) => {
+      totalQty += r.balanceQty;
+      totalUCap += r.balanceUCap;
+      totalLCap += r.balanceLCap;
+    });
+
+    return { totalItems, totalQty, totalUCap, totalLCap };
+  }, [stockBalanceList]);
+
+  // =========================================================================
+  // TAB 1: ENTER STOCK INTERACTIONS & HELPERS
+  // =========================================================================
+
+  // Duplicate items detection
+  const duplicateItemSummary = useMemo(() => {
+    const counts = new Map<string, number>();
+    stockRows.forEach((r) => {
+      const name = r.name.trim().toLowerCase();
+      if (name) {
+        counts.set(name, (counts.get(name) || 0) + 1);
+      }
+    });
+
+    let dupCount = 0;
+    const dupNames: string[] = [];
+    counts.forEach((cnt, name) => {
+      if (cnt > 1) {
+        dupCount += cnt - 1;
+        dupNames.push(name);
+      }
+    });
+
+    return { count: dupCount, names: dupNames };
+  }, [stockRows]);
+
+  // Stock rows live totals
+  const entryTotals = useMemo(() => {
+    let qty = 0;
+    let uCap = 0;
+    let lCap = 0;
+    let validItems = 0;
+
+    stockRows.forEach((r) => {
+      if (r.name.trim()) {
+        validItems++;
+        qty += Number(r.qty) || 0;
+        uCap += Number(r.uCap) || 0;
+        lCap += Number(r.lCap) || 0;
+      }
+    });
+
+    return { qty, uCap, lCap, validItems };
+  }, [stockRows]);
+
+  // Autocomplete suggestions generator
+  const currentSuggestions = useMemo(() => {
+    if (!suggestQuery.trim()) return [];
+    const q = suggestQuery.trim().toLowerCase();
+
+    const matches: { name: string; uCap: number; lCap: number; desc?: string }[] = [];
+
+    // Check conversions
+    for (const c of conversions) {
+      const sc = (c.shortcut || '').toLowerCase();
+      const conv = (c.conversion || '').toLowerCase();
+
+      if (sc.startsWith(q) || conv.includes(q)) {
+        const u = Number(c.u_cap) || (c.u_cap && c.u_cap !== '0' ? 1 : 0);
+        const l = Number(c.l_cap) || (c.l_cap && c.l_cap !== '0' ? 1 : 0);
+        
+        // Add 10FT and 12FT variants
+        matches.push({
+          name: formatItemWithSize(c.conversion || c.shortcut, '10FT'),
+          uCap: u,
+          lCap: l,
+          desc: `Shortcut [${c.shortcut}]`
+        });
+        matches.push({
+          name: formatItemWithSize(c.conversion || c.shortcut, '12FT'),
+          uCap: u,
+          lCap: l,
+          desc: `12FT Variant`
+        });
+      }
+      if (matches.length >= 8) break;
+    }
+
+    return matches;
+  }, [suggestQuery, conversions]);
+
+  // Handle row field change
+  const handleStockRowChange = (index: number, field: keyof StockVoucherItem, value: any) => {
+    setStockRows((prev) => {
+      const updated = [...prev];
+      const row = { ...updated[index], [field]: value };
+
+      // Auto-item & Auto-convert expansion logic
+      if (field === 'name' && typeof value === 'string') {
+        const trimmed = value.trim();
+        const lower = trimmed.toLowerCase();
+
+        // Check if exact match to a shortcut and autoConvert is ON
+        if (autoConvert && conversionMap.has(lower)) {
+          const match = conversionMap.get(lower);
+          row.name = formatItemWithSize(match.conversion || match.shortcut, '10FT');
+          if (autoItem) {
+            row.uCap = Number(match.u_cap) || 0;
+            row.lCap = Number(match.l_cap) || 0;
+          }
+        }
+      }
+
+      updated[index] = row;
+      return updated;
+    });
+  };
+
+  // Add blank row
+  const handleAddStockRow = () => {
+    macAudio.playPop();
+    setStockRows((prev) => [
+      ...prev,
+      { id: `row-${Date.now()}-${prev.length + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
+    ]);
+  };
+
+  // Delete row
+  const handleDeleteStockRow = (index: number) => {
+    if (stockRows.length === 1) {
+      setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+      return;
+    }
+    macAudio.playTrash();
+    setStockRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Barcode quick scan into stock entry
+  const handleBarcodeScan = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const code = barcodeScanInput.trim();
+      if (!code) return;
+
+      macAudio.playSuccess();
+      const formatted = formatItemWithSize(code, '10FT');
+      
+      // Auto fill cap info if shortcut exists
+      let u = 0;
+      let l = 0;
+      const match = conversionMap.get(code.toLowerCase());
+      if (match) {
+        u = Number(match.u_cap) || 0;
+        l = Number(match.l_cap) || 0;
+      }
+
+      setStockRows((prev) => {
+        // If last row is empty, fill it, else append
+        const lastRow = prev[prev.length - 1];
+        if (lastRow && !lastRow.name) {
+          const updated = [...prev];
+          updated[prev.length - 1] = {
+            ...lastRow,
+            name: formatted,
+            qty: 1,
+            uCap: u,
+            lCap: l
+          };
+          return [...updated, { id: `row-${Date.now()}`, name: '', qty: 0, uCap: 0, lCap: 0 }];
+        } else {
+          return [
+            ...prev,
+            { id: `row-${Date.now()}`, name: formatted, qty: 1, uCap: u, lCap: l },
+            { id: `row-${Date.now() + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
+          ];
+        }
+      });
+
+      setBarcodeScanInput('');
+      showToast(`Scanned item: ${formatted}`, 'success');
+    }
+  };
+
+  // Save or Update Stock Voucher
+  const handleSaveVoucher = () => {
+    const validRows = stockRows
+      .filter((r) => r.name.trim() && (Number(r.qty) > 0 || Number(r.uCap) > 0 || Number(r.lCap) > 0))
+      .map((r) => ({
+        ...r,
+        name: formatItemWithSize(r.name)
+      }));
+
+    if (validRows.length === 0) {
+      macAudio.playWarning();
+      showToast('Please enter at least one item with valid quantity or caps!', 'warning');
+      return;
+    }
+
+    if (editingVoucherId !== null) {
+      // Update existing voucher
+      setVouchers((prev) =>
+        prev.map((v) =>
+          v.id === editingVoucherId
+            ? {
+                ...v,
+                date: voucherDate,
+                remarks: voucherRemarks,
+                items: validRows,
+                updatedAt: Date.now()
+              }
+            : v
+        )
+      );
+      macAudio.playSuccess();
+      showToast(`Stock Voucher #${editingVoucherId} Updated Successfully!`, 'success');
+      setEditingVoucherId(null);
+    } else {
+      // Create new voucher
+      let counter = 1;
+      try {
+        const c = localStorage.getItem(STOCK_COUNTER_KEY);
+        counter = c ? parseInt(c, 10) + 1 : vouchers.length + 1;
+      } catch {}
+      localStorage.setItem(STOCK_COUNTER_KEY, String(counter));
+
+      const newVoucher: StockVoucher = {
+        id: counter,
+        voucherNo: `VOUCHER-${counter}`,
+        date: voucherDate,
+        partyName: 'FACTORY INWARD ENTRY',
+        remarks: voucherRemarks,
+        items: validRows,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      setVouchers((prev) => [newVoucher, ...prev]);
+      macAudio.playSuccess();
+      showToast(`Stock Voucher #${counter} Saved Successfully!`, 'success');
+    }
+
+    // Reset table for next entry
+    setVoucherRemarks('');
+    setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+  };
+
+  // Load Voucher into Enter Stock for editing
+  const handleLoadVoucherForEdit = (voucherId: number) => {
+    const found = vouchers.find((v) => v.id === voucherId);
+    if (!found) {
+      macAudio.playError();
+      showToast(`Stock Voucher #${voucherId} NOT FOUND!`, 'error');
+      return;
+    }
+
+    macAudio.playPop();
+    setEditingVoucherId(found.id);
+    setVoucherDate(found.date);
+    setVoucherRemarks(found.remarks || '');
+    setStockRows(
+      found.items.map((it, idx) => ({
+        ...it,
+        id: `edit-row-${idx}`
+      }))
+    );
+    setActiveTab('entry');
+    showToast(`Loaded Voucher #${voucherId} for Editing`, 'info');
+  };
+
+  // Cancel edit mode
+  const handleCancelEdit = () => {
+    setEditingVoucherId(null);
+    setVoucherRemarks('');
+    setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+    showToast('Cancelled Voucher Edit Mode', 'info');
+  };
+
+  // Delete Voucher
+  const handleDeleteVoucher = (voucherId: number) => {
+    if (window.confirm(`Are you sure you want to delete Stock Voucher #${voucherId}?`)) {
+      macAudio.playTrash();
+      setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
+      if (editingVoucherId === voucherId) {
+        handleCancelEdit();
+      }
+      showToast(`Voucher #${voucherId} deleted`, 'info');
+    }
+  };
+
+  // =========================================================================
+  // TAB 4: STOCK BALANCE TOOLS (EXPORT CSV & PRINT REPORT)
+  // =========================================================================
+
+  // Export Stock Balance CSV
+  const handleExportStockCsv = () => {
+    macAudio.playClick();
+    const headers = [
+      'Item Name',
+      'Category',
+      'Inward Qty',
+      'Outward Qty',
+      'Balance Qty',
+      'Inward U-Cap',
+      'Outward U-Cap',
+      'Balance U-Cap',
+      'Inward L-Cap',
+      'Outward L-Cap',
+      'Balance L-Cap',
+      'Status'
+    ];
+
+    const rows = stockBalanceList.map((r) => [
+      `"${r.itemName}"`,
+      `"${r.category}"`,
+      r.inwardQty,
+      r.outwardQty,
+      r.balanceQty,
+      r.inwardUCap,
+      r.outwardUCap,
+      r.balanceUCap,
+      r.inwardLCap,
+      r.outwardLCap,
+      r.balanceLCap,
+      `"${r.status}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Stock_Balance_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Stock Balance CSV exported successfully!', 'success');
+  };
+
+  // Print Stock Report
+  const handlePrintStockReport = () => {
+    macAudio.playClick();
+    const printWindow = window.open('', '_blank', 'width=950,height=750');
+    if (!printWindow) {
+      showToast('Could not open print window. Please allow popups.', 'error');
+      return;
+    }
+
+    const rowsHtml = stockBalanceList
+      .map(
+        (r, idx) => `
+        <tr style="background: ${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-weight: bold;">${r.itemName}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${r.inwardQty}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${r.outwardQty}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: ${
+            r.balanceQty < 0 ? '#dc2626' : '#059669'
+          }">${r.balanceQty}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${r.inwardUCap}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${r.outwardUCap}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${r.balanceUCap}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${r.inwardLCap}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${r.outwardLCap}</td>
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${r.balanceLCap}</td>
+        </tr>
+      `
+      )
+      .join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Stock Inventory Balance Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; color: #0f172a; }
+            h2 { margin: 0 0 4px 0; color: #0f172a; }
+            p { margin: 0 0 16px 0; color: #64748b; font-size: 13px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            th { background: #0f172a; color: white; padding: 7px 8px; border: 1px solid #0f172a; }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 10mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <h2>STOCK INVENTORY BALANCE REPORT</h2>
+          <p>Generated on ${new Date().toLocaleString()} | Total Items: ${stockBalanceList.length} | Net Qty: ${totalStats.totalQty}</p>
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2">Item Name (With Size)</th>
+                <th colspan="3">ITEM QTY</th>
+                <th colspan="3">U CAP</th>
+                <th colspan="3">L CAP</th>
+              </tr>
+              <tr>
+                <th>Inward</th><th>Outward</th><th>Balance</th>
+                <th>Inward</th><th>Outward</th><th>Balance</th>
+                <th>Inward</th><th>Outward</th><th>Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // =========================================================================
+  // TAB 5: PRINT BARCODE LOGIC
+  // =========================================================================
+
+  // Populate barcode states from stock items if empty
+  useEffect(() => {
+    if (Object.keys(barcodeStates).length === 0 && stockBalanceList.length > 0) {
+      const initial: Record<string, BarcodeItemState> = {};
+      stockBalanceList.forEach((b) => {
+        initial[b.itemName] = {
+          itemName: b.itemName,
+          category: b.category,
+          qty: 1,
+          qtyChecked: true,
+          uCapName: 'U Cap',
+          uCapQty: 1,
+          uCapChecked: false,
+          lCapName: 'L Cap',
+          lCapQty: 1,
+          lCapChecked: false
+        };
+      });
+      setBarcodeStates(initial);
+    }
+  }, [stockBalanceList, barcodeStates]);
+
+  // Barcode items filtered
+  const filteredBarcodeItems = useMemo(() => {
+    return stockBalanceList.filter((b) => {
+      const matchSearch = !barcodeSearch.trim() || b.itemName.toLowerCase().includes(barcodeSearch.toLowerCase());
+      const matchCat = barcodeCategory === 'All Categories' || b.category === barcodeCategory;
+      return matchSearch && matchCat;
+    });
+  }, [stockBalanceList, barcodeSearch, barcodeCategory]);
+
+  // Toggle all checkboxes
+  const handleToggleAllBarcode = (field: 'qtyChecked' | 'uCapChecked' | 'lCapChecked', targetState: boolean) => {
+    macAudio.playClick();
+    setBarcodeStates((prev) => {
+      const updated = { ...prev };
+      filteredBarcodeItems.forEach((it) => {
+        if (!updated[it.itemName]) {
+          updated[it.itemName] = {
+            itemName: it.itemName,
+            category: it.category,
+            qty: 1,
+            qtyChecked: false,
+            uCapName: 'U Cap',
+            uCapQty: 1,
+            uCapChecked: false,
+            lCapName: 'L Cap',
+            lCapQty: 1,
+            lCapChecked: false
+          };
+        }
+        updated[it.itemName] = {
+          ...updated[it.itemName],
+          [field]: targetState
+        };
+      });
+      return updated;
+    });
+  };
+
+  // Compile print jobs for barcode
+  const barcodePrintJobs = useMemo(() => {
+    const jobs: { name: string; component: string; code: string; qty: number }[] = [];
+
+    Object.values(barcodeStates).forEach((st) => {
+      if (st.qtyChecked && st.qty > 0) {
+        jobs.push({
+          name: st.itemName,
+          component: 'ITEM',
+          code: st.itemName.replace(/[^A-Za-z0-9]/g, '').slice(0, 10).toUpperCase(),
+          qty: st.qty
+        });
+      }
+      if (st.uCapChecked && st.uCapQty > 0) {
+        jobs.push({
+          name: `${st.itemName} (U-CAP)`,
+          component: 'U-CAP',
+          code: `U-${st.itemName.replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase()}`,
+          qty: st.uCapQty
+        });
+      }
+      if (st.lCapChecked && st.lCapQty > 0) {
+        jobs.push({
+          name: `${st.itemName} (L-CAP)`,
+          component: 'L-CAP',
+          code: `L-${st.itemName.replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase()}`,
+          qty: st.lCapQty
+        });
+      }
+    });
+
+    return jobs;
+  }, [barcodeStates]);
+
+  // =========================================================================
+  // RENDER INTERFACE
+  // =========================================================================
+
+  return (
+    <div 
+      className="glass-panel" 
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        overflow: 'hidden',
+        background: 'rgba(11, 15, 25, 0.94)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: '10px'
+      }}
+    >
+      {/* ------------------------------------------------------------- */}
+      {/* TOP HEADER: TITLE & 5 SUB-TABS (MATCHING DESKTOP SOFTWARE) */}
+      {/* ------------------------------------------------------------- */}
+      <div 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 12px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'rgba(0, 0, 0, 0.35)',
+          gap: '12px',
+          flexShrink: 0
+        }}
+      >
+        {/* Module Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div 
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '7px',
+              background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.25) 0%, rgba(234, 88, 12, 0.4) 100%)',
+              border: '1px solid rgba(251, 146, 60, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fb923c'
+            }}
+          >
+            <Package size={16} />
+          </div>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
+              STOCK INVENTORY
+            </div>
+            <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 500 }}>
+              Multi-Column Length Tracker • F8 Shortcut
+            </div>
+          </div>
+        </div>
+
+        {/* 5 Inner Tabs Bar */}
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(15, 23, 42, 0.65)',
+            padding: '3px',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
+            gap: '2px'
+          }}
+        >
+          {[
+            { key: 'entry', label: 'ENTER STOCK', icon: <ArrowDownLeft size={13} />, color: '#10b981' },
+            { key: 'inward', label: 'INWARD HISTORY', icon: <Layers size={13} />, color: '#06b6d4' },
+            { key: 'outward', label: 'SALE (OUTWARD)', icon: <ArrowUpRight size={13} />, color: '#f43f5e' },
+            { key: 'balance', label: 'STOCK BALANCE', icon: <Scale size={13} />, color: '#fb923c' },
+            { key: 'barcode', label: 'PRINT BARCODE', icon: <Barcode size={13} />, color: '#a855f7' }
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  macAudio.playClick();
+                  setActiveTab(tab.key as StockInnerTab);
+                }}
+                onMouseEnter={() => macAudio.playHover()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: isActive ? 700 : 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  background: isActive 
+                    ? `linear-gradient(135deg, ${tab.color}33 0%, ${tab.color}18 100%)` 
+                    : 'transparent',
+                  color: isActive ? '#f8fafc' : '#94a3b8',
+                  boxShadow: isActive ? `0 0 10px ${tab.color}25, inset 0 0 0 1px ${tab.color}50` : 'none'
+                }}
+              >
+                <span style={{ color: isActive ? tab.color : '#64748b' }}>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Quick Back to Bill or Status Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {editingVoucherId !== null && (
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                background: 'rgba(239, 68, 68, 0.18)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                color: '#f87171',
+                fontSize: '11px',
+                fontWeight: 700
+              }}
+            >
+              <span>EDITING #{editingVoucherId}</span>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#f87171',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  padding: 0
+                }}
+                title="Cancel Edit"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
+          {onBackToBill && (
+            <button
+              type="button"
+              onClick={() => {
+                macAudio.playClick();
+                onBackToBill();
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: '#e2e8f0',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                cursor: 'pointer'
+              }}
+            >
+              <span>Back to Bill</span>
+              <ChevronRight size={13} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* INNER TAB CONTENT */}
+      {/* ------------------------------------------------------------- */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+        {/* =========================================================== */}
+        {/* TAB 1: ENTER STOCK (INWARD ENTRY) */}
+        {/* =========================================================== */}
+        {activeTab === 'entry' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
+            
+            {/* Header: Date, Remarks, Voucher Load */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'rgba(26, 31, 44, 0.7)',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                flexShrink: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Date:</span>
+                <input
+                  type="date"
+                  value={voucherDate}
+                  onChange={(e) => setVoucherDate(e.target.value)}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#f8fafc',
+                    padding: '3px 8px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Remarks:</span>
+                <input
+                  type="text"
+                  placeholder="Remarks / Supplier Invoice / Reference No (Optional)"
+                  value={voucherRemarks}
+                  onChange={(e) => setVoucherRemarks(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#f8fafc',
+                    padding: '3px 10px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Load Voucher by ID */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <input
+                  type="number"
+                  placeholder="Voucher ID..."
+                  value={loadVoucherIdInput}
+                  onChange={(e) => setLoadVoucherIdInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && loadVoucherIdInput) {
+                      handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
+                    }
+                  }}
+                  style={{
+                    width: '90px',
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#38bdf8',
+                    padding: '3px 8px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (loadVoucherIdInput) {
+                      handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    color: '#38bdf8',
+                    padding: '3px 8px',
+                    borderRadius: '5px',
+                    fontSize: '10.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Load
+                </button>
+              </div>
+            </div>
+
+            {/* Inward Items Entry Table */}
+            <div 
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                background: 'rgba(15, 23, 42, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '8px'
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
+                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <th style={{ width: '38px', padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>#</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME (WITH SIZE)</th>
+                    <th style={{ width: '100px', padding: '6px 8px', textAlign: 'right', color: '#34d399' }}>QTY (PCS)</th>
+                    {!simpleMode && (
+                      <>
+                        <th style={{ width: '90px', padding: '6px 8px', textAlign: 'right', color: '#818cf8' }}>U CAP</th>
+                        <th style={{ width: '90px', padding: '6px 8px', textAlign: 'right', color: '#fb923c' }}>L CAP</th>
+                      </>
+                    )}
+                    <th style={{ width: '120px', padding: '6px 8px', textAlign: 'center', color: '#a78bfa' }}>LIVE BALANCE</th>
+                    <th style={{ width: '45px', padding: '6px 4px', textAlign: 'center', color: '#64748b' }}>DEL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stockRows.map((row, idx) => {
+                    const liveBal = getLiveItemBalance(row.name);
+                    const isDuplicate = duplicateItemSummary.names.includes(row.name.trim().toLowerCase());
+
+                    return (
+                      <tr 
+                        key={row.id}
+                        style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                          background: isDuplicate ? 'rgba(239, 68, 68, 0.08)' : idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
+                        }}
+                      >
+                        {/* Row Index */}
+                        <td style={{ textAlign: 'center', color: '#64748b', fontWeight: 600 }}>{idx + 1}</td>
+
+                        {/* Item Name Input with Autocomplete */}
+                        <td style={{ padding: '4px 6px', position: 'relative' }}>
+                          <input
+                            type="text"
+                            placeholder="Type item or shortcut (e.g. CM 161 (10FT), G1)..."
+                            value={row.name}
+                            onChange={(e) => {
+                              handleStockRowChange(idx, 'name', e.target.value);
+                              setSuggestQuery(e.target.value);
+                              setActiveSuggestRow(idx);
+                              setSuggestIndex(0);
+                            }}
+                            onFocus={() => {
+                              if (row.name) {
+                                setSuggestQuery(row.name);
+                                setActiveSuggestRow(idx);
+                              }
+                            }}
+                            onBlur={() => {
+                              // Small timeout to allow click on suggestion
+                              setTimeout(() => setActiveSuggestRow(null), 200);
+                            }}
+                            onKeyDown={(e) => {
+                              if (activeSuggestRow === idx && currentSuggestions.length > 0) {
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  setSuggestIndex((prev) => (prev + 1) % currentSuggestions.length);
+                                  return;
+                                }
+                                if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  setSuggestIndex((prev) => (prev - 1 + currentSuggestions.length) % currentSuggestions.length);
+                                  return;
+                                }
+                                if (e.key === 'Enter' || e.key === 'Tab') {
+                                  e.preventDefault();
+                                  const selected = currentSuggestions[suggestIndex];
+                                  if (selected) {
+                                    handleStockRowChange(idx, 'name', selected.name);
+                                    if (autoItem) {
+                                      handleStockRowChange(idx, 'uCap', selected.uCap);
+                                      handleStockRowChange(idx, 'lCap', selected.lCap);
+                                    }
+                                  }
+                                  setActiveSuggestRow(null);
+                                  return;
+                                }
+                              }
+
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                // Move to Qty field
+                                const nextInput = document.getElementById(`stock-qty-${idx}`);
+                                if (nextInput) nextInput.focus();
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#f8fafc',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              outline: 'none',
+                              padding: '2px 4px'
+                            }}
+                          />
+
+                          {/* Autocomplete Dropdown Popup */}
+                          {activeSuggestRow === idx && currentSuggestions.length > 0 && (
+                            <div 
+                              style={{
+                                position: 'absolute',
+                                left: 6,
+                                top: '100%',
+                                zIndex: 100,
+                                width: '320px',
+                                background: '#111827',
+                                border: '1px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '6px',
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+                                maxHeight: '200px',
+                                overflowY: 'auto'
+                              }}
+                            >
+                              {currentSuggestions.map((sug, sIdx) => {
+                                const isHighlighted = sIdx === suggestIndex;
+                                return (
+                                  <div
+                                    key={sug.name + sIdx}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleStockRowChange(idx, 'name', sug.name);
+                                      if (autoItem) {
+                                        handleStockRowChange(idx, 'uCap', sug.uCap);
+                                        handleStockRowChange(idx, 'lCap', sug.lCap);
+                                      }
+                                      setActiveSuggestRow(null);
+                                    }}
+                                    style={{
+                                      padding: '6px 10px',
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      background: isHighlighted ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                                      cursor: 'pointer',
+                                      borderBottom: '1px solid rgba(255,255,255,0.04)'
+                                    }}
+                                  >
+                                    <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '11.5px' }}>
+                                      {sug.name}
+                                    </span>
+                                    <span style={{ color: '#38bdf8', fontSize: '9.5px' }}>{sug.desc || ''}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Qty Input */}
+                        <td style={{ padding: '4px 6px' }}>
+                          <input
+                            id={`stock-qty-${idx}`}
+                            type="number"
+                            value={row.qty || ''}
+                            onChange={(e) => handleStockRowChange(idx, 'qty', parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!simpleMode) {
+                                  const next = document.getElementById(`stock-ucap-${idx}`);
+                                  if (next) next.focus();
+                                } else {
+                                  if (idx === stockRows.length - 1) {
+                                    handleAddStockRow();
+                                  }
+                                }
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              textAlign: 'right',
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#34d399',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              outline: 'none',
+                              padding: '2px 4px'
+                            }}
+                          />
+                        </td>
+
+                        {/* U Cap Input */}
+                        {!simpleMode && (
+                          <td style={{ padding: '4px 6px' }}>
+                            <input
+                              id={`stock-ucap-${idx}`}
+                              type="number"
+                              value={row.uCap || ''}
+                              onChange={(e) => handleStockRowChange(idx, 'uCap', parseFloat(e.target.value) || 0)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const next = document.getElementById(`stock-lcap-${idx}`);
+                                  if (next) next.focus();
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'right',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#818cf8',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                outline: 'none',
+                                padding: '2px 4px'
+                              }}
+                            />
+                          </td>
+                        )}
+
+                        {/* L Cap Input */}
+                        {!simpleMode && (
+                          <td style={{ padding: '4px 6px' }}>
+                            <input
+                              id={`stock-lcap-${idx}`}
+                              type="number"
+                              value={row.lCap || ''}
+                              onChange={(e) => handleStockRowChange(idx, 'lCap', parseFloat(e.target.value) || 0)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (idx === stockRows.length - 1) {
+                                    handleAddStockRow();
+                                  }
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'right',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#fb923c',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                outline: 'none',
+                                padding: '2px 4px'
+                              }}
+                            />
+                          </td>
+                        )}
+
+                        {/* Live Stock Balance Badge */}
+                        <td style={{ textAlign: 'center' }}>
+                          <span 
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: liveBal > 0 ? 'rgba(52, 211, 153, 0.15)' : liveBal < 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(148, 163, 184, 0.1)',
+                              color: liveBal > 0 ? '#34d399' : liveBal < 0 ? '#f87171' : '#94a3b8'
+                            }}
+                          >
+                            {liveBal} pcs
+                          </span>
+                        </td>
+
+                        {/* Delete Row Button */}
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStockRow(idx)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#64748b',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              display: 'inline-flex'
+                            }}
+                            title="Delete row"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Entry Summary Bar: Stats + Duplicate Count */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '5px 12px',
+                background: 'rgba(26, 31, 44, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '6px',
+                flexShrink: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11.5px', fontWeight: 600 }}>
+                <span style={{ color: '#94a3b8' }}>Items: <strong style={{ color: '#f8fafc' }}>{entryTotals.validItems}</strong></span>
+                <span style={{ color: '#94a3b8' }}>Total Qty: <strong style={{ color: '#34d399' }}>{entryTotals.qty}</strong></span>
+                {!simpleMode && (
+                  <>
+                    <span style={{ color: '#94a3b8' }}>Total U Cap: <strong style={{ color: '#818cf8' }}>{entryTotals.uCap}</strong></span>
+                    <span style={{ color: '#94a3b8' }}>Total L Cap: <strong style={{ color: '#fb923c' }}>{entryTotals.lCap}</strong></span>
+                  </>
+                )}
+              </div>
+
+              {/* Duplicate Badge */}
+              <div>
+                <span 
+                  style={{
+                    fontSize: '10.5px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    background: duplicateItemSummary.count > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(52, 211, 153, 0.15)',
+                    border: `1px solid ${duplicateItemSummary.count > 0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(52, 211, 153, 0.3)'}`,
+                    color: duplicateItemSummary.count > 0 ? '#f87171' : '#34d399'
+                  }}
+                >
+                  DUPLICATES: {duplicateItemSummary.count}
+                </span>
+              </div>
+            </div>
+
+            {/* Footer Toolbar: Smart Toggles, Barcode Input, Add Row, Save Button */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '2px',
+                gap: '8px',
+                flexShrink: 0
+              }}
+            >
+              {/* Left: Smart Toggles */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playClick();
+                    setAutoConvert((prev) => !prev);
+                  }}
+                  style={{
+                    background: autoConvert ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${autoConvert ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    color: autoConvert ? '#34d399' : '#94a3b8',
+                    padding: '4px 10px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Auto-Convert: {autoConvert ? 'ON' : 'OFF'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playClick();
+                    setAutoItem((prev) => !prev);
+                  }}
+                  style={{
+                    background: autoItem ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${autoItem ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    color: autoItem ? '#38bdf8' : '#94a3b8',
+                    padding: '4px 10px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Auto Item: {autoItem ? 'ON' : 'OFF'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playClick();
+                    setSimpleMode((prev) => !prev);
+                  }}
+                  style={{
+                    background: simpleMode ? 'rgba(251, 191, 36, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${simpleMode ? 'rgba(251, 191, 36, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    color: simpleMode ? '#fbbf24' : '#94a3b8',
+                    padding: '4px 10px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Simple Mode: {simpleMode ? 'ON' : 'OFF'}
+                </button>
+
+                {/* Quick Barcode Scanner Input */}
+                <input
+                  type="text"
+                  placeholder="Scan Barcode... (e.g. CM 161)"
+                  value={barcodeScanInput}
+                  onChange={(e) => setBarcodeScanInput(e.target.value)}
+                  onKeyDown={handleBarcodeScan}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#f8fafc',
+                    padding: '4px 10px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    width: '180px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Right: Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={handleAddStockRow}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#e2e8f0',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>Add Row</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setStockRows([{ id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 }]);
+                    setVoucherRemarks('');
+                    setEditingVoucherId(null);
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#94a3b8',
+                    padding: '5px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveVoucher}
+                  style={{
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    color: '#ffffff',
+                    padding: '6px 16px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.35)'
+                  }}
+                >
+                  <Save size={14} />
+                  <span>{editingVoucherId !== null ? 'UPDATE VOUCHER' : 'SAVE STOCK ENTRY'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================== */}
+        {/* TAB 2: INWARD HISTORY */}
+        {/* =========================================================== */}
+        {activeTab === 'inward' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
+            
+            {/* Filter Bar */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(26, 31, 44, 0.7)',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                flexShrink: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                <Search size={14} style={{ color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Search party, item name, date, voucher no, remarks..."
+                  value={inwardSearch}
+                  onChange={(e) => setInwardSearch(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <select
+                value={inwardTypeFilter}
+                onChange={(e) => setInwardTypeFilter(e.target.value)}
+                style={{
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#f8fafc',
+                  padding: '4px 8px',
+                  borderRadius: '5px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  outline: 'none'
+                }}
+              >
+                <option value="ALL TYPES">ALL TYPES</option>
+                <option value="STOCK VOUCHER">STOCK VOUCHERS</option>
+                <option value="PURCHASE">PURCHASE BILLS</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => {
+                  macAudio.playClick();
+                  setInwardSearch('');
+                  setInwardTypeFilter('ALL TYPES');
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#94a3b8',
+                  padding: '4px 10px',
+                  borderRadius: '5px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Clear
+              </button>
+            </div>
+
+            {/* History Table */}
+            <div 
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                background: 'rgba(15, 23, 42, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '8px'
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
+                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <th style={{ width: '110px', padding: '7px 8px', textAlign: 'left', color: '#38bdf8' }}>ID</th>
+                    <th style={{ width: '120px', padding: '7px 8px', textAlign: 'left', color: '#a78bfa' }}>TYPE</th>
+                    <th style={{ width: '95px', padding: '7px 8px', textAlign: 'left', color: '#94a3b8' }}>DATE</th>
+                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#e2e8f0' }}>PARTY / REMARKS</th>
+                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME (WITH SIZE)</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#34d399' }}>QTY</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#818cf8' }}>U CAP</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#fb923c' }}>L CAP</th>
+                    <th style={{ width: '70px', padding: '7px 8px', textAlign: 'center', color: '#64748b' }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inwardItems
+                    .filter((item) => {
+                      const matchType =
+                        inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
+                      const q = inwardSearch.toLowerCase();
+                      const matchSearch =
+                        !q ||
+                        item.voucherId.toLowerCase().includes(q) ||
+                        item.party.toLowerCase().includes(q) ||
+                        item.name.toLowerCase().includes(q) ||
+                        item.date.includes(q);
+                      return matchType && matchSearch;
+                    })
+                    .map((item, idx) => (
+                      <tr
+                        key={item.id}
+                        onDoubleClick={() => {
+                          if (item.rawVoucherId !== null) {
+                            handleLoadVoucherForEdit(item.rawVoucherId);
+                          }
+                        }}
+                        style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent',
+                          cursor: item.rawVoucherId !== null ? 'pointer' : 'default'
+                        }}
+                        title={item.rawVoucherId !== null ? 'Double click to edit voucher' : ''}
+                      >
+                        <td style={{ padding: '6px 8px', color: '#38bdf8', fontWeight: 700 }}>{item.voucherId}</td>
+                        <td style={{ padding: '6px 8px' }}>
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              fontWeight: 700,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: item.voucherType === 'STOCK VOUCHER' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                              color: item.voucherType === 'STOCK VOUCHER' ? '#34d399' : '#38bdf8'
+                            }}
+                          >
+                            {item.voucherType}
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{item.date}</td>
+                        <td style={{ padding: '6px 8px', color: '#e2e8f0', fontWeight: 500 }}>{item.party}</td>
+                        <td style={{ padding: '6px 8px', color: '#f8fafc', fontWeight: 600 }}>{item.name}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{item.qty}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#818cf8', fontWeight: 600 }}>{item.uCap}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#fb923c', fontWeight: 600 }}>{item.lCap}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                          {item.rawVoucherId !== null ? (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleLoadVoucherForEdit(item.rawVoucherId!)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#38bdf8',
+                                  cursor: 'pointer',
+                                  padding: 0
+                                }}
+                                title="Edit Voucher"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteVoucher(item.rawVoucherId!)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  cursor: 'pointer',
+                                  padding: 0
+                                }}
+                                title="Delete Voucher"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '10px' }}>Bill</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================== */}
+        {/* TAB 3: SALE (OUTWARD) */}
+        {/* =========================================================== */}
+        {activeTab === 'outward' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
+            
+            {/* Filter Bar */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(26, 31, 44, 0.7)',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                flexShrink: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                <Search size={14} style={{ color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Search party, item name, date, bill no..."
+                  value={outwardSearch}
+                  onChange={(e) => setOutwardSearch(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <select
+                value={outwardTypeFilter}
+                onChange={(e) => setOutwardTypeFilter(e.target.value)}
+                style={{
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#f8fafc',
+                  padding: '4px 8px',
+                  borderRadius: '5px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  outline: 'none'
+                }}
+              >
+                <option value="ALL TYPES">ALL TYPES</option>
+                <option value="SALE BILL">SALE BILL</option>
+                <option value="ESTIMATE">ESTIMATE</option>
+                <option value="ORDER">ORDER</option>
+                <option value="RETURN">RETURN</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => {
+                  macAudio.playClick();
+                  setOutwardSearch('');
+                  setOutwardTypeFilter('ALL TYPES');
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#94a3b8',
+                  padding: '4px 10px',
+                  borderRadius: '5px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Clear
+              </button>
+            </div>
+
+            {/* Outward Table */}
+            <div 
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                background: 'rgba(15, 23, 42, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '8px'
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
+                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <th style={{ width: '90px', padding: '7px 8px', textAlign: 'left', color: '#f43f5e' }}>BILL NO</th>
+                    <th style={{ width: '110px', padding: '7px 8px', textAlign: 'left', color: '#a78bfa' }}>DOC TYPE</th>
+                    <th style={{ width: '95px', padding: '7px 8px', textAlign: 'left', color: '#94a3b8' }}>DATE</th>
+                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#e2e8f0' }}>PARTY NAME</th>
+                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME (WITH SIZE)</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#f43f5e' }}>QTY</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#818cf8' }}>U CAP</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#fb923c' }}>L CAP</th>
+                    <th style={{ width: '60px', padding: '7px 8px', textAlign: 'center', color: '#64748b' }}>VIEW</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {outwardItems
+                    .filter((item) => {
+                      const matchType =
+                        outwardTypeFilter === 'ALL TYPES' ||
+                        item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
+                      const q = outwardSearch.toLowerCase();
+                      const matchSearch =
+                        !q ||
+                        item.token.toLowerCase().includes(q) ||
+                        item.party.toLowerCase().includes(q) ||
+                        item.name.toLowerCase().includes(q) ||
+                        item.date.includes(q);
+                      return matchType && matchSearch;
+                    })
+                    .map((item, idx) => (
+                      <tr
+                        key={item.id}
+                        onDoubleClick={() => {
+                          if (onOpenBillDetails) {
+                            onOpenBillDetails(item.billId);
+                          }
+                        }}
+                        style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent',
+                          cursor: 'pointer'
+                        }}
+                        title="Double-click to open bill details"
+                      >
+                        <td style={{ padding: '6px 8px', color: '#f43f5e', fontWeight: 700 }}>#{item.token}</td>
+                        <td style={{ padding: '6px 8px' }}>
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              fontWeight: 700,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(244, 63, 94, 0.15)',
+                              color: '#fb7185'
+                            }}
+                          >
+                            {item.docType}
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{item.date}</td>
+                        <td style={{ padding: '6px 8px', color: '#e2e8f0', fontWeight: 500 }}>{item.party}</td>
+                        <td style={{ padding: '6px 8px', color: '#f8fafc', fontWeight: 600 }}>{item.name}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#f43f5e', fontWeight: 700 }}>{item.qty}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#818cf8', fontWeight: 600 }}>{item.uCap}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#fb923c', fontWeight: 600 }}>{item.lCap}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (onOpenBillDetails) {
+                                onOpenBillDetails(item.billId);
+                              }
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#38bdf8',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '2px'
+                            }}
+                            title="View Bill"
+                          >
+                            <ExternalLink size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================== */}
+        {/* TAB 4: STOCK BALANCE (GROUPED MULTI-COLUMN TABLE + CARDS) */}
+        {/* =========================================================== */}
+        {activeTab === 'balance' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
+            
+            {/* 4 Apple Glass Metric Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', flexShrink: 0 }}>
+              {/* Total Items */}
+              <div 
+                style={{
+                  background: 'rgba(26, 31, 44, 0.75)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px'
+                }}
+              >
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL UNIQUE ITEMS</span>
+                <span style={{ fontSize: '20px', fontWeight: 900, color: '#38bdf8' }}>{totalStats.totalItems}</span>
+              </div>
+
+              {/* Total Qty Balance */}
+              <div 
+                style={{
+                  background: 'rgba(26, 31, 44, 0.75)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px'
+                }}
+              >
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL QTY BALANCE</span>
+                <span style={{ fontSize: '20px', fontWeight: 900, color: totalStats.totalQty >= 0 ? '#34d399' : '#f87171' }}>
+                  {totalStats.totalQty} <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>PCS</span>
+                </span>
+              </div>
+
+              {/* Total U-Cap Balance */}
+              <div 
+                style={{
+                  background: 'rgba(26, 31, 44, 0.75)',
+                  border: '1px solid rgba(129, 140, 248, 0.25)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px'
+                }}
+              >
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL U-CAP BALANCE</span>
+                <span style={{ fontSize: '20px', fontWeight: 900, color: '#818cf8' }}>
+                  {totalStats.totalUCap} <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>PCS</span>
+                </span>
+              </div>
+
+              {/* Total L-Cap Balance */}
+              <div 
+                style={{
+                  background: 'rgba(26, 31, 44, 0.75)',
+                  border: '1px solid rgba(251, 146, 60, 0.25)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px'
+                }}
+              >
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL L-CAP BALANCE</span>
+                <span style={{ fontSize: '20px', fontWeight: 900, color: '#fb923c' }}>
+                  {totalStats.totalLCap} <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>PCS</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Filter & Export Toolbar */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 10px',
+                background: 'rgba(26, 31, 44, 0.7)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                gap: '8px',
+                flexShrink: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                <Search size={14} style={{ color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Search item name with size..."
+                  value={balanceSearch}
+                  onChange={(e) => setBalanceSearch(e.target.value)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    width: '200px',
+                    outline: 'none'
+                  }}
+                />
+
+                {/* Stock Status Filter */}
+                <select
+                  value={balanceFilter}
+                  onChange={(e) => setBalanceFilter(e.target.value)}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#f8fafc',
+                    padding: '4px 8px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    outline: 'none'
+                  }}
+                >
+                  <option value="All Items">All Items</option>
+                  <option value="Positive Balance">Positive Balance (&gt;0)</option>
+                  <option value="Negative Balance">Negative Balance (&lt;0)</option>
+                  <option value="Zero Balance">Zero Balance (=0)</option>
+                </select>
+
+                {/* Category Prefix Filter */}
+                <select
+                  value={balanceCategory}
+                  onChange={(e) => setBalanceCategory(e.target.value)}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#f8fafc',
+                    padding: '4px 8px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    outline: 'none'
+                  }}
+                >
+                  {uniqueCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons: Export CSV & Print */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={handleExportStockCsv}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    color: '#34d399',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <FileSpreadsheet size={13} />
+                  <span>Export CSV</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrintStockReport}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(2, 132, 199, 0.35) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    color: '#38bdf8',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Printer size={13} />
+                  <span>Print Report</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Multi-Column Grouped Table (10 Columns Exact Schema) */}
+            <div 
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                background: 'rgba(15, 23, 42, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '8px'
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                  {/* Top Level Grouping Row */}
+                  <tr style={{ background: '#131926', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <th rowSpan={2} style={{ padding: '6px 10px', textAlign: 'left', color: '#f8fafc', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                      ITEM NAME (WITH SIZE)
+                    </th>
+                    <th colSpan={3} style={{ padding: '4px 8px', textAlign: 'center', color: '#34d399', borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(16, 185, 129, 0.08)' }}>
+                      ITEM QTY
+                    </th>
+                    <th colSpan={3} style={{ padding: '4px 8px', textAlign: 'center', color: '#818cf8', borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(129, 140, 248, 0.08)' }}>
+                      U CAP
+                    </th>
+                    <th colSpan={3} style={{ padding: '4px 8px', textAlign: 'center', color: '#fb923c', borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(251, 146, 60, 0.08)' }}>
+                      L CAP
+                    </th>
+                    <th rowSpan={2} style={{ width: '80px', padding: '6px 8px', textAlign: 'center', color: '#94a3b8' }}>
+                      STATUS
+                    </th>
+                  </tr>
+
+                  {/* Sub-Header Row */}
+                  <tr style={{ background: '#161d2d', borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <th style={{ width: '65px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>In</th>
+                    <th style={{ width: '65px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>Out</th>
+                    <th style={{ width: '75px', padding: '4px 6px', textAlign: 'right', color: '#34d399', fontSize: '10.5px', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>Balance</th>
+
+                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>In</th>
+                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>Out</th>
+                    <th style={{ width: '70px', padding: '4px 6px', textAlign: 'right', color: '#818cf8', fontSize: '10.5px', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>Balance</th>
+
+                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>In</th>
+                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>Out</th>
+                    <th style={{ width: '70px', padding: '4px 6px', textAlign: 'right', color: '#fb923c', fontSize: '10.5px', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stockBalanceList
+                    .filter((row) => {
+                      const q = balanceSearch.toLowerCase();
+                      const matchSearch = !q || row.itemName.toLowerCase().includes(q);
+                      const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
+
+                      let matchBal = true;
+                      if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
+                      if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
+                      if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
+
+                      return matchSearch && matchCat && matchBal;
+                    })
+                    .map((row, idx) => (
+                      <tr 
+                        key={row.itemName}
+                        style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
+                        }}
+                      >
+                        {/* Item Name */}
+                        <td style={{ padding: '6px 10px', color: '#f8fafc', fontWeight: 600, borderRight: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          {row.itemName}
+                        </td>
+
+                        {/* Qty In, Out, Balance */}
+                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.inwardQty}</td>
+                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.outwardQty}</td>
+                        <td 
+                          style={{
+                            padding: '6px 6px',
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: row.balanceQty > 0 ? '#34d399' : row.balanceQty < 0 ? '#f87171' : '#94a3b8',
+                            borderRight: '1px solid rgba(255, 255, 255, 0.06)'
+                          }}
+                        >
+                          {row.balanceQty}
+                        </td>
+
+                        {/* U Cap In, Out, Balance */}
+                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.inwardUCap}</td>
+                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.outwardUCap}</td>
+                        <td 
+                          style={{
+                            padding: '6px 6px',
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: row.balanceUCap > 0 ? '#818cf8' : row.balanceUCap < 0 ? '#f87171' : '#94a3b8',
+                            borderRight: '1px solid rgba(255, 255, 255, 0.06)'
+                          }}
+                        >
+                          {row.balanceUCap}
+                        </td>
+
+                        {/* L Cap In, Out, Balance */}
+                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.inwardLCap}</td>
+                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.outwardLCap}</td>
+                        <td 
+                          style={{
+                            padding: '6px 6px',
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: row.balanceLCap > 0 ? '#fb923c' : row.balanceLCap < 0 ? '#f87171' : '#94a3b8',
+                            borderRight: '1px solid rgba(255, 255, 255, 0.06)'
+                          }}
+                        >
+                          {row.balanceLCap}
+                        </td>
+
+                        {/* Status Badge */}
+                        <td style={{ textAlign: 'center' }}>
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              fontWeight: 700,
+                              padding: '2px 6px',
+                              borderRadius: '9999px',
+                              background:
+                                row.status === 'IN STOCK'
+                                  ? 'rgba(52, 211, 153, 0.15)'
+                                  : row.status === 'LOW STOCK'
+                                  ? 'rgba(251, 191, 36, 0.15)'
+                                  : row.status === 'NEGATIVE'
+                                  ? 'rgba(248, 113, 113, 0.15)'
+                                  : 'rgba(148, 163, 184, 0.1)',
+                              color:
+                                row.status === 'IN STOCK'
+                                  ? '#34d399'
+                                  : row.status === 'LOW STOCK'
+                                  ? '#fbbf24'
+                                  : row.status === 'NEGATIVE'
+                                  ? '#f87171'
+                                  : '#94a3b8'
+                            }}
+                          >
+                            {row.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================== */}
+        {/* TAB 5: PRINT BARCODE */}
+        {/* =========================================================== */}
+        {activeTab === 'barcode' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
+            
+            {/* Toolbar */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 10px',
+                background: 'rgba(26, 31, 44, 0.7)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                gap: '8px',
+                flexShrink: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                <Search size={14} style={{ color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Search barcode items..."
+                  value={barcodeSearch}
+                  onChange={(e) => setBarcodeSearch(e.target.value)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    width: '180px',
+                    outline: 'none'
+                  }}
+                />
+
+                <select
+                  value={barcodeCategory}
+                  onChange={(e) => setBarcodeCategory(e.target.value)}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#f8fafc',
+                    padding: '4px 8px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    outline: 'none'
+                  }}
+                >
+                  {uniqueCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+
+                {/* Bulk Select Toggles */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => handleToggleAllBarcode('qtyChecked', e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>All Qty</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => handleToggleAllBarcode('uCapChecked', e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>All U-Cap</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => handleToggleAllBarcode('lCapChecked', e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>All L-Cap</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsBarcodePreviewOpen(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(126, 34, 206, 0.35) 100%)',
+                    border: '1px solid rgba(168, 85, 247, 0.4)',
+                    color: '#c084fc',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Eye size={13} />
+                  <span>PRINT PREVIEW ({barcodePrintJobs.length})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Barcode Item Configuration Table */}
+            <div 
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                background: 'rgba(15, 23, 42, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '8px'
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
+                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    <th style={{ padding: '7px 10px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'center', color: '#34d399' }}>QTY</th>
+                    <th style={{ width: '50px', padding: '7px 8px', textAlign: 'center', color: '#34d399' }}>☑</th>
+                    <th style={{ width: '130px', padding: '7px 8px', textAlign: 'left', color: '#818cf8' }}>U CAP</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'center', color: '#818cf8' }}>U QTY</th>
+                    <th style={{ width: '50px', padding: '7px 8px', textAlign: 'center', color: '#818cf8' }}>☑ U</th>
+                    <th style={{ width: '130px', padding: '7px 8px', textAlign: 'left', color: '#fb923c' }}>L CAP</th>
+                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'center', color: '#fb923c' }}>L QTY</th>
+                    <th style={{ width: '50px', padding: '7px 8px', textAlign: 'center', color: '#fb923c' }}>☑ L</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBarcodeItems.map((item, idx) => {
+                    const st = barcodeStates[item.itemName] || {
+                      itemName: item.itemName,
+                      category: item.category,
+                      qty: 1,
+                      qtyChecked: false,
+                      uCapName: 'U Cap',
+                      uCapQty: 1,
+                      uCapChecked: false,
+                      lCapName: 'L Cap',
+                      lCapQty: 1,
+                      lCapChecked: false
+                    };
+
+                    return (
+                      <tr 
+                        key={item.itemName}
+                        style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
+                        }}
+                      >
+                        <td style={{ padding: '6px 10px', color: '#f8fafc', fontWeight: 600 }}>{item.itemName}</td>
+
+                        {/* Main Item Qty & Checkbox */}
+                        <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            value={st.qty}
+                            onChange={(e) => {
+                              const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                              setBarcodeStates((prev) => ({
+                                ...prev,
+                                [item.itemName]: { ...st, qty: val }
+                              }));
+                            }}
+                            style={{
+                              width: '60px',
+                              textAlign: 'center',
+                              background: 'rgba(15, 23, 42, 0.8)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: '#34d399',
+                              borderRadius: '4px',
+                              padding: '2px',
+                              fontSize: '11px',
+                              fontWeight: 700
+                            }}
+                          />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={st.qtyChecked}
+                            onChange={(e) => {
+                              macAudio.playHover();
+                              setBarcodeStates((prev) => ({
+                                ...prev,
+                                [item.itemName]: { ...st, qtyChecked: e.target.checked }
+                              }));
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </td>
+
+                        {/* U Cap Name, Qty & Checkbox */}
+                        <td style={{ padding: '6px 8px', color: '#818cf8', fontSize: '11px' }}>U Cap</td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            value={st.uCapQty}
+                            onChange={(e) => {
+                              const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                              setBarcodeStates((prev) => ({
+                                ...prev,
+                                [item.itemName]: { ...st, uCapQty: val }
+                              }));
+                            }}
+                            style={{
+                              width: '60px',
+                              textAlign: 'center',
+                              background: 'rgba(15, 23, 42, 0.8)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: '#818cf8',
+                              borderRadius: '4px',
+                              padding: '2px',
+                              fontSize: '11px',
+                              fontWeight: 700
+                            }}
+                          />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={st.uCapChecked}
+                            onChange={(e) => {
+                              macAudio.playHover();
+                              setBarcodeStates((prev) => ({
+                                ...prev,
+                                [item.itemName]: { ...st, uCapChecked: e.target.checked }
+                              }));
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </td>
+
+                        {/* L Cap Name, Qty & Checkbox */}
+                        <td style={{ padding: '6px 8px', color: '#fb923c', fontSize: '11px' }}>L Cap</td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            value={st.lCapQty}
+                            onChange={(e) => {
+                              const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                              setBarcodeStates((prev) => ({
+                                ...prev,
+                                [item.itemName]: { ...st, lCapQty: val }
+                              }));
+                            }}
+                            style={{
+                              width: '60px',
+                              textAlign: 'center',
+                              background: 'rgba(15, 23, 42, 0.8)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: '#fb923c',
+                              borderRadius: '4px',
+                              padding: '2px',
+                              fontSize: '11px',
+                              fontWeight: 700
+                            }}
+                          />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={st.lCapChecked}
+                            onChange={(e) => {
+                              macAudio.playHover();
+                              setBarcodeStates((prev) => ({
+                                ...prev,
+                                [item.itemName]: { ...st, lCapChecked: e.target.checked }
+                              }));
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* =========================================================== */}
+      {/* BARCODE PRINT PREVIEW MODAL */}
+      {/* =========================================================== */}
+      {isBarcodePreviewOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div 
+            style={{
+              width: '800px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              background: '#0f172a',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '12px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Modal Header */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 18px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.03)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Barcode size={18} style={{ color: '#a855f7' }} />
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>
+                  BARCODE PRINT PREVIEW ({barcodePrintJobs.length} Labels)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBarcodePreviewOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: 4
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Content: Grid of Barcode Cards */}
+            <div 
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '16px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                gap: '12px',
+                background: '#090d16'
+              }}
+            >
+              {barcodePrintJobs.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                  Please check at least one item or component in the list to generate barcodes!
+                </div>
+              ) : (
+                barcodePrintJobs.map((job, idx) => (
+                  <div
+                    key={`${job.name}-${idx}`}
+                    style={{
+                      background: '#ffffff',
+                      color: '#000000',
+                      borderRadius: '6px',
+                      padding: '10px',
+                      border: '1px solid #cbd5e1',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', fontWeight: 800, color: '#64748b', marginBottom: '2px' }}>
+                      MODERN QUALITY PROFILE
+                    </span>
+                    <span 
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 900,
+                        textAlign: 'center',
+                        color: '#0f172a',
+                        lineHeight: 1.2,
+                        marginBottom: '6px',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                      title={job.name}
+                    >
+                      {job.name}
+                    </span>
+
+                    {/* SVG Vector Barcode Simulation */}
+                    <div style={{ height: '36px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="180" height="34" viewBox="0 0 180 34" style={{ display: 'block' }}>
+                        {Array.from({ length: 42 }).map((_, barIdx) => {
+                          const x = barIdx * 4.2 + 4;
+                          const width = (barIdx % 3 === 0 || barIdx % 7 === 0) ? 2.5 : 1.2;
+                          return (
+                            <rect
+                              key={barIdx}
+                              x={x}
+                              y="0"
+                              width={width}
+                              height="34"
+                              fill="#000000"
+                            />
+                          );
+                        })}
+                      </svg>
+                    </div>
+
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '2px', marginTop: '3px' }}>
+                      *{job.code}*
+                    </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '4px', fontSize: '8px', color: '#475569', fontWeight: 600 }}>
+                      <span>TAG: {job.component}</span>
+                      <span>QTY: {job.qty}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 18px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.02)'
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                Standard Label Size: <strong>50mm x 30mm</strong> Thermal / A4 Sheet
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsBarcodePreviewOpen(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#e2e8f0',
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playSuccess();
+                    window.print();
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
+                    border: '1px solid rgba(168, 85, 247, 0.4)',
+                    color: '#ffffff',
+                    padding: '6px 16px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Printer size={13} />
+                  <span>Print Barcode Sheet</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

@@ -1,5 +1,6 @@
 import { ControlPanelView } from './ControlPanelView';
 import { SettingsTabView } from './SettingsTabView';
+import { StockInventoryView } from './StockInventoryView';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { NavKey } from '../types';
@@ -7,7 +8,7 @@ import { macAudio } from '../utils/macAudio';
 import { extractSizeFromColLabel } from '../utils/mouldUtils';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
-import type { BillRecord } from '../services/db/schema';
+import type { BillRecord, PartyRecord } from '../services/db/schema';
 import {
   Printer,
   Eye,
@@ -2764,134 +2765,20 @@ export const OtherTabsView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB F8: STOCK INVENTORY & BARCODE (Sleek Dark Glass Barcode Card) */}
+      {/* ========================================================================= */}
+      {/* TAB F8: STOCK INVENTORY (5 Comprehensive Tabs: Entry, Inward, Outward, Balance, Barcode) */}
       {/* ========================================================================= */}
       {activeTab === 'F8' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '8px', minHeight: 0 }}>
-          {/* Stock Table */}
-          <div className="glass-panel" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '6px', borderRadius: '8px', padding: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '4px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.05em' }}>STOCK INVENTORY</span>
-                <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>{stockItems.length} ITEMS</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleExportStockCsv}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
-                  border: '1px solid rgba(16, 185, 129, 0.4)',
-                  color: '#34d399',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  cursor: 'pointer'
-                }}
-                title="Download Stock Inventory as CSV / Excel"
-              >
-                <FileSpreadsheet size={13} />
-                <span>Export CSV</span>
-              </button>
-            </div>
-            <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: `${tableCols.f8Stock.code}px`, position: 'relative', userSelect: 'none' }}>
-                    CODE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f8Stock', 'code', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f8Stock.name}px`, position: 'relative', userSelect: 'none' }}>
-                    ITEM NAME
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f8Stock', 'name', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f8Stock.qty}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    QTY
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f8Stock', 'qty', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f8Stock.rack}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    RACK
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f8Stock', 'rack', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f8Stock.status}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    STATUS
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f8Stock', 'status', e)} title="Drag to resize column" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockItems.map((s) => {
-                  const isSelected = selectedStockId === s.id;
-                  return (
-                    <tr 
-                      key={s.id} 
-                      className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                      style={{ height: `${activeRowHeight}px` }}
-                      onMouseEnter={() => macAudio.playHover()}
-                      onClick={() => {
-                        macAudio.playClick();
-                        setSelectedStockId(s.id);
-                      }}
-                    >
-                      <td style={{ color: '#38bdf8', fontWeight: 700, position: 'relative' }}>
-                        {s.code}
-                        <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                      </td>
-                      <td style={{ fontWeight: 600, color: '#f8fafc' }}>{s.name}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: s.status === 'CRITICAL' ? '#f87171' : '#34d399' }}>
-                        {s.qty} {s.uom}
-                      </td>
-                      <td style={{ textAlign: 'center', color: '#f8fafc', fontFamily: 'monospace' }}>{s.rack}</td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span style={{
-                          fontSize: '9.5px',
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: '9999px',
-                          background: s.status === 'IN STOCK' ? 'rgba(52, 211, 153, 0.2)' : s.status === 'LOW STOCK' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(248, 113, 113, 0.2)',
-                          color: s.status === 'IN STOCK' ? '#34d399' : s.status === 'LOW STOCK' ? '#fbbf24' : '#f87171'
-                        }}>
-                          {s.status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            </div>
-          </div>
-
-          {/* Barcode / QR Generator Preview Card (Dark Liquid Glass Theme) */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', borderRadius: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#fb923c', alignSelf: 'flex-start' }}>Barcode Label</span>
-
-            <div style={{ 
-              background: 'rgba(0, 0, 0, 0.45)', 
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '12px', 
-              borderRadius: '8px', 
-              width: '190px', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '4px', 
-              margin: 'auto' 
-            }}>
-              <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#f8fafc' }}>APEX INDUSTRIAL</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '22px', letterSpacing: '2px', fontWeight: 900, color: '#38bdf8' }}>|||| | ||||| ||</div>
-              <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: '#e2e8f0' }}>*STK-01-MLD1420*</div>
-            </div>
-
-            <button type="button" className="mac-btn primary" style={{ width: '100%', padding: '6px', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }} onClick={() => macAudio.playClick()} onMouseEnter={() => macAudio.playHover()}>
-              <Printer size={13} />
-              <span>Print Barcode</span>
-            </button>
-          </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+          <StockInventoryView 
+            onBackToBill={onBackToBill}
+            onOpenBillDetails={(billId) => {
+              const b = bills.find((x: any) => x.id === billId);
+              if (b && onLoadBillToEditor) {
+                onLoadBillToEditor(b);
+              }
+            }}
+          />
         </div>
       )}
 

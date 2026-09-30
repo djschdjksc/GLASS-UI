@@ -707,6 +707,30 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
+      // F8: Instant Switch to Stock Inventory module (as requested: "ISKA F8 SHORTCUT HAI USME")
+      if (e.key === 'F8') {
+        e.preventDefault();
+        setActiveTab('F8');
+        playTapSound();
+        return;
+      }
+
+      // F1: Switch to Bill UI
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setActiveTab('F1');
+        playTapSound();
+        return;
+      }
+
+      // F2: Switch to Bill History
+      if (e.key === 'F2') {
+        e.preventDefault();
+        setActiveTab('F2');
+        playTapSound();
+        return;
+      }
+
       // F9 or Ctrl+Alt+C: Toggle Digital Retro Numpad Calculator
       if (e.key === 'F9' || (isCtrlOrCmd && e.altKey && (e.key === 'c' || e.key === 'C'))) {
         e.preventDefault();

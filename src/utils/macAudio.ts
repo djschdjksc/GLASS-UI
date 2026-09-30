@@ -227,6 +227,15 @@ class AppleAudioEngine {
       osc.stop(t + 0.16);
     } catch {}
   }
+
+  // 8. Warning & Error Alerts
+  public playWarning() {
+    this.playBeep();
+  }
+
+  public playError() {
+    this.playBeep();
+  }
 }
 
 export const macAudio = new AppleAudioEngine();
