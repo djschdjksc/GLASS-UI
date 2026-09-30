@@ -3084,6 +3084,11 @@ export const OtherTabsView: React.FC<Props> = ({
           initialMode="estimate"
           billNo={selectedBill.token || selectedBill.id}
           dynamicCols={f2AllSizeCols.filter(c => !c.isBase).map(c => ({ field: c.field, label: c.label }))}
+          hasPartyCodeCol={
+            selectedBill.hasPartyCodeCol !== undefined
+              ? Boolean(selectedBill.hasPartyCodeCol)
+              : (selectedBill.rawItems || []).some(r => r.partyCode && r.partyCode.trim() !== '')
+          }
         />
       )}
 

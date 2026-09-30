@@ -2514,6 +2514,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         initialMode={printModalMode}
         billNo={header.tokenNo || '0001'}
         dynamicCols={dynamicCols}
+        hasPartyCodeCol={hasPartyCodeCol}
       />
 
       <OcrModal

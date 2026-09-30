@@ -11,6 +11,7 @@ interface Props {
   initialMode?: 'estimate' | 'summary_only' | 'loading_slip';
   billNo?: string | number;
   dynamicCols?: Array<{ field: string; label: string }>;
+  hasPartyCodeCol?: boolean;
 }
 
 export const SlipModal: React.FC<Props> = (props) => {

@@ -172,14 +172,16 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
 
     // Calculate responsive column widths
     const totalTableW = W - 2 * margin; // e.g. 1354px
-    const srW = 80;
-    const pCodeW = showPCode ? (dynCols.length > 2 ? 180 : 250) : 0;
+    const srW = 70;
+    // PARTY CODE is compact (150px - 170px) so ITEM NAME gets dominant width
+    const pCodeW = showPCode ? (dynCols.length > 2 ? 150 : 170) : 0;
     
     // Total numeric quantity columns = 1 (Base Qty) + dynCols.length + 1 (uCap) + 1 (lCap)
     const numQtyCols = 1 + dynCols.length + 2;
-    // Distribute remaining width to item name and quantity columns
-    const totalQtyW = Math.min(totalTableW * 0.58, numQtyCols * (dynCols.length > 3 ? 110 : dynCols.length > 1 ? 140 : 180));
-    const eachQtyW = Math.round(totalQtyW / numQtyCols);
+    // Limit quantity columns to max 50% so ITEM NAME is always at least double of any column
+    const maxQtyTotalW = totalTableW * 0.50;
+    const desiredEachW = dynCols.length > 3 ? 95 : dynCols.length > 1 ? 115 : 140;
+    const eachQtyW = Math.max(80, Math.min(desiredEachW, Math.floor(maxQtyTotalW / numQtyCols)));
     const nameW = totalTableW - srW - pCodeW - (eachQtyW * numQtyCols);
 
     const cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right'; field?: string }> = [
@@ -207,7 +209,7 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
 
     // Column Headers (Black Rect with White Centered Bold Text)
     let xHdr = margin;
-    const hdrFontSize = dynCols.length > 2 ? 26 : 32;
+    const hdrFontSize = (dynCols.length > 2 || showPCode) ? 24 : 30;
     ctx.font = `bold ${hdrFontSize}px "Segoe UI", Arial, sans-serif`;
     cols.forEach(col => {
       ctx.fillStyle = '#000000';

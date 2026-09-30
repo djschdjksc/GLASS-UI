@@ -33,6 +33,7 @@ export interface BillPrintModalProps {
   initialMode?: 'estimate' | 'summary_only' | 'loading_slip';
   billNo?: string | number;
   dynamicCols?: Array<{ field: string; label: string }>;
+  hasPartyCodeCol?: boolean;
 }
 
 export const BillPrintModal: React.FC<BillPrintModalProps> = ({
@@ -43,7 +44,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   finishedItems,
   initialMode = 'estimate',
   billNo = '0001',
-  dynamicCols
+  dynamicCols,
+  hasPartyCodeCol
 }) => {
   const [printMode, setPrintMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>(initialMode);
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
@@ -103,7 +105,11 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
   // Build Payload
   const printPayload: BillPrintPayload = useMemo(() => {
-    const showPartyCode = rawItems.some(r => (r.partyCode || '').trim().length > 0);
+    // Only show PARTY CODE in print if visible in the UI (hasPartyCodeCol)
+    const showPartyCode = hasPartyCodeCol !== undefined
+      ? Boolean(hasPartyCodeCol)
+      : rawItems.some(r => (r.partyCode || '').trim().length > 0);
+
     return {
       docType: header.docType || 'Bill',
       billNo: billNo,
@@ -132,7 +138,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       subTotal,
       finalBalance
     };
-  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols]);
+  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol]);
 
   // Live Canvas Rendering & Native PyQt6 Engine fetch
   useEffect(() => {

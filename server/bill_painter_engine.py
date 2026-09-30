@@ -297,17 +297,18 @@ class BillPainter:
         dyn_cols = self.d.get("dynamic_cols", []) or []
         show_party_code = bool(self.d.get("show_party_code"))
         table_w = self.W - (2 * self.margin)
-        sr_w = 80
-        pcode_w = 260 if show_party_code else 0
+        sr_w = 70
+        # PARTY CODE is compact (150px - 170px) so ITEM NAME gets dominant width
+        pcode_w = (150 if len(dyn_cols) > 2 else 170) if show_party_code else 0
 
         # Columns for quantities: Base QTY + Dynamic Columns + U CAP + L CAP
         num_val_cols = 3 + len(dyn_cols)
-        max_val_w = table_w * 0.55
-        desired_each = 110 if len(dyn_cols) > 2 else 130
+        max_val_w = table_w * 0.50
+        desired_each = 95 if len(dyn_cols) > 3 else (115 if len(dyn_cols) > 1 else 140)
         each_w = max(80, min(desired_each, int(max_val_w / num_val_cols)))
 
-        remaining_for_desc = table_w - sr_w - pcode_w - (each_w * num_val_cols)
-        desc_w = max(260, remaining_for_desc)
+        # ITEM NAME gets all remaining width (always double or more of any other column)
+        desc_w = table_w - sr_w - pcode_w - (each_w * num_val_cols)
 
         cols = [
             ("SR.", sr_w, "sr"),
@@ -326,7 +327,8 @@ class BillPainter:
     def _draw_column_headers(self, painter, cols, row_h):
         x = self.margin
         dyn_cols = self.d.get("dynamic_cols", []) or []
-        hdr_font_size = 26 if len(dyn_cols) > 2 else 32
+        show_party_code = bool(self.d.get("show_party_code"))
+        hdr_font_size = 24 if (len(dyn_cols) > 2 or show_party_code) else 30
         f = QFont("Segoe UI", 0, QFont.Weight.Bold)
         f.setPixelSize(hdr_font_size)
         painter.setFont(f)
