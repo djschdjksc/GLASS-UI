@@ -6,7 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QImage, QPainter, QColor, QPageSize, QPageLayout
 from PyQt6.QtCore import QBuffer, QIODevice
-from PyQt6.QtPrintSupport import QPrinter
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 
 # Ensure server directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -156,6 +156,16 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 printer = QPrinter(QPrinter.PrinterMode.HighResolution)
                 printer.setPageOrientation(QPageLayout.Orientation.Portrait)
                 printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+
+                if payload.get('showDialog', False):
+                    dlg = QPrintDialog(printer)
+                    if dlg.exec() != QPrintDialog.DialogCode.Accepted:
+                        self.send_response(200)
+                        self._send_cors_headers()
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({'success': False, 'message': 'Print cancelled by user'}).encode('utf-8'))
+                        return
 
                 p = QPainter(printer)
                 bp = BillPainter(bill_data)

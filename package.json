@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "vite",
+    "print-server": "python server/native_print_server.py",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

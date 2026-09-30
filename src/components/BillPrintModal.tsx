@@ -11,7 +11,9 @@ import {
   Truck,
   Layers,
   Check,
-  Zap
+  Zap,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
@@ -21,7 +23,6 @@ import {
   downloadBillCanvasAsImage,
   formatIndianCurrency
 } from '../utils/billCanvasPainter';
-import { directPrintBill } from '../utils/printHtmlHelper';
 
 export interface BillPrintModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [nativeImage, setNativeImage] = useState<string | null>(null);
   const [isNativeServiceActive, setIsNativeServiceActive] = useState<boolean>(false);
+  const [retryTrigger, setRetryTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Sync initialMode when modal opens
@@ -159,7 +161,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     return () => {
       active = false;
     };
-  }, [isOpen, printPayload]);
+  }, [isOpen, printPayload, retryTrigger]);
 
   // Modal Keyboard Shortcuts
   useEffect(() => {
@@ -255,17 +257,28 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         const resp = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(printPayload)
+          body: JSON.stringify({ ...printPayload, showDialog: true })
         });
         const res = await resp.json();
         if (res.success) {
           return;
         }
       } catch (err) {
-        console.warn('Native direct-print fallback:', err);
+        console.warn('Native direct-print failed:', err);
       }
     }
-    directPrintBill(printPayload);
+
+    // High-resolution native vector image print (NEVER fallback to bad HTML table)
+    if (nativeImage) {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`<!DOCTYPE html><html><head><title>Print - ${header.partyName || 'Bill'}</title><style>@page{size:A4 portrait;margin:0;}body{margin:0;padding:0;display:flex;justify-content:center;background:#fff;}img{width:100%;max-width:210mm;height:auto;display:block;}</style></head><body><img src="${nativeImage}" onload="window.print();setTimeout(()=>window.close(),1200);"/></body></html>`);
+        printWindow.document.close();
+        return;
+      }
+    }
+
+    alert("⚠️ Python PyQt6 Print Server offline hai!\nKripya 'run_app.bat' chalayein ya 'python server/native_print_server.py' start karein.");
   };
 
   const handleCopyAsImage = async () => {
@@ -372,9 +385,29 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 <Zap size={11} fill="#34d399" /> ⚡ PYTHON QPAINTER ACTIVE (F:\SUMMARY 1:1)
               </span>
             ) : (
-              <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                CANVAS ENGINE (LOCAL)
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  macAudio.playPop();
+                  setRetryTrigger(prev => prev + 1);
+                }}
+                style={{
+                  fontSize: '10px',
+                  color: '#fbbf24',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+                title="Python PyQt6 engine offline. Run 'run_app.bat' or 'python server/native_print_server.py'. Click to reconnect."
+              >
+                <AlertTriangle size={11} /> ⚠️ PYTHON ENGINE OFFLINE (Click to Reconnect)
+              </button>
             )}
           </div>
 
