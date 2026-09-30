@@ -327,6 +327,9 @@ export const OtherTabsView: React.FC<Props> = ({
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
   const [deleteConfirmBillId, setDeleteConfirmBillId] = useState<string | null>(null);
 
+  // Throttle timer ref for smooth arrow navigation without lag
+  const lastBillArrowTimeRef = useRef<number>(0);
+
   // Refs for auto-scrolling
   const billsListRef = useRef<HTMLDivElement>(null);
   const billItemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -508,15 +511,20 @@ export const OtherTabsView: React.FC<Props> = ({
         // Arrow Navigation inside active column (Up / Down)
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          macAudio.playHover();
           if (f2FocusArea === 'bills') {
+            const now = performance.now();
+            if (now - lastBillArrowTimeRef.current < 110) return;
+            lastBillArrowTimeRef.current = now;
+            macAudio.playHover();
             const currentIdx = filteredBills.findIndex(b => b.id === selectedBill.id);
             if (currentIdx >= 0 && currentIdx + 1 < filteredBills.length) {
               setSelectedBillId(filteredBills[currentIdx + 1].id);
             }
           } else if (f2FocusArea === 'raw') {
+            macAudio.playHover();
             setSelectedRawRowIdx(prev => (prev + 1 < displayRawItems.length ? prev + 1 : prev));
           } else if (f2FocusArea === 'finished') {
+            macAudio.playHover();
             setSelectedFinishedRowIdx(prev => (prev + 1 < displayFinishedItems.length ? prev + 1 : prev));
           }
           return;
@@ -524,15 +532,20 @@ export const OtherTabsView: React.FC<Props> = ({
 
         if (e.key === 'ArrowUp') {
           e.preventDefault();
-          macAudio.playHover();
           if (f2FocusArea === 'bills') {
+            const now = performance.now();
+            if (now - lastBillArrowTimeRef.current < 110) return;
+            lastBillArrowTimeRef.current = now;
+            macAudio.playHover();
             const currentIdx = filteredBills.findIndex(b => b.id === selectedBill.id);
             if (currentIdx > 0) {
               setSelectedBillId(filteredBills[currentIdx - 1].id);
             }
           } else if (f2FocusArea === 'raw') {
+            macAudio.playHover();
             setSelectedRawRowIdx(prev => (prev - 1 >= 0 ? prev - 1 : 0));
           } else if (f2FocusArea === 'finished') {
+            macAudio.playHover();
             setSelectedFinishedRowIdx(prev => (prev - 1 >= 0 ? prev - 1 : 0));
           }
           return;
