@@ -255,16 +255,17 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Database Save & Navigation Handlers
   const handleSaveCurrentBill = useCallback(async () => {
-    // 0. Validation: Party Name must NOT be empty! (as requested: "CTRL + S DABATE AGER PARTY NAME FILL NAHI HAI TO PAHLE BOLE KI FILL KARO TAB JAYE CELEBRATION WALA OPTION AAYE AGER SAB KUCHH THEEK HAI")
+    // 0. Validation: Party Name must NOT be empty
     const cleanPartyName = (header?.partyName || '').trim();
     if (!cleanPartyName) {
-      showToast('⚠️ Please enter Party Name first! (Party Name bharna zaroori hai)', 'warning');
+      showToast('⚠️ Kripya pehle Party ka naam bharein!', 'warning');
       try {
-        macAudio.playPop();
+        macAudio.playBeep();
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
           window.speechSynthesis.cancel();
-          const utter = new SpeechSynthesisUtterance('Please enter Party Name first');
-          utter.rate = 1.05;
+          const utter = new SpeechSynthesisUtterance('कृपया पहले पार्टी का नाम भरें');
+          utter.lang = 'hi-IN';
+          utter.rate = 1.0;
           window.speechSynthesis.speak(utter);
         }
       } catch {}
@@ -288,8 +289,17 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     // 1. Validation: Left table must have at least one item with a name
     const itemsWithName = (rawItems || []).filter(r => (r.name || '').trim() !== '');
     if (itemsWithName.length === 0) {
-      showToast('⚠️ Left table mein kam se kam ek item ka naam hona chahiye!', 'warning');
-      try { macAudio.playPop(); } catch {}
+      showToast('⚠️ Kripya Left Table mein Item ka naam bharein!', 'warning');
+      try {
+        macAudio.playBeep();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance('कृपया आइटम का नाम भरें');
+          utter.lang = 'hi-IN';
+          utter.rate = 1.0;
+          window.speechSynthesis.speak(utter);
+        }
+      } catch {}
       setActiveTab('F1');
       setActiveTable('left');
       setTimeout(() => {
@@ -315,10 +325,31 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       return dynamicCols.some(dc => (Number((r as any)[dc.field]) || 0) > 0);
     });
     if (!hasAnyQty) {
-      showToast('⚠️ Kam se kam ek row mein koi quantity honi chahiye! (qty, uCap, lCap, ya koi bhi size column)', 'warning');
-      try { macAudio.playPop(); } catch {}
+      showToast('⚠️ Kripya Left Table mein Quantity bharein!', 'warning');
+      try {
+        macAudio.playBeep();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance('कृपया क्वांटिटी भरें');
+          utter.lang = 'hi-IN';
+          utter.rate = 1.0;
+          window.speechSynthesis.speak(utter);
+        }
+      } catch {}
       setActiveTab('F1');
       setActiveTable('left');
+      setTimeout(() => {
+        const qtyCell = document.getElementById('left-cell-0-1') as HTMLInputElement | null;
+        if (qtyCell) {
+          qtyCell.focus();
+          qtyCell.style.borderColor = '#ef4444';
+          qtyCell.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.45)';
+          setTimeout(() => {
+            qtyCell.style.borderColor = '';
+            qtyCell.style.boxShadow = '';
+          }, 2500);
+        }
+      }, 50);
       return;
     }
 
