@@ -29,18 +29,25 @@ def map_payload_to_bill_data(payload):
     elif 'PURCHASE' in doc_type.upper():
         bill_type = 'PURCHASE'
 
+    dynamic_cols = payload.get('dynamicCols', []) or []
     items_data = []
     for it in payload.get('items', []):
         name = str(it.get('name', '')).strip()
         qty = it.get('qty', '')
-        if name or qty:
-            items_data.append({
+        has_any_val = bool(name) or bool(qty) or any(bool(str(it.get(dc.get('field', ''), '')).strip()) for dc in dynamic_cols)
+        if has_any_val:
+            row_dict = {
                 'desc': name,
                 'party_code': str(it.get('partyCode', '')).strip(),
                 'qty': str(qty).strip(),
                 'u_cap': str(it.get('uCap', '')).strip(),
                 'l_cap': str(it.get('lCap', '')).strip()
-            })
+            }
+            for dc in dynamic_cols:
+                fld = dc.get('field')
+                if fld:
+                    row_dict[fld] = str(it.get(fld, '')).strip()
+            items_data.append(row_dict)
 
     groups_data = []
     for g in payload.get('groups', []):
@@ -72,6 +79,7 @@ def map_payload_to_bill_data(payload):
         'is_estimate': is_estimate,
         'is_summary_only': is_summary_only,
         'show_party_code': bool(payload.get('showPartyCode', False)),
+        'dynamic_cols': dynamic_cols,
         'items': items_data,
         'groups': groups_data,
         'adjustments': adjustments,

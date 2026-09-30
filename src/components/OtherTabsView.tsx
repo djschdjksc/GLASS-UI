@@ -3066,6 +3066,7 @@ export const OtherTabsView: React.FC<Props> = ({
             tokenNo: selectedBill.token || selectedBill.id
           }}
           rawItems={displayRawItems.map((r, i) => ({
+            ...r,
             id: String(i),
             name: r.name,
             partyCode: r.partyCode,
@@ -3082,6 +3083,7 @@ export const OtherTabsView: React.FC<Props> = ({
           }))}
           initialMode="estimate"
           billNo={selectedBill.token || selectedBill.id}
+          dynamicCols={f2AllSizeCols.filter(c => !c.isBase).map(c => ({ field: c.field, label: c.label }))}
         />
       )}
 

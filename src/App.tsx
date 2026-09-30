@@ -2513,6 +2513,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         finishedItems={finishedItems}
         initialMode={printModalMode}
         billNo={header.tokenNo || '0001'}
+        dynamicCols={dynamicCols}
       />
 
       <OcrModal

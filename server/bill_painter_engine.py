@@ -88,12 +88,29 @@ class BillPainter:
         self.sum_pcs = 0.0; self.sum_boxes = 0.0; self.sum_weight = 0.0; self.sum_amt = 0.0
         
         items = self.d.get("items", [])
+        dyn_cols = self.d.get("dynamic_cols", []) or []
+        self.col_sums = {"qty": 0.0, "u_cap": 0.0, "l_cap": 0.0}
+        for dc in dyn_cols:
+            fld = dc.get("field")
+            if fld:
+                self.col_sums[fld] = 0.0
+
         if self.d.get("is_loading_slip"):
             for item in items:
                 try:
-                    self.sum_qty += float(item.get("qty", 0) or 0)
-                    self.sum_ucap += float(item.get("u_cap", 0) or 0)
-                    self.sum_lcap += float(item.get("l_cap", 0) or 0)
+                    q_num = float(item.get("qty", 0) or 0)
+                    u_num = float(item.get("u_cap", 0) or 0)
+                    l_num = float(item.get("l_cap", 0) or 0)
+                    self.sum_qty += q_num
+                    self.col_sums["qty"] += q_num
+                    self.sum_ucap += u_num
+                    self.col_sums["u_cap"] += u_num
+                    self.sum_lcap += l_num
+                    self.col_sums["l_cap"] += l_num
+                    for dc in dyn_cols:
+                        fld = dc.get("field")
+                        if fld:
+                            self.col_sums[fld] += float(item.get(fld, 0) or 0)
                 except: pass
         elif self.d.get("is_equation"):
             for item in items:
@@ -276,12 +293,46 @@ class BillPainter:
         painter.drawLine(self.margin, self.cur_y, self.W - self.margin, self.cur_y)
         self.cur_y += 40
 
+    def _get_table_cols(self):
+        dyn_cols = self.d.get("dynamic_cols", []) or []
+        show_party_code = bool(self.d.get("show_party_code"))
+        table_w = self.W - (2 * self.margin)
+        sr_w = 80
+        pcode_w = 260 if show_party_code else 0
+
+        # Columns for quantities: Base QTY + Dynamic Columns + U CAP + L CAP
+        num_val_cols = 3 + len(dyn_cols)
+        max_val_w = table_w * 0.55
+        desired_each = 110 if len(dyn_cols) > 2 else 130
+        each_w = max(80, min(desired_each, int(max_val_w / num_val_cols)))
+
+        remaining_for_desc = table_w - sr_w - pcode_w - (each_w * num_val_cols)
+        desc_w = max(260, remaining_for_desc)
+
+        cols = [
+            ("SR.", sr_w, "sr"),
+            ("ITEM NAME", desc_w, "desc")
+        ]
+        if show_party_code:
+            cols.append(("PARTY CODE", pcode_w, "party_code"))
+        cols.append(("QTY", each_w, "qty"))
+        for dc in dyn_cols:
+            label = str(dc.get("label", dc.get("field", ""))).upper()
+            cols.append((label, each_w, dc.get("field")))
+        cols.append(("U CAP", each_w, "u_cap"))
+        cols.append(("L CAP", each_w, "l_cap"))
+        return cols
+
     def _draw_column_headers(self, painter, cols, row_h):
         x = self.margin
+        dyn_cols = self.d.get("dynamic_cols", []) or []
+        hdr_font_size = 26 if len(dyn_cols) > 2 else 32
         f = QFont("Segoe UI", 0, QFont.Weight.Bold)
-        f.setPixelSize(35)
+        f.setPixelSize(hdr_font_size)
         painter.setFont(f)
-        for txt, w in cols:
+        for col_info in cols:
+            txt = col_info[0]
+            w = col_info[1]
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(Qt.GlobalColor.black))
             painter.drawRect(x, self.cur_y, w, row_h)
@@ -297,6 +348,8 @@ class BillPainter:
         f.setPixelSize(font_size)
         painter.setFont(f)
         
+        dyn_cols = self.d.get("dynamic_cols", []) or []
+        
         for i_rel, item in enumerate(items_to_draw):
             idx = start_idx + i_rel
             x = self.margin
@@ -309,10 +362,18 @@ class BillPainter:
             raw_desc = str(item.get("desc", ""))
             clean_desc = raw_desc.replace(".", "").replace("-", " ")
             
+            row_data = [str(idx + 1), clean_desc]
             if self.d.get("show_party_code"):
-                row_data = [str(idx + 1), clean_desc, str(item.get("party_code", "")), bz(q_val), bz(u_val), bz(l_val)]
-            else:
-                row_data = [str(idx + 1), clean_desc, bz(q_val), bz(u_val), bz(l_val)]
+                row_data.append(str(item.get("party_code", "")))
+            row_data.append(bz(q_val))
+
+            for dc in dyn_cols:
+                fld = dc.get("field")
+                d_val = float(item.get(fld, 0) or 0)
+                row_data.append(bz(d_val))
+
+            row_data.append(bz(u_val))
+            row_data.append(bz(l_val))
                 
             # BG Color for Estimate / Loading Slip in Image Mode
             if (self.d.get("is_estimate") or self.d.get("is_loading_slip")) and is_image:
@@ -324,6 +385,8 @@ class BillPainter:
                 painter.setBrush(Qt.BrushStyle.NoBrush)
 
             for i, val in enumerate(row_data):
+                if i >= len(cols):
+                    break
                 w = cols[i][1]
                 painter.drawRect(x, self.cur_y, w, row_h)
                 align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter if i == 1 else Qt.AlignmentFlag.AlignCenter
@@ -355,7 +418,7 @@ class BillPainter:
                     else:
                         painter.drawText(QRect(x+10, self.cur_y, w-20, row_h), align, str(val))
                 else:
-                    painter.drawText(QRect(x+10, self.cur_y, w-20, row_h), align, str(val))
+                    painter.drawText(QRect(x+5, self.cur_y, w-10, row_h), align, str(val))
                 x += w
             self.cur_y += row_h
 
@@ -457,20 +520,11 @@ class BillPainter:
             cols = [("ITEM NAME", 330), ("PCS", 100), ("BOXES", 90), ("MULT", 100), ("BILL QTY", 140), ("PRICE", 140), ("WEIGHT", 150), ("TOTAL", 240)]
             row_h = 85
             data_font_size = 25
-        elif self.d.get("is_loading_slip") or self.d.get("is_estimate") or self.d.get("is_summary_only"):
-            if self.d.get("show_party_code"):
-                cols = [("SR.", 80), ("ITEM NAME", 350), ("PARTY CODE", 350), ("QTY", 180), ("U CAP", 180), ("L CAP", 180)]
-            else:
-                cols = [("SR.", 80), ("ITEM NAME", 520), ("QTY", 230), ("U CAP", 230), ("L CAP", 230)]
-            row_h = 60
-            data_font_size = 35 
         else:
-            if self.d.get("show_party_code"):
-                cols = [("SR.", 80), ("ITEM NAME", 350), ("PARTY CODE", 350), ("QTY", 180), ("U CAP", 180), ("L CAP", 180)]
-            else:
-                cols = [("SR.", 80), ("ITEM NAME", 520), ("QTY", 230), ("U CAP", 230), ("L CAP", 230)]
+            cols = self._get_table_cols()
             row_h = 60
-            data_font_size = 35
+            dyn_cols = self.d.get("dynamic_cols", []) or []
+            data_font_size = 28 if len(dyn_cols) > 2 else 35
 
         items = self.d.get("items", [])
         
@@ -613,22 +667,20 @@ class BillPainter:
         f = QFont("Segoe UI", 0, QFont.Weight.Bold)
         
         if self.d.get("is_loading_slip") and not self.d.get("is_estimate"):
-            f.setPixelSize(32)
+            f.setPixelSize(30)
             f.setWeight(QFont.Weight.Bold)
             painter.setFont(f)
-            # Draw Totals aligned with columns
-            if self.d.get("show_party_code"):
-                # SR(80), ITEM(350), P.CODE(350), QTY(180), UCAP(180), LCAP(180)
-                x_qty = self.margin + 80 + 350 + 350
-                col_w = 180
-            else:
-                # SR(80), ITEM(520), QTY(230), UCAP(230), LCAP(230)
-                x_qty = self.margin + 80 + 520
-                col_w = 230
-                
-            painter.drawText(QRect(x_qty, self.cur_y, col_w, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_qty:g}")
-            painter.drawText(QRect(x_qty + col_w, self.cur_y, col_w, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_ucap:g}")
-            painter.drawText(QRect(x_qty + (2 * col_w), self.cur_y, col_w, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_lcap:g}")
+            # Draw Totals dynamically aligned under each column
+            cols = self._get_table_cols()
+            x_footer = self.margin
+            for col_info in cols:
+                w = col_info[1]
+                fld = col_info[2] if len(col_info) > 2 else None
+                if fld and fld in self.col_sums:
+                    sum_val = self.col_sums[fld]
+                    if sum_val != 0:
+                        painter.drawText(QRect(x_footer, self.cur_y, w, 60), Qt.AlignmentFlag.AlignCenter, f"{sum_val:g}")
+                x_footer += w
         
         elif self.d.get("is_equation"):
             painter.setPen(QPen(Qt.GlobalColor.black, 3))

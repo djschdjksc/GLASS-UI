@@ -16,6 +16,7 @@ export interface BillPrintPayload {
   vehicleNo?: string;
   vehicleType?: string;
   showPartyCode?: boolean;
+  dynamicCols?: Array<{ field: string; label: string }>;
   mode: 'estimate' | 'summary_only' | 'loading_slip';
   items: Array<{
     name: string;
@@ -23,6 +24,7 @@ export interface BillPrintPayload {
     qty: number | string;
     uCap?: number | string;
     lCap?: number | string;
+    [key: string]: any;
   }>;
   groups: Array<{
     mould: string;
@@ -166,26 +168,47 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   // 3. Raw Items Table
   if (!isSummaryOnly) {
     const showPCode = Boolean(data.showPartyCode);
-    const cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right' }> = showPCode
-      ? [
-          { title: 'SR.', w: 80, align: 'center' },
-          { title: 'ITEM NAME', w: 350, align: 'left' },
-          { title: 'PARTY CODE', w: 350, align: 'center' },
-          { title: 'QTY', w: 180, align: 'center' },
-          { title: 'U CAP', w: 180, align: 'center' },
-          { title: 'L CAP', w: 180, align: 'center' }
-        ]
-      : [
-          { title: 'SR.', w: 80, align: 'center' },
-          { title: 'ITEM NAME', w: 520, align: 'left' },
-          { title: 'QTY', w: 230, align: 'center' },
-          { title: 'U CAP', w: 230, align: 'center' },
-          { title: 'L CAP', w: 230, align: 'center' }
-        ];
+    const dynCols = Array.isArray(data.dynamicCols) ? data.dynamicCols : [];
+
+    // Calculate responsive column widths
+    const totalTableW = W - 2 * margin; // e.g. 1354px
+    const srW = 80;
+    const pCodeW = showPCode ? (dynCols.length > 2 ? 180 : 250) : 0;
+    
+    // Total numeric quantity columns = 1 (Base Qty) + dynCols.length + 1 (uCap) + 1 (lCap)
+    const numQtyCols = 1 + dynCols.length + 2;
+    // Distribute remaining width to item name and quantity columns
+    const totalQtyW = Math.min(totalTableW * 0.58, numQtyCols * (dynCols.length > 3 ? 110 : dynCols.length > 1 ? 140 : 180));
+    const eachQtyW = Math.round(totalQtyW / numQtyCols);
+    const nameW = totalTableW - srW - pCodeW - (eachQtyW * numQtyCols);
+
+    const cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right'; field?: string }> = [
+      { title: 'SR.', w: srW, align: 'center' },
+      { title: 'ITEM NAME', w: nameW, align: 'left' }
+    ];
+
+    if (showPCode) {
+      cols.push({ title: 'PARTY CODE', w: pCodeW, align: 'center' });
+    }
+
+    cols.push({ title: 'QTY', w: eachQtyW, align: 'center', field: 'qty' });
+
+    dynCols.forEach(dc => {
+      cols.push({
+        title: (dc.label || dc.field).toUpperCase(),
+        w: eachQtyW,
+        align: 'center',
+        field: dc.field
+      });
+    });
+
+    cols.push({ title: 'U CAP', w: eachQtyW, align: 'center', field: 'uCap' });
+    cols.push({ title: 'L CAP', w: eachQtyW, align: 'center', field: 'lCap' });
 
     // Column Headers (Black Rect with White Centered Bold Text)
     let xHdr = margin;
-    ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+    const hdrFontSize = dynCols.length > 2 ? 26 : 32;
+    ctx.font = `bold ${hdrFontSize}px "Segoe UI", Arial, sans-serif`;
     cols.forEach(col => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(xHdr, curY, col.w, rowH);
@@ -197,25 +220,35 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     });
     curY += rowH;
 
-    // Data Rows
-    let sumQty = 0;
-    let sumUCap = 0;
-    let sumLCap = 0;
+    // Track column totals
+    const colSums: Record<string, number> = { qty: 0, uCap: 0, lCap: 0 };
+    dynCols.forEach(dc => { colSums[dc.field] = 0; });
 
     validItems.forEach((it, idx) => {
       const qVal = parseFloat(String(it.qty)) || 0;
       const uVal = parseFloat(String(it.uCap)) || 0;
       const lVal = parseFloat(String(it.lCap)) || 0;
-      sumQty += qVal;
-      sumUCap += uVal;
-      sumLCap += lVal;
+      colSums['qty'] += qVal;
+      colSums['uCap'] += uVal;
+      colSums['lCap'] += lVal;
 
       const rawDesc = String(it.name || '');
       const cleanDesc = rawDesc.replace(/\./g, '').replace(/-/g, ' ');
 
-      const rowData = showPCode
-        ? [String(idx + 1), cleanDesc, String(it.partyCode || ''), qVal !== 0 ? String(qVal) : '', uVal !== 0 ? String(uVal) : '', lVal !== 0 ? String(lVal) : '']
-        : [String(idx + 1), cleanDesc, qVal !== 0 ? String(qVal) : '', uVal !== 0 ? String(uVal) : '', lVal !== 0 ? String(lVal) : ''];
+      const rowData: string[] = [String(idx + 1), cleanDesc];
+      if (showPCode) {
+        rowData.push(String(it.partyCode || ''));
+      }
+      rowData.push(qVal !== 0 ? String(qVal) : '');
+
+      dynCols.forEach(dc => {
+        const dVal = parseFloat(String((it as any)[dc.field])) || 0;
+        colSums[dc.field] += dVal;
+        rowData.push(dVal !== 0 ? String(dVal) : '');
+      });
+
+      rowData.push(uVal !== 0 ? String(uVal) : '');
+      rowData.push(lVal !== 0 ? String(lVal) : '');
 
       let xRow = margin;
       rowData.forEach((val, i) => {
@@ -237,20 +270,20 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
             const baseText = noteMatch[1].trim();
             const noteText = `(${noteMatch[2].trim()})`;
 
-            ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+            ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(baseText, xRow + 20, curY + rowH / 2);
+            ctx.fillText(baseText, xRow + 15, curY + rowH / 2);
 
             const baseW = ctx.measureText(baseText).width;
-            ctx.font = 'italic 33px "Segoe UI", Arial, sans-serif';
-            ctx.fillText(noteText, xRow + 20 + baseW + 8, curY + rowH / 2);
+            ctx.font = 'italic 28px "Segoe UI", Arial, sans-serif';
+            ctx.fillText(noteText, xRow + 15 + baseW + 8, curY + rowH / 2);
           } else {
-            ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+            ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(val, xRow + 20, curY + rowH / 2);
+            ctx.fillText(val, xRow + 15, curY + rowH / 2);
           }
         } else {
-          ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+          ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(val, xRow + w / 2, curY + rowH / 2);
         }
@@ -263,21 +296,21 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
 
     // Loading Slip Footer (Pure Numbers under Columns matching main.py)
     if (isLoadingSlip && !isEstimate) {
-      curY += 30;
-      ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
+      curY += 25;
+      ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      const showPartyCode = Boolean(data.showPartyCode);
-      const xQty = showPartyCode ? (margin + 80 + 350 + 350) : (margin + 80 + 520);
-      const colW = showPartyCode ? 180 : 230;
-
-      if (sumQty > 0) ctx.fillText(String(sumQty), xQty + colW / 2, curY + 30);
-      if (sumUCap > 0) ctx.fillText(String(sumUCap), xQty + colW + colW / 2, curY + 30);
-      if (sumLCap > 0) ctx.fillText(String(sumLCap), xQty + 2 * colW + colW / 2, curY + 30);
-
-      curY += 70;
+      let xFooter = margin;
+      cols.forEach((col, i) => {
+        if (col.field && colSums[col.field] !== undefined) {
+          const sumVal = colSums[col.field];
+          ctx.fillText(sumVal !== 0 ? String(sumVal) : '', xFooter + col.w / 2, curY + 20);
+        }
+        xFooter += col.w;
+      });
+      curY += 40;
     }
   }
 

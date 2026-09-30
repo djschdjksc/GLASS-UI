@@ -10,6 +10,7 @@ interface Props {
   finishedItems: FinishedItem[];
   initialMode?: 'estimate' | 'summary_only' | 'loading_slip';
   billNo?: string | number;
+  dynamicCols?: Array<{ field: string; label: string }>;
 }
 
 export const SlipModal: React.FC<Props> = (props) => {

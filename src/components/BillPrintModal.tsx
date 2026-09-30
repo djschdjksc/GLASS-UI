@@ -32,6 +32,7 @@ export interface BillPrintModalProps {
   finishedItems: FinishedItem[];
   initialMode?: 'estimate' | 'summary_only' | 'loading_slip';
   billNo?: string | number;
+  dynamicCols?: Array<{ field: string; label: string }>;
 }
 
 export const BillPrintModal: React.FC<BillPrintModalProps> = ({
@@ -41,7 +42,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   rawItems,
   finishedItems,
   initialMode = 'estimate',
-  billNo = '0001'
+  billNo = '0001',
+  dynamicCols
 }) => {
   const [printMode, setPrintMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>(initialMode);
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
@@ -110,7 +112,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       vehicleNo: header.vehicleNo,
       showPartyCode,
       mode: printMode,
+      dynamicCols,
       items: rawItems.map(r => ({
+        ...r,
         name: r.name,
         partyCode: r.partyCode,
         qty: r.qty,
@@ -128,7 +132,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       subTotal,
       finalBalance
     };
-  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance]);
+  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols]);
 
   // Live Canvas Rendering & Native PyQt6 Engine fetch
   useEffect(() => {
