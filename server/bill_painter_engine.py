@@ -134,6 +134,11 @@ class BillPainter:
             win_h = self.full_h if page_num == -1 else self.H
             painter.setWindow(0, 0, self.W, win_h)
 
+        # Enable high-quality subpixel antialiasing & smooth transforms
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+
         # Pure White Clean Background
         draw_h = self.full_h if page_num == -1 else self.H
         painter.fillRect(0, 0, self.W, draw_h, QColor("#FFFFFF"))

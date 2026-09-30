@@ -318,21 +318,28 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
   const handleCopyAsImage = async () => {
     macAudio.playClick();
-    if (isNativeServiceActive) {
-      try {
-        const resp = await fetch('http://127.0.0.1:5005/api/print/copy-to-clipboard', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(printPayload)
-        });
-        const res = await resp.json();
-        if (res.success) {
-          macAudio.playSuccess();
-          setCopiedSuccess(true);
-          setTimeout(() => setCopiedSuccess(false), 2500);
-          return;
-        }
-      } catch {}
+    try {
+      let blob: Blob | null = null;
+      if (nativeImage) {
+        const res = await fetch(nativeImage);
+        blob = await res.blob();
+      } else if (canvasRef.current) {
+        blob = await new Promise<Blob | null>((resolve) =>
+          canvasRef.current!.toBlob(resolve, 'image/png')
+        );
+      }
+
+      if (blob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        macAudio.playSuccess();
+        setCopiedSuccess(true);
+        setTimeout(() => setCopiedSuccess(false), 2500);
+        return;
+      }
+    } catch (err) {
+      console.warn('Direct browser clipboard write failed, trying canvas fallback:', err);
     }
 
     if (canvasRef.current) {
@@ -887,7 +894,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     width: isFitPage ? 'auto' : '100%',
                     height: isFitPage ? 'auto' : 'auto',
                     objectFit: 'contain',
-                    imageRendering: 'crisp-edges'
+                    imageRendering: 'auto',
+                    filter: 'contrast(1.02)'
                   }}
                 />
               )}
@@ -899,7 +907,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   maxWidth: '100%',
                   width: isFitPage ? 'auto' : '100%',
                   height: isFitPage ? 'auto' : 'auto',
-                  objectFit: 'contain'
+                  objectFit: 'contain',
+                  imageRendering: 'auto',
+                  filter: 'contrast(1.02)'
                 }}
               />
             </div>
