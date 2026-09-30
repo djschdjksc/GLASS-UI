@@ -200,8 +200,8 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       }))
     ].sort((a, b) => b.size - a.size);
 
-    // Calculate responsive column widths
-    const totalTableW = W - 2 * margin; // e.g. 1354px
+    // Calculate responsive column widths (Exactly match lower group table width = 1290px)
+    const totalTableW = 1290;
     const srW = 70;
     const availW = totalTableW - srW;
 
@@ -437,11 +437,11 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   // 5. Estimate & Summary Footer: SUB-TOTAL, Adjustments, BALANCE
   if ((isEstimate || isSummaryOnly) && isLastPage) {
     curY += 40;
+    const tableRight = margin + 1290;
     const blockW = 700;
-    const rightGap = 80;
-    const xLabel = W - margin - blockW - rightGap;
-    const xValue = W - margin - 300 - rightGap;
     const valW = 300;
+    const xLabel = tableRight - blockW;
+    const xValue = tableRight - valW;
 
     // Sub-Total
     ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';

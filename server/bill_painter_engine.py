@@ -297,7 +297,8 @@ class BillPainter:
     def _get_table_cols(self):
         dyn_cols = self.d.get("dynamic_cols", []) or []
         show_party_code = bool(self.d.get("show_party_code"))
-        table_w = self.W - (2 * self.margin)
+        # Exactly match lower table width: MOULD NAME(520) + QTY(230) + PRICE(230) + TOTAL(310) = 1290px
+        table_w = 1290
         sr_w = 70
         avail_w = table_w - sr_w
 
@@ -714,12 +715,12 @@ class BillPainter:
             painter.drawText(QRect(x_total, self.cur_y, 240, 60), Qt.AlignmentFlag.AlignCenter, f"₹ {self.sum_amt:,.2f}")
 
         elif self.d.get("is_estimate") or self.d.get("is_summary_only"):
-            # --- SHARED ALIGNMENT CONFIG ---
+            # --- SHARED ALIGNMENT CONFIG (Aligns flush with 1290px tables) ---
+            table_right = self.margin + 1290
             block_w = 700
-            right_gap = 80 # Shifted left to prevent cutting
-            x_label = self.W - self.margin - block_w - right_gap
-            x_value = self.W - self.margin - 300 - right_gap
             val_w = 300
+            x_label = table_right - block_w
+            x_value = table_right - val_w
             
             # 1. Draw Sub-Total (Sum of Groups)
             self.cur_y += 40
