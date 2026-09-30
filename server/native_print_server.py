@@ -167,16 +167,6 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 printer.setPageOrientation(QPageLayout.Orientation.Portrait)
                 printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
 
-                if payload.get('showDialog', False):
-                    dlg = QPrintDialog(printer)
-                    if dlg.exec() != QPrintDialog.DialogCode.Accepted:
-                        self.send_response(200)
-                        self._send_cors_headers()
-                        self.send_header('Content-Type', 'application/json')
-                        self.end_headers()
-                        self.wfile.write(json.dumps({'success': False, 'message': 'Print cancelled by user'}).encode('utf-8'))
-                        return
-
                 p = QPainter(printer)
                 bp = BillPainter(bill_data)
                 rect = printer.pageRect(QPrinter.Unit.DevicePixel).toRect()

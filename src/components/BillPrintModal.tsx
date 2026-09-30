@@ -303,21 +303,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
   const handleDirectPrint = async () => {
     macAudio.playSuccess();
-    if (isNativeServiceActive) {
-      try {
-        const resp = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...printPayload, showDialog: true })
-        });
-        const res = await resp.json();
-        if (res.success || res.message === 'Print cancelled by user') {
-          return;
-        }
-      } catch (err) {
-        console.warn('Native direct-print failed:', err);
-      }
-    }
 
     // High-resolution image print (Native PyQt6 or Canvas fallback)
     const imgToPrint = nativeImage || (canvasRef.current ? canvasRef.current.toDataURL('image/png') : null);
