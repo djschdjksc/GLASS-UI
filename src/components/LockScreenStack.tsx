@@ -6,7 +6,6 @@ import React, {
 } from "react";
 import NotificationCard from "./NotificationCard";
 import useSound from "../utils/useSound";
-import { macAudio } from "../utils/macAudio";
 import type { BillRecord } from "../services/db/schema";
 import "./LockScreenStack.css";
 
@@ -17,12 +16,17 @@ interface Props {
   onDoubleClickBill?: (bill: BillRecord) => void;
 }
 
-const SWITCH_COOLDOWN = 80;        // ms — fast response
-const MAX_VISIBLE = 5;             // max cards in bottom stack
-const MIN_SWIPE_DISTANCE = 28;     // px drag threshold
-const LERP = 0.28;                 // smooth spring
-const CARD_HEIGHT = 74;            // card height + gap in px
+// ─── Physics constants (tuned to match Apple iOS spring feel) ────────────────
+const SWITCH_COOLDOWN  = 75;   // ms between advances
+const MIN_SWIPE        = 26;   // px drag threshold
+const CARD_H           = 72;   // card height + gap
+const MAX_STACK        = 4;    // how many cards peek below the active card
 
+// Spring physics: position(t+1) = pos + vel; vel = vel*damping + (target-pos)*stiffness
+const SPRING_STIFFNESS = 0.22;  // "pull" force toward target (lower = softer)
+const SPRING_DAMPING   = 0.76;  // velocity decay (lower = more bounce, higher = overdamped)
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export const LockScreenStack: React.FC<Props> = ({
   bills,
   selectedBillId,
@@ -31,238 +35,273 @@ export const LockScreenStack: React.FC<Props> = ({
 }) => {
   const { initAudio, playIPhoneClick, playSoftWhoosh } = useSound();
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  // Ref always mirrors activeIndex — FIXES STALE CLOSURE BUG in tryAdvance
-  const activeIndexRef = useRef(0);
-  // Flag: true when change originated inside this component (prevents sync loop)
-  const isInternalChangeRef = useRef(false);
+  const [activeIndex, setActiveIndex]   = useState(0);
+  const activeIndexRef                  = useRef(0);   // always mirrors state
+  const isInternalRef                   = useRef(false);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const targetRef = useRef(0);
-  const animActiveRef = useRef(0);
+  const containerRef  = useRef<HTMLDivElement | null>(null);
+  const cardRefs      = useRef<(HTMLDivElement | null)[]>([]);
   const lastSwitchRef = useRef(0);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Keep activeIndexRef always in sync with state
+  // Spring state — one spring for position
+  const springPos = useRef(0);   // current animated position (fractional index)
+  const springVel = useRef(0);   // current velocity
+  const targetPos = useRef(0);   // where we want to go (integer index)
+
+  // For entrance animation
+  const isEnteredRef = useRef(false);
+
+  // ── Keep activeIndexRef in sync ──────────────────────────────────────────
   useEffect(() => {
     activeIndexRef.current = activeIndex;
-    targetRef.current = activeIndex;
+    targetPos.current      = activeIndex;
   }, [activeIndex]);
 
-  // Reset to top whenever bills list changes (category/search change)
+  // ── Reset when bills change (category / search) ──────────────────────────
   useEffect(() => {
-    isInternalChangeRef.current = true;
+    isInternalRef.current = true;
+    isEnteredRef.current  = false;  // trigger entrance animation again
     setActiveIndex(0);
-    targetRef.current = 0;
-    animActiveRef.current = 0;
-    setTimeout(() => { isInternalChangeRef.current = false; }, 60);
+    targetPos.current = 0;
+    springPos.current = 0;
+    springVel.current = 0;
+    setTimeout(() => { isInternalRef.current = false; }, 80);
   }, [bills]);
 
-  // Sync with selectedBillId from OUTSIDE (e.g. parent arrow key navigation)
-  // Skip if we caused the change ourselves (prevents animation fight/flicker)
+  // ── Sync from parent (arrow keys, etc.) ─────────────────────────────────
   useEffect(() => {
     if (!selectedBillId || bills.length === 0) return;
-    if (isInternalChangeRef.current) return;
-    const found = bills.findIndex((b) => b.id === selectedBillId);
+    if (isInternalRef.current) return;
+    const found = bills.findIndex(b => b.id === selectedBillId);
     if (found >= 0) {
       setActiveIndex(found);
-      targetRef.current = found;
+      targetPos.current = found;
     }
   }, [selectedBillId, bills]);
 
-  /* ============================================================
-     APPLY STYLES — iPhone Bottom Stack Physics
-     - Active card sits at baseBottom
-     - Cards below: stacked & scaled down (bottom stack)
-     - Cards above: flowing upward in normal list
-     ============================================================ */
-  const applyStyles = useCallback((aIndex: number) => {
+  /* ══════════════════════════════════════════════════════════════════════════
+     APPLY STYLES
+     Key insight (Apple behavior):
+       • z-index is driven by INTEGER targetPos (not fractional spring position).
+         This ensures the card we're MOVING TO always appears on top during transition.
+       • Cards BELOW active (stack peek) go lower by 13px each + scale down
+       • Cards ABOVE active scroll upward in a plain list
+     ══════════════════════════════════════════════════════════════════════════ */
+  const applyStyles = useCallback((pos: number) => {
     const container = containerRef.current;
-    const containerH = container ? container.clientHeight : 0;
-    // Don't apply if not yet laid out
-    if (containerH < 80) return;
-    const baseBottom = Math.max(80, containerH - 160);
+    if (!container) return;
+    const H = container.clientHeight;
+    if (H < 80) return;
+
+    // Active card sits at 72% of container height from top
+    const activeY = Math.round(H * 0.72);
+
+    // Integer target — used for z-index so the card we're going TO is always on top
+    const intTarget = targetPos.current;
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
-      const rel = i - aIndex;
 
-      let translateY = 0;
-      let scale = 1;
-      let opacity = 1;
-      let z = 100 - i;
+      // Fractional rel for smooth position/scale (smooth spring interpolation)
+      const rel        = i - pos;
+      // Integer rel for z-index (based on where we're GOING, not where we are)
+      const relForZ    = i - intTarget;
 
-      if (rel === 0) {
-        // ACTIVE CARD — full size, at baseBottom
-        translateY = baseBottom;
-        scale = 1;
-        opacity = 1;
-        z = 1000;
-      } else if (rel > 0) {
-        // BELOW ACTIVE — bottom stack (scaled down, visible)
-        const step = Math.min(rel, MAX_VISIBLE);
-        translateY = baseBottom + step * 14;
-        scale = Math.max(0.82, 1 - step * 0.048);
-        opacity = Math.max(0.55, 1 - step * 0.15);
-        z = 1000 - Math.round(step * 10);
+      let translateY: number;
+      let scale:      number;
+      let opacity:    number;
+      let zIndex:     number;
+
+      if (relForZ === 0) {
+        // ── ACTIVE (destination) card: always highest z ──
+        zIndex = 1000;
+      } else if (relForZ > 0) {
+        // ── STACK cards below active: next highest z ──
+        zIndex = 1000 - Math.min(relForZ, MAX_STACK) * 8;
       } else {
-        // ABOVE ACTIVE — normal upward list
-        const up = Math.abs(rel);
-        translateY = baseBottom - up * CARD_HEIGHT;
-        scale = 1;
-        opacity = up <= 2 ? 1 : Math.max(0.35, 1 - (up - 2) * 0.22);
-        z = 900 - up;
+        // ── LIST cards above active: lower z, decreasing upward ──
+        zIndex = 900 + relForZ; // relForZ is negative, so 899, 898, ...
+      }
+
+      if (rel >= 0) {
+        // BELOW or AT active — stacked
+        const step   = Math.min(rel, MAX_STACK + 1);
+        translateY   = activeY + step * 13;
+        scale        = Math.max(0.80, 1 - step * 0.05);
+        opacity      = step === 0 ? 1 : Math.max(0.50, 1 - step * 0.14);
+      } else {
+        // ABOVE active — normal upward list
+        const up     = Math.abs(rel);
+        translateY   = activeY - up * CARD_H;
+        scale        = 1;
+        opacity      = up <= 1 ? 1 : Math.max(0.30, 1 - (up - 1) * 0.20);
       }
 
       card.style.transform = `translate(-50%, ${translateY}px) scale(${scale})`;
-      card.style.opacity = String(opacity);
-      card.style.zIndex = String(z);
-      card.style.filter = 'none'; // ZERO BLUR always
+      card.style.opacity   = String(Math.max(0, Math.min(1, opacity)));
+      card.style.zIndex    = String(zIndex);
+      card.style.filter    = 'none';
     });
   }, []);
 
-  /* 60fps rAF Animation Loop — LERP interpolation */
+  /* ══════════════════════════════════════════════════════════════════════════
+     SPRING PHYSICS rAF LOOP
+     — simulates Apple UISpringTimingParameters (damped spring)
+     — smoother, more natural than LERP (no abrupt stop, gentle settle)
+     ══════════════════════════════════════════════════════════════════════════ */
   useEffect(() => {
     let animId: number;
     const tick = () => {
-      const diff = targetRef.current - animActiveRef.current;
-      if (Math.abs(diff) > 0.008) {
-        animActiveRef.current += diff * LERP;
-        applyStyles(animActiveRef.current);
-      } else if (diff !== 0) {
-        animActiveRef.current = targetRef.current;
-        applyStyles(animActiveRef.current);
+      const target = targetPos.current;
+      const diff   = target - springPos.current;
+
+      springVel.current = springVel.current * SPRING_DAMPING + diff * SPRING_STIFFNESS;
+      springPos.current += springVel.current;
+
+      // Snap when close enough
+      if (Math.abs(diff) < 0.0015 && Math.abs(springVel.current) < 0.0015) {
+        springPos.current = target;
+        springVel.current = 0;
       }
+
+      applyStyles(springPos.current);
       animId = requestAnimationFrame(tick);
     };
     animId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animId);
-  }, [applyStyles]); // NO bills.length dep — avoids rAF restart flicker
-
-  /* Initial layout apply — run immediately on next tick after DOM paint */
-  useEffect(() => {
-    // Try immediately (DOM may already have size)
-    applyStyles(0);
-    // Also retry after 1 frame in case clientHeight was 0 on first call
-    const id = requestAnimationFrame(() => applyStyles(0));
-    return () => cancelAnimationFrame(id);
   }, [applyStyles]);
 
-  /* ============================================================
-     ADVANCE — reads from REF (not state) — fixes stale closure bug
-     ============================================================ */
-  const tryAdvance = useCallback(
-    (dir: number) => {
-      const now = performance.now();
-      if (now - lastSwitchRef.current < SWITCH_COOLDOWN) return false;
-      const current = activeIndexRef.current; // REF — never stale!
+  /* ══════════════════════════════════════════════════════════════════════════
+     ENTRANCE ANIMATION — Crawl up from bottom, staggered (Apple style)
+     Cards start below the viewport and crawl up one by one
+     ══════════════════════════════════════════════════════════════════════════ */
+  useEffect(() => {
+    if (isEnteredRef.current || bills.length === 0) return;
+    const container = containerRef.current;
+    if (!container || container.clientHeight < 80) return;
 
-      if (dir > 0 && current < bills.length - 1) {
-        lastSwitchRef.current = now;
-        playIPhoneClick();
-        playSoftWhoosh();
-        const nextIdx = current + 1;
-        isInternalChangeRef.current = true;
-        activeIndexRef.current = nextIdx; // Update ref immediately before setState
-        setActiveIndex(nextIdx);
-        targetRef.current = nextIdx;
-        if (bills[nextIdx]) onSelectBill(bills[nextIdx]);
-        setTimeout(() => { isInternalChangeRef.current = false; }, 80);
-        return true;
+    isEnteredRef.current = true;
+
+    // Temporarily set all cards to start from below the container
+    cardRefs.current.forEach((card) => {
+      if (card) {
+        card.style.transition = 'none';
+        card.style.opacity    = '0';
+        card.style.transform  = `translate(-50%, ${container.clientHeight + 80}px) scale(0.9)`;
       }
-      if (dir < 0 && current > 0) {
-        lastSwitchRef.current = now;
-        playIPhoneClick();
-        const prevIdx = current - 1;
-        isInternalChangeRef.current = true;
-        activeIndexRef.current = prevIdx;
-        setActiveIndex(prevIdx);
-        targetRef.current = prevIdx;
-        if (bills[prevIdx]) onSelectBill(bills[prevIdx]);
-        setTimeout(() => { isInternalChangeRef.current = false; }, 80);
-        return true;
-      }
-      return false;
-    },
-    [bills, onSelectBill, playIPhoneClick, playSoftWhoosh]
-    // NOTE: activeIndex NOT in deps — we use activeIndexRef instead
-  );
+    });
 
-  /* MOUSE WHEEL */
-  const onWheel = useCallback(
-    (e: React.WheelEvent) => {
-      e.preventDefault();
-      initAudio();
-      if (Math.abs(e.deltaY) < 3) return;
-      tryAdvance(e.deltaY > 0 ? 1 : -1);
-    },
-    [initAudio, tryAdvance]
-  );
+    // Stagger each card crawling up from bottom using CSS transition
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return;
+      const delay = i * 38 + 40; // stagger: 40ms base + 38ms per card
+      setTimeout(() => {
+        if (!card) return;
+        card.style.transition = `transform 0.52s cubic-bezier(0.34, 1.28, 0.64, 1), opacity 0.35s ease-out`;
+        card.style.opacity    = '1';
+        // Let the spring system take over once transition is done
+        setTimeout(() => {
+          if (card) card.style.transition = 'none';
+        }, 560);
+      }, delay);
+    });
 
-  /* TOUCH SWIPE */
-  const touchState = useRef({ startY: 0, active: false, consumed: false });
+    // Apply final spring positions after all cards have entered
+    const totalDelay = bills.length * 38 + 600;
+    setTimeout(() => applyStyles(springPos.current), totalDelay);
+  });
 
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      initAudio();
-      touchState.current.startY = e.touches[0].clientY;
-      touchState.current.active = true;
-      touchState.current.consumed = false;
-    },
-    [initAudio]
-  );
+  /* ══════════════════════════════════════════════════════════════════════════
+     ADVANCE — instant target update, spring does the smooth motion
+     ══════════════════════════════════════════════════════════════════════════ */
+  const tryAdvance = useCallback((dir: number) => {
+    const now = performance.now();
+    if (now - lastSwitchRef.current < SWITCH_COOLDOWN) return false;
 
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      const s = touchState.current;
-      if (!s.active || s.consumed) return;
-      const dy = s.startY - e.touches[0].clientY;
-      if (Math.abs(dy) >= MIN_SWIPE_DISTANCE) {
-        if (tryAdvance(dy > 0 ? 1 : -1)) s.consumed = true;
-      }
-    },
-    [tryAdvance]
-  );
+    const current = activeIndexRef.current;
+
+    if (dir > 0 && current < bills.length - 1) {
+      lastSwitchRef.current = now;
+      playIPhoneClick();
+      playSoftWhoosh();
+      const next = current + 1;
+      isInternalRef.current    = true;
+      activeIndexRef.current   = next;
+      setActiveIndex(next);
+      targetPos.current        = next;
+      if (bills[next]) onSelectBill(bills[next]);
+      setTimeout(() => { isInternalRef.current = false; }, 100);
+      return true;
+    }
+    if (dir < 0 && current > 0) {
+      lastSwitchRef.current = now;
+      playIPhoneClick();
+      const prev = current - 1;
+      isInternalRef.current   = true;
+      activeIndexRef.current  = prev;
+      setActiveIndex(prev);
+      targetPos.current       = prev;
+      if (bills[prev]) onSelectBill(bills[prev]);
+      setTimeout(() => { isInternalRef.current = false; }, 100);
+      return true;
+    }
+    return false;
+  }, [bills, onSelectBill, playIPhoneClick, playSoftWhoosh]);
+
+  // ── Mouse Wheel ──────────────────────────────────────────────────────────
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    initAudio();
+    if (Math.abs(e.deltaY) < 3) return;
+    tryAdvance(e.deltaY > 0 ? 1 : -1);
+  }, [initAudio, tryAdvance]);
+
+  // ── Touch Swipe ──────────────────────────────────────────────────────────
+  const touchRef = useRef({ startY: 0, active: false, consumed: false });
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    initAudio();
+    touchRef.current = { startY: e.touches[0].clientY, active: true, consumed: false };
+  }, [initAudio]);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    const t = touchRef.current;
+    if (!t.active || t.consumed) return;
+    const dy = t.startY - e.touches[0].clientY;
+    if (Math.abs(dy) >= MIN_SWIPE) {
+      if (tryAdvance(dy > 0 ? 1 : -1)) t.consumed = true;
+    }
+  }, [tryAdvance]);
 
   const onTouchEnd = useCallback(() => {
-    touchState.current.active = false;
-    touchState.current.consumed = false;
+    touchRef.current.active   = false;
+    touchRef.current.consumed = false;
   }, []);
 
-  /* MOUSE DRAG — only for drag gesture, does NOT interfere with card clicks */
-  const mouseState = useRef({ down: false, startY: 0, consumed: false });
+  // ── Mouse Drag ───────────────────────────────────────────────────────────
+  const mouseRef = useRef({ down: false, startY: 0, consumed: false });
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      initAudio();
-      mouseState.current.down = true;
-      mouseState.current.startY = e.clientY;
-      mouseState.current.consumed = false;
-    },
-    [initAudio]
-  );
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    initAudio();
+    mouseRef.current = { down: true, startY: e.clientY, consumed: false };
+  }, [initAudio]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      const m = mouseState.current;
+      const m = mouseRef.current;
       if (!m.down || m.consumed) return;
       const dy = m.startY - e.clientY;
-      if (Math.abs(dy) >= MIN_SWIPE_DISTANCE) {
+      if (Math.abs(dy) >= MIN_SWIPE) {
         if (tryAdvance(dy > 0 ? 1 : -1)) m.consumed = true;
       }
     };
-    const onUp = () => {
-      mouseState.current.down = false;
-      mouseState.current.consumed = false;
-    };
+    const onUp = () => { mouseRef.current.down = false; mouseRef.current.consumed = false; };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, [tryAdvance]);
 
+  // ── Empty state ──────────────────────────────────────────────────────────
   if (bills.length === 0) {
     return (
       <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748b', fontSize: '11px' }}>
@@ -286,27 +325,25 @@ export const LockScreenStack: React.FC<Props> = ({
           {bills.map((b, i) => (
             <div
               key={b.id || i}
-              ref={(el) => { cardRefs.current[i] = el; }}
+              ref={el => { cardRefs.current[i] = el; }}
               className="card-wrapper"
             >
               <NotificationCard
                 bill={b}
                 isActive={i === activeIndex}
                 timeText={b.date}
-                onClick={(e) => {
-                  e?.stopPropagation(); // prevent drag conflict
+                onClick={e => {
+                  e?.stopPropagation();
                   initAudio();
                   playIPhoneClick();
-                  isInternalChangeRef.current = true;
+                  isInternalRef.current  = true;
                   activeIndexRef.current = i;
                   setActiveIndex(i);
-                  targetRef.current = i;
+                  targetPos.current      = i;
                   onSelectBill(b);
-                  setTimeout(() => { isInternalChangeRef.current = false; }, 80);
+                  setTimeout(() => { isInternalRef.current = false; }, 100);
                 }}
-                onDoubleClick={() => {
-                  if (onDoubleClickBill) onDoubleClickBill(b);
-                }}
+                onDoubleClick={() => { if (onDoubleClickBill) onDoubleClickBill(b); }}
               />
             </div>
           ))}
