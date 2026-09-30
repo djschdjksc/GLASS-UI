@@ -2,7 +2,7 @@ import sys
 import os
 import json
 import base64
-from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QImage, QPainter, QColor, QPageSize, QPageLayout
 from PyQt6.QtCore import QBuffer, QIODevice
@@ -201,8 +201,7 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
 def run_server(port=5005):
-    server = ThreadingHTTPServer(('127.0.0.1', port), PrintRequestHandler)
-    server.daemon_threads = True
+    server = HTTPServer(('127.0.0.1', port), PrintRequestHandler)
     print(f'Native PyQt6 Print Service started on http://127.0.0.1:{port}')
     server.serve_forever()
 

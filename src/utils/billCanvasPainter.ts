@@ -208,10 +208,12 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       pCodeW = eachQtyW * 2;
       nameW = availW - pCodeW - (numQtyCols * eachQtyW); // equals 2*eachQtyW + remainder
     } else {
-      // When PARTY CODE is hidden: all numeric columns are EK BARABAR, ITEM NAME gets remaining width (>= 2x)
-      eachQtyW = Math.min(180, Math.floor((availW * 0.45) / numQtyCols));
+      // When PARTY CODE is hidden:
+      // ITEM NAME is 2 units, each numeric col is 1 unit (exact double 2x, NOT 4x!)
+      const totalUnits = 2 + numQtyCols;
+      eachQtyW = Math.floor(availW / totalUnits);
       pCodeW = 0;
-      nameW = availW - (numQtyCols * eachQtyW);
+      nameW = availW - (numQtyCols * eachQtyW); // equals 2*eachQtyW + remainder
     }
 
     const cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right'; field?: string }> = [

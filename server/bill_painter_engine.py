@@ -330,9 +330,12 @@ class BillPainter:
             pcode_w = each_w * 2
             desc_w = avail_w - pcode_w - (num_qty_cols * each_w)  # equals 2*each_w + remainder
         else:
-            each_w = min(180, int((avail_w * 0.45) / num_qty_cols))
+            # When PARTY CODE is hidden:
+            # ITEM NAME is 2 units, each numeric col is 1 unit (exact double 2x, NOT 4x!)
+            total_units = 2 + num_qty_cols
+            each_w = int(avail_w / total_units)
             pcode_w = 0
-            desc_w = avail_w - (num_qty_cols * each_w)
+            desc_w = avail_w - (num_qty_cols * each_w)  # equals 2*each_w + remainder
 
         cols = [
             ("SR.", sr_w, "sr"),
