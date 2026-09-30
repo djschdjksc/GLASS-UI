@@ -16,13 +16,13 @@ interface Props {
   onDoubleClickBill?: (bill: BillRecord) => void;
 }
 
-// ─── Smooth & High Visibility Configuration ──────────────────────────────
-const COOLDOWN        = 60;    // ms debounce to prevent fast vibration
-const MIN_SWIPE       = 24;    // px drag threshold
+// ─── Ultra Fast & Smooth Configuration ────────────────────────────────────
+const COOLDOWN        = 18;    // ms debounce — super fast response on wheel/keys
+const MIN_SWIPE       = 18;    // px drag threshold
 const CARD_HEIGHT     = 72;    // visible card height + gap
-const VISIBLE_COUNT   = 8;     // Kam se kam 8 cards view me visible hon
-const STACK_PEEK      = 14;    // px peek for folded stack edges
-const LERP_FACTOR     = 0.18;  // Perfectly damped smooth interpolation (no vibration/oscillations)
+const VISIBLE_COUNT   = 8;     // Cards visible in view
+const STACK_PEEK      = 12;    // px peek for folded stack edges
+const LERP_FACTOR     = 0.35;  // Fast and responsive smooth glide (Apple feel)
 
 export const LockScreenStack: React.FC<Props> = ({
   bills,
@@ -50,13 +50,23 @@ export const LockScreenStack: React.FC<Props> = ({
     targetPos.current      = activeIndex;
   }, [activeIndex]);
 
-  // Reset to top when bills list changes (category / search query)
+  // Apply immediately on mount & when bills change (prevents black empty state on initial tab open)
   useEffect(() => {
     isInternalRef.current = true;
     setActiveIndex(0);
     targetPos.current  = 0;
     currentPos.current = 0;
-    setTimeout(() => { isInternalRef.current = false; }, 80);
+
+    // Run applyStyles on next frame so layout has dimensions immediately
+    const frameId = requestAnimationFrame(() => {
+      applyStyles(0);
+    });
+    const timer = setTimeout(() => { isInternalRef.current = false; }, 50);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timer);
+    };
   }, [bills]);
 
   // External sync (Arrow keys from parent, search auto-select)
@@ -71,20 +81,17 @@ export const LockScreenStack: React.FC<Props> = ({
 
   /* ════════════════════════════════════════════════════════════════════════
      APPLY STYLES ENGINE — 8+ Cards Visible & Rol/Fold Drum Effect
-     • 8 cards viewable at once with clear spacing so content is easy to read
-     • Top & bottom cards fold gracefully into stacks without sudden disappearing
+     • Bottom fold cards gracefully fade & roll just like the top roll
      • Integer target drives Z-Index so cards never slip behind during scroll
-     • Pure transform/opacity without transition conflicts = ZERO vibration
      ════════════════════════════════════════════════════════════════════════ */
   const applyStyles = useCallback((pos: number) => {
     const el = containerRef.current;
     if (!el) return;
-    const H = el.clientHeight;
-    if (H < 60) return;
+    const H = el.clientHeight || 520;
+    if (H < 40) return;
 
     // Lift active card up so bottom fold roll stays inside container view
-    // Start active card near top (approx 12% to 15% from top or 60px)
-    const baseActiveY = Math.max(50, Math.round(H * 0.12));
+    const baseActiveY = Math.max(46, Math.round(H * 0.10));
     const intTarget = targetPos.current;
 
     // How many cards can fully fit vertically before folding at the bottom
@@ -110,19 +117,20 @@ export const LockScreenStack: React.FC<Props> = ({
         scale = Math.max(0.88, 1 - (rel * 0.016));
         opacity = rel === 0 ? 1 : Math.max(0.45, 1 - (rel * 0.08));
       } else if (rel >= dynamicVisible) {
-        // BOTTOM OVERFLOW: Fold into a visible deck stack at the bottom
+        // BOTTOM OVERFLOW: Fold into a visible deck stack that fades into background (like top)
         const overflow = rel - dynamicVisible;
         const foldStep = Math.min(overflow, 4);
         const bottomBaseY = baseActiveY + (dynamicVisible * CARD_HEIGHT);
         ty = bottomBaseY + (foldStep * STACK_PEEK);
-        scale = Math.max(0.78, 0.88 - (foldStep * 0.03));
-        opacity = Math.max(0.20, 0.65 - (foldStep * 0.12));
+        scale = Math.max(0.78, 0.88 - (foldStep * 0.035));
+        // Soft gradient fade matching top fold behavior
+        opacity = Math.max(0, 0.55 - (overflow * 0.22));
       } else if (rel < 0 && rel >= -4) {
-        // TOP OVERFLOW: Fold upwards gracefully
+        // TOP OVERFLOW: Fold upwards gracefully with soft fade
         const upRel = Math.abs(rel);
         ty = baseActiveY - (upRel * STACK_PEEK * 1.8);
         scale = Math.max(0.82, 1 - (upRel * 0.04));
-        opacity = Math.max(0.15, 0.85 - (upRel * 0.20));
+        opacity = Math.max(0.10, 0.80 - (upRel * 0.22));
       } else {
         // Deeply folded off-screen cards
         const deepUp = Math.abs(rel);

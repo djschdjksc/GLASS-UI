@@ -33,7 +33,7 @@
   height: 100%;
 }
 
-/* Card wrapper — starts hidden off-screen (JS positions it after layout) */
+/* Card wrapper — positioned by JS applyStyles */
 .card-wrapper {
   position: absolute;
   top: 0;
@@ -42,12 +42,10 @@
   max-width: 360px;
   transform-origin: center bottom;
   will-change: transform, opacity;
-  /* Hidden until JS entrance animation fires */
-  transform: translate(-50%, -9999px);
-  opacity: 0;
+  transform: translate3d(-50%, 0, 0);
+  opacity: 1;
   backface-visibility: hidden;
   pointer-events: auto;
-  /* NO CSS transition here — spring physics rAF loop handles all motion */
 }
 
 /* ── Card Visual ─────────────────────────────────────────────────────────── */

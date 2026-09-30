@@ -291,12 +291,16 @@ export const OtherTabsView: React.FC<Props> = ({
   const [selectedBillId, setSelectedBillId] = useState<string>('');
 
   useEffect(() => {
-    if (categoryBills.length > 0) {
-      setSelectedBillId(categoryBills[0].id);
+    if (filteredBills.length > 0) {
+      // Keep selectedBillId if it exists in filtered list, otherwise default to first filtered bill
+      const exists = filteredBills.some(b => b.id === selectedBillId);
+      if (!exists) {
+        setSelectedBillId(filteredBills[0].id);
+      }
     } else {
       setSelectedBillId('');
     }
-  }, [historySubTab, categoryBills]);
+  }, [historySubTab, categoryBills, billSearchQuery, filteredBills]);
 
   const selectedBill = (selectedBillId ? filteredBills.find(b => b.id === selectedBillId) : null) || filteredBills[0] || categoryBills[0] || {
     id: 'empty',
