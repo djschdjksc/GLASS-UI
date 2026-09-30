@@ -298,17 +298,41 @@ class BillPainter:
         show_party_code = bool(self.d.get("show_party_code"))
         table_w = self.W - (2 * self.margin)
         sr_w = 70
-        # PARTY CODE is compact (150px - 170px) so ITEM NAME gets dominant width
-        pcode_w = (150 if len(dyn_cols) > 2 else 170) if show_party_code else 0
+        avail_w = table_w - sr_w
 
-        # Columns for quantities: Base QTY + Dynamic Columns + U CAP + L CAP
-        num_val_cols = 3 + len(dyn_cols)
-        max_val_w = table_w * 0.50
-        desired_each = 95 if len(dyn_cols) > 3 else (115 if len(dyn_cols) > 1 else 140)
-        each_w = max(80, min(desired_each, int(max_val_w / num_val_cols)))
+        # Helper to parse feet size for sorting descending
+        def parse_feet_size(val):
+            if str(val).lower() == 'qty':
+                return 10.0
+            import re as _re
+            m = _re.search(r'(\d+(\.\d+)?)', str(val))
+            return float(m.group(1)) if m else 10.0
 
-        # ITEM NAME gets all remaining width (always double or more of any other column)
-        desc_w = table_w - sr_w - pcode_w - (each_w * num_val_cols)
+        size_cols = [{'field': 'qty', 'label': '(10 FT)', 'size': 10.0}]
+        for dc in dyn_cols:
+            fld = dc.get('field')
+            lbl = dc.get('label') or fld
+            size_cols.append({
+                'field': fld,
+                'label': str(lbl),
+                'size': parse_feet_size(lbl or fld)
+            })
+        size_cols.sort(key=lambda x: x['size'], reverse=True)
+
+        num_qty_cols = len(size_cols) + 2  # all size cols + u_cap + l_cap
+
+        if show_party_code:
+            # User rule: ITEM NAME and PARTY CODE must be EK BARABAR (equal)!
+            # All other numeric columns must be EK BARABAR (each_w)!
+            # And ITEM NAME and PARTY CODE must be DOUBLE (2x) the size of each numeric column!
+            total_units = 4 + num_qty_cols
+            each_w = int(avail_w / total_units)
+            pcode_w = each_w * 2
+            desc_w = avail_w - pcode_w - (num_qty_cols * each_w)  # equals 2*each_w + remainder
+        else:
+            each_w = min(180, int((avail_w * 0.45) / num_qty_cols))
+            pcode_w = 0
+            desc_w = avail_w - (num_qty_cols * each_w)
 
         cols = [
             ("SR.", sr_w, "sr"),
@@ -316,10 +340,8 @@ class BillPainter:
         ]
         if show_party_code:
             cols.append(("PARTY CODE", pcode_w, "party_code"))
-        cols.append(("QTY", each_w, "qty"))
-        for dc in dyn_cols:
-            label = str(dc.get("label", dc.get("field", ""))).upper()
-            cols.append((label, each_w, dc.get("field")))
+        for sc in size_cols:
+            cols.append((sc['label'].upper(), each_w, sc['field']))
         cols.append(("U CAP", each_w, "u_cap"))
         cols.append(("L CAP", each_w, "l_cap"))
         return cols
@@ -350,32 +372,26 @@ class BillPainter:
         f.setPixelSize(font_size)
         painter.setFont(f)
         
-        dyn_cols = self.d.get("dynamic_cols", []) or []
+        def bz(v): return f"{v:g}" if v != 0 else ""
         
         for i_rel, item in enumerate(items_to_draw):
             idx = start_idx + i_rel
             x = self.margin
             
-            q_val = float(item.get("qty", 0) or 0)
-            u_val = float(item.get("u_cap", 0) or 0)
-            l_val = float(item.get("l_cap", 0) or 0)
-            def bz(v): return f"{v:g}" if v != 0 else ""
-            
             raw_desc = str(item.get("desc", ""))
             clean_desc = raw_desc.replace(".", "").replace("-", " ")
             
             row_data = [str(idx + 1), clean_desc]
-            if self.d.get("show_party_code"):
-                row_data.append(str(item.get("party_code", "")))
-            row_data.append(bz(q_val))
-
-            for dc in dyn_cols:
-                fld = dc.get("field")
-                d_val = float(item.get(fld, 0) or 0)
-                row_data.append(bz(d_val))
-
-            row_data.append(bz(u_val))
-            row_data.append(bz(l_val))
+            for col_info in cols[2:]:
+                fld = col_info[2] if len(col_info) > 2 else None
+                if fld == 'party_code':
+                    row_data.append(str(item.get("party_code", "")))
+                elif fld:
+                    try:
+                        v = float(item.get(fld, 0) or 0)
+                        row_data.append(bz(v))
+                    except:
+                        row_data.append(str(item.get(fld, "")))
                 
             # BG Color for Estimate / Loading Slip in Image Mode
             if (self.d.get("is_estimate") or self.d.get("is_loading_slip")) and is_image:

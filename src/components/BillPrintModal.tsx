@@ -61,6 +61,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     if (isOpen) {
       setPrintMode(initialMode);
       setCopiedSuccess(false);
+      setNativeImage(null);
       // Load saved adjustments from localStorage for this bill/party if available
       try {
         const cacheKey = `bill_adj_${billNo}_${header.partyName || 'CASH'}`;

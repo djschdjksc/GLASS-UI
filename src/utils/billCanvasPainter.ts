@@ -170,19 +170,49 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     const showPCode = Boolean(data.showPartyCode);
     const dynCols = Array.isArray(data.dynamicCols) ? data.dynamicCols : [];
 
+    // Helper to parse feet size number for sorting
+    const parseFeetSize = (labelOrField: string): number => {
+      if (labelOrField === 'qty') return 10;
+      const match = String(labelOrField).match(/(\d+(\.\d+)?)/);
+      return match ? parseFloat(match[1]) : 10;
+    };
+
+    // Unified size columns sorted descending (matching UI order: e.g. 12 FT -> 10 FT -> 9.5 FT)
+    const sizeCols = [
+      { field: 'qty', label: '(10 FT)', size: 10 },
+      ...dynCols.map(dc => ({
+        field: dc.field,
+        label: dc.label || dc.field,
+        size: parseFeetSize(dc.label || dc.field)
+      }))
+    ].sort((a, b) => b.size - a.size);
+
     // Calculate responsive column widths
     const totalTableW = W - 2 * margin; // e.g. 1354px
     const srW = 70;
-    // PARTY CODE is compact (150px - 170px) so ITEM NAME gets dominant width
-    const pCodeW = showPCode ? (dynCols.length > 2 ? 150 : 170) : 0;
-    
-    // Total numeric quantity columns = 1 (Base Qty) + dynCols.length + 1 (uCap) + 1 (lCap)
-    const numQtyCols = 1 + dynCols.length + 2;
-    // Limit quantity columns to max 50% so ITEM NAME is always at least double of any column
-    const maxQtyTotalW = totalTableW * 0.50;
-    const desiredEachW = dynCols.length > 3 ? 95 : dynCols.length > 1 ? 115 : 140;
-    const eachQtyW = Math.max(80, Math.min(desiredEachW, Math.floor(maxQtyTotalW / numQtyCols)));
-    const nameW = totalTableW - srW - pCodeW - (eachQtyW * numQtyCols);
+    const availW = totalTableW - srW;
+
+    // Total numeric quantity columns = all size columns + uCap + lCap
+    const numQtyCols = sizeCols.length + 2;
+
+    let eachQtyW: number;
+    let pCodeW: number;
+    let nameW: number;
+
+    if (showPCode) {
+      // User rule: ITEM NAME and PARTY CODE must be EK BARABAR (equal)!
+      // All other numeric columns must be EK BARABAR (eachQtyW)!
+      // And ITEM NAME and PARTY CODE must be DOUBLE (2x) the size of each numeric column!
+      const totalUnits = 4 + numQtyCols; // 2 (name) + 2 (party code) + numQtyCols
+      eachQtyW = Math.floor(availW / totalUnits);
+      pCodeW = eachQtyW * 2;
+      nameW = availW - pCodeW - (numQtyCols * eachQtyW); // equals 2*eachQtyW + remainder
+    } else {
+      // When PARTY CODE is hidden: all numeric columns are EK BARABAR, ITEM NAME gets remaining width (>= 2x)
+      eachQtyW = Math.min(180, Math.floor((availW * 0.45) / numQtyCols));
+      pCodeW = 0;
+      nameW = availW - (numQtyCols * eachQtyW);
+    }
 
     const cols: Array<{ title: string; w: number; align: 'left' | 'center' | 'right'; field?: string }> = [
       { title: 'SR.', w: srW, align: 'center' },
@@ -190,17 +220,15 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     ];
 
     if (showPCode) {
-      cols.push({ title: 'PARTY CODE', w: pCodeW, align: 'center' });
+      cols.push({ title: 'PARTY CODE', w: pCodeW, align: 'center', field: 'partyCode' });
     }
 
-    cols.push({ title: 'QTY', w: eachQtyW, align: 'center', field: 'qty' });
-
-    dynCols.forEach(dc => {
+    sizeCols.forEach(sc => {
       cols.push({
-        title: (dc.label || dc.field).toUpperCase(),
+        title: sc.label.toUpperCase(),
         w: eachQtyW,
         align: 'center',
-        field: dc.field
+        field: sc.field
       });
     });
 
@@ -223,14 +251,12 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     curY += rowH;
 
     // Track column totals
-    const colSums: Record<string, number> = { qty: 0, uCap: 0, lCap: 0 };
-    dynCols.forEach(dc => { colSums[dc.field] = 0; });
+    const colSums: Record<string, number> = { uCap: 0, lCap: 0 };
+    sizeCols.forEach(sc => { colSums[sc.field] = 0; });
 
     validItems.forEach((it, idx) => {
-      const qVal = parseFloat(String(it.qty)) || 0;
       const uVal = parseFloat(String(it.uCap)) || 0;
       const lVal = parseFloat(String(it.lCap)) || 0;
-      colSums['qty'] += qVal;
       colSums['uCap'] += uVal;
       colSums['lCap'] += lVal;
 
@@ -241,12 +267,11 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       if (showPCode) {
         rowData.push(String(it.partyCode || ''));
       }
-      rowData.push(qVal !== 0 ? String(qVal) : '');
 
-      dynCols.forEach(dc => {
-        const dVal = parseFloat(String((it as any)[dc.field])) || 0;
-        colSums[dc.field] += dVal;
-        rowData.push(dVal !== 0 ? String(dVal) : '');
+      sizeCols.forEach(sc => {
+        const val = parseFloat(String((it as any)[sc.field])) || 0;
+        colSums[sc.field] += val;
+        rowData.push(val !== 0 ? String(val) : '');
       });
 
       rowData.push(uVal !== 0 ? String(uVal) : '');
