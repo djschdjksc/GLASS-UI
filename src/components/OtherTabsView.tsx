@@ -47,6 +47,7 @@ import { downloadCSV } from '../utils/exportCsv';
 import { BillPrintModal } from './BillPrintModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { LockScreenStack } from './LockScreenStack';
+import { PartyDetailStackModal } from './PartyDetailStackModal';
 
 interface Props {
   activeTab: NavKey;
@@ -694,6 +695,16 @@ export const OtherTabsView: React.FC<Props> = ({
   const [selectedPartyId, setSelectedPartyId] = useState<string | null>('P-1');
   const [isEditingParty, setIsEditingParty] = useState(false);
   const [partyToast, setPartyToast] = useState<string | null>(null);
+
+  // iOS Stack Detail Modal State
+  const [isPartyStackModalOpen, setIsPartyStackModalOpen] = useState(false);
+  const [viewingPartyForStack, setViewingPartyForStack] = useState<PartyRecord | null>(null);
+
+  const handleOpenPartyStack = (party: PartyRecord) => {
+    macAudio.playPop();
+    setViewingPartyForStack(party);
+    setIsPartyStackModalOpen(true);
+  };
 
   const [partyForm, setPartyForm] = useState({
     id: '',
@@ -2204,7 +2215,7 @@ export const OtherTabsView: React.FC<Props> = ({
                     BALANCE
                     <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
                   </th>
-                  <th style={{ width: '65px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                  <th style={{ width: '85px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
                     ACTION
                   </th>
                 </tr>
@@ -2364,21 +2375,47 @@ export const OtherTabsView: React.FC<Props> = ({
                             )}
                           </td>
                           <td style={{ textAlign: 'center', padding: '1px' }}>
-                            {isEditing ? (
-                              <button
-                                type="button"
-                                className="mac-btn primary"
-                                style={{ padding: '2px 8px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', margin: '0 auto' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  macAudio.playSuccess();
-                                  setEditingPartyId(null);
-                                }}
-                                title="Add / Save Party"
-                              >
-                                <Plus size={12} /> Add
-                              </button>
-                            ) : null}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                              {isEditing ? (
+                                <button
+                                  type="button"
+                                  className="mac-btn primary"
+                                  style={{ padding: '2px 8px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    macAudio.playSuccess();
+                                    setEditingPartyId(null);
+                                  }}
+                                  title="Add / Save Party"
+                                >
+                                  <Plus size={12} /> Add
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="mac-btn secondary"
+                                  style={{
+                                    padding: '2px 7px',
+                                    height: '21px',
+                                    fontSize: '10px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    color: '#38bdf8',
+                                    borderColor: 'rgba(56, 189, 248, 0.35)',
+                                    background: 'rgba(56, 189, 248, 0.1)'
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenPartyStack(p);
+                                  }}
+                                  title="View Party Details in iOS Stack (Inspired by Apple LockScreen)"
+                                >
+                                  <Layers size={11} color="#38bdf8" />
+                                  <span>Stack</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -2765,6 +2802,18 @@ export const OtherTabsView: React.FC<Props> = ({
           />
         );
       })()}
+
+      {/* iOS 3D Stack Party Detail Modal (Inspired by deepseek_html_20260930_5ff871.html) */}
+      <PartyDetailStackModal
+        isOpen={isPartyStackModalOpen}
+        party={viewingPartyForStack}
+        bills={bills}
+        onClose={() => {
+          setIsPartyStackModalOpen(false);
+          setViewingPartyForStack(null);
+        }}
+        onSelectPartyForBill={onSelectPartyForBill}
+      />
     </div>
   );
 };
