@@ -40,7 +40,9 @@ import {
   History,
   Package,
   Layers,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Grid,
+  List
 } from 'lucide-react';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { downloadCSV } from '../utils/exportCsv';
@@ -695,6 +697,23 @@ export const OtherTabsView: React.FC<Props> = ({
   const [selectedPartyId, setSelectedPartyId] = useState<string | null>('P-1');
   const [isEditingParty, setIsEditingParty] = useState(false);
   const [partyToast, setPartyToast] = useState<string | null>(null);
+
+  // iPhone Cards vs Table View Mode ('cards' | 'table')
+  const [partyViewMode, setPartyViewMode] = useState<'cards' | 'table'>(() => {
+    try {
+      return (localStorage.getItem('modern_party_view_mode') as 'cards' | 'table') || 'cards';
+    } catch {
+      return 'cards';
+    }
+  });
+
+  const handleTogglePartyViewMode = (mode: 'cards' | 'table') => {
+    macAudio.playClick();
+    setPartyViewMode(mode);
+    try {
+      localStorage.setItem('modern_party_view_mode', mode);
+    } catch {}
+  };
 
   // iOS Stack Detail Modal State
   const [isPartyStackModalOpen, setIsPartyStackModalOpen] = useState(false);
@@ -2110,6 +2129,63 @@ export const OtherTabsView: React.FC<Props> = ({
                 : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
             </div>
 
+            {/* iOS Style View Mode Switcher: Cards vs Table */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.06)',
+              borderRadius: '6px',
+              padding: '2px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <button
+                type="button"
+                onClick={() => handleTogglePartyViewMode('cards')}
+                style={{
+                  height: '22px',
+                  padding: '0 8px',
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  borderRadius: '4px',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                  background: partyViewMode === 'cards' ? '#0071e3' : 'transparent',
+                  color: partyViewMode === 'cards' ? '#ffffff' : '#94a3b8',
+                  transition: 'all 0.15s ease'
+                }}
+                title="iPhone Cards View (Inspired by Apple LockScreen)"
+              >
+                <Grid size={12} />
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTogglePartyViewMode('table')}
+                style={{
+                  height: '22px',
+                  padding: '0 8px',
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  borderRadius: '4px',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                  background: partyViewMode === 'table' ? '#0071e3' : 'transparent',
+                  color: partyViewMode === 'table' ? '#ffffff' : '#94a3b8',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Standard Table Grid View"
+              >
+                <List size={12} />
+                <span>Table</span>
+              </button>
+            </div>
+
             {/* Export Parties CSV / Excel */}
             <button
               type="button"
@@ -2174,52 +2250,295 @@ export const OtherTabsView: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Table Area */}
+          {/* Table / iPhone Cards View Area */}
           <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '4px' }}>
-            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
-                <tr>
-                  <th style={{ width: `${tableCols.f5Parties.index}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    #
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
-                    PARTY NAME
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.phone}px`, position: 'relative', userSelect: 'none' }}>
-                    PHONE NUMBER
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
-                    STATION
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.district}px`, position: 'relative', userSelect: 'none' }}>
-                    DISTRICT
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.state}px`, position: 'relative', userSelect: 'none' }}>
-                    STATE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.pincode}px`, position: 'relative', userSelect: 'none' }}>
-                    PINCODE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.bills}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    BILLS
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    BALANCE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
-                  </th>
-                  <th style={{ width: '85px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    ACTION
-                  </th>
-                </tr>
-              </thead>
+            {partyViewMode === 'cards' ? (
+              /* ===== iPHONE CARD DECK GRID VIEW ===== */
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '12px',
+                padding: '4px 2px 14px 2px'
+              }}>
+                {paginatedParties.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px 10px', color: '#94a3b8', fontSize: '13px' }}>
+                    No parties match "{partySearchQuery}". Click "Add Party Row" or paste Excel rows (Ctrl+V).
+                  </div>
+                ) : (
+                  paginatedParties.map((p, idx) => {
+                    const pNameKey = (p.name || '').trim().toLowerCase();
+                    const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
+                    const isSelected = selectedPartyId === p.id;
+                    const bal = Number(p.balance || 0);
+
+                    const initials = (p.name || 'P')
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map(w => w[0].toUpperCase())
+                      .join('');
+
+                    // Consistent avatar color gradient based on name hash
+                    const colors = [
+                      'linear-gradient(135deg, #0a84ff 0%, #0066cc 100%)',
+                      'linear-gradient(135deg, #bf5af2 0%, #893dc7 100%)',
+                      'linear-gradient(135deg, #30d158 0%, #20993e 100%)',
+                      'linear-gradient(135deg, #ff9f0a 0%, #d97706 100%)',
+                      'linear-gradient(135deg, #ff375f 0%, #d6244a 100%)',
+                      'linear-gradient(135deg, #64d2ff 0%, #0284c7 100%)'
+                    ];
+                    const colorIdx = (p.name || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % colors.length;
+
+                    return (
+                      <div
+                        key={p.id || idx}
+                        className="glass-panel"
+                        style={{
+                          background: isSelected ? 'rgba(30, 41, 68, 0.85)' : 'rgba(24, 27, 40, 0.75)',
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          border: isSelected ? '1.5px solid rgba(56, 189, 248, 0.7)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          boxShadow: isSelected
+                            ? '0 12px 30px rgba(0, 100, 255, 0.35), inset 0 0 12px rgba(56, 189, 248, 0.15)'
+                            : '0 8px 24px rgba(0, 0, 0, 0.45)',
+                          padding: '14px 15px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          position: 'relative'
+                        }}
+                        onClick={() => {
+                          macAudio.playClick();
+                          setSelectedPartyId(p.id);
+                        }}
+                        onDoubleClick={() => handleOpenPartyStack(p)}
+                      >
+                        {/* Top: Avatar, Name & Stack Open Button */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '50%',
+                            background: colors[colorIdx],
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
+                            border: '1.5px solid rgba(255, 255, 255, 0.2)'
+                          }}>
+                            {initials}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '14.5px',
+                              fontWeight: 700,
+                              color: '#ffffff',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              letterSpacing: '-0.01em'
+                            }}>
+                              {p.name}
+                            </div>
+                            <div style={{
+                              fontSize: '11.5px',
+                              color: '#94a3b8',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              marginTop: '1px'
+                            }}>
+                              {p.station || p.city || 'No Station'} {p.district ? `• ${p.district}` : ''}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="mac-btn secondary"
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              padding: 0,
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#38bdf8',
+                              borderColor: 'rgba(56, 189, 248, 0.35)',
+                              background: 'rgba(56, 189, 248, 0.12)'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenPartyStack(p);
+                            }}
+                            title="Open iOS 3D Card Stack (Wheel / Arrow Flip)"
+                          >
+                            <Layers size={13} />
+                          </button>
+                        </div>
+
+                        {/* Mid Info Row: Phone & GSTIN/Bills */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#cbd5e1' }}>
+                            <Phone size={12} color="#38bdf8" />
+                            <span>{p.phone || 'No Phone'}</span>
+                          </div>
+                          <div style={{
+                            background: stat.count > 0 ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                            color: stat.count > 0 ? '#38bdf8' : '#64748b',
+                            padding: '1px 7px',
+                            borderRadius: '9999px',
+                            fontWeight: 700,
+                            fontSize: '10px'
+                          }}>
+                            {stat.count} Bills
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Balance & Action Chips */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingTop: '4px',
+                          borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+                        }}>
+                          <div>
+                            <div style={{ fontSize: '9.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Balance</div>
+                            <div style={{
+                              fontSize: '15px',
+                              fontWeight: 700,
+                              color: bal > 0 ? '#34d399' : bal < 0 ? '#ff375f' : '#cbd5e1'
+                            }}>
+                              ₹{bal.toLocaleString('en-IN')}
+                            </div>
+                          </div>
+
+                          {/* Quick Actions in Card */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            {p.phone && (
+                              <a
+                                href={`https://wa.me/${p.phone.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  macAudio.playClick();
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(52, 211, 153, 0.12)',
+                                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                                  color: '#34d399',
+                                  fontSize: '10.5px',
+                                  fontWeight: 600,
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}
+                                title="WhatsApp"
+                              >
+                                <MessageCircle size={11} />
+                                <span>WA</span>
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                macAudio.playSuccess();
+                                if (onSelectPartyForBill) {
+                                  onSelectPartyForBill(p.name);
+                                }
+                              }}
+                              style={{
+                                padding: '4px 9px',
+                                borderRadius: '6px',
+                                background: 'linear-gradient(135deg, #0a84ff 0%, #0066cc 100%)',
+                                border: '1px solid rgba(10, 132, 255, 0.5)',
+                                color: '#ffffff',
+                                fontSize: '10.5px',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                cursor: 'pointer'
+                              }}
+                              title="Create Sale Bill for this Party"
+                            >
+                              <FileText size={11} />
+                              <span>Bill</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              /* ===== CLASSIC TABLE VIEW ===== */
+              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
+                  <tr>
+                    <th style={{ width: `${tableCols.f5Parties.index}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                      #
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
+                      PARTY NAME
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.phone}px`, position: 'relative', userSelect: 'none' }}>
+                      PHONE NUMBER
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
+                      STATION
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.district}px`, position: 'relative', userSelect: 'none' }}>
+                      DISTRICT
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.state}px`, position: 'relative', userSelect: 'none' }}>
+                      STATE
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.pincode}px`, position: 'relative', userSelect: 'none' }}>
+                      PINCODE
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.bills}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                      BILLS
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
+                      BALANCE
+                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
+                    </th>
+                    <th style={{ width: '85px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                      ACTION
+                    </th>
+                  </tr>
+                </thead>
                 <tbody>
                   {paginatedParties.length === 0 ? (
                     <tr>
@@ -2423,7 +2742,8 @@ export const OtherTabsView: React.FC<Props> = ({
                   )}
                 </tbody>
               </table>
-            </div>
+            )}
+          </div>
 
             {/* Bottom Status strip */}
           <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#64748b', padding: '2px 4px' }}>
