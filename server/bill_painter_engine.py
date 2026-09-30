@@ -584,8 +584,8 @@ class BillPainter:
                 rows_per_page = 27 if self.d.get("is_loading_slip") else 20
                 start_idx = page_num * rows_per_page
                 items_to_draw = items[start_idx : start_idx + rows_per_page]
-                self.total_pages = (len(items) + rows_per_page - 1) // rows_per_page
-                self.is_last_page = (start_idx + rows_per_page >= len(items))
+                self.total_pages = max(1, (len(items) + rows_per_page - 1) // rows_per_page)
+                self.is_last_page = (start_idx + rows_per_page >= len(items)) or (page_num >= self.total_pages - 1)
 
             if self.d.get("is_loading_slip") or self.d.get("is_estimate"):
                 self._draw_loading_header(painter)
@@ -721,7 +721,7 @@ class BillPainter:
             x_total = x_weight + 150
             painter.drawText(QRect(x_total, self.cur_y, 240, 60), Qt.AlignmentFlag.AlignCenter, f"₹ {self.sum_amt:,.2f}")
 
-        elif self.d.get("is_estimate"):
+        elif self.d.get("is_estimate") or self.d.get("is_summary_only"):
             # --- SHARED ALIGNMENT CONFIG ---
             block_w = 700
             right_gap = 80 # Shifted left to prevent cutting

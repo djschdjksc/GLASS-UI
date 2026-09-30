@@ -87,13 +87,13 @@ def map_payload_to_bill_data(payload):
     }
     return bill_data
 
-def render_qimage(bill_data):
+def render_qimage(bill_data, page_num=0):
     bp = BillPainter(bill_data)
     target_h = bp.H
     img = QImage(bp.W, target_h, QImage.Format.Format_ARGB32)
     img.fill(QColor('#FFFFFF'))
     p = QPainter(img)
-    bp.paint(p, img.rect(), page_num=0)
+    bp.paint(p, img.rect(), page_num=page_num)
     p.end()
     return img, bp
 
@@ -128,9 +128,10 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             payload = {}
 
         bill_data = map_payload_to_bill_data(payload)
+        page_num = int(payload.get('pageNum', 0))
 
         if self.path == '/api/print/render-image':
-            img, bp = render_qimage(bill_data)
+            img, bp = render_qimage(bill_data, page_num=page_num)
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
             img.save(buf, 'PNG')
@@ -142,7 +143,8 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 'dataUrl': data_url,
                 'width': img.width(),
                 'height': img.height(),
-                'totalPages': getattr(bp, 'total_pages', 1)
+                'totalPages': getattr(bp, 'total_pages', 1),
+                'currentPage': page_num
             }
             self.send_response(200)
             self._send_cors_headers()

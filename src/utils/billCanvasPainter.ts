@@ -36,6 +36,7 @@ export interface BillPrintPayload {
   balanceLabel: string;
   subTotal: number;
   finalBalance: number;
+  pageNum?: number;
 }
 
 export function formatIndianCurrency(num: number): string {
@@ -100,6 +101,13 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   const validItems = (data.items || []).filter(it => (it.name || '').trim() || Number(it.qty) > 0);
   const validGroups = (data.groups || []).filter(g => (g.mould || '').trim() || Number(g.qty) > 0 || Number(g.total) > 0);
 
+  const pageNum = data.pageNum ?? 0;
+  const rowsPerPage = isLoadingSlip ? 27 : 20;
+  const totalPages = isSummaryOnly ? 1 : Math.max(1, Math.ceil(validItems.length / rowsPerPage));
+  const startIdx = pageNum * rowsPerPage;
+  const itemsToDraw = isSummaryOnly ? [] : validItems.slice(startIdx, startIdx + rowsPerPage);
+  const isLastPage = isSummaryOnly || (startIdx + rowsPerPage >= validItems.length) || (pageNum >= totalPages - 1);
+
   // Exact row height from main.py
   const rowH = 60;
 
@@ -108,9 +116,9 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   if (isSummaryOnly) {
     H = 450 + (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200;
   } else if (isEstimate) {
-    H = 450 + (validItems.length * 60) + 200 + (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200;
+    H = 450 + (itemsToDraw.length * 60) + 200 + (isLastPage ? (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200 : 0);
   } else if (isLoadingSlip) {
-    H = Math.max(400 + (validItems.length * 60) + 200, 2000);
+    H = Math.max(400 + (itemsToDraw.length * 60) + 200, 2000);
   }
   H = Math.min(Math.max(H, 1500), 30000);
 
@@ -256,7 +264,7 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     const colSums: Record<string, number> = { uCap: 0, lCap: 0 };
     sizeCols.forEach(sc => { colSums[sc.field] = 0; });
 
-    validItems.forEach((it, idx) => {
+    itemsToDraw.forEach((it, idx) => {
       const uVal = parseFloat(String(it.uCap)) || 0;
       const lVal = parseFloat(String(it.lCap)) || 0;
       colSums['uCap'] += uVal;
@@ -265,7 +273,7 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       const rawDesc = String(it.name || '');
       const cleanDesc = rawDesc.replace(/\./g, '').replace(/-/g, ' ');
 
-      const rowData: string[] = [String(idx + 1), cleanDesc];
+      const rowData: string[] = [String(startIdx + idx + 1), cleanDesc];
       if (showPCode) {
         rowData.push(String(it.partyCode || ''));
       }
@@ -344,7 +352,7 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   }
 
   // 4. Group Summary / Estimate Totals (Estimate & Summary Only)
-  if ((isEstimate || isSummaryOnly) && validGroups.length > 0) {
+  if ((isEstimate || isSummaryOnly) && isLastPage && validGroups.length > 0) {
     curY += 30;
 
     // Header Label
@@ -419,8 +427,10 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
 
       curY += rowH;
     });
+  }
 
-    // 5. Estimate Footer: SUB-TOTAL, Adjustments, BALANCE
+  // 5. Estimate & Summary Footer: SUB-TOTAL, Adjustments, BALANCE
+  if ((isEstimate || isSummaryOnly) && isLastPage) {
     curY += 40;
     const blockW = 700;
     const rightGap = 80;

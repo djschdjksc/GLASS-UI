@@ -13,7 +13,9 @@ import {
   Check,
   Zap,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
@@ -48,6 +50,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   hasPartyCodeCol
 }) => {
   const [printMode, setPrintMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>(initialMode);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
   const [adjustments, setAdjustments] = useState<PrintAdjustment[]>([]);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
@@ -60,6 +64,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setPrintMode(initialMode);
+      setCurrentPage(0);
+      setTotalPages(1);
       setCopiedSuccess(false);
       setNativeImage(null);
       // Load saved adjustments from localStorage for this bill/party if available
@@ -120,6 +126,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       showPartyCode,
       mode: printMode,
       dynamicCols,
+      pageNum: currentPage,
       items: rawItems.map(r => ({
         ...r,
         name: r.name,
@@ -139,11 +146,15 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       subTotal,
       finalBalance
     };
-  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol]);
+  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol, currentPage]);
 
   // Live Canvas Rendering & Native PyQt6 Engine fetch
   useEffect(() => {
     if (!isOpen) return;
+
+    const validRawCount = rawItems.filter(r => (r.name || '').trim().length > 0 || Number(r.qty) > 0).length;
+    const calcPages = printMode === 'summary_only' ? 1 : Math.max(1, Math.ceil(validRawCount / (printMode === 'loading_slip' ? 27 : 20)));
+    setTotalPages(calcPages);
 
     if (canvasRef.current) {
       renderBillToCanvas(printPayload, canvasRef.current);
@@ -160,6 +171,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         if (active && data.success && data.dataUrl) {
           setNativeImage(data.dataUrl);
           setIsNativeServiceActive(true);
+          if (typeof data.totalPages === 'number') {
+            setTotalPages(Math.max(1, data.totalPages));
+          }
         }
       })
       .catch(() => {
@@ -172,7 +186,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     return () => {
       active = false;
     };
-  }, [isOpen, printPayload, retryTrigger]);
+  }, [isOpen, printPayload, retryTrigger, rawItems, printMode]);
 
   // Modal Keyboard Shortcuts
   useEffect(() => {
@@ -198,6 +212,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         e.preventDefault();
         macAudio.playPop();
         setPrintMode('estimate');
+        setCurrentPage(0);
         return;
       }
 
@@ -206,6 +221,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         e.preventDefault();
         macAudio.playPop();
         setPrintMode('summary_only');
+        setCurrentPage(0);
         return;
       }
 
@@ -214,13 +230,30 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         e.preventDefault();
         macAudio.playPop();
         setPrintMode('loading_slip');
+        setCurrentPage(0);
+        return;
+      }
+
+      // PageDown / Next Page
+      if (e.key === 'PageDown' || (e.altKey && e.key === 'ArrowRight')) {
+        e.preventDefault();
+        macAudio.playPop();
+        setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+        return;
+      }
+
+      // PageUp / Previous Page
+      if (e.key === 'PageUp' || (e.altKey && e.key === 'ArrowLeft')) {
+        e.preventDefault();
+        macAudio.playPop();
+        setCurrentPage(p => Math.max(0, p - 1));
         return;
       }
     };
 
     window.addEventListener('keydown', handleModalKeyDown);
     return () => window.removeEventListener('keydown', handleModalKeyDown);
-  }, [isOpen, printPayload]);
+  }, [isOpen, printPayload, totalPages]);
 
   if (!isOpen) return null;
 
@@ -499,6 +532,87 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
             </button>
           </div>
 
+          {/* TOP BAR PAGE NAVIGATION */}
+          {printMode !== 'summary_only' && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(255, 255, 255, 0.06)',
+                padding: '3px 8px',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <button
+                type="button"
+                disabled={currentPage <= 0}
+                onClick={() => {
+                  macAudio.playPop();
+                  setCurrentPage(p => Math.max(0, p - 1));
+                }}
+                style={{
+                  background: currentPage <= 0 ? 'transparent' : 'rgba(255, 255, 255, 0.12)',
+                  color: currentPage <= 0 ? '#475569' : '#f8fafc',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '3px 8px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: currentPage <= 0 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  opacity: currentPage <= 0 ? 0.4 : 1
+                }}
+                title="Previous Page (PageUp)"
+              >
+                <ChevronLeft size={13} />
+                <span>Prev</span>
+              </button>
+
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#38bdf8',
+                  padding: '0 6px',
+                  letterSpacing: '0.04em'
+                }}
+              >
+                PAGE {currentPage + 1} OF {totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => {
+                  macAudio.playPop();
+                  setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+                }}
+                style={{
+                  background: currentPage >= totalPages - 1 ? 'transparent' : 'rgba(56, 189, 248, 0.25)',
+                  color: currentPage >= totalPages - 1 ? '#475569' : '#38bdf8',
+                  border: currentPage >= totalPages - 1 ? 'none' : '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '12px',
+                  padding: '3px 8px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  opacity: currentPage >= totalPages - 1 ? 0.4 : 1
+                }}
+                title="Next Page (PageDown)"
+              >
+                <span>Next</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => {
@@ -534,10 +648,112 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               padding: '20px',
               overflow: 'auto',
               display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'flex-start'
+              flexDirection: 'column',
+              alignItems: 'center'
             }}
           >
+            {/* DEDICATED PREVIEW PAGE BAR */}
+            {printMode !== 'summary_only' && (
+              <div
+                style={{
+                  width: '780px',
+                  maxWidth: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '8px 14px',
+                  marginBottom: '14px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em' }}>
+                    PAGE NAVIGATION:
+                  </span>
+                  <span
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38bdf8',
+                      padding: '2px 10px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 800
+                    }}
+                  >
+                    PAGE {currentPage + 1} OF {totalPages}
+                  </span>
+                  {totalPages > 1 && (
+                    <span style={{ fontSize: '10.5px', color: '#38bdf8', fontWeight: 600 }}>
+                      ⚡ Multiple pages available! Click Next Page to view.
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    disabled={currentPage <= 0}
+                    onClick={() => {
+                      macAudio.playPop();
+                      setCurrentPage(p => Math.max(0, p - 1));
+                    }}
+                    style={{
+                      background: currentPage <= 0 ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.1)',
+                      color: currentPage <= 0 ? '#475569' : '#f8fafc',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '6px',
+                      padding: '5px 12px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: currentPage <= 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      opacity: currentPage <= 0 ? 0.4 : 1,
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Previous Page (PageUp)"
+                  >
+                    <ChevronLeft size={13} />
+                    <span>Previous Page</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => {
+                      macAudio.playPop();
+                      setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+                    }}
+                    style={{
+                      background: currentPage >= totalPages - 1 ? 'rgba(255, 255, 255, 0.03)' : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      color: currentPage >= totalPages - 1 ? '#475569' : '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '5px 14px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      opacity: currentPage >= totalPages - 1 ? 0.4 : 1,
+                      boxShadow: currentPage >= totalPages - 1 ? 'none' : '0 2px 8px rgba(2, 132, 199, 0.4)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Next Page (PageDown)"
+                  >
+                    <span>Next Page</span>
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
             <div
               style={{
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15)',
