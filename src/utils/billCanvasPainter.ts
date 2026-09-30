@@ -171,6 +171,11 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   ctx.textAlign = 'left';
   ctx.fillText(`PARTY: ${data.partyName || 'N/A'}`, margin, y);
 
+  if (data.vehicleNo && data.vehicleNo.trim()) {
+    ctx.textAlign = 'right';
+    ctx.fillText(`VEHICLE: ${data.vehicleNo.trim()}`, W - 400, y);
+  }
+
   let curY = y + 70;
 
   // 3. Raw Items Table

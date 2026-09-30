@@ -75,7 +75,7 @@ def map_payload_to_bill_data(payload):
         'v_type': str(payload.get('vehicleType', '')),
         'v_name': str(payload.get('vehicleNo', '')),
         'bill_type': bill_type,
-        'is_loading_slip': is_loading_slip or is_estimate,
+        'is_loading_slip': is_loading_slip,
         'is_estimate': is_estimate,
         'is_summary_only': is_summary_only,
         'show_party_code': bool(payload.get('showPartyCode', False)),

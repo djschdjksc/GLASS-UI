@@ -285,18 +285,14 @@ class BillPainter:
         if not self.d.get("is_equation"):
             y += 50
             painter.drawText(self.margin, y, f"PARTY: {self.d.get('party', 'N/A')}")
+            v_name = str(self.d.get('v_name', '')).strip()
+            if v_name:
+                painter.drawText(self.W - 400, y, f"VEHICLE: {v_name}")
         
         self.cur_y = y + 70
 
     def _draw_generic_header(self, painter):
-        f = QFont("Segoe UI", 0, QFont.Weight.Bold)
-        f.setPixelSize(45)
-        painter.setFont(f)
-        painter.drawText(QRect(0, 30, self.W, 80), Qt.AlignmentFlag.AlignCenter, "DISTRIBUTION REPORT SUMMARY")
-        self.cur_y = 115
-        painter.setPen(QPen(Qt.GlobalColor.black, 3))
-        painter.drawLine(self.margin, self.cur_y, self.W - self.margin, self.cur_y)
-        self.cur_y += 40
+        self._draw_loading_header(painter)
 
     def _get_table_cols(self):
         dyn_cols = self.d.get("dynamic_cols", []) or []
@@ -558,19 +554,13 @@ class BillPainter:
         if self.d.get("is_summary_only"):
             self.is_last_page = True
             self.total_pages = 1
-            if self.d.get("is_loading_slip") or self.d.get("is_estimate"):
-                self._draw_loading_header(painter)
-            else:
-                self._draw_generic_header(painter)
+            self._draw_loading_header(painter)
         elif page_num == -1:
             # --- IMAGE COPY MODE (Single Long Document) ---
             self.is_last_page = True
             self.total_pages = 1
             
-            if self.d.get("is_loading_slip") or self.d.get("is_estimate"):
-                self._draw_loading_header(painter)
-            else:
-                self._draw_generic_header(painter)
+            self._draw_loading_header(painter)
                 
             if self.d.get("is_equation"):
                 self._draw_equation_rows(painter, items, cols, row_h, data_font_size)
@@ -592,10 +582,7 @@ class BillPainter:
                 self.total_pages = max(1, (len(items) + rows_per_page - 1) // rows_per_page)
                 self.is_last_page = (start_idx + rows_per_page >= len(items)) or (page_num >= self.total_pages - 1)
 
-            if self.d.get("is_loading_slip") or self.d.get("is_estimate"):
-                self._draw_loading_header(painter)
-            else:
-                self._draw_generic_header(painter)
+            self._draw_loading_header(painter)
                 
             if self.d.get("is_equation"):
                 self._draw_equation_rows(painter, items_to_draw, cols, row_h, data_font_size)
@@ -675,8 +662,8 @@ class BillPainter:
                     x += w
                 self.cur_y += row_h
 
-        # Calculate Grand Total from Groups if in Estimate mode
-        if self.d.get("is_estimate"):
+        # Calculate Grand Total from Groups if in Estimate mode or Summary Only mode
+        if self.d.get("is_estimate") or self.d.get("is_summary_only"):
             groups_sum = 0.0
             for row in self.d.get("groups", []):
                 try:
