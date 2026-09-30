@@ -15,7 +15,10 @@ import {
   AlertTriangle,
   RefreshCw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Maximize2
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
@@ -52,6 +55,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [printMode, setPrintMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>(initialMode);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [isFitPage, setIsFitPage] = useState<boolean>(true);
+  const [zoomScale, setZoomScale] = useState<number>(100);
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
   const [adjustments, setAdjustments] = useState<PrintAdjustment[]>([]);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
@@ -66,6 +71,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       setPrintMode(initialMode);
       setCurrentPage(0);
       setTotalPages(1);
+      setIsFitPage(true);
+      setZoomScale(100);
       setCopiedSuccess(false);
       setNativeImage(null);
       // Load saved adjustments from localStorage for this bill/party if available
@@ -652,49 +659,31 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               alignItems: 'center'
             }}
           >
-            {/* DEDICATED PREVIEW PAGE BAR */}
-            {printMode !== 'summary_only' && (
-              <div
-                style={{
-                  width: '780px',
-                  maxWidth: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  padding: '8px 14px',
-                  marginBottom: '14px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                }}
-              >
+            {/* DEDICATED PREVIEW CONTROLS & PAGE BAR */}
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '850px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '7px 14px',
+                marginBottom: '14px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}
+            >
+              {/* Left Side: Page Navigation */}
+              {printMode !== 'summary_only' ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em' }}>
-                    PAGE NAVIGATION:
+                    PAGE:
                   </span>
-                  <span
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.15)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      padding: '2px 10px',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      fontWeight: 800
-                    }}
-                  >
-                    PAGE {currentPage + 1} OF {totalPages}
-                  </span>
-                  {totalPages > 1 && (
-                    <span style={{ fontSize: '10.5px', color: '#38bdf8', fontWeight: 600 }}>
-                      ⚡ Multiple pages available! Click Next Page to view.
-                    </span>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
                     type="button"
                     disabled={currentPage <= 0}
@@ -707,7 +696,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       color: currentPage <= 0 ? '#475569' : '#f8fafc',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                       borderRadius: '6px',
-                      padding: '5px 12px',
+                      padding: '4px 10px',
                       fontSize: '11px',
                       fontWeight: 700,
                       cursor: currentPage <= 0 ? 'not-allowed' : 'pointer',
@@ -720,8 +709,22 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     title="Previous Page (PageUp)"
                   >
                     <ChevronLeft size={13} />
-                    <span>Previous Page</span>
+                    <span>Prev</span>
                   </button>
+
+                  <span
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38bdf8',
+                      padding: '2px 10px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 800
+                    }}
+                  >
+                    {currentPage + 1} / {totalPages}
+                  </span>
 
                   <button
                     type="button"
@@ -735,7 +738,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       color: currentPage >= totalPages - 1 ? '#475569' : '#ffffff',
                       border: 'none',
                       borderRadius: '6px',
-                      padding: '5px 14px',
+                      padding: '4px 12px',
                       fontSize: '11px',
                       fontWeight: 800,
                       cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
@@ -748,20 +751,144 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     }}
                     title="Next Page (PageDown)"
                   >
-                    <span>Next Page</span>
+                    <span>Next</span>
                     <ChevronRight size={13} />
                   </button>
                 </div>
+              ) : (
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#a78bfa' }}>
+                  ⚡ SUMMARY ONLY MODE (Single Sheet)
+                </div>
+              )}
+
+              {/* Right Side: Zoom & Fit Page Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 700, marginRight: '2px' }}>
+                  VIEW:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsFitPage(true);
+                    setZoomScale(100);
+                  }}
+                  style={{
+                    background: isFitPage ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'rgba(255, 255, 255, 0.08)',
+                    color: isFitPage ? '#ffffff' : '#94a3b8',
+                    border: isFitPage ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: isFitPage ? '0 2px 8px rgba(2, 132, 199, 0.4)' : 'none'
+                  }}
+                  title="Fit whole page on screen without scrolling"
+                >
+                  <Maximize2 size={12} />
+                  <span>Fit Page (Pura Page)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsFitPage(false);
+                    setZoomScale(100);
+                  }}
+                  style={{
+                    background: (!isFitPage && zoomScale === 100) ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'rgba(255, 255, 255, 0.08)',
+                    color: (!isFitPage && zoomScale === 100) ? '#ffffff' : '#94a3b8',
+                    border: (!isFitPage && zoomScale === 100) ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  title="Actual Size (100%)"
+                >
+                  100%
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isFitPage || zoomScale <= 50}
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsFitPage(false);
+                    setZoomScale(z => Math.max(50, z - 15));
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: (isFitPage || zoomScale <= 50) ? '#475569' : '#f8fafc',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: (isFitPage || zoomScale <= 50) ? 'not-allowed' : 'pointer',
+                    opacity: (isFitPage || zoomScale <= 50) ? 0.4 : 1
+                  }}
+                  title="Zoom Out (-)"
+                >
+                  <ZoomOut size={12} />
+                </button>
+
+                <button
+                  type="button"
+                  disabled={zoomScale >= 180}
+                  onClick={() => {
+                    macAudio.playPop();
+                    setIsFitPage(false);
+                    setZoomScale(z => Math.min(180, z + 15));
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: zoomScale >= 180 ? '#475569' : '#f8fafc',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: zoomScale >= 180 ? 'not-allowed' : 'pointer',
+                    opacity: zoomScale >= 180 ? 0.4 : 1
+                  }}
+                  title="Zoom In (+)"
+                >
+                  <ZoomIn size={12} />
+                </button>
+
+                {!isFitPage && (
+                  <span style={{ fontSize: '10.5px', color: '#38bdf8', fontWeight: 700, minWidth: '32px' }}>
+                    {zoomScale}%
+                  </span>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* PREVIEW IMAGE CARD */}
             <div
               style={{
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15)',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 overflow: 'hidden',
                 background: '#ffffff',
+                maxHeight: isFitPage ? 'calc(92vh - 165px)' : 'none',
                 maxWidth: '100%',
-                width: '780px'
+                width: isFitPage ? 'fit-content' : `${Math.round(780 * (zoomScale / 100))}px`,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                transition: 'width 0.2s ease'
               }}
             >
               {nativeImage && (
@@ -770,8 +897,11 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   alt="Native Qt Print Preview"
                   style={{
                     display: 'block',
-                    width: '100%',
-                    height: 'auto',
+                    maxHeight: isFitPage ? 'calc(92vh - 165px)' : 'none',
+                    maxWidth: '100%',
+                    width: isFitPage ? 'auto' : '100%',
+                    height: isFitPage ? 'auto' : 'auto',
+                    objectFit: 'contain',
                     imageRendering: 'crisp-edges'
                   }}
                 />
@@ -780,8 +910,11 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 ref={canvasRef}
                 style={{
                   display: nativeImage ? 'none' : 'block',
-                  width: '100%',
-                  height: 'auto'
+                  maxHeight: isFitPage ? 'calc(92vh - 165px)' : 'none',
+                  maxWidth: '100%',
+                  width: isFitPage ? 'auto' : '100%',
+                  height: isFitPage ? 'auto' : 'auto',
+                  objectFit: 'contain'
                 }}
               />
             </div>
