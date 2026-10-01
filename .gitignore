@@ -33,6 +33,8 @@ __pycache__/
 *.db-wal
 
 # Tauri / Rust target
+target/
+**/target/
 src-tauri/target/
 
 # Large media files

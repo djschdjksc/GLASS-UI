@@ -1,0 +1,27 @@
+[package]
+name = "modern-summary-app"
+version = "1.0.0"
+description = "Modern Summary App - Ultra Fast Accounting Software"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "modern_summary_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = [] }
+tauri-plugin-opener = "2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
