@@ -65,7 +65,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [isNativeServiceActive, setIsNativeServiceActive] = useState<boolean>(false);
   const [detectedPrinter, setDetectedPrinter] = useState<string | null>(null);
   const [isPrintingNative, setIsPrintingNative] = useState<boolean>(false);
-  const [printStatusMessage, setPrintStatusMessage] = useState<string | null>(null);
   const [retryTrigger, setRetryTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -335,7 +334,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
     if (isNativeServiceActive) {
       setIsPrintingNative(true);
-      setPrintStatusMessage('Printing...');
       try {
         const res = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
           method: 'POST',
@@ -344,12 +342,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         });
         const data = await res.json();
         if (data.success) {
-          setPrintStatusMessage('Print sent successfully');
-          setTimeout(() => setPrintStatusMessage(null), 3000);
           return;
         } else if (data.message && data.message.includes('cancelled')) {
-          setPrintStatusMessage('Print cancelled');
-          setTimeout(() => setPrintStatusMessage(null), 2000);
           return;
         } else {
           console.warn('Native direct-print returned error:', data.error);
@@ -361,9 +355,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       }
     }
 
-    setPrintStatusMessage('Printing...');
     directPrintBill(printPayload);
-    setTimeout(() => setPrintStatusMessage(null), 2000);
   };
 
   const handleCopyAsImage = async () => {
@@ -479,7 +471,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   try { macAudio.playClick(); } catch {}
                   onClose();
                 }}
-                title="Close (Esc)"
                 style={{
                   width: '12px',
                   height: '12px',
@@ -552,7 +543,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxShadow: printMode === 'estimate' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Full Estimate (Ctrl+E)"
             >
               <FileText size={13} color={printMode === 'estimate' ? '#007AFF' : 'rgba(255, 255, 255, 0.6)'} />
               <span>Full Estimate</span>
@@ -580,7 +570,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxShadow: printMode === 'summary_only' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Summary Only (Alt+S)"
             >
               <Layers size={13} color={printMode === 'summary_only' ? '#bf5af2' : 'rgba(255, 255, 255, 0.6)'} />
               <span>Summary Only</span>
@@ -608,7 +597,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxShadow: printMode === 'loading_slip' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Loading Slip (Ctrl+L)"
             >
               <Truck size={13} color={printMode === 'loading_slip' ? '#34c759' : 'rgba(255, 255, 255, 0.6)'} />
               <span>Loading Slip</span>
@@ -643,7 +631,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
               e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
             }}
-            title="Close (Esc)"
           >
             <X size={15} />
           </button>
@@ -697,7 +684,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       alignItems: 'center',
                       gap: '4px'
                     }}
-                    title="Previous Page (PageUp)"
                   >
                     <ChevronLeft size={13} />
                     <span>Prev</span>
@@ -735,7 +721,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       alignItems: 'center',
                       gap: '4px'
                     }}
-                    title="Next Page (PageDown)"
                   >
                     <span>Next</span>
                     <ChevronRight size={13} />
@@ -766,7 +751,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     setIsFitPage(false);
                     setZoomScale(z => Math.max(50, z - 10));
                   }}
-                  title="Zoom Out"
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -790,7 +774,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     setIsFitPage(false);
                     setZoomScale(z => Math.min(200, z + 10));
                   }}
-                  title="Zoom In"
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -810,7 +793,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     setIsFitPage(!isFitPage);
                     if (!isFitPage) setZoomScale(100);
                   }}
-                  title={isFitPage ? "Switch to 100% Zoom" : "Fit Full Page"}
                   style={{
                     background: isFitPage ? 'rgba(0, 122, 255, 0.35)' : 'rgba(255, 255, 255, 0.08)',
                     border: isFitPage ? '1px solid #007AFF' : '1px solid rgba(255, 255, 255, 0.1)',
@@ -897,55 +879,37 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               scrollbarWidth: 'thin'
             }}
           >
-            {/* Status Message Notification */}
-            {printStatusMessage && (
-              <div
-                style={{
-                  background: printStatusMessage.startsWith('✅')
-                    ? 'rgba(16, 185, 129, 0.18)'
-                    : 'rgba(0, 122, 255, 0.18)',
-                  border: `1px solid ${printStatusMessage.startsWith('✅') ? '#34c759' : '#007AFF'}`,
-                  color: printStatusMessage.startsWith('✅') ? '#6ee7b7' : '#bae6fd',
-                  borderRadius: '10px',
-                  padding: '8px 12px',
-                  fontSize: '11.5px',
-                  fontWeight: 600,
-                  textAlign: 'center',
-                  animation: 'fadeIn 0.15s ease'
-                }}
-              >
-                {printStatusMessage}
-              </div>
-            )}
-
-            {/* ─── Primary Print Button ─── */}
+            {/* ─── Hero Primary Action: Animated Print Button ─── */}
             <button
               type="button"
               disabled={isPrintingNative}
               onClick={() => handleDirectPrint(false)}
               onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
-              style={{
-                background: isPrintingNative
-                  ? 'rgba(16, 185, 129, 0.5)'
-                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: '#ffffff',
-                border: 'none',
-                height: '42px',
-                borderRadius: '10px',
-                fontWeight: 700,
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '0 16px',
-                boxShadow: '0 6px 20px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                cursor: isPrintingNative ? 'wait' : 'pointer',
-                transition: 'all 0.18s ease'
-              }}
-              title="Print (Ctrl+P)"
+              className={`print-animated-btn ${isPrintingNative ? 'is-printing' : ''}`}
             >
-              <Printer size={16} />
+              <span className="printer-wrapper">
+                <span className="printer-container">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 92 75">
+                    <path
+                      strokeWidth={5}
+                      stroke="#0f172a"
+                      d="M12 37.5H80C85.2467 37.5 89.5 41.7533 89.5 47V69C89.5 70.933 87.933 72.5 86 72.5H6C4.067 72.5 2.5 70.933 2.5 69V47C2.5 41.7533 6.75329 37.5 12 37.5Z"
+                    />
+                    <mask fill="white" id="printer-paper-mask">
+                      <path d="M12 12C12 5.37258 17.3726 0 24 0H57C70.2548 0 81 10.7452 81 24V29H12V12Z" />
+                    </mask>
+                    <path
+                      mask="url(#printer-paper-mask)"
+                      fill="#0f172a"
+                      d="M7 12C7 2.61116 14.6112 -5 24 -5H57C73.0163 -5 86 7.98374 86 24H76C76 13.5066 67.4934 5 57 5H24C20.134 5 17 8.13401 17 12H7ZM81 29H12H81ZM7 29V12C7 2.61116 14.6112 -5 24 -5V5C20.134 5 17 8.13401 17 12V29H7ZM57 -5C73.0163 -5 86 7.98374 86 24V29H76V24C76 13.5066 67.4934 5 57 5V-5Z"
+                    />
+                    <circle fill="#0f172a" r={3} cy={49} cx={78} />
+                  </svg>
+                </span>
+                <span className="printer-page-wrapper">
+                  <span className="printer-page" />
+                </span>
+              </span>
               <span>{isPrintingNative ? 'Printing...' : 'Print'}</span>
             </button>
 
@@ -972,7 +936,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
-                title="Copy high-res image to clipboard (WhatsApp)"
               >
                 {copiedSuccess ? <Check size={14} /> : <Camera size={14} />}
                 <span>{copiedSuccess ? 'Copied' : 'Copy Image'}</span>
@@ -997,7 +960,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
-                title="Save PNG image file"
               >
                 <Download size={14} />
                 <span>Save PNG</span>
