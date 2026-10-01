@@ -29,13 +29,43 @@ import {
   MessageCircle,
   Phone,
   Smartphone,
-  ShieldCheck
+  ShieldCheck,
+  Scan,
+  QrCode,
+  Tag as TagIcon,
+  Maximize2,
+  Volume2
 } from 'lucide-react';
 import { saveMediaToDB, clearMediaFromDB } from '../services/mediaStorage';
+import {
+  BARCODE_PRESETS,
+  DEFAULT_BARCODE_CONFIG,
+  loadBarcodeConfig,
+  saveBarcodeConfig,
+  generateCode128SvgBars,
+  generateQrMatrix,
+  generateTsplCommand,
+  generateZplCommand,
+  downloadThermalScriptFile,
+  parseWeighingScaleBarcode
+} from '../utils/barcodeConfigHelper';
+import type {
+  BarcodePreset,
+  BarcodeSymbology,
+  BarcodeSystemConfig,
+  MargWorkingStyle,
+  MargAskQty,
+  MargDuplicatePolicy,
+  MargRescanAction,
+  MargBarcodeNotFound,
+  MargCreationStyle,
+  ThermalSensorMode
+} from '../utils/barcodeConfigHelper';
 
 export type SettingsMainTab = 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'GENERAL' | 'BARCODE';
-export type BarcodeSubTab = 'PAGE_SETUP' | 'LABEL_LAYOUT' | 'CONTENT_FIELDS' | 'ELEMENT_PLACEMENTS';
+export type BarcodeSubTab = 'PRESETS' | 'MARG_RULES' | 'DIMENSIONS' | 'THERMAL_HEAD' | 'CONTENT' | 'PRINTER_CMDS' | 'SCANNER';
 export type AppThemeMode = 'dark' | 'glass';
+
 
 interface Props {
   themeMode?: AppThemeMode;
@@ -276,16 +306,69 @@ export const SettingsTabView: React.FC<Props> = ({
   const [restoreMode, setRestoreMode] = useState<'merge' | 'overwrite'>('merge');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Barcode Designer State
-  const [barcodeSubTab, setBarcodeSubTab] = useState<BarcodeSubTab>('PAGE_SETUP');
-  const [labelWidthMm, setLabelWidthMm] = useState<number>(60);
-  const [labelHeightMm, setLabelHeightMm] = useState<number>(35);
-  const [columnsPerRow, setColumnsPerRow] = useState<number>(3);
-  const [barcodeSymbology, setBarcodeSymbology] = useState<string>('CODE128');
-  const [barcodeHeaderText, setBarcodeHeaderText] = useState<string>('SHREE BALAJI TRADERS');
-  const [printHeader, setPrintHeader] = useState<boolean>(true);
-  const [printItemName, setPrintItemName] = useState<boolean>(true);
-  const [printPrice, setPrintPrice] = useState<boolean>(true);
+  // Comprehensive Barcode Designer & Hardware Scanner State
+  const [barcodeSubTab, setBarcodeSubTab] = useState<BarcodeSubTab>('PRESETS');
+  const [barcodeConfig, setBarcodeConfig] = useState<BarcodeSystemConfig>(loadBarcodeConfig);
+  const [scannerTestInput, setScannerTestInput] = useState<string>('');
+  const [scannerTestHistory, setScannerTestHistory] = useState<Array<{ code: string; time: string; durationMs: number; isLaserGun: boolean }>>([]);
+  const scanStartTimeRef = useRef<number | null>(null);
+  const [activeCodeLang, setActiveCodeLang] = useState<'TSPL' | 'ZPL'>('TSPL');
+  const [isSendingRawPrint, setIsSendingRawPrint] = useState<boolean>(false);
+
+  const handleUpdateBarcodeConfig = (updates: Partial<BarcodeSystemConfig>) => {
+    setBarcodeConfig(prev => {
+      const next = { ...prev, ...updates };
+      saveBarcodeConfig(next);
+      return next;
+    });
+  };
+
+  const handleSelectBarcodePreset = (preset: BarcodePreset) => {
+    macAudio.playPop();
+    handleUpdateBarcodeConfig({
+      presetId: preset.id,
+      widthMm: preset.widthMm,
+      heightMm: preset.heightMm,
+      columns: preset.columns,
+      gapXMm: preset.gapX,
+      gapYMm: preset.gapY,
+      marginTopMm: preset.marginTop,
+      marginLeftMm: preset.marginLeft
+    });
+    onShowToast?.(`Loaded ${preset.name}`, 'info');
+  };
+
+  const handleResetBarcodeDefaults = () => {
+    macAudio.playSuccess();
+    setBarcodeConfig(DEFAULT_BARCODE_CONFIG);
+    saveBarcodeConfig(DEFAULT_BARCODE_CONFIG);
+    onShowToast?.('Barcode configuration reset to Marg ERP standard factory defaults', 'success');
+  };
+
+  const handleSendRawPrint = async (commands: string) => {
+    setIsSendingRawPrint(true);
+    try {
+      const resp = await fetch('http://127.0.0.1:5005/api/print/raw-thermal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commands })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        macAudio.playSuccess();
+        onShowToast?.(data.message || 'Thermal command sent to printer!', 'success');
+      } else {
+        macAudio.playError();
+        onShowToast?.(`Print Error: ${data.error || 'Failed to spool'}`, 'error');
+      }
+    } catch (err: any) {
+      macAudio.playError();
+      onShowToast?.('Native print service not reachable on port 5005. You can still download the .PRN file!', 'warning');
+    } finally {
+      setIsSendingRawPrint(false);
+    }
+  };
+
 
   // User Profile & Chat DP State
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
@@ -2017,10 +2100,11 @@ export const SettingsTabView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: BARCODE DESIGNER (LABEL LAYOUT & LIVE PREVIEW)                     */}
+      {/* TAB 5: COMPREHENSIVE BARCODE & THERMAL LABEL DESIGNER                     */}
       {/* ========================================================================= */}
       {activeTab === 'BARCODE' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '12px', minHeight: 0, overflow: 'hidden' }}>
+          {/* Left Column: Sub-Tab Controls */}
           <div
             className="glass-panel"
             style={{
@@ -2031,64 +2115,965 @@ export const SettingsTabView: React.FC<Props> = ({
               overflowY: 'auto'
             }}
           >
-            <div>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '2px' }}>
-                BARCODE & THERMAL LABEL DESIGNER
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                Configure roll dimensions, symbology, and printed elements
-              </span>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Barcode size={16} color="#a855f7" />
+                  BARCODE & LABEL DESIGNER SUITE
+                </span>
+                <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
+                  Multi-printer presets, custom millimeter geometry, symbology & scanner engine
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleResetBarcodeDefaults}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#cbd5e1',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Reset Defaults
+              </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div>
-                <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Label Width (mm)</span>
-                <InputNumber
-                  min={10}
-                  max={200}
-                  value={labelWidthMm}
-                  onChange={(val) => setLabelWidthMm(val || 50)}
-                  addonAfter="mm"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div>
-                <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Label Height (mm)</span>
-                <InputNumber
-                  min={10}
-                  max={200}
-                  value={labelHeightMm}
-                  onChange={(val) => setLabelHeightMm(val || 30)}
-                  addonAfter="mm"
-                  style={{ width: '100%' }}
-                />
-              </div>
+            {/* Sub-Tab Navigation Bar */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                background: 'rgba(0, 0, 0, 0.35)',
+                padding: '3px',
+                borderRadius: '8px',
+                gap: '3px',
+                border: '1px solid rgba(255, 255, 255, 0.06)'
+              }}
+            >
+              {[
+                { key: 'PRESETS', label: 'Presets' },
+                { key: 'MARG_RULES', label: 'Marg Rules' },
+                { key: 'DIMENSIONS', label: 'Dimensions' },
+                { key: 'THERMAL_HEAD', label: 'Thermal Head' },
+                { key: 'CONTENT', label: 'Content' },
+                { key: 'PRINTER_CMDS', label: 'TSPL / ZPL' },
+                { key: 'SCANNER', label: 'Scanner Gun' }
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    macAudio.playClick();
+                    setBarcodeSubTab(tab.key as BarcodeSubTab);
+                  }}
+                  style={{
+                    padding: '6px 2px',
+                    fontSize: '10px',
+                    fontWeight: barcodeSubTab === tab.key ? 700 : 500,
+                    borderRadius: '5px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: barcodeSubTab === tab.key ? 'rgba(168, 85, 247, 0.28)' : 'transparent',
+                    color: barcodeSubTab === tab.key ? '#ffffff' : '#94a3b8',
+                    boxShadow: barcodeSubTab === tab.key ? 'inset 0 0 0 1px rgba(168, 85, 247, 0.5)' : 'none',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'center'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <LuxuryToggle
-              title="Print Company Header"
-              desc="Adds company title on top edge of the barcode sticker"
-              checked={printHeader}
-              onChange={setPrintHeader}
-            />
+            {/* SUB-TAB 1: PRESETS */}
+            {barcodeSubTab === 'PRESETS' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#e2e8f0' }}>
+                  Select Standard Printer / Sheet Template:
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
+                  {BARCODE_PRESETS.map(preset => {
+                    const isSelected = barcodeConfig.presetId === preset.id;
+                    return (
+                      <div
+                        key={preset.id}
+                        onClick={() => handleSelectBarcodePreset(preset)}
+                        style={{
+                          background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                          border: isSelected ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                            <span style={{ fontSize: '11.5px', fontWeight: 700, color: isSelected ? '#ffffff' : '#e2e8f0' }}>
+                              {preset.name}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '9px',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                fontWeight: 700,
+                                background: preset.category === 'THERMAL' ? 'rgba(56, 189, 248, 0.2)' : preset.category === 'A4_SHEET' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                                color: preset.category === 'THERMAL' ? '#38bdf8' : preset.category === 'A4_SHEET' ? '#34d399' : '#fbbf24'
+                              }}
+                            >
+                              {preset.category}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                            {preset.description}
+                          </span>
+                        </div>
+                        <div style={{ textAlign: 'right', minWidth: '70px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#c084fc', display: 'block' }}>
+                            {preset.widthMm}×{preset.heightMm} mm
+                          </span>
+                          <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+                            {preset.columns} Across
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-            <LuxuryToggle
-              title="Print Item Specification"
-              desc="Prints full item name and alloy/core grade"
-              checked={printItemName}
-              onChange={setPrintItemName}
-            />
+            {/* SUB-TAB 2: MARG ERP CONTROL ROOM RULES */}
+            {barcodeSubTab === 'MARG_RULES' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '8px', padding: '10px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldCheck size={14} />
+                    MARG ERP 9+ CONTROL ROOM BILLING BEHAVIOR
+                  </span>
+                  <span style={{ fontSize: '10px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                    Official industrial parameters for high-speed POS retail counter, wholesale, and weighing scale billing
+                  </span>
+                </div>
 
-            <LuxuryToggle
-              title="Print Wholesale Price"
-              desc="Displays price in INR with currency symbol"
-              checked={printPrice}
-              onChange={setPrintPrice}
-            />
+                <div>
+                  <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    Item Working Style in Billing:
+                  </span>
+                  <Segmented
+                    block
+                    value={barcodeConfig.workingStyle}
+                    onChange={(val: any) => handleUpdateBarcodeConfig({ workingStyle: val })}
+                    options={[
+                      { label: 'R - Realtime (Scan + Name Search)', value: 'REALTIME' },
+                      { label: 'O - Only Barcode (Strict Cashier Lock)', value: 'ONLY_BARCODE' },
+                      { label: 'B - Batch Specific', value: 'BATCH_WISE' },
+                      { label: 'S - Serial / IMEI', value: 'SERIAL_WISE' },
+                      { label: 'M - MRP / Size Wise', value: 'MRP_WISE' }
+                    ]}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                      Ask Barcode Qty on Sales:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.askQtyMode || (barcodeConfig.askQtyOnScan ? 'YES' : 'NO')}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ askQtyMode: val, askQtyOnScan: val !== 'NO' })}
+                      options={[
+                        { label: 'N - Rapid (1 Qty auto)', value: 'NO' },
+                        { label: 'Y - Ask Qty (Cursor pauses)', value: 'YES' },
+                        { label: 'P - Modal Popup', value: 'POPUP' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                      Same Item Rescan Action:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.sameItemRescanAction}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ sameItemRescanAction: val })}
+                      options={[
+                        { label: 'Increment Qty (+1)', value: 'INCREMENT' },
+                        { label: 'New Row Line', value: 'NEW_ROW' },
+                        { label: 'Prompt Cashier', value: 'PROMPT' }
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                      Duplicate Barcode in Master:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.duplicatePolicy}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ duplicatePolicy: val })}
+                      options={[
+                        { label: '3 - No (Strict Error)', value: 'NO' },
+                        { label: '1 - Warn Confirm', value: 'WARN' },
+                        { label: '2 - Allowed (Popup List)', value: 'ALLOW' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                      Barcode Not Found in Master:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.barcodeNotFoundAction || 'BEEP_ERROR'}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ barcodeNotFoundAction: val })}
+                      options={[
+                        { label: 'Beep Error Tone', value: 'BEEP_ERROR' },
+                        { label: 'Prompt Add Item', value: 'PROMPT_ADD_ITEM' },
+                        { label: 'Ignore Quietly', value: 'IGNORE' }
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                      Barcode Series Creation:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.creationStyle}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ creationStyle: val })}
+                      options={[
+                        { label: 'Auto Serial', value: 'AUTO_INCREMENT' },
+                        { label: 'Item Code', value: 'ITEM_CODE' },
+                        { label: 'Mould/Size', value: 'SIZE_EMBEDDED' },
+                        { label: 'Scale EAN', value: 'EAN13_SCALE' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Prefix</span>
+                    <Input
+                      value={barcodeConfig.autoPrefix || 'BAL-'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ autoPrefix: e.target.value })}
+                      placeholder="e.g. BAL-"
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Next Serial #</span>
+                    <InputNumber
+                      min={1}
+                      max={999999}
+                      value={barcodeConfig.nextAutoNumber || 1001}
+                      onChange={(val) => handleUpdateBarcodeConfig({ nextAutoNumber: val || 1001 })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                  <LuxuryToggle
+                    title="Auto-Generate Barcode on New Item"
+                    desc="Automatically assigns barcode when adding inventory items"
+                    checked={barcodeConfig.autoGenerateOnNewItem !== false}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ autoGenerateOnNewItem: checked })}
+                  />
+                  <LuxuryToggle
+                    title="Indian Weighing Scale Barcode (EAN-13)"
+                    desc="Auto-decodes weight in grams from 20-xxxx-wwwww scale labels"
+                    checked={barcodeConfig.enableScaleBarcode || false}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ enableScaleBarcode: checked })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 3: DIMENSIONS */}
+            {barcodeSubTab === 'DIMENSIONS' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Label Width (mm)</span>
+                    <InputNumber
+                      min={10}
+                      max={200}
+                      value={barcodeConfig.widthMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ widthMm: val || 50, presetId: 'custom' })}
+                      addonAfter="mm"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Label Height (mm)</span>
+                    <InputNumber
+                      min={10}
+                      max={200}
+                      value={barcodeConfig.heightMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ heightMm: val || 30, presetId: 'custom' })}
+                      addonAfter="mm"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Columns Across</span>
+                    <InputNumber
+                      min={1}
+                      max={8}
+                      value={barcodeConfig.columns}
+                      onChange={(val) => handleUpdateBarcodeConfig({ columns: val || 1, presetId: 'custom' })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Gap Horiz. (mm)</span>
+                    <InputNumber
+                      min={0}
+                      max={20}
+                      value={barcodeConfig.gapXMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ gapXMm: val || 0, presetId: 'custom' })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Gap Vert. (mm)</span>
+                    <InputNumber
+                      min={0}
+                      max={20}
+                      value={barcodeConfig.gapYMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ gapYMm: val || 0, presetId: 'custom' })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Top Margin (mm)</span>
+                    <InputNumber
+                      min={0}
+                      max={50}
+                      value={barcodeConfig.marginTopMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ marginTopMm: val || 0, presetId: 'custom' })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Left Margin (mm)</span>
+                    <InputNumber
+                      min={0}
+                      max={50}
+                      value={barcodeConfig.marginLeftMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ marginLeftMm: val || 0, presetId: 'custom' })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Print Head DPI</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.dpi}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ dpi: val })}
+                      options={[
+                        { label: '203 DPI', value: 203 },
+                        { label: '300 DPI', value: 300 }
+                      ]}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 4: THERMAL HEAD & HARDWARE CALIBRATION */}
+            {barcodeSubTab === 'THERMAL_HEAD' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Thermal Media Sensor:</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.sensorMode}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ sensorMode: val })}
+                      options={[
+                        { label: 'Gap Sensor', value: 'GAP' },
+                        { label: 'Black Mark', value: 'BLACK_MARK' },
+                        { label: 'Continuous', value: 'CONTINUOUS' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Print Speed:</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.printSpeedIps}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ printSpeedIps: val })}
+                      options={[
+                        { label: '2 IPS (Fine)', value: 2 },
+                        { label: '3 IPS', value: 3 },
+                        { label: '4 IPS (Std)', value: 4 },
+                        { label: '6 IPS (Fast)', value: 6 }
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700 }}>Thermal Burn Darkness / Heat Density (1–15):</span>
+                    <span style={{ fontSize: '10.5px', color: '#a855f7', fontWeight: 800 }}>Level {barcodeConfig.printDarkness} / 15</span>
+                  </div>
+                  <Slider
+                    min={1}
+                    max={15}
+                    value={barcodeConfig.printDarkness}
+                    onChange={(val) => handleUpdateBarcodeConfig({ printDarkness: val })}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Orientation:</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.orientation}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ orientation: val })}
+                      options={[
+                        { label: '0°', value: 0 },
+                        { label: '90°', value: 90 },
+                        { label: '180°', value: 180 },
+                        { label: '270°', value: 270 }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Symbology:</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.symbology}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ symbology: val })}
+                      options={[
+                        { label: 'Code 128', value: 'CODE128' },
+                        { label: 'EAN-13', value: 'EAN13' },
+                        { label: 'QR', value: 'QR' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Bar Height (mm):</span>
+                    <InputNumber
+                      min={6}
+                      max={40}
+                      value={barcodeConfig.barHeightMm}
+                      onChange={(val) => handleUpdateBarcodeConfig({ barHeightMm: val || 14 })}
+                      addonAfter="mm"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Human Readable Text:</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.textPosition}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ textPosition: val, showText: val !== 'none' })}
+                      options={[
+                        { label: 'Below Barcode', value: 'below' },
+                        { label: 'Above Barcode', value: 'above' },
+                        { label: 'Hidden', value: 'none' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Tear-off Cutter Offset:</span>
+                    <InputNumber
+                      min={-10}
+                      max={20}
+                      value={barcodeConfig.tearOffOffsetMm || 0}
+                      onChange={(val) => handleUpdateBarcodeConfig({ tearOffOffsetMm: val || 0 })}
+                      addonAfter="mm"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 5: LABEL CONTENT */}
+            {barcodeSubTab === 'CONTENT' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <LuxuryToggle
+                  title="Print Company Header"
+                  desc="Top shop title banner"
+                  checked={barcodeConfig.printHeader}
+                  onChange={(checked) => handleUpdateBarcodeConfig({ printHeader: checked })}
+                />
+                {barcodeConfig.printHeader && (
+                  <div style={{ display: 'flex', gap: '8px', paddingLeft: '8px' }}>
+                    <Input
+                      value={barcodeConfig.headerText}
+                      onChange={(e) => handleUpdateBarcodeConfig({ headerText: e.target.value })}
+                      placeholder="Company Name"
+                      style={{ flex: 1 }}
+                    />
+                    <InputNumber
+                      min={8}
+                      max={18}
+                      value={barcodeConfig.headerFontSize}
+                      onChange={(val) => handleUpdateBarcodeConfig({ headerFontSize: val || 11 })}
+                      addonAfter="pt"
+                      style={{ width: '90px' }}
+                    />
+                  </div>
+                )}
+
+                <LuxuryToggle
+                  title="Print Sub-Header / GSTIN / Phone"
+                  desc="Secondary title line under header"
+                  checked={barcodeConfig.printSubHeader || false}
+                  onChange={(checked) => handleUpdateBarcodeConfig({ printSubHeader: checked })}
+                />
+                {barcodeConfig.printSubHeader && (
+                  <div style={{ display: 'flex', gap: '8px', paddingLeft: '8px' }}>
+                    <Input
+                      value={barcodeConfig.subHeaderText || 'GSTIN: 07AAAAA0000A1Z5'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ subHeaderText: e.target.value })}
+                      placeholder="GSTIN / Tagline / Phone"
+                      style={{ flex: 1 }}
+                    />
+                    <InputNumber
+                      min={7}
+                      max={14}
+                      value={barcodeConfig.subHeaderFontSize || 8}
+                      onChange={(val) => handleUpdateBarcodeConfig({ subHeaderFontSize: val || 8 })}
+                      addonAfter="pt"
+                      style={{ width: '90px' }}
+                    />
+                  </div>
+                )}
+
+                <LuxuryToggle
+                  title="Print Item Specification"
+                  desc="Prints full item name and mould size"
+                  checked={barcodeConfig.printItemName}
+                  onChange={(checked) => handleUpdateBarcodeConfig({ printItemName: checked })}
+                />
+                {barcodeConfig.printItemName && (
+                  <div style={{ display: 'flex', gap: '8px', paddingLeft: '8px' }}>
+                    <InputNumber
+                      min={8}
+                      max={16}
+                      value={barcodeConfig.itemNameFontSize}
+                      onChange={(val) => handleUpdateBarcodeConfig({ itemNameFontSize: val || 10 })}
+                      addonAfter="pt"
+                      style={{ width: '100px' }}
+                    />
+                    <InputNumber
+                      min={10}
+                      max={80}
+                      value={barcodeConfig.maxItemNameChars || 30}
+                      onChange={(val) => handleUpdateBarcodeConfig({ maxItemNameChars: val || 30 })}
+                      addonAfter="chars max"
+                      style={{ width: '130px' }}
+                    />
+                  </div>
+                )}
+
+                <LuxuryToggle
+                  title="Print Wholesale Price / MRP"
+                  desc="Displays price with currency symbol and tax disclaimer"
+                  checked={barcodeConfig.printPrice}
+                  onChange={(checked) => handleUpdateBarcodeConfig({ printPrice: checked })}
+                />
+                {barcodeConfig.printPrice && (
+                  <div style={{ display: 'flex', gap: '8px', paddingLeft: '8px' }}>
+                    <Input
+                      value={barcodeConfig.pricePrefix}
+                      onChange={(e) => handleUpdateBarcodeConfig({ pricePrefix: e.target.value })}
+                      placeholder="MRP: ₹"
+                      style={{ flex: 1 }}
+                    />
+                    <InputNumber
+                      min={8}
+                      max={16}
+                      value={barcodeConfig.priceFontSize}
+                      onChange={(val) => handleUpdateBarcodeConfig({ priceFontSize: val || 11 })}
+                      addonAfter="pt"
+                      style={{ width: '90px' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <LuxuryToggle
+                    title="Component Tag"
+                    desc="Tag: ITEM / U-CAP / L-CAP"
+                    checked={barcodeConfig.printTag}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ printTag: checked })}
+                  />
+                  <LuxuryToggle
+                    title="Print HSN Code"
+                    desc="Prints HSN: 7007 / 7604"
+                    checked={barcodeConfig.printHsn || false}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ printHsn: checked })}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <LuxuryToggle
+                    title="Batch / Lot Number"
+                    desc="Prints B.No: [Lot]"
+                    checked={barcodeConfig.printBatch || false}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ printBatch: checked })}
+                  />
+                  <LuxuryToggle
+                    title="Manufacturing Date"
+                    desc="Prints PKD: [Month/Year]"
+                    checked={barcodeConfig.printDate || false}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ printDate: checked })}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Text Alignment:</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.textAlign}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ textAlign: val })}
+                      options={[
+                        { label: 'Left', value: 'left' },
+                        { label: 'Center', value: 'center' },
+                        { label: 'Right', value: 'right' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Custom Footer:</span>
+                    <Input
+                      value={barcodeConfig.customFooter || ''}
+                      onChange={(e) => handleUpdateBarcodeConfig({ customFooter: e.target.value })}
+                      placeholder="e.g. *NO RETURN WITHOUT TAG*"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <LuxuryToggle
+                    title="Peel Cutline Border"
+                    desc="Show dashed peel border outline"
+                    checked={barcodeConfig.showBorder}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ showBorder: checked })}
+                  />
+                  <LuxuryToggle
+                    title="Incl. of All Taxes Text"
+                    desc="Show tax inclusive badge beside MRP"
+                    checked={barcodeConfig.showTaxInclusive !== false}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ showTaxInclusive: checked })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 6: TSPL & ZPL DIRECT PRINTER COMMANDS */}
+            {barcodeSubTab === 'PRINTER_CMDS' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '10px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Printer size={14} />
+                    DIRECT THERMAL PRINTER COMMAND GENERATOR (TSPL / ZPL-II)
+                  </span>
+                  <span style={{ fontSize: '10px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                    Industrial command code generated directly from your label configuration without Windows raster lag
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Segmented
+                    value={activeCodeLang}
+                    onChange={(val: any) => setActiveCodeLang(val)}
+                    options={[
+                      { label: 'TSPL (TVS LP-46 / TSC TE244 / Godex)', value: 'TSPL' },
+                      { label: 'ZPL-II (Zebra ZD220 / ZD230 / GT800)', value: 'ZPL' }
+                    ]}
+                  />
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sampleItem = { name: 'Mould 14x20 Standard Housing', code: 'MLD-1420-STD', price: 650.00, tag: 'ITEM', size: '10FT' };
+                        const code = activeCodeLang === 'TSPL' ? generateTsplCommand(barcodeConfig, sampleItem) : generateZplCommand(barcodeConfig, sampleItem);
+                        navigator.clipboard.writeText(code);
+                        macAudio.playSuccess();
+                        onShowToast?.(`Copied ${activeCodeLang} code to clipboard!`, 'success');
+                      }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#f8fafc',
+                        padding: '4px 10px',
+                        borderRadius: '5px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Copy Script
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sampleItem = { name: 'Mould 14x20 Standard Housing', code: 'MLD-1420-STD', price: 650.00, tag: 'ITEM', size: '10FT' };
+                        const code = activeCodeLang === 'TSPL' ? generateTsplCommand(barcodeConfig, sampleItem) : generateZplCommand(barcodeConfig, sampleItem);
+                        downloadThermalScriptFile(code, `label_${activeCodeLang.toLowerCase()}_50x30.prn`);
+                        macAudio.playSuccess();
+                        onShowToast?.(`Downloaded ${activeCodeLang} PRN file!`, 'success');
+                      }}
+                      style={{
+                        background: 'rgba(56, 189, 248, 0.2)',
+                        border: '1px solid rgba(56, 189, 248, 0.4)',
+                        color: '#38bdf8',
+                        padding: '4px 10px',
+                        borderRadius: '5px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Download .PRN
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSendingRawPrint}
+                      onClick={() => {
+                        const sampleItem = { name: 'Mould 14x20 Standard Housing', code: 'MLD-1420-STD', price: 650.00, tag: 'ITEM', size: '10FT' };
+                        const code = activeCodeLang === 'TSPL' ? generateTsplCommand(barcodeConfig, sampleItem) : generateZplCommand(barcodeConfig, sampleItem);
+                        handleSendRawPrint(code);
+                      }}
+                      style={{
+                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                        border: '1px solid rgba(56, 189, 248, 0.5)',
+                        color: '#ffffff',
+                        padding: '4px 12px',
+                        borderRadius: '5px',
+                        fontSize: '10.5px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        cursor: isSendingRawPrint ? 'wait' : 'pointer'
+                      }}
+                    >
+                      <Zap size={12} />
+                      <span>{isSendingRawPrint ? 'Sending...' : 'Send Raw Direct'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: '#090d16',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '6px',
+                    padding: '10px 12px',
+                    fontFamily: 'Consolas, Monaco, monospace',
+                    fontSize: '10.5px',
+                    color: '#38bdf8',
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: 1.4
+                  }}
+                >
+                  {(() => {
+                    const sampleItem = { name: 'Mould 14x20 Standard Housing', code: 'MLD-1420-STD', price: 650.00, tag: 'ITEM', size: '10FT' };
+                    return activeCodeLang === 'TSPL' ? generateTsplCommand(barcodeConfig, sampleItem) : generateZplCommand(barcodeConfig, sampleItem);
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 7: SCANNER HARDWARE */}
+            {barcodeSubTab === 'SCANNER' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', padding: '10px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Scan size={14} />
+                    HARDWARE BARCODE SCANNER INTEGRATION
+                  </span>
+                  <span style={{ fontSize: '10px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                    Auto-detects USB, Wireless 2.4G & Bluetooth laser guns with high-speed key burst timing
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Scanner Suffix</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.scannerSuffix}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ scannerSuffix: val })}
+                      options={[
+                        { label: 'Enter', value: 'enter' },
+                        { label: 'Tab', value: 'tab' },
+                        { label: 'None', value: 'none' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Sound Feedback</span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.soundType}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ soundType: val, soundFeedback: val !== 'MUTE' })}
+                      options={[
+                        { label: 'POS Beep', value: 'POS_BEEP' },
+                        { label: 'Chime', value: 'MAC_CHIME' },
+                        { label: 'Mute', value: 'MUTE' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Min Length</span>
+                    <InputNumber
+                      min={1}
+                      max={20}
+                      value={barcodeConfig.minCodeLength}
+                      onChange={(val) => handleUpdateBarcodeConfig({ minCodeLength: val || 3 })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <LuxuryToggle
+                    title="Auto-Add to Table on Scan"
+                    desc="Instantly adds item row when scanned without pressing Enter"
+                    checked={barcodeConfig.autoAddOnScan}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ autoAddOnScan: checked })}
+                  />
+
+                  <LuxuryToggle
+                    title="Auto-Increment Quantity (+1)"
+                    desc="If item already exists, scanning increments qty by 1"
+                    checked={barcodeConfig.autoIncrementQty}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ autoIncrementQty: checked })}
+                  />
+                </div>
+
+                {/* Interactive Live Scanner Test Console with Burst Latency Detector */}
+                <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Zap size={13} color="#a855f7" />
+                      TEST HARDWARE SCANNER INPUT (BURST LATENCY DETECTOR):
+                    </span>
+                    {scannerTestHistory.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setScannerTestHistory([])}
+                        style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '9.5px', cursor: 'pointer', padding: 0 }}
+                      >
+                        Clear History
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={scannerTestInput}
+                    onChange={(e) => {
+                      if (!scanStartTimeRef.current) scanStartTimeRef.current = performance.now();
+                      setScannerTestInput(e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (!scanStartTimeRef.current) scanStartTimeRef.current = performance.now();
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = scannerTestInput.trim();
+                        const elapsed = scanStartTimeRef.current ? Math.round(performance.now() - scanStartTimeRef.current) : 0;
+                        scanStartTimeRef.current = null;
+                        if (val) {
+                          if (val.length < (barcodeConfig.minCodeLength || 3)) {
+                            macAudio.playPosError();
+                            onShowToast?.(`Code too short (min ${barcodeConfig.minCodeLength} chars)`, 'warning');
+                            return;
+                          }
+                          const isLaserGun = elapsed < 75; // Laser scanners send all characters in < 75ms
+                          if (barcodeConfig.soundType === 'POS_BEEP') {
+                            macAudio.playPosBeep();
+                          } else if (barcodeConfig.soundType === 'MAC_CHIME') {
+                            macAudio.playSuccess();
+                          }
+                          setScannerTestHistory(prev => [
+                            { code: val, time: new Date().toLocaleTimeString(), durationMs: elapsed, isLaserGun },
+                            ...prev.slice(0, 4)
+                          ]);
+                          setScannerTestInput('');
+                        }
+                      }
+                    }}
+                    placeholder="Click here and scan a barcode with your barcode gun..."
+                    style={{
+                      width: '100%',
+                      background: 'rgba(15, 23, 42, 0.9)',
+                      border: '1px solid #a855f7',
+                      color: '#ffffff',
+                      borderRadius: '6px',
+                      padding: '7px 10px',
+                      fontSize: '11.5px',
+                      outline: 'none'
+                    }}
+                  />
+                  {scannerTestHistory.length > 0 && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <span style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 700 }}>Recent Scans:</span>
+                      {scannerTestHistory.map((h, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10.5px', background: 'rgba(255,255,255,0.04)', padding: '3px 8px', borderRadius: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 800 }}>{h.code}</span>
+                            <span
+                              style={{
+                                fontSize: '8.5px',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 800,
+                                background: h.isLaserGun ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                                color: h.isLaserGun ? '#34d399' : '#fbbf24'
+                              }}
+                            >
+                              {h.isLaserGun ? `⚡ LASER GUN (${h.durationMs}ms)` : `⌨️ TYPED (${h.durationMs}ms)`}
+                            </span>
+                          </div>
+                          <span style={{ color: '#64748b', fontSize: '9.5px' }}>{h.time}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Right Column: Live Barcode Label Preview */}
+          {/* Right Column: Live 1:1 Scale Barcode Label Preview */}
           <div
             className="glass-panel"
             style={{
@@ -2097,58 +3082,223 @@ export const SettingsTabView: React.FC<Props> = ({
               flexDirection: 'column',
               gap: '12px',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'space-between'
             }}
           >
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#cbd5e1' }}>
-              THERMAL LABEL PREVIEW (1:1 SCALE)
-            </span>
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Maximize2 size={13} color="#a855f7" />
+                THERMAL LABEL PREVIEW (1:1 PROPORTION)
+              </span>
+              <span style={{ fontSize: '10px', color: '#a855f7', fontWeight: 700 }}>
+                {barcodeConfig.widthMm}mm × {barcodeConfig.heightMm}mm • {barcodeConfig.dpi} DPI
+              </span>
+            </div>
 
-            {/* Sticker Mockup */}
+            {/* Sticker Mockup with Accurate Sizing & Real SVG Bars */}
             <div
               style={{
-                width: '240px',
-                height: '140px',
+                width: `${Math.min(300, Math.max(180, barcodeConfig.widthMm * 4.5))}px`,
+                minHeight: `${Math.min(240, Math.max(120, barcodeConfig.heightMm * 4.5))}px`,
                 background: '#ffffff',
                 borderRadius: '6px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
-                padding: '10px 14px',
+                boxShadow: '0 12px 30px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.2)',
+                border: barcodeConfig.showBorder ? `1px ${barcodeConfig.borderStyle || 'dashed'} #94a3b8` : 'none',
+                padding: '10px 12px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 color: '#000000',
-                fontFamily: 'sans-serif'
+                fontFamily: 'Inter, system-ui, sans-serif',
+                textAlign: barcodeConfig.textAlign
               }}
             >
-              {printHeader && (
-                <div style={{ fontSize: '11px', fontWeight: 900, textAlign: 'center', letterSpacing: '0.4px', borderBottom: '1px solid #000', paddingBottom: '2px' }}>
-                  {barcodeHeaderText}
+              {barcodeConfig.printHeader && (
+                <div
+                  style={{
+                    fontSize: `${barcodeConfig.headerFontSize}px`,
+                    fontWeight: barcodeConfig.headerBold !== false ? 900 : 700,
+                    letterSpacing: '0.4px',
+                    borderBottom: '1px solid #1e293b',
+                    paddingBottom: '2px',
+                    lineHeight: 1.1
+                  }}
+                >
+                  {barcodeConfig.headerText || 'COMPANY NAME'}
                 </div>
               )}
 
-              {printItemName && (
-                <div style={{ fontSize: '10px', fontWeight: 800, textAlign: 'center' }}>
+              {barcodeConfig.printSubHeader && (
+                <div
+                  style={{
+                    fontSize: `${barcodeConfig.subHeaderFontSize || 8}px`,
+                    fontWeight: 600,
+                    color: '#475569',
+                    marginTop: '2px',
+                    lineHeight: 1.1
+                  }}
+                >
+                  {barcodeConfig.subHeaderText || 'GSTIN: 07AAAAA0000A1Z5'}
+                </div>
+              )}
+
+              {barcodeConfig.printItemName && (
+                <div
+                  style={{
+                    fontSize: `${barcodeConfig.itemNameFontSize}px`,
+                    fontWeight: 800,
+                    margin: '3px 0',
+                    lineHeight: 1.15
+                  }}
+                >
                   Mould 14x20 Standard Housing
                 </div>
               )}
 
-              {/* Barcode lines */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '2px', height: '36px', alignItems: 'flex-end' }}>
-                  {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4].map((w, i) => (
-                    <div key={i} style={{ width: `${w}px`, height: '100%', background: '#000' }} />
-                  ))}
-                </div>
-                <span style={{ fontSize: '9px', fontFamily: 'monospace', fontWeight: 700, letterSpacing: '2px' }}>
-                  *MLD-1420-STD*
-                </span>
-              </div>
-
-              {printPrice && (
-                <div style={{ fontSize: '11px', fontWeight: 900, textAlign: 'right', borderTop: '1px solid #ddd', paddingTop: '2px' }}>
-                  MRP: ₹650.00
+              {barcodeConfig.printItemSize && (
+                <div style={{ fontSize: `${barcodeConfig.itemSizeFontSize || 9}px`, fontWeight: 700, color: '#334155' }}>
+                  DIMENSIONS: 14" × 20" (10FT)
                 </div>
               )}
+
+              {/* Dynamic Barcode Generation (Code128 or QR) */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: barcodeConfig.textAlign === 'center' ? 'center' : barcodeConfig.textAlign === 'right' ? 'flex-end' : 'flex-start', margin: '4px 0' }}>
+                {barcodeConfig.textPosition === 'above' && (
+                  <span style={{ fontSize: '9px', fontFamily: 'monospace', fontWeight: 800, letterSpacing: '1px', marginBottom: '2px' }}>
+                    *MLD-1420-STD*
+                  </span>
+                )}
+
+                {barcodeConfig.symbology === 'QR' ? (
+                  <div style={{ width: '56px', height: '56px', display: 'grid', gridTemplateColumns: 'repeat(21, 1fr)', gap: '0px', background: '#fff', padding: '2px' }}>
+                    {generateQrMatrix('MLD-1420-STD').map((row, rI) =>
+                      row.map((cell, cI) => (
+                        <div key={`${rI}-${cI}`} style={{ background: cell ? '#000' : '#fff' }} />
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  (() => {
+                    const { svgBars, totalWidth } = generateCode128SvgBars('MLD-1420-STD', barcodeConfig.barHeightMm, barcodeConfig.barScale);
+                    return (
+                      <svg width="100%" height={barcodeConfig.barHeightMm * 2.2} viewBox={`0 0 ${totalWidth} ${barcodeConfig.barHeightMm * 2.2}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', maxWidth: '100%' }}>
+                        {svgBars.map((b, i) => (
+                          <rect key={i} x={b.x} y={0} width={b.width} height={barcodeConfig.barHeightMm * 2.2} fill="#000000" />
+                        ))}
+                      </svg>
+                    );
+                  })()
+                )}
+
+                {barcodeConfig.textPosition === 'below' && (
+                  <span style={{ fontSize: '9px', fontFamily: 'monospace', fontWeight: 800, letterSpacing: '1.5px', marginTop: '2px' }}>
+                    *MLD-1420-STD*
+                  </span>
+                )}
+              </div>
+
+              {/* Specs Line: HSN, Batch, Date */}
+              {(barcodeConfig.printHsn || barcodeConfig.printBatch || barcodeConfig.printDate) && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#64748b', fontWeight: 700, margin: '2px 0' }}>
+                  {barcodeConfig.printHsn && <span>HSN: 7007</span>}
+                  {barcodeConfig.printBatch && <span>B.No: B26-1</span>}
+                  {barcodeConfig.printDate && <span>PKD: 10/26</span>}
+                </div>
+              )}
+
+              {/* Footer Row: Tag & Price */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  borderTop: '1px solid #cbd5e1',
+                  paddingTop: '3px',
+                  marginTop: '2px'
+                }}
+              >
+                {barcodeConfig.printTag ? (
+                  <span style={{ fontSize: '8.5px', fontWeight: 800, color: '#475569', letterSpacing: '0.5px' }}>
+                    TAG: ITEM
+                  </span>
+                ) : <span />}
+
+                {barcodeConfig.printPrice && (
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: `${barcodeConfig.priceFontSize}px`, fontWeight: 900, color: '#0f172a' }}>
+                      {barcodeConfig.pricePrefix}650.00
+                    </span>
+                    {barcodeConfig.showTaxInclusive && (
+                      <span style={{ display: 'block', fontSize: '7.5px', color: '#64748b', fontWeight: 600, lineHeight: 1 }}>
+                        (Incl. of all taxes)
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {barcodeConfig.customFooter && (
+                <div style={{ fontSize: `${barcodeConfig.footerFontSize || 8}px`, fontWeight: 700, color: '#64748b', textAlign: 'center', marginTop: '2px', borderTop: '1px dotted #e2e8f0', paddingTop: '1px' }}>
+                  {barcodeConfig.customFooter}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Actions */}
+            <div style={{ width: '100%', display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const sampleItem = { name: 'Mould 14x20 Standard Housing', code: 'MLD-1420-STD', price: 650.00, tag: 'ITEM', size: '10FT' };
+                  const tspl = generateTsplCommand(barcodeConfig, sampleItem);
+                  downloadThermalScriptFile(tspl, `label_test_${barcodeConfig.widthMm}x${barcodeConfig.heightMm}.prn`);
+                  macAudio.playSuccess();
+                  onShowToast?.('Downloaded .PRN file for direct printer spooling!', 'success');
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#e2e8f0',
+                  height: '34px',
+                  padding: '0 12px',
+                  borderRadius: '7px',
+                  fontWeight: 600,
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Download size={13} />
+                <span>Export .PRN</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  macAudio.playSuccess();
+                  onShowToast?.('Marg ERP Barcode configuration saved & active!', 'success');
+                }}
+                style={{
+                  flex: 1,
+                  background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
+                  color: '#ffffff',
+                  height: '34px',
+                  borderRadius: '7px',
+                  fontWeight: 700,
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(168, 85, 247, 0.3)'
+                }}
+              >
+                <Check size={14} />
+                <span>Save & Apply Settings</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2156,3 +3306,4 @@ export const SettingsTabView: React.FC<Props> = ({
     </div>
   );
 };
+

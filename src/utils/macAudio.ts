@@ -236,6 +236,55 @@ class AppleAudioEngine {
   public playError() {
     this.playBeep();
   }
+
+  // 9. Authentic POS Retail Barcode Scanner Beep (Laser Gun Chirp 1950Hz)
+  public playPosBeep() {
+    if (!this.enabled) return;
+    try {
+      const ctx = this.initContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1950, t);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.48, t + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.07);
+    } catch {}
+  }
+
+  // 10. Hardware Scanner Rejection / Error Tone (Low frequency buzz 220Hz)
+  public playPosError() {
+    if (!this.enabled) return;
+    try {
+      const ctx = this.initContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, t);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.35, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.19);
+    } catch {}
+  }
 }
 
 export const macAudio = new AppleAudioEngine();
+

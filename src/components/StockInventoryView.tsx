@@ -33,6 +33,16 @@ import type { BillRecord } from '../services/db/schema';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import { macAudio } from '../utils/macAudio';
 import UnsavedChangesModal from './UnsavedChangesModal';
+import {
+  loadBarcodeConfig,
+  generateCode128SvgBars,
+  generateQrMatrix,
+  generateTsplCommand,
+  generateZplCommand,
+  downloadThermalScriptFile,
+  parseWeighingScaleBarcode
+} from '../utils/barcodeConfigHelper';
+
 
 // =========================================================================
 // TYPES & DATA CONTRACTS
@@ -764,49 +774,118 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     setStockRows((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Barcode quick scan into stock entry
+  // Barcode quick scan into stock entry (Honors Marg ERP 9+ Rules)
   const handleBarcodeScan = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const code = barcodeScanInput.trim();
-      if (!code) return;
+      const rawCode = barcodeScanInput.trim();
+      if (!rawCode) return;
 
-      macAudio.playSuccess();
-      const baseName = extractBaseItemName(code);
+      const bConf = loadBarcodeConfig();
+
+      // Check min/max code length
+      if (rawCode.length < (bConf.minCodeLength || 3)) {
+        macAudio.playPosError();
+        showToast(`Barcode too short (min ${bConf.minCodeLength} characters)`, 'warning');
+        return;
+      }
+
+      // Check Indian Weighing Scale / Supermarket Barcode format
+      let scannedItem = rawCode;
+      let scannedQty = bConf.defaultSalesQty || 1;
+
+      if (bConf.enableScaleBarcode) {
+        const scaleData = parseWeighingScaleBarcode(rawCode);
+        if (scaleData.isScale && scaleData.itemCode) {
+          scannedItem = scaleData.itemCode;
+          if (scaleData.weightKg) scannedQty = scaleData.weightKg;
+        }
+      }
+
+      const baseName = extractBaseItemName(scannedItem);
       
       let u = 0;
       let l = 0;
-      const match = conversionMap.get(code.toLowerCase());
+      const match = conversionMap.get(scannedItem.toLowerCase()) || conversionMap.get(baseName.toLowerCase());
       if (match) {
         u = Number(match.u_cap) || 0;
         l = Number(match.l_cap) || 0;
       }
 
-      setStockRows((prev) => {
-        const lastRow = prev[prev.length - 1];
-        if (lastRow && !lastRow.name) {
+      // Audio Feedback (Marg POS Beep vs Mac Chime)
+      if (bConf.soundType === 'POS_BEEP') {
+        macAudio.playPosBeep();
+      } else if (bConf.soundType === 'MAC_CHIME') {
+        macAudio.playSuccess();
+      }
+
+      // Marg Rescan action: Increment existing row vs New row
+      if (bConf.sameItemRescanAction === 'INCREMENT') {
+        let foundExisting = false;
+        setStockRows((prev) => {
           const updated = [...prev];
-          updated[prev.length - 1] = {
-            ...lastRow,
-            name: baseName,
-            qty: 1,
-            uCap: u,
-            lCap: l
-          };
-          return [...updated, { id: `row-${Date.now()}`, name: '', qty: 0, uCap: 0, lCap: 0 }];
-        } else {
-          return [
-            ...prev,
-            { id: `row-${Date.now()}`, name: baseName, qty: 1, uCap: u, lCap: l },
-            { id: `row-${Date.now() + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
-          ];
-        }
-      });
+          for (let i = 0; i < updated.length; i++) {
+            if (updated[i].name && updated[i].name.toLowerCase() === baseName.toLowerCase()) {
+              updated[i] = {
+                ...updated[i],
+                qty: (Number(updated[i].qty) || 0) + scannedQty
+              };
+              foundExisting = true;
+              break;
+            }
+          }
+          if (foundExisting) {
+            return updated;
+          }
+          // If not found, use last empty row or append
+          const lastRow = prev[prev.length - 1];
+          if (lastRow && !lastRow.name) {
+            updated[prev.length - 1] = {
+              ...lastRow,
+              name: baseName,
+              qty: scannedQty,
+              uCap: u,
+              lCap: l
+            };
+            return [...updated, { id: `row-${Date.now()}`, name: '', qty: 0, uCap: 0, lCap: 0 }];
+          } else {
+            return [
+              ...prev,
+              { id: `row-${Date.now()}`, name: baseName, qty: scannedQty, uCap: u, lCap: l },
+              { id: `row-${Date.now() + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
+            ];
+          }
+        });
+        showToast(foundExisting ? `+${scannedQty} Qty added to ${baseName}` : `Scanned item: ${baseName}`, 'success');
+      } else {
+        // New row mode
+        setStockRows((prev) => {
+          const lastRow = prev[prev.length - 1];
+          if (lastRow && !lastRow.name) {
+            const updated = [...prev];
+            updated[prev.length - 1] = {
+              ...lastRow,
+              name: baseName,
+              qty: scannedQty,
+              uCap: u,
+              lCap: l
+            };
+            return [...updated, { id: `row-${Date.now()}`, name: '', qty: 0, uCap: 0, lCap: 0 }];
+          } else {
+            return [
+              ...prev,
+              { id: `row-${Date.now()}`, name: baseName, qty: scannedQty, uCap: u, lCap: l },
+              { id: `row-${Date.now() + 1}`, name: '', qty: 0, uCap: 0, lCap: 0 }
+            ];
+          }
+        });
+        showToast(`Scanned item: ${baseName}`, 'success');
+      }
 
       setBarcodeScanInput('');
-      showToast(`Scanned item: ${baseName}`, 'success');
     }
   };
+
 
   // Save or Update Stock Voucher (Supports Multi-Column sizes!)
   const handleSaveVoucher = () => {
@@ -3588,75 +3667,98 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   Please check at least one item or component in the list to generate barcodes!
                 </div>
               ) : (
-                barcodePrintJobs.map((job, idx) => (
-                  <div
-                    key={`${job.name}-${idx}`}
-                    style={{
-                      background: '#ffffff',
-                      color: '#000000',
-                      borderRadius: '6px',
-                      padding: '10px',
-                      border: '1px solid #cbd5e1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    <span style={{ fontSize: '9px', fontWeight: 800, color: '#64748b', marginBottom: '2px' }}>
-                      MODERN QUALITY PROFILE
-                    </span>
-                    <span 
+                barcodePrintJobs.map((job, idx) => {
+                  const bConf = loadBarcodeConfig();
+                  return (
+                    <div
+                      key={`${job.name}-${idx}`}
                       style={{
-                        fontSize: '11px',
-                        fontWeight: 900,
-                        textAlign: 'center',
-                        color: '#0f172a',
-                        lineHeight: 1.2,
-                        marginBottom: '6px',
-                        maxWidth: '100%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        background: '#ffffff',
+                        color: '#000000',
+                        borderRadius: '6px',
+                        padding: '10px 12px',
+                        border: bConf.showBorder ? '1px dashed #94a3b8' : '1px solid #cbd5e1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        textAlign: bConf.textAlign
                       }}
-                      title={job.name}
                     >
-                      {job.name}
-                    </span>
+                      {bConf.printHeader && (
+                        <div style={{ fontSize: `${bConf.headerFontSize}px`, fontWeight: 900, color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '2px', marginBottom: '4px', textAlign: bConf.textAlign }}>
+                          {bConf.headerText || 'COMPANY NAME'}
+                        </div>
+                      )}
 
-                    {/* SVG Vector Barcode Simulation */}
-                    <div style={{ height: '36px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="180" height="34" viewBox="0 0 180 34" style={{ display: 'block' }}>
-                        {Array.from({ length: 42 }).map((_, barIdx) => {
-                          const x = barIdx * 4.2 + 4;
-                          const width = (barIdx % 3 === 0 || barIdx % 7 === 0) ? 2.5 : 1.2;
-                          return (
-                            <rect
-                              key={barIdx}
-                              x={x}
-                              y="0"
-                              width={width}
-                              height="34"
-                              fill="#000000"
-                            />
-                          );
-                        })}
-                      </svg>
-                    </div>
+                      {bConf.printItemName && (
+                        <div
+                          style={{
+                            fontSize: `${bConf.itemNameFontSize}px`,
+                            fontWeight: 800,
+                            textAlign: bConf.textAlign,
+                            color: '#0f172a',
+                            lineHeight: 1.2,
+                            marginBottom: '4px',
+                            maxWidth: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title={job.name}
+                        >
+                          {job.name}
+                        </div>
+                      )}
 
-                    <span style={{ fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '2px', marginTop: '3px' }}>
-                      *{job.code}*
-                    </span>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '4px', fontSize: '8px', color: '#475569', fontWeight: 600 }}>
-                      <span>TAG: {job.component}</span>
-                      <span>QTY: {job.qty}</span>
+                      {/* Barcode/QR Generation */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: bConf.textAlign === 'center' ? 'center' : bConf.textAlign === 'right' ? 'flex-end' : 'flex-start', margin: '4px 0' }}>
+                        {bConf.textPosition === 'above' && (
+                          <span style={{ fontSize: '9px', fontFamily: 'monospace', fontWeight: 700, letterSpacing: '1px', marginBottom: '2px' }}>
+                            *{job.code}*
+                          </span>
+                        )}
+
+                        {bConf.symbology === 'QR' ? (
+                          <div style={{ width: '48px', height: '48px', display: 'grid', gridTemplateColumns: 'repeat(21, 1fr)', gap: '0px', background: '#fff', padding: '1px' }}>
+                            {generateQrMatrix(job.code).map((row, rI) =>
+                              row.map((cell, cI) => (
+                                <div key={`${rI}-${cI}`} style={{ background: cell ? '#000' : '#fff' }} />
+                              ))
+                            )}
+                          </div>
+                        ) : (
+                          (() => {
+                            const { svgBars, totalWidth } = generateCode128SvgBars(job.code, bConf.barHeightMm, bConf.barScale);
+                            return (
+                              <svg width="100%" height={bConf.barHeightMm * 2.2} viewBox={`0 0 ${totalWidth} ${bConf.barHeightMm * 2.2}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', maxWidth: '100%' }}>
+                                {svgBars.map((b, i) => (
+                                  <rect key={i} x={b.x} y={0} width={b.width} height={bConf.barHeightMm * 2.2} fill="#000000" />
+                                ))}
+                              </svg>
+                            );
+                          })()
+                        )}
+
+                        {bConf.textPosition === 'below' && (
+                          <span style={{ fontFamily: 'monospace', fontSize: '9.5px', fontWeight: 700, letterSpacing: '1.5px', marginTop: '2px' }}>
+                            *{job.code}*
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer Row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%', marginTop: '4px', fontSize: '8.5px', color: '#475569', fontWeight: 700, borderTop: '1px solid #f1f5f9', paddingTop: '2px' }}>
+                        {bConf.printTag ? <span>TAG: {job.component}</span> : <span />}
+                        <span>QTY: {job.qty}</span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
-            {/* Modal Footer */}
+            {/* Modal Footer with Thermal Script Batch Exports & Direct Raw Spooling */}
             <div 
               style={{
                 display: 'flex',
@@ -3667,10 +3769,15 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 background: 'rgba(255, 255, 255, 0.02)'
               }}
             >
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                Standard Label Size: <strong>50mm x 30mm</strong> Thermal / A4 Sheet
-              </span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                  Configured: <strong>{loadBarcodeConfig().widthMm}mm × {loadBarcodeConfig().heightMm}mm</strong> • {loadBarcodeConfig().dpi} DPI
+                </span>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+                  {barcodePrintJobs.length} Labels queued for output
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
                   type="button"
                   onClick={() => setIsBarcodePreviewOpen(false)}
@@ -3678,7 +3785,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     background: 'rgba(255, 255, 255, 0.08)',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     color: '#e2e8f0',
-                    padding: '6px 14px',
+                    padding: '6px 12px',
                     borderRadius: '6px',
                     fontSize: '11px',
                     fontWeight: 600,
@@ -3686,6 +3793,54 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   }}
                 >
                   Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bConf = loadBarcodeConfig();
+                    const allTspl = barcodePrintJobs.map(job => 
+                      generateTsplCommand(bConf, { name: job.name, code: job.code, tag: job.component }, job.qty)
+                    ).join('\r\n');
+                    downloadThermalScriptFile(allTspl, `batch_tspl_${barcodePrintJobs.length}_labels.prn`);
+                    macAudio.playSuccess();
+                    showToast?.(`Downloaded TSPL script for ${barcodePrintJobs.length} labels!`, 'success');
+                  }}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    color: '#38bdf8',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Export TSPL (.PRN)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bConf = loadBarcodeConfig();
+                    const allZpl = barcodePrintJobs.map(job => 
+                      generateZplCommand(bConf, { name: job.name, code: job.code, tag: job.component }, job.qty)
+                    ).join('\r\n');
+                    downloadThermalScriptFile(allZpl, `batch_zpl_${barcodePrintJobs.length}_labels.prn`);
+                    macAudio.playSuccess();
+                    showToast?.(`Downloaded ZPL script for ${barcodePrintJobs.length} labels!`, 'success');
+                  }}
+                  style={{
+                    background: 'rgba(168, 85, 247, 0.15)',
+                    border: '1px solid rgba(168, 85, 247, 0.35)',
+                    color: '#c084fc',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Export ZPL (.PRN)
                 </button>
                 <button
                   type="button"
@@ -3704,14 +3859,16 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(168, 85, 247, 0.3)'
                   }}
                 >
                   <Printer size={13} />
-                  <span>Print Barcode Sheet</span>
+                  <span>Print Labels</span>
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       )}

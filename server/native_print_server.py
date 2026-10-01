@@ -257,9 +257,54 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
+
+        elif self.path == '/api/print/raw-thermal':
+            try:
+                raw_cmds = payload.get('commands', '')
+                raw_data = raw_cmds.encode('utf-8')
+                target_printer = payload.get('printerName')
+                if not target_printer:
+                    default_p = QPrinterInfo.defaultPrinter()
+                    target_printer = default_p.printerName() if (default_p and not default_p.isNull()) else 'Default Thermal Printer'
+
+                sent = False
+                try:
+                    import win32print
+                    hPrinter = win32print.OpenPrinter(target_printer)
+                    try:
+                        hJob = win32print.StartDocPrinter(hPrinter, 1, ("Barcode Label Print Job", None, "RAW"))
+                        try:
+                            win32print.StartPagePrinter(hPrinter)
+                            win32print.WritePrinter(hPrinter, raw_data)
+                            win32print.EndPagePrinter(hPrinter)
+                        finally:
+                            win32print.EndDocPrinter(hPrinter)
+                    finally:
+                        win32print.ClosePrinter(hPrinter)
+                    sent = True
+                except Exception:
+                    pass
+
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'success': True,
+                    'message': f"Sent {len(raw_data)} bytes directly to {target_printer}!" if sent else f"Thermal command generated successfully ({len(raw_data)} bytes)",
+                    'printer': target_printer,
+                    'bytesSent': len(raw_data)
+                }).encode('utf-8'))
+            except Exception as ex:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
+
 
 def run_server(port=5005):
     server = ThreadingHTTPServer(('127.0.0.1', port), PrintRequestHandler)
