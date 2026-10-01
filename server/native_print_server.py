@@ -2,11 +2,11 @@ import sys
 import os
 import json
 import base64
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QImage, QPainter, QColor, QPageSize, QPageLayout
 from PyQt6.QtCore import QBuffer, QIODevice
-from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog, QPrinterInfo
 
 # Ensure server directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -135,11 +135,13 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             self._send_cors_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            default_printer = QPrinter().printerName()
+            default_printer = QPrinterInfo.defaultPrinterName()
+            available = [p.printerName() for p in QPrinterInfo.availablePrinters()]
             self.wfile.write(json.dumps({
                 'status': 'ok',
                 'engine': 'PyQt6 BillPainter Native',
-                'printer': default_printer
+                'printer': default_printer,
+                'availablePrinters': available
             }).encode('utf-8'))
         else:
             self.send_response(404)
@@ -190,8 +192,14 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
         elif self.path == '/api/print/direct-print':
             try:
                 printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                target_printer = payload.get('printerName')
+                if target_printer:
+                    printer.setPrinterName(target_printer)
                 printer.setPageOrientation(QPageLayout.Orientation.Portrait)
                 printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+
+                printer_name = printer.printerName() or 'Default Printer'
+                is_pdf_virtual = 'PDF' in printer_name.upper() or 'XPS' in printer_name.upper() or 'ONENOTE' in printer_name.upper() or 'PORTPROMPT' in printer_name.upper()
 
                 show_dialog = bool(payload.get('showDialog', False))
                 if show_dialog:
@@ -205,6 +213,16 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                         self.end_headers()
                         self.wfile.write(json.dumps({'success': False, 'message': 'Print cancelled by user'}).encode('utf-8'))
                         return
+                    printer_name = printer.printerName() or 'Selected Printer'
+                    is_pdf_virtual = 'PDF' in printer_name.upper() or 'XPS' in printer_name.upper()
+
+                output_pdf_path = None
+                if is_pdf_virtual and not show_dialog:
+                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    party_clean = "".join(c for c in str(bill_data.get('party', 'SALE')) if c.isalnum() or c in (' ', '_', '-')).strip() or 'BILL'
+                    bill_no = str(bill_data.get('billNo', '0001')).replace('/', '_')
+                    output_pdf_path = os.path.join(desktop_dir, f"BILL_{bill_no}_{party_clean}.pdf")
+                    printer.setOutputFileName(output_pdf_path)
 
                 p = QPainter(printer)
                 bp = BillPainter(bill_data)
@@ -216,7 +234,12 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                     bp.paint(p, rect, page_num=pg)
                 p.end()
 
-                printer_name = printer.printerName() or 'Default Printer'
+                if output_pdf_path and os.path.exists(output_pdf_path):
+                    try:
+                        os.startfile(output_pdf_path)
+                    except Exception:
+                        pass
+
                 self.send_response(200)
                 self._send_cors_headers()
                 self.send_header('Content-Type', 'application/json')
@@ -225,7 +248,8 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                     'success': True,
                     'message': f"Sent to {printer_name} ({total_p} page{'s' if total_p > 1 else ''}) in High-Resolution Vector mode!",
                     'printer': printer_name,
-                    'totalPages': total_p
+                    'totalPages': total_p,
+                    'filePath': output_pdf_path
                 }).encode('utf-8'))
             except Exception as ex:
                 self.send_response(500)
@@ -238,7 +262,7 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
 def run_server(port=5005):
-    server = HTTPServer(('127.0.0.1', port), PrintRequestHandler)
+    server = ThreadingHTTPServer(('127.0.0.1', port), PrintRequestHandler)
     print(f'Native PyQt6 Print Service started on http://127.0.0.1:{port}')
     server.serve_forever()
 

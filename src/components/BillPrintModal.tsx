@@ -26,7 +26,6 @@ import {
   downloadBillCanvasAsImage,
   formatIndianCurrency
 } from '../utils/billCanvasPainter';
-import { directPrintBill } from '../utils/printHtmlHelper';
 
 export interface BillPrintModalProps {
   isOpen: boolean;
@@ -358,30 +357,27 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const handleDirectPrint = async (showDialog = false) => {
     try { macAudio.playSuccess(); } catch { }
 
-    if (isNativeServiceActive) {
-      setIsPrintingNative(true);
-      try {
-        const res = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...printPayload, showDialog })
-        });
-        const data = await res.json();
-        if (data.success) {
-          return;
-        } else if (data.message && data.message.includes('cancelled')) {
-          return;
-        } else {
-          console.warn('Native direct-print returned error:', data.error);
-        }
-      } catch (err) {
-        console.warn('Native direct-print network error, falling back to browser print:', err);
-      } finally {
-        setIsPrintingNative(false);
+    setIsPrintingNative(true);
+    try {
+      const res = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...printPayload, showDialog })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsNativeServiceActive(true);
+        return;
+      } else if (data.message && data.message.includes('cancelled')) {
+        return;
+      } else {
+        console.warn('Native direct-print returned error:', data.error);
       }
+    } catch (err) {
+      console.warn('Native direct-print network error:', err);
+    } finally {
+      setIsPrintingNative(false);
     }
-
-    directPrintBill(printPayload);
   };
 
   const handleCopyAsImage = async () => {
