@@ -13,12 +13,12 @@ import {
   Check,
   Zap,
   AlertTriangle,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
   ZoomOut,
-  Maximize2
+  Maximize2,
+  Minus
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
@@ -81,7 +81,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       setZoomScale(100);
       setCopiedSuccess(false);
       setNativeImage(null);
-      // Load saved adjustments from localStorage for this bill/party if available
       try {
         const cacheKey = `bill_adj_${billNo}_${header.partyName || 'CASH'}`;
         const saved = localStorage.getItem(cacheKey);
@@ -123,14 +122,12 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     return bal;
   }, [subTotal, adjustments]);
 
-  // Build Payload
+  // Build Payload (Format 100% untouched)
   const printPayload: BillPrintPayload = useMemo(() => {
-    // Only show PARTY CODE in print if visible in the UI (hasPartyCodeCol)
     const showPartyCode = hasPartyCodeCol !== undefined
       ? Boolean(hasPartyCodeCol)
       : rawItems.some(r => (r.partyCode || '').trim().length > 0);
 
-    // Build skip group entries from localStorage for Python native print
     let skipGroupEntries: Array<{ prefix: string; group: string }> = [];
     try {
       const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
@@ -241,59 +238,52 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         return;
       }
 
-      // Ctrl+Shift+P: Windows Print Dialog
       if (isCtrlOrCmd && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
         handleDirectPrint(true);
         return;
       }
 
-      // Ctrl+P: Direct Vector Print
       if (isCtrlOrCmd && !e.shiftKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
         handleDirectPrint(false);
         return;
       }
 
-      // Ctrl+E: Switch to Estimate
       if (isCtrlOrCmd && (e.key === 'e' || e.key === 'E')) {
         e.preventDefault();
-        macAudio.playPop();
+        try { macAudio.playPop(); } catch {}
         setPrintMode('estimate');
         setCurrentPage(0);
         return;
       }
 
-      // Alt+S: Switch to Summary Only
       if (e.altKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
-        macAudio.playPop();
+        try { macAudio.playPop(); } catch {}
         setPrintMode('summary_only');
         setCurrentPage(0);
         return;
       }
 
-      // Ctrl+L: Switch to Loading Slip
       if (isCtrlOrCmd && (e.key === 'l' || e.key === 'L')) {
         e.preventDefault();
-        macAudio.playPop();
+        try { macAudio.playPop(); } catch {}
         setPrintMode('loading_slip');
         setCurrentPage(0);
         return;
       }
 
-      // PageDown / Next Page
       if (e.key === 'PageDown' || (e.altKey && e.key === 'ArrowRight')) {
         e.preventDefault();
-        macAudio.playPop();
+        try { macAudio.playPop(); } catch {}
         setCurrentPage(p => Math.min(totalPages - 1, p + 1));
         return;
       }
 
-      // PageUp / Previous Page
       if (e.key === 'PageUp' || (e.altKey && e.key === 'ArrowLeft')) {
         e.preventDefault();
-        macAudio.playPop();
+        try { macAudio.playPop(); } catch {}
         setCurrentPage(p => Math.max(0, p - 1));
         return;
       }
@@ -307,7 +297,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
   // Add adjustment row
   const handleAddAdjustment = (type: 'add' | 'sub') => {
-    macAudio.playClick();
+    try { macAudio.playClick(); } catch {}
     const newAdj: PrintAdjustment = {
       id: 'adj_' + Date.now() + Math.random().toString(36).substring(2, 6),
       type,
@@ -331,7 +321,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   };
 
   const handleDeleteAdjustment = (id: string) => {
-    macAudio.playPop();
+    try { macAudio.playPop(); } catch {}
     const updated = adjustments.filter(a => a.id !== id);
     setAdjustments(updated);
     saveAdjustmentsCache(updated, balanceLabel);
@@ -343,7 +333,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   };
 
   const handleDirectPrint = async (showDialog = false) => {
-    macAudio.playSuccess();
+    try { macAudio.playSuccess(); } catch {}
 
     if (isNativeServiceActive) {
       setIsPrintingNative(true);
@@ -373,14 +363,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       }
     }
 
-    // High-resolution Vector HTML Browser Print Fallback (NEVER blurry image print!)
     setPrintStatusMessage('📄 Opening browser vector print...');
     directPrintBill(printPayload);
     setTimeout(() => setPrintStatusMessage(null), 2000);
   };
 
   const handleCopyAsImage = async () => {
-    macAudio.playClick();
+    try { macAudio.playClick(); } catch {}
     try {
       let blob: Blob | null = null;
       if (nativeImage) {
@@ -396,7 +385,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        macAudio.playSuccess();
+        try { macAudio.playSuccess(); } catch {}
         setCopiedSuccess(true);
         setTimeout(() => setCopiedSuccess(false), 2500);
         return;
@@ -408,7 +397,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     if (canvasRef.current) {
       const success = await copyBillCanvasToClipboard(canvasRef.current);
       if (success) {
-        macAudio.playSuccess();
+        try { macAudio.playSuccess(); } catch {}
         setCopiedSuccess(true);
         setTimeout(() => setCopiedSuccess(false), 2500);
       }
@@ -416,7 +405,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   };
 
   const handleSaveAsImage = () => {
-    macAudio.playClick();
+    try { macAudio.playClick(); } catch {}
     const cleanParty = (header.partyName || 'SALE').replace(/[^a-zA-Z0-9_-]/g, '_');
     const filename = `${printMode.toUpperCase()}_${billNo}_${cleanParty}.png`;
 
@@ -441,244 +430,242 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(3, 7, 18, 0.88)',
-        backdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
         zIndex: 9999999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        animation: 'fadeIn 0.15s ease'
+        animation: 'fadeIn 0.15s ease',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="glass-panel"
         style={{
-          width: '95vw',
-          maxWidth: '1280px',
-          height: '92vh',
+          width: '96vw',
+          maxWidth: '1360px',
+          height: '93vh',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '14px',
+          borderRadius: '22px',
           overflow: 'hidden',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12)',
-          background: 'rgba(15, 23, 42, 0.85)'
+          boxShadow: '0 35px 80px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
+          background: 'rgba(15, 23, 42, 0.82)',
+          backdropFilter: 'blur(45px) saturate(210%)',
+          WebkitBackdropFilter: 'blur(45px) saturate(210%)'
         }}
       >
-        {/* TOP BAR: Title, Shortcut Selector Pills, Close Button */}
+        {/* ─── Apple Unified Header Bar ─── */}
         <div
           style={{
-            padding: '10px 18px',
+            padding: '12px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(30, 41, 59, 0.5)'
+            background: 'rgba(255, 255, 255, 0.03)',
+            userSelect: 'none',
+            flexShrink: 0
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
-              HIGH-SPEED PRINT & ESTIMATE CENTER
-            </span>
-            <span style={{ fontSize: '11px', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
-              BILL NO: <strong style={{ color: '#38bdf8' }}>{billNo}</strong> • {header.partyName || 'CASH SALE'}
-            </span>
-            {isNativeServiceActive ? (
-              <span style={{ fontSize: '10px', color: '#34d399', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Zap size={11} fill="#34d399" /> ⚡ PYTHON QPAINTER ACTIVE (F:\SUMMARY 1:1)
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  macAudio.playPop();
-                  setRetryTrigger(prev => prev + 1);
-                }}
-                style={{
-                  fontSize: '10px',
-                  color: '#fbbf24',
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px'
-                }}
-                title="Python PyQt6 engine offline. Run 'run_app.bat' or 'python server/native_print_server.py'. Click to reconnect."
-              >
-                <AlertTriangle size={11} /> ⚠️ PYTHON ENGINE OFFLINE (Click to Reconnect)
-              </button>
-            )}
-          </div>
-
-          {/* Mode Switcher Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.3)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          {/* Left: Window Dots & Bill Identity Pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            {/* macOS Red Close Dot */}
             <button
               type="button"
               onClick={() => {
-                macAudio.playPop();
+                try { macAudio.playClick(); } catch {}
+                onClose();
+              }}
+              title="Close (Esc)"
+              style={{
+                width: '13px',
+                height: '13px',
+                borderRadius: '50%',
+                background: '#ff5f56',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 1px 4px rgba(255, 95, 86, 0.55)',
+                padding: 0
+              }}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  letterSpacing: '0.02em'
+                }}
+              >
+                Token #{billNo}
+              </span>
+
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>
+                {header.partyName || 'CASH SALE'}
+              </span>
+
+              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                • {header.date}
+              </span>
+
+              {isNativeServiceActive ? (
+                <span
+                  style={{
+                    fontSize: '10.5px',
+                    color: '#34d399',
+                    background: 'rgba(16, 185, 129, 0.14)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    padding: '2px 9px',
+                    borderRadius: '9999px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    marginLeft: '4px'
+                  }}
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399' }} />
+                  Vector Laser 600 DPI {detectedPrinter && `(${detectedPrinter.split(' ')[0]})`}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { macAudio.playPop(); } catch {}
+                    setRetryTrigger(prev => prev + 1);
+                  }}
+                  style={{
+                    fontSize: '10.5px',
+                    color: '#fbbf24',
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    padding: '2px 9px',
+                    borderRadius: '9999px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <AlertTriangle size={11} /> Reconnect Native Engine
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Center: Apple Segmented Pill Switcher (Estimate | Summary Only | Loading Slip) */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(0, 0, 0, 0.4)',
+              padding: '3px',
+              borderRadius: '9999px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.4)'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                try { macAudio.playPop(); } catch {}
                 setPrintMode('estimate');
+                setCurrentPage(0);
               }}
               style={{
-                background: printMode === 'estimate' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'transparent',
-                color: printMode === 'estimate' ? '#ffffff' : '#94a3b8',
+                background: printMode === 'estimate' ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
+                color: printMode === 'estimate' ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                 border: 'none',
-                padding: '4px 10px',
-                borderRadius: '6px',
+                padding: '4px 14px',
+                borderRadius: '9999px',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px'
+                gap: '6px',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: printMode === 'estimate' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Full Estimate with Raw Items + Mould Summary (Ctrl+E)"
+              title="Full Estimate with Items + Mould Summary (Ctrl+E)"
             >
-              <FileText size={12} />
-              <span>Estimate (Ctrl+E)</span>
+              <FileText size={12} color={printMode === 'estimate' ? '#007AFF' : 'rgba(255, 255, 255, 0.6)'} />
+              <span>Full Estimate (Ctrl+E)</span>
             </button>
 
             <button
               type="button"
               onClick={() => {
-                macAudio.playPop();
+                try { macAudio.playPop(); } catch {}
                 setPrintMode('summary_only');
+                setCurrentPage(0);
               }}
               style={{
-                background: printMode === 'summary_only' ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : 'transparent',
-                color: printMode === 'summary_only' ? '#ffffff' : '#94a3b8',
+                background: printMode === 'summary_only' ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
+                color: printMode === 'summary_only' ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                 border: 'none',
-                padding: '4px 10px',
-                borderRadius: '6px',
+                padding: '4px 14px',
+                borderRadius: '9999px',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px'
+                gap: '6px',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: printMode === 'summary_only' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
               title="Summary Only without Raw Items (Alt+S)"
             >
-              <Layers size={12} />
+              <Layers size={12} color={printMode === 'summary_only' ? '#bf5af2' : 'rgba(255, 255, 255, 0.6)'} />
               <span>Summary Only (Alt+S)</span>
             </button>
 
             <button
               type="button"
               onClick={() => {
-                macAudio.playPop();
+                try { macAudio.playPop(); } catch {}
                 setPrintMode('loading_slip');
+                setCurrentPage(0);
               }}
               style={{
-                background: printMode === 'loading_slip' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'transparent',
-                color: printMode === 'loading_slip' ? '#ffffff' : '#94a3b8',
+                background: printMode === 'loading_slip' ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
+                color: printMode === 'loading_slip' ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                 border: 'none',
-                padding: '4px 10px',
-                borderRadius: '6px',
+                padding: '4px 14px',
+                borderRadius: '9999px',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px'
+                gap: '6px',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: printMode === 'loading_slip' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
               title="Loading Slip for Dispatch (Ctrl+L)"
             >
-              <Truck size={12} />
+              <Truck size={12} color={printMode === 'loading_slip' ? '#34c759' : 'rgba(255, 255, 255, 0.6)'} />
               <span>Loading Slip (Ctrl+L)</span>
             </button>
           </div>
 
-          {/* TOP BAR PAGE NAVIGATION */}
-          {printMode !== 'summary_only' && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                padding: '3px 8px',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
-            >
-              <button
-                type="button"
-                disabled={currentPage <= 0}
-                onClick={() => {
-                  macAudio.playPop();
-                  setCurrentPage(p => Math.max(0, p - 1));
-                }}
-                style={{
-                  background: currentPage <= 0 ? 'transparent' : 'rgba(255, 255, 255, 0.12)',
-                  color: currentPage <= 0 ? '#475569' : '#f8fafc',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: currentPage <= 0 ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  opacity: currentPage <= 0 ? 0.4 : 1
-                }}
-                title="Previous Page (PageUp)"
-              >
-                <ChevronLeft size={13} />
-                <span>Prev</span>
-              </button>
-
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#38bdf8',
-                  padding: '0 6px',
-                  letterSpacing: '0.04em'
-                }}
-              >
-                PAGE {currentPage + 1} OF {totalPages}
-              </span>
-
-              <button
-                type="button"
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => {
-                  macAudio.playPop();
-                  setCurrentPage(p => Math.min(totalPages - 1, p + 1));
-                }}
-                style={{
-                  background: currentPage >= totalPages - 1 ? 'transparent' : 'rgba(56, 189, 248, 0.25)',
-                  color: currentPage >= totalPages - 1 ? '#475569' : '#38bdf8',
-                  border: currentPage >= totalPages - 1 ? 'none' : '1px solid rgba(56, 189, 248, 0.4)',
-                  borderRadius: '12px',
-                  padding: '3px 8px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  opacity: currentPage >= totalPages - 1 ? 0.4 : 1
-                }}
-                title="Next Page (PageDown)"
-              >
-                <span>Next</span>
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          )}
-
+          {/* Right: Close Action */}
           <button
             type="button"
             onClick={() => {
-              macAudio.playClick();
+              try { macAudio.playClick(); } catch {}
               onClose();
             }}
             style={{
@@ -691,8 +678,16 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#94a3b8',
+              color: 'rgba(255, 255, 255, 0.65)',
               transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
             }}
             title="Close (Esc)"
           >
@@ -700,66 +695,53 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
           </button>
         </div>
 
-        {/* MAIN BODY: SPLIT VIEW (LEFT: Live High-Res Canvas Preview, RIGHT: Adjustments & Controls) */}
+        {/* ─── Main Content Split Stage ─── */}
         <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
-          {/* LEFT: Live Preview Container with Zoom & Scroll */}
+          {/* LEFT: Live Document Preview Stage */}
           <div
             style={{
               flex: 1,
-              background: '#090d16',
-              padding: '20px',
-              overflow: 'auto',
+              background: '#070b14',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              minHeight: 0,
+              overflow: 'hidden'
             }}
           >
-            {/* DEDICATED PREVIEW CONTROLS & PAGE BAR */}
+            {/* Stage Integrated Control Bar (Clean, Unified, NO Duplicate Pagers!) */}
             <div
               style={{
-                width: '100%',
-                maxWidth: '850px',
+                padding: '8px 18px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '10px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '7px 14px',
-                marginBottom: '14px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                flexShrink: 0
               }}
             >
-              {/* Left Side: Page Navigation */}
+              {/* Left Side: Page Pager */}
               {printMode !== 'summary_only' ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em' }}>
-                    PAGE:
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button
                     type="button"
                     disabled={currentPage <= 0}
                     onClick={() => {
-                      macAudio.playPop();
+                      try { macAudio.playPop(); } catch {}
                       setCurrentPage(p => Math.max(0, p - 1));
                     }}
                     style={{
-                      background: currentPage <= 0 ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.1)',
-                      color: currentPage <= 0 ? '#475569' : '#f8fafc',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      borderRadius: '6px',
+                      background: currentPage <= 0 ? 'transparent' : 'rgba(255, 255, 255, 0.08)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: currentPage <= 0 ? 'rgba(255, 255, 255, 0.2)' : '#ffffff',
                       padding: '4px 10px',
                       fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: currentPage <= 0 ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                      cursor: currentPage <= 0 ? 'default' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
-                      opacity: currentPage <= 0 ? 0.4 : 1,
-                      transition: 'all 0.15s ease'
+                      gap: '4px'
                     }}
                     title="Previous Page (PageUp)"
                   >
@@ -769,40 +751,35 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
                   <span
                     style={{
-                      background: 'rgba(56, 189, 248, 0.15)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      padding: '2px 10px',
-                      borderRadius: '12px',
                       fontSize: '11px',
-                      fontWeight: 800
+                      fontWeight: 700,
+                      color: '#00F0FF',
+                      padding: '0 8px',
+                      letterSpacing: '0.04em'
                     }}
                   >
-                    {currentPage + 1} / {totalPages}
+                    PAGE {currentPage + 1} OF {totalPages}
                   </span>
 
                   <button
                     type="button"
                     disabled={currentPage >= totalPages - 1}
                     onClick={() => {
-                      macAudio.playPop();
+                      try { macAudio.playPop(); } catch {}
                       setCurrentPage(p => Math.min(totalPages - 1, p + 1));
                     }}
                     style={{
-                      background: currentPage >= totalPages - 1 ? 'rgba(255, 255, 255, 0.03)' : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                      color: currentPage >= totalPages - 1 ? '#475569' : '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '4px 12px',
+                      background: currentPage >= totalPages - 1 ? 'transparent' : 'rgba(0, 122, 255, 0.3)',
+                      border: currentPage >= totalPages - 1 ? 'none' : '1px solid rgba(0, 122, 255, 0.5)',
+                      borderRadius: '8px',
+                      color: currentPage >= totalPages - 1 ? 'rgba(255, 255, 255, 0.2)' : '#ffffff',
+                      padding: '4px 10px',
                       fontSize: '11px',
-                      fontWeight: 800,
-                      cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                      cursor: currentPage >= totalPages - 1 ? 'default' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
-                      opacity: currentPage >= totalPages - 1 ? 0.4 : 1,
-                      boxShadow: currentPage >= totalPages - 1 ? 'none' : '0 2px 8px rgba(2, 132, 199, 0.4)',
-                      transition: 'all 0.15s ease'
+                      gap: '4px'
                     }}
                     title="Next Page (PageDown)"
                   >
@@ -811,221 +788,196 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   </button>
                 </div>
               ) : (
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#a78bfa' }}>
-                  ⚡ SUMMARY ONLY MODE (Single Sheet)
-                </div>
+                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.45)', fontWeight: 500 }}>
+                  Single Page Summary View
+                </span>
               )}
 
-              {/* Right Side: Zoom & Fit Page Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 700, marginRight: '2px' }}>
-                  VIEW:
-                </span>
+              {/* Right Side: Zoom & Fit Page Capsule */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: 'rgba(0, 0, 0, 0.35)',
+                  padding: '3px 6px',
+                  borderRadius: '9999px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => {
-                    macAudio.playPop();
-                    setIsFitPage(true);
-                    setZoomScale(100);
+                    try { macAudio.playClick(); } catch {}
+                    setIsFitPage(false);
+                    setZoomScale(z => Math.max(50, z - 10));
                   }}
+                  title="Zoom Out"
                   style={{
-                    background: isFitPage ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isFitPage ? '#ffffff' : '#94a3b8',
-                    border: isFitPage ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.7)',
                     cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: isFitPage ? '0 2px 8px rgba(2, 132, 199, 0.4)' : 'none'
+                    padding: '3px 6px',
+                    borderRadius: '6px'
                   }}
-                  title="Fit whole page on screen without scrolling"
                 >
-                  <Maximize2 size={12} />
-                  <span>Fit Page (Pura Page)</span>
+                  <Minus size={13} />
                 </button>
+
+                <span style={{ fontSize: '10.5px', color: '#ffffff', fontWeight: 600, minWidth: '40px', textAlign: 'center' }}>
+                  {isFitPage ? 'Fit' : `${zoomScale}%`}
+                </span>
 
                 <button
                   type="button"
                   onClick={() => {
-                    macAudio.playPop();
+                    try { macAudio.playClick(); } catch {}
                     setIsFitPage(false);
-                    setZoomScale(100);
+                    setZoomScale(z => Math.min(200, z + 10));
                   }}
+                  title="Zoom In"
                   style={{
-                    background: (!isFitPage && zoomScale === 100) ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'rgba(255, 255, 255, 0.08)',
-                    color: (!isFitPage && zoomScale === 100) ? '#ffffff' : '#94a3b8',
-                    border: (!isFitPage && zoomScale === 100) ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                  title="Actual Size (100%)"
-                >
-                  100%
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isFitPage || zoomScale <= 50}
-                  onClick={() => {
-                    macAudio.playPop();
-                    setIsFitPage(false);
-                    setZoomScale(z => Math.max(50, z - 15));
-                  }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: (isFitPage || zoomScale <= 50) ? '#475569' : '#f8fafc',
+                    background: 'transparent',
                     border: 'none',
-                    borderRadius: '6px',
-                    width: '26px',
-                    height: '26px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: (isFitPage || zoomScale <= 50) ? 'not-allowed' : 'pointer',
-                    opacity: (isFitPage || zoomScale <= 50) ? 0.4 : 1
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    cursor: 'pointer',
+                    padding: '3px 6px',
+                    borderRadius: '6px'
                   }}
-                  title="Zoom Out (-)"
                 >
-                  <ZoomOut size={12} />
+                  <Plus size={13} />
                 </button>
 
                 <button
                   type="button"
-                  disabled={zoomScale >= 180}
                   onClick={() => {
-                    macAudio.playPop();
-                    setIsFitPage(false);
-                    setZoomScale(z => Math.min(180, z + 15));
+                    try { macAudio.playClick(); } catch {}
+                    setIsFitPage(!isFitPage);
+                    if (!isFitPage) setZoomScale(100);
                   }}
+                  title={isFitPage ? "Switch to 100% Zoom" : "Fit Full Page"}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: zoomScale >= 180 ? '#475569' : '#f8fafc',
-                    border: 'none',
-                    borderRadius: '6px',
-                    width: '26px',
-                    height: '26px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: zoomScale >= 180 ? 'not-allowed' : 'pointer',
-                    opacity: zoomScale >= 180 ? 0.4 : 1
+                    background: isFitPage ? 'rgba(0, 122, 255, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                    border: isFitPage ? '1px solid #007AFF' : '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '9999px',
+                    padding: '2px 8px',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    marginLeft: '4px'
                   }}
-                  title="Zoom In (+)"
                 >
-                  <ZoomIn size={12} />
+                  Fit Page
                 </button>
-
-                {!isFitPage && (
-                  <span style={{ fontSize: '10.5px', color: '#38bdf8', fontWeight: 700, minWidth: '32px' }}>
-                    {zoomScale}%
-                  </span>
-                )}
               </div>
             </div>
 
-            {/* PREVIEW IMAGE CARD */}
+            {/* Document Sheet Display with Paper Drop Shadow */}
             <div
               style={{
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15)',
-                borderRadius: '6px',
-                overflow: 'hidden',
-                background: '#ffffff',
-                maxHeight: isFitPage ? 'calc(92vh - 165px)' : 'none',
-                maxWidth: '100%',
-                width: isFitPage ? 'fit-content' : `${Math.round(780 * (zoomScale / 100))}px`,
+                flex: 1,
+                overflow: 'auto',
+                padding: '24px',
                 display: 'flex',
-                justifyContent: 'center',
                 alignItems: 'center',
-                transition: 'width 0.2s ease'
+                justifyContent: 'center',
+                scrollbarWidth: 'thin'
               }}
             >
-              {nativeImage && (
-                <img
-                  src={nativeImage}
-                  alt="Native Qt Print Preview"
-                  style={{
-                    display: 'block',
-                    maxHeight: isFitPage ? 'calc(92vh - 165px)' : 'none',
-                    maxWidth: '100%',
-                    width: isFitPage ? 'auto' : '100%',
-                    height: isFitPage ? 'auto' : 'auto',
-                    objectFit: 'contain',
-                    imageRendering: 'auto',
-                    filter: 'contrast(1.02)'
-                  }}
-                />
-              )}
-              <canvas
-                ref={canvasRef}
+              <div
                 style={{
-                  display: nativeImage ? 'none' : 'block',
-                  maxHeight: isFitPage ? 'calc(92vh - 165px)' : 'none',
-                  maxWidth: '100%',
-                  width: isFitPage ? 'auto' : '100%',
-                  height: isFitPage ? 'auto' : 'auto',
-                  objectFit: 'contain',
-                  imageRendering: 'auto',
-                  filter: 'contrast(1.02)'
+                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  background: '#ffffff',
+                  transform: isFitPage ? 'none' : `scale(${zoomScale / 100})`,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.15s ease'
                 }}
-              />
+              >
+                {nativeImage ? (
+                  <img
+                    src={nativeImage}
+                    alt="Native Qt Print Preview"
+                    style={{
+                      display: 'block',
+                      maxHeight: isFitPage ? 'calc(93vh - 145px)' : 'none',
+                      maxWidth: '100%',
+                      width: isFitPage ? 'auto' : '100%',
+                      height: isFitPage ? 'auto' : 'auto',
+                      objectFit: 'contain',
+                      filter: 'contrast(1.02)'
+                    }}
+                  />
+                ) : (
+                  <canvas
+                    ref={canvasRef}
+                    style={{
+                      display: 'block',
+                      maxHeight: isFitPage ? 'calc(93vh - 145px)' : 'none',
+                      maxWidth: '100%',
+                      width: isFitPage ? 'auto' : '100%',
+                      height: isFitPage ? 'auto' : 'auto',
+                      objectFit: 'contain',
+                      filter: 'contrast(1.02)'
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
 
-          {/* RIGHT: Adjustments & Actions Sidebar (matching F:\SUMMARY\BillApp\main.py) */}
+          {/* RIGHT: Inspector Sidebar (Actions, Adjustments, Balance) */}
           <div
             style={{
               width: '380px',
               borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
-              background: 'rgba(15, 23, 42, 0.6)',
-              padding: '16px',
+              background: 'rgba(15, 23, 42, 0.65)',
+              padding: '18px',
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              scrollbarWidth: 'thin'
             }}
           >
-            {/* STATUS BANNER */}
+            {/* Status Message Notification */}
             {printStatusMessage && (
               <div
                 style={{
                   background: printStatusMessage.startsWith('✅')
-                    ? 'rgba(16, 185, 129, 0.15)'
-                    : 'rgba(56, 189, 248, 0.15)',
-                  border: `1px solid ${printStatusMessage.startsWith('✅') ? '#10b981' : '#38bdf8'}`,
+                    ? 'rgba(16, 185, 129, 0.18)'
+                    : 'rgba(0, 122, 255, 0.18)',
+                  border: `1px solid ${printStatusMessage.startsWith('✅') ? '#34c759' : '#007AFF'}`,
                   color: printStatusMessage.startsWith('✅') ? '#6ee7b7' : '#bae6fd',
-                  borderRadius: '6px',
+                  borderRadius: '10px',
                   padding: '8px 12px',
                   fontSize: '11.5px',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  animation: 'fadeIn 0.15s ease'
                 }}
               >
                 {printStatusMessage}
               </div>
             )}
 
-            {/* 1. DIRECT VECTOR PRINT BUTTON */}
+            {/* ─── Hero Primary Action: Direct Vector Print ─── */}
             <button
               type="button"
               disabled={isPrintingNative}
               onClick={() => handleDirectPrint(false)}
-              onMouseEnter={() => macAudio.playHover()}
+              onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
               style={{
                 background: isPrintingNative
                   ? 'rgba(16, 185, 129, 0.5)'
                   : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 color: '#ffffff',
                 border: 'none',
-                minHeight: '48px',
-                borderRadius: '8px',
+                minHeight: '50px',
+                borderRadius: '12px',
                 fontWeight: 800,
                 fontSize: '13px',
                 display: 'flex',
@@ -1033,10 +985,10 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2px',
-                padding: '6px 12px',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+                padding: '8px 14px',
+                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                 cursor: isPrintingNative ? 'wait' : 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.18s ease'
               }}
               title="Shortcut: Ctrl+P"
             >
@@ -1045,143 +997,139 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 <span>{isPrintingNative ? 'PRINTING VECTOR...' : 'DIRECT PRINT (Ctrl+P)'}</span>
               </div>
               {detectedPrinter && isNativeServiceActive && (
-                <span style={{ fontSize: '10px', opacity: 0.92, fontWeight: 600 }}>
-                  🖨️ {detectedPrinter} (High-Res Vector 600 DPI)
+                <span style={{ fontSize: '10px', opacity: 0.9, fontWeight: 500 }}>
+                  🖨️ {detectedPrinter} (High-Speed Vector)
                 </span>
               )}
             </button>
 
-            {/* 1B. WINDOWS PRINT DIALOG / BROWSER PRINT */}
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {isNativeServiceActive ? (
-                <button
-                  type="button"
-                  onClick={() => handleDirectPrint(true)}
-                  onMouseEnter={() => macAudio.playHover()}
-                  style={{
-                    flex: 1,
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    color: '#94a3b8',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    height: '32px',
-                    borderRadius: '6px',
-                    fontWeight: 700,
-                    fontSize: '10.5px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  title="Select another printer or print to PDF via Windows dialog (Ctrl+Shift+P)"
-                >
-                  <span>Windows Dialog... (Ctrl+Shift+P)</span>
-                </button>
-              ) : null}
+            {/* Secondary Print Actions Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => handleDirectPrint(true)}
+                onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: '#cbd5e1',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  height: '34px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease'
+                }}
+                title="Select another printer or print to PDF via Windows dialog (Ctrl+Shift+P)"
+              >
+                <span>Windows Dialog...</span>
+              </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  macAudio.playClick();
+                  try { macAudio.playClick(); } catch {}
                   directPrintBill(printPayload);
                 }}
-                onMouseEnter={() => macAudio.playHover()}
+                onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
                 style={{
-                  flex: 1,
                   background: 'rgba(255, 255, 255, 0.06)',
-                  color: '#94a3b8',
+                  color: '#cbd5e1',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
-                  height: '32px',
-                  borderRadius: '6px',
-                  fontWeight: 700,
-                  fontSize: '10.5px',
+                  height: '34px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '11px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px',
+                  gap: '6px',
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease'
+                  transition: 'background 0.15s ease'
                 }}
-                title="Open browser print preview (Vector HTML / PDF)"
+                title="Browser HTML Vector Print"
               >
-                <span>Browser Vector Print...</span>
+                <span>Browser Print</span>
               </button>
             </div>
 
-            {/* 2. COPY AS IMAGE TO CLIPBOARD */}
-            <button
-              type="button"
-              onClick={handleCopyAsImage}
-              onMouseEnter={() => macAudio.playHover()}
-              style={{
-                background: copiedSuccess
-                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                  : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                color: '#ffffff',
-                border: 'none',
-                height: '44px',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-              title="Render high-res PNG and copy to clipboard for WhatsApp / Telegram"
-            >
-              {copiedSuccess ? <Check size={16} /> : <Camera size={16} />}
-              <span>{copiedSuccess ? 'COPIED TO CLIPBOARD!' : '📸 COPY AS IMAGE (CLIPBOARD)'}</span>
-            </button>
+            {/* Copy / Save Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={handleCopyAsImage}
+                onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
+                style={{
+                  background: copiedSuccess
+                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                    : 'rgba(0, 122, 255, 0.2)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(0, 122, 255, 0.4)',
+                  height: '36px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Copy high-res image to clipboard for WhatsApp"
+              >
+                {copiedSuccess ? <Check size={14} /> : <Camera size={14} />}
+                <span>{copiedSuccess ? 'Copied!' : 'Copy Image'}</span>
+              </button>
 
-            {/* 3. SAVE AS IMAGE BUTTON */}
-            <button
-              type="button"
-              onClick={handleSaveAsImage}
-              onMouseEnter={() => macAudio.playHover()}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: '#94a3b8',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                height: '34px',
-                borderRadius: '6px',
-                fontWeight: 600,
-                fontSize: '11px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                cursor: 'pointer'
-              }}
-              title="Download bill image to file"
-            >
-              <Download size={13} />
-              <span>Save PNG File</span>
-            </button>
+              <button
+                type="button"
+                onClick={handleSaveAsImage}
+                onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: '#cbd5e1',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  height: '36px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer'
+                }}
+                title="Download bill image file"
+              >
+                <Download size={13} />
+                <span>Save PNG</span>
+              </button>
+            </div>
 
-            {/* 4. ADJUSTMENTS PANEL (Only in Estimate & Summary Only modes) */}
+            {/* ─── Adjustments / Extras Panel ─── */}
             {printMode !== 'loading_slip' && (
               <div
                 style={{
                   background: 'rgba(0, 0, 0, 0.35)',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '10px',
-                  padding: '12px',
+                  borderRadius: '14px',
+                  padding: '14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.05em' }}>
-                    ADJUSTMENTS / AURGESTMENT
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.04em' }}>
+                    ADJUSTMENTS / EXTRAS
                   </span>
-                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                    {adjustments.length} ROWS
+                  <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)' }}>
+                    {adjustments.length} Rows
                   </span>
                 </div>
 
@@ -1191,13 +1139,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     type="button"
                     onClick={() => handleAddAdjustment('add')}
                     style={{
-                      background: 'rgba(16, 185, 129, 0.2)',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
                       color: '#a7f3d0',
-                      height: '36px',
-                      borderRadius: '6px',
+                      height: '32px',
+                      borderRadius: '8px',
                       fontSize: '11px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1206,20 +1154,20 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     }}
                   >
                     <Plus size={13} />
-                    <span>+ ADD Amount</span>
+                    <span>+ Extra / Freight</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleAddAdjustment('sub')}
                     style={{
-                      background: 'rgba(239, 68, 68, 0.2)',
-                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
                       color: '#fca5a5',
-                      height: '36px',
-                      borderRadius: '6px',
+                      height: '32px',
+                      borderRadius: '8px',
                       fontSize: '11px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1227,8 +1175,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       cursor: 'pointer'
                     }}
                   >
-                    <Plus size={13} style={{ transform: 'rotate(45deg)' }} />
-                    <span>- SUBTRACT Amount</span>
+                    <Minus size={13} />
+                    <span>- Discount / Less</span>
                   </button>
                 </div>
 
@@ -1238,13 +1186,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '6px',
-                    maxHeight: '190px',
+                    maxHeight: '160px',
                     overflowY: 'auto'
                   }}
                 >
                   {adjustments.length === 0 ? (
                     <div style={{ fontSize: '10.5px', color: '#64748b', textAlign: 'center', padding: '10px 0' }}>
-                      No adjustments added yet. Click + Add or - Subtract above.
+                      No adjustments added yet. Click + or - above.
                     </div>
                   ) : (
                     adjustments.map((adj) => (
@@ -1253,7 +1201,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                         style={{
                           background: 'rgba(255, 255, 255, 0.04)',
                           border: '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: '6px',
+                          borderRadius: '8px',
                           padding: '6px 8px',
                           display: 'flex',
                           alignItems: 'center',
@@ -1263,9 +1211,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                         <span
                           style={{
                             fontSize: '11px',
-                            fontWeight: 800,
+                            fontWeight: 700,
                             color: adj.type === 'sub' ? '#f87171' : '#34d399',
-                            width: '24px'
+                            width: '20px'
                           }}
                         >
                           {adj.type === 'sub' ? '(-)' : '(+)'}
@@ -1276,12 +1224,16 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                           value={adj.desc}
                           onChange={(e) => handleUpdateAdjustment(adj.id, 'desc', e.target.value)}
                           placeholder="Details / Description"
-                          className="mac-input"
                           style={{
                             flex: 1,
                             height: '26px',
                             fontSize: '11px',
-                            padding: '2px 6px'
+                            padding: '2px 6px',
+                            background: 'rgba(0, 0, 0, 0.25)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '4px',
+                            color: '#ffffff',
+                            outline: 'none'
                           }}
                         />
 
@@ -1290,14 +1242,18 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                           value={adj.val || ''}
                           onChange={(e) => handleUpdateAdjustment(adj.id, 'val', parseFloat(e.target.value) || 0)}
                           placeholder="Amount"
-                          className="mac-input"
                           style={{
-                            width: '85px',
+                            width: '80px',
                             height: '26px',
                             fontSize: '11px',
                             fontWeight: 700,
                             textAlign: 'right',
-                            padding: '2px 6px'
+                            padding: '2px 6px',
+                            background: 'rgba(0, 0, 0, 0.25)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '4px',
+                            color: '#ffffff',
+                            outline: 'none'
                           }}
                         />
 
@@ -1316,7 +1272,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                             justifyContent: 'center',
                             cursor: 'pointer'
                           }}
-                          title="Remove row"
+                          title="Remove"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -1327,80 +1283,85 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               </div>
             )}
 
-            {/* 5. CUSTOM BALANCE LABEL & REALTIME TOTALS (Only in Estimate & Summary Only) */}
+            {/* ─── Balance Summary Card ─── */}
             {printMode !== 'loading_slip' && (
               <div
                 style={{
-                  background: 'rgba(0, 0, 0, 0.45)',
+                  background: 'rgba(0, 0, 0, 0.4)',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '10px',
-                  padding: '12px',
+                  borderRadius: '14px',
+                  padding: '14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '8px'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <span style={{ color: '#94a3b8' }}>Mould Sub-Total:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px' }}>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Mould Subtotal:</span>
                   <strong style={{ color: '#ffffff' }}>{formatIndianCurrency(subTotal)}</strong>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>
-                    CUSTOM BALANCE LABEL (e.g. NET PAYABLE, FINAL BALANCE):
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)', fontWeight: 600 }}>
+                    CUSTOM BALANCE LABEL:
                   </span>
                   <input
                     type="text"
                     value={balanceLabel}
                     onChange={(e) => handleBalanceLabelChange(e.target.value)}
                     placeholder="BALANCE"
-                    className="mac-input"
                     style={{
                       height: '28px',
                       fontSize: '11px',
                       fontWeight: 700,
-                      textTransform: 'uppercase'
+                      textTransform: 'uppercase',
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      padding: '2px 8px',
+                      outline: 'none'
                     }}
                   />
                 </div>
 
                 <div
                   style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    paddingTop: '8px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    paddingTop: '10px',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'baseline'
                   }}
                 >
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc' }}>
                     {balanceLabel || 'BALANCE'}:
                   </span>
-                  <span style={{ fontSize: '17px', fontWeight: 900, color: '#38bdf8' }}>
+                  <span style={{ fontSize: '19px', fontWeight: 900, color: '#00F0FF', letterSpacing: '-0.02em' }}>
                     {formatIndianCurrency(finalBalance)}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Quick Shortcuts Helper Card */}
+            {/* Clean Keyboard Shortcuts Helper Card */}
             <div
               style={{
                 marginTop: 'auto',
-                padding: '8px 10px',
-                background: 'rgba(255,255,255,0.03)',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                padding: '10px 12px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
                 fontSize: '10px',
-                color: '#64748b',
+                color: 'rgba(255, 255, 255, 0.4)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '3px'
               }}
             >
-              <div>⚡ <strong>Ctrl+P</strong>: Direct Print immediately</div>
-              <div>⚡ <strong>Ctrl+E</strong>: Full Estimate (Items + Moulds)</div>
-              <div>⚡ <strong>Alt+S</strong>: Summary Only (Moulds only)</div>
+              <div>⚡ <strong>Ctrl+P</strong>: Direct Vector Laser Print</div>
+              <div>⚡ <strong>Ctrl+E</strong>: Full Estimate Mode</div>
+              <div>⚡ <strong>Alt+S</strong>: Summary Only Mode</div>
               <div>⚡ <strong>Ctrl+L</strong>: Warehouse Loading Slip</div>
             </div>
           </div>
