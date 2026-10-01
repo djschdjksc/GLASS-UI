@@ -9,7 +9,14 @@ import sqlite3
 import json
 import time
 
-SRC_DB = r"f:\SUMMARY\BillApp\database\bill_data.db"
+candidate_paths = [
+    r"e:\SUMMARY\BillApp\database\bill_data.db",
+    r"f:\SUMMARY\BillApp\database\bill_data.db",
+    r"d:\SUMMARY\BillApp\database\bill_data.db",
+    r"c:\SUMMARY\BillApp\database\bill_data.db",
+    r"e:\C++ SUMMARY\database\bill_data.db",
+]
+SRC_DB = next((p for p in candidate_paths if os.path.exists(p)), r"e:\SUMMARY\BillApp\database\bill_data.db")
 DST_DB = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "billapp.db"))
 
 print(f"[*] Source Database: {SRC_DB}")
@@ -127,11 +134,12 @@ for idx, p in enumerate(parties_rows, 1):
     if not name:
         continue
     pid = f"P-{idx}"
-    phone = str(p['contacts'] or '').strip()
-    station = str(p['station'] or '').strip()
-    district = str(p['district'] or '').strip()
-    state = str(p['state'] or '').strip()
-    pincode = str(p['pincode'] or '').strip()
+    keys = p.keys()
+    phone = str(p['contacts'] or '').strip() if 'contacts' in keys else ''
+    station = str(p['station'] or '').strip() if 'station' in keys else ''
+    district = str(p['district'] or '').strip() if 'district' in keys else ''
+    state = str(p['state'] or '').strip() if 'state' in keys else ''
+    pincode = str(p['pincode'] or '').strip() if 'pincode' in keys else ''
 
     dst.execute("""
         INSERT OR REPLACE INTO parties

@@ -10,13 +10,12 @@ function autoStartPythonPrintEngine(): Plugin {
     name: 'auto-start-python-print-engine',
     configureServer() {
       // Check if port 5005 is already alive
-      const req = http.get('http://127.0.0.1:5005/api/status', (res) => {
+      const reqPrint = http.get('http://127.0.0.1:5005/api/status', (res) => {
         if (res.statusCode === 200) {
           console.log('\x1b[32m%s\x1b[0m', '⚡ [Print Engine] Python PyQt6 Native Server active on http://127.0.0.1:5005')
         }
       })
-
-      req.on('error', () => {
+      reqPrint.on('error', () => {
         console.log('\x1b[33m%s\x1b[0m', '⚡ [Print Engine] Spawning Python PyQt6 Native Server (port 5005)...')
         const pyScript = path.resolve(__dirname, 'server/native_print_server.py')
         const pyProc = spawn('python', [pyScript], {
@@ -25,6 +24,23 @@ function autoStartPythonPrintEngine(): Plugin {
           shell: true,
         })
         pyProc.unref()
+      })
+
+      // Check if port 5006 (SQLite DB Engine) is already alive
+      const reqDb = http.get('http://127.0.0.1:5006/api/db/status', (res) => {
+        if (res.statusCode === 200) {
+          console.log('\x1b[32m%s\x1b[0m', '⚡ [DB Engine] SQLite High-Speed DB Server active on http://127.0.0.1:5006')
+        }
+      })
+      reqDb.on('error', () => {
+        console.log('\x1b[33m%s\x1b[0m', '⚡ [DB Engine] Spawning SQLite High-Speed DB Server (port 5006)...')
+        const dbScript = path.resolve(__dirname, 'server/db_server.py')
+        const dbProc = spawn('python', [dbScript], {
+          stdio: 'ignore',
+          detached: true,
+          shell: true,
+        })
+        dbProc.unref()
       })
     },
   }
