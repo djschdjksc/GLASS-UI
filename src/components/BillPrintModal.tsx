@@ -11,8 +11,6 @@ import {
   Truck,
   Layers,
   Check,
-  Zap,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
@@ -337,7 +335,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
     if (isNativeServiceActive) {
       setIsPrintingNative(true);
-      setPrintStatusMessage('🖨️ Preparing high-resolution vector print job...');
+      setPrintStatusMessage('Printing...');
       try {
         const res = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
           method: 'POST',
@@ -346,24 +344,24 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         });
         const data = await res.json();
         if (data.success) {
-          setPrintStatusMessage(`✅ ${data.message || 'Print job sent successfully!'}`);
-          setTimeout(() => setPrintStatusMessage(null), 4500);
+          setPrintStatusMessage('Print sent successfully');
+          setTimeout(() => setPrintStatusMessage(null), 3000);
           return;
         } else if (data.message && data.message.includes('cancelled')) {
-          setPrintStatusMessage('ℹ️ Print cancelled');
-          setTimeout(() => setPrintStatusMessage(null), 2500);
+          setPrintStatusMessage('Print cancelled');
+          setTimeout(() => setPrintStatusMessage(null), 2000);
           return;
         } else {
           console.warn('Native direct-print returned error:', data.error);
         }
       } catch (err) {
-        console.warn('Native direct-print network error, falling back to vector browser print:', err);
+        console.warn('Native direct-print network error, falling back to browser print:', err);
       } finally {
         setIsPrintingNative(false);
       }
     }
 
-    setPrintStatusMessage('📄 Opening browser vector print...');
+    setPrintStatusMessage('Printing...');
     directPrintBill(printPayload);
     setTimeout(() => setPrintStatusMessage(null), 2000);
   };
@@ -472,96 +470,52 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
             flexShrink: 0
           }}
         >
-          {/* Left: Window Dots & Bill Identity Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* macOS Red Close Dot */}
-            <button
-              type="button"
-              onClick={() => {
-                try { macAudio.playClick(); } catch {}
-                onClose();
-              }}
-              title="Close (Esc)"
-              style={{
-                width: '13px',
-                height: '13px',
-                borderRadius: '50%',
-                background: '#ff5f56',
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: '0 1px 4px rgba(255, 95, 86, 0.55)',
-                padding: 0
-              }}
-            />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Left: Window Controls & Minimal Clean Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  try { macAudio.playClick(); } catch {}
+                  onClose();
+                }}
+                title="Close (Esc)"
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#ff5f56',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 4px rgba(255, 95, 86, 0.55)',
+                  padding: 0
+                }}
+              />
               <span
                 style={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  padding: '3px 10px',
-                  borderRadius: '9999px',
-                  letterSpacing: '0.02em'
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#febc2e',
+                  display: 'inline-block',
+                  opacity: 0.65
                 }}
-              >
-                Token #{billNo}
-              </span>
-
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>
-                {header.partyName || 'CASH SALE'}
-              </span>
-
-              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)' }}>
-                • {header.date}
-              </span>
-
-              {isNativeServiceActive ? (
-                <span
-                  style={{
-                    fontSize: '10.5px',
-                    color: '#34d399',
-                    background: 'rgba(16, 185, 129, 0.14)',
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
-                    padding: '2px 9px',
-                    borderRadius: '9999px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    marginLeft: '4px'
-                  }}
-                >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399' }} />
-                  Vector Laser 600 DPI {detectedPrinter && `(${detectedPrinter.split(' ')[0]})`}
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    try { macAudio.playPop(); } catch {}
-                    setRetryTrigger(prev => prev + 1);
-                  }}
-                  style={{
-                    fontSize: '10.5px',
-                    color: '#fbbf24',
-                    background: 'rgba(245, 158, 11, 0.12)',
-                    border: '1px solid rgba(245, 158, 11, 0.35)',
-                    padding: '2px 9px',
-                    borderRadius: '9999px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  <AlertTriangle size={11} /> Reconnect Native Engine
-                </button>
-              )}
+              />
+              <span
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#28c840',
+                  display: 'inline-block',
+                  opacity: 0.65
+                }}
+              />
             </div>
+
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.85)', letterSpacing: '-0.01em' }}>
+              Print Preview
+            </span>
           </div>
 
           {/* Center: Apple Segmented Pill Switcher (Estimate | Summary Only | Loading Slip) */}
@@ -587,9 +541,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 background: printMode === 'estimate' ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
                 color: printMode === 'estimate' ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                 border: 'none',
-                padding: '4px 14px',
+                padding: '5px 16px',
                 borderRadius: '9999px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
@@ -598,10 +552,10 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxShadow: printMode === 'estimate' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Full Estimate with Items + Mould Summary (Ctrl+E)"
+              title="Full Estimate (Ctrl+E)"
             >
-              <FileText size={12} color={printMode === 'estimate' ? '#007AFF' : 'rgba(255, 255, 255, 0.6)'} />
-              <span>Full Estimate (Ctrl+E)</span>
+              <FileText size={13} color={printMode === 'estimate' ? '#007AFF' : 'rgba(255, 255, 255, 0.6)'} />
+              <span>Full Estimate</span>
             </button>
 
             <button
@@ -615,9 +569,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 background: printMode === 'summary_only' ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
                 color: printMode === 'summary_only' ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                 border: 'none',
-                padding: '4px 14px',
+                padding: '5px 16px',
                 borderRadius: '9999px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
@@ -626,10 +580,10 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxShadow: printMode === 'summary_only' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Summary Only without Raw Items (Alt+S)"
+              title="Summary Only (Alt+S)"
             >
-              <Layers size={12} color={printMode === 'summary_only' ? '#bf5af2' : 'rgba(255, 255, 255, 0.6)'} />
-              <span>Summary Only (Alt+S)</span>
+              <Layers size={13} color={printMode === 'summary_only' ? '#bf5af2' : 'rgba(255, 255, 255, 0.6)'} />
+              <span>Summary Only</span>
             </button>
 
             <button
@@ -643,9 +597,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 background: printMode === 'loading_slip' ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
                 color: printMode === 'loading_slip' ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                 border: 'none',
-                padding: '4px 14px',
+                padding: '5px 16px',
                 borderRadius: '9999px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
@@ -654,10 +608,10 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxShadow: printMode === 'loading_slip' ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3)' : 'none'
               }}
-              title="Loading Slip for Dispatch (Ctrl+L)"
+              title="Loading Slip (Ctrl+L)"
             >
-              <Truck size={12} color={printMode === 'loading_slip' ? '#34c759' : 'rgba(255, 255, 255, 0.6)'} />
-              <span>Loading Slip (Ctrl+L)</span>
+              <Truck size={13} color={printMode === 'loading_slip' ? '#34c759' : 'rgba(255, 255, 255, 0.6)'} />
+              <span>Loading Slip</span>
             </button>
           </div>
 
@@ -964,7 +918,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               </div>
             )}
 
-            {/* ─── Hero Primary Action: Direct Vector Print ─── */}
+            {/* ─── Primary Print Button ─── */}
             <button
               type="button"
               disabled={isPrintingNative}
@@ -976,88 +930,26 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 color: '#ffffff',
                 border: 'none',
-                minHeight: '50px',
-                borderRadius: '12px',
-                fontWeight: 800,
+                height: '42px',
+                borderRadius: '10px',
+                fontWeight: 700,
                 fontSize: '13px',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '2px',
-                padding: '8px 14px',
-                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                gap: '8px',
+                padding: '0 16px',
+                boxShadow: '0 6px 20px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                 cursor: isPrintingNative ? 'wait' : 'pointer',
                 transition: 'all 0.18s ease'
               }}
-              title="Shortcut: Ctrl+P"
+              title="Print (Ctrl+P)"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Printer size={18} />
-                <span>{isPrintingNative ? 'PRINTING VECTOR...' : 'DIRECT PRINT (Ctrl+P)'}</span>
-              </div>
-              {detectedPrinter && isNativeServiceActive && (
-                <span style={{ fontSize: '10px', opacity: 0.9, fontWeight: 500 }}>
-                  🖨️ {detectedPrinter} (High-Speed Vector)
-                </span>
-              )}
+              <Printer size={16} />
+              <span>{isPrintingNative ? 'Printing...' : 'Print'}</span>
             </button>
 
-            {/* Secondary Print Actions Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => handleDirectPrint(true)}
-                onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  color: '#cbd5e1',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  height: '34px',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease'
-                }}
-                title="Select another printer or print to PDF via Windows dialog (Ctrl+Shift+P)"
-              >
-                <span>Windows Dialog...</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  try { macAudio.playClick(); } catch {}
-                  directPrintBill(printPayload);
-                }}
-                onMouseEnter={() => { try { macAudio.playHover(); } catch {} }}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  color: '#cbd5e1',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  height: '34px',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease'
-                }}
-                title="Browser HTML Vector Print"
-              >
-                <span>Browser Print</span>
-              </button>
-            </div>
-
-            {/* Copy / Save Row */}
+            {/* Actions: Copy & Save */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
@@ -1066,13 +958,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 style={{
                   background: copiedSuccess
                     ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                    : 'rgba(0, 122, 255, 0.2)',
+                    : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
-                  border: '1px solid rgba(0, 122, 255, 0.4)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
                   height: '36px',
                   borderRadius: '8px',
                   fontWeight: 600,
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1080,10 +972,10 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
-                title="Copy high-res image to clipboard for WhatsApp"
+                title="Copy high-res image to clipboard (WhatsApp)"
               >
                 {copiedSuccess ? <Check size={14} /> : <Camera size={14} />}
-                <span>{copiedSuccess ? 'Copied!' : 'Copy Image'}</span>
+                <span>{copiedSuccess ? 'Copied' : 'Copy Image'}</span>
               </button>
 
               <button
@@ -1097,16 +989,17 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   height: '36px',
                   borderRadius: '8px',
                   fontWeight: 600,
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
-                title="Download bill image file"
+                title="Save PNG image file"
               >
-                <Download size={13} />
+                <Download size={14} />
                 <span>Save PNG</span>
               </button>
             </div>
@@ -1344,26 +1237,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               </div>
             )}
 
-            {/* Clean Keyboard Shortcuts Helper Card */}
-            <div
-              style={{
-                marginTop: 'auto',
-                padding: '10px 12px',
-                background: 'rgba(255, 255, 255, 0.03)',
-                borderRadius: '10px',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                fontSize: '10px',
-                color: 'rgba(255, 255, 255, 0.4)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '3px'
-              }}
-            >
-              <div>⚡ <strong>Ctrl+P</strong>: Direct Vector Laser Print</div>
-              <div>⚡ <strong>Ctrl+E</strong>: Full Estimate Mode</div>
-              <div>⚡ <strong>Alt+S</strong>: Summary Only Mode</div>
-              <div>⚡ <strong>Ctrl+L</strong>: Warehouse Loading Slip</div>
-            </div>
           </div>
         </div>
       </div>
