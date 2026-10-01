@@ -30,14 +30,34 @@ def map_payload_to_bill_data(payload):
         bill_type = 'PURCHASE'
 
     dynamic_cols = payload.get('dynamicCols', []) or []
+
+    # Build skip group lookup: prefix (lowercase) → group name
+    skip_entries = payload.get('skipGroupEntries', []) or []
+    def get_group_label(name):
+        if not name or not skip_entries:
+            return None
+        lower = name.strip().lower()
+        if not lower:
+            return None
+        # Sort by prefix length descending for longest-match-first
+        sorted_entries = sorted(skip_entries, key=lambda e: len(e.get('prefix', '')), reverse=True)
+        for entry in sorted_entries:
+            prefix = entry.get('prefix', '').strip().lower()
+            if prefix and lower.startswith(prefix):
+                return entry.get('group', '').strip()
+        return None
+
     items_data = []
     for it in payload.get('items', []):
         name = str(it.get('name', '')).strip()
         qty = it.get('qty', '')
         has_any_val = bool(name) or bool(qty) or any(bool(str(it.get(dc.get('field', ''), '')).strip()) for dc in dynamic_cols)
         if has_any_val:
+            # Append group label in parens — painter already handles (NOTE) in italic
+            group_label = get_group_label(name)
+            desc_with_group = f"{name} ({group_label})" if group_label else name
             row_dict = {
-                'desc': name,
+                'desc': desc_with_group,
                 'party_code': str(it.get('partyCode', '')).strip(),
                 'qty': str(qty).strip(),
                 'u_cap': str(it.get('uCap', '')).strip(),
@@ -83,7 +103,8 @@ def map_payload_to_bill_data(payload):
         'items': items_data,
         'groups': groups_data,
         'adjustments': adjustments,
-        'balance_label': str(payload.get('balanceLabel', 'BALANCE')).upper()
+        'balance_label': str(payload.get('balanceLabel', 'BALANCE')).upper(),
+        'edit_id': str(payload.get('editId', ''))
     }
     return bill_data
 

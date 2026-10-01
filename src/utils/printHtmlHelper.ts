@@ -1,6 +1,38 @@
 import type { BillPrintPayload } from './billCanvasPainter';
 import { formatIndianCurrency, formatDisplayDate } from './billCanvasPainter';
 
+// Build itemPrefix → mainGroup map from localStorage (same logic as LeftGrid)
+function buildPrintSkipMap(): Map<string, string> {
+  try {
+    const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
+    const map = new Map<string, string>();
+    raw.forEach((it: any) => {
+      if (it.itemPrefix && it.mainGroup) {
+        map.set(it.itemPrefix.trim().toLowerCase(), it.mainGroup.trim());
+      }
+    });
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+function getPrintGroupLabel(name: string, map: Map<string, string>): string | null {
+  if (!name || map.size === 0) return null;
+  const lower = name.trim().toLowerCase();
+  if (!lower) return null;
+  if (map.has(lower)) return map.get(lower)!;
+  let bestMatch: string | null = null;
+  let bestLen = 0;
+  map.forEach((group, prefix) => {
+    if (lower.startsWith(prefix) && prefix.length > bestLen) {
+      bestLen = prefix.length;
+      bestMatch = group;
+    }
+  });
+  return bestMatch;
+}
+
 export function directPrintBill(data: BillPrintPayload): void {
   const isEstimate = data.mode === 'estimate';
   const isSummaryOnly = data.mode === 'summary_only';
@@ -47,6 +79,9 @@ export function directPrintBill(data: BillPrintPayload): void {
     });
   });
 
+  // Build skip group map for print badges
+  const skipMap = buildPrintSkipMap();
+
   // Exactly 27 rows per page for Loading Slip (matching F:\SUMMARY\BillApp\main.py rows_per_page = 27)
   const FIXED_ROWS = 27;
   const itemsToRender = [...validItems];
@@ -62,11 +97,32 @@ export function directPrintBill(data: BillPrintPayload): void {
     const l = isActual ? (Number(it.lCap) || 0) : 0;
     const cleanName = isActual ? (it.name || '').replace(/\./g, '').replace(/-/g, ' ') : '';
     const pCode = isActual ? (it.partyCode || '') : '';
+    const groupLabel = isActual ? getPrintGroupLabel(cleanName, skipMap) : null;
+
+    // Group badge HTML for print — simple inline pill, print-safe solid colors
+    const groupBadgeHtml = groupLabel
+      ? `<span style="
+          display:inline-block;
+          vertical-align:middle;
+          margin-left:7px;
+          font-size:10px;
+          font-weight:600;
+          font-family:system-ui,-apple-system,sans-serif;
+          color:#1a5fa8;
+          background:#ddeeff;
+          border:1px solid #99c2ee;
+          border-radius:4px;
+          padding:1px 6px;
+          line-height:1.4;
+          letter-spacing:0;
+          white-space:nowrap;
+        ">${groupLabel}</span>`
+      : '';
 
     return `
       <tr style="height: 31px;">
         <td style="text-align: center; font-weight: 700; width: 50px;">${isActual ? idx + 1 : ''}</td>
-        <td style="text-align: left; font-weight: 700; padding-left: 10px; font-size: 14.5px;">${cleanName}</td>
+        <td style="text-align: left; font-weight: 700; padding-left: 10px; font-size: 14.5px;">${cleanName}${groupBadgeHtml}</td>
         ${showPCode ? `<td style="text-align: center; font-weight: 700; width: 130px;">${pCode}</td>` : ''}
         ${sizeCols.map(sc => {
           const val = isActual ? (Number((it as any)[sc.field]) || 0) : 0;
@@ -77,6 +133,7 @@ export function directPrintBill(data: BillPrintPayload): void {
       </tr>
     `;
   }).join('');
+
 
   const groupRowsHtml = validGroups.map(g => {
     const q = Number(g.qty) || 0;
@@ -215,7 +272,7 @@ export function directPrintBill(data: BillPrintPayload): void {
         <div class="title-header">${title}</div>
 
         <div class="meta-row">
-          <span>${slipPrefix} ${data.billNo || '0001'}</span>
+          <span>${slipPrefix} ${data.billNo || '0001'}${data.editId ? ` [${data.editId}]` : ''}</span>
           <span>DATE: ${formatDisplayDate(data.date)}</span>
         </div>
 

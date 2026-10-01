@@ -285,6 +285,13 @@ export const SQLITE_SKIP_SUB_GROUPS: SkipSubGroupSeed[] = [
     "mainGroup": "7D UV SHEET",
     "groupName": "7D UV",
     "sumColumn": "QTY"
+  },
+  {
+    "id": "sg-35",
+    "mainGroupId": "mg-3",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "sumColumn": "QTY"
   }
 ];
 
@@ -5174,5 +5181,320 @@ export const SQLITE_SKIP_ITEMS: SkipItemSeed[] = [
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 809"
+  },
+  {
+    "id": "si-699",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2000"
+  },
+  {
+    "id": "si-700",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2001"
+  },
+  {
+    "id": "si-701",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2002"
+  },
+  {
+    "id": "si-702",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2003"
+  },
+  {
+    "id": "si-703",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2004"
+  },
+  {
+    "id": "si-704",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2005"
+  },
+  {
+    "id": "si-705",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2006"
+  },
+  {
+    "id": "si-706",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2007"
+  },
+  {
+    "id": "si-707",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2008"
+  },
+  {
+    "id": "si-708",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2009"
+  },
+  {
+    "id": "si-709",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2010"
+  },
+  {
+    "id": "si-710",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2011"
+  },
+  {
+    "id": "si-711",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2012"
+  },
+  {
+    "id": "si-712",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2013"
+  },
+  {
+    "id": "si-713",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2014"
+  },
+  {
+    "id": "si-714",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2015"
+  },
+  {
+    "id": "si-715",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2016"
+  },
+  {
+    "id": "si-716",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2017"
+  },
+  {
+    "id": "si-717",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2018"
+  },
+  {
+    "id": "si-718",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2019"
+  },
+  {
+    "id": "si-719",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2020"
+  },
+  {
+    "id": "si-720",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2021"
+  },
+  {
+    "id": "si-721",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2022"
+  },
+  {
+    "id": "si-722",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2023"
+  },
+  {
+    "id": "si-723",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2024"
+  },
+  {
+    "id": "si-724",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2025"
+  },
+  {
+    "id": "si-725",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2026"
+  },
+  {
+    "id": "si-726",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2027"
+  },
+  {
+    "id": "si-727",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2028"
+  },
+  {
+    "id": "si-728",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2029"
+  },
+  {
+    "id": "si-730",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2030"
+  },
+  {
+    "id": "si-731",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2031"
+  },
+  {
+    "id": "si-732",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2032"
+  },
+  {
+    "id": "si-733",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2033"
+  },
+  {
+    "id": "si-734",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2034"
+  },
+  {
+    "id": "si-735",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2035"
+  },
+  {
+    "id": "si-736",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2036"
+  },
+  {
+    "id": "si-737",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2037"
+  },
+  {
+    "id": "si-738",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2038"
+  },
+  {
+    "id": "si-739",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2039"
+  },
+  {
+    "id": "si-740",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2040"
+  },
+  {
+    "id": "si-741",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2041"
+  },
+  {
+    "id": "si-742",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2042"
+  },
+  {
+    "id": "si-743",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2043"
+  },
+  {
+    "id": "si-744",
+    "subGroupId": "sg-35",
+    "mainGroup": "Digital",
+    "groupName": "UV-(Digital)",
+    "itemPrefix": "UV 2044"
   }
 ];

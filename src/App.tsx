@@ -15,6 +15,7 @@ import { SlipModal } from './components/SlipModal';
 import { GoodsDistributionModal } from './components/GoodsDistributionModal';
 import { OcrModal } from './components/OcrModal';
 import { NoteModal } from './components/NoteModal';
+import { PendingSlipModal } from './components/PendingSlipModal';
 import { JsonModal } from './components/JsonModal';
 import { OtherTabsView } from './components/OtherTabsView';
 import { BottomModeBar } from './components/BottomModeBar';
@@ -40,6 +41,7 @@ import { getUserProfile, getNextUserToken } from './services/supabaseClient';
 import { UserIdentityModal } from './components/UserIdentityModal';
 import { BillAuditHistoryModal } from './components/BillAuditHistoryModal';
 import { CloudBillNotification, type CloudNotificationData } from './components/CloudBillNotification';
+import { speakVoiceSummaryHindi } from './utils/hindiVoiceSummary';
 
 const playTapSound = () => {
   try {
@@ -251,6 +253,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [auditTarget, setAuditTarget] = useState<{ id: string; token: string; party?: string } | null>(null);
   const loadedBillSnapshotRef = useRef<BillRecord | null>(null);
+  const [deleteRowConfirm, setDeleteRowConfirm] = useState<{ table: 'raw' | 'finished'; indices: number[] } | null>(null);
 
   const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
   const [incomingCloudBill, setIncomingCloudBill] = useState<CloudNotificationData | null>(null);
@@ -313,6 +316,44 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const showToast = (_message: string, _type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
     // Disabled: no recurring top toast notifications
   };
+
+  // Multi-User Edit Versioning & Dirty Tracking
+  const currentFingerprint = getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol);
+  const isBillDirty = currentFingerprint !== lastSavedSnapshotRef.current;
+
+  const activeEditInfo = useMemo(() => {
+    const profile = getUserProfile();
+    const userPrefix = profile.prefix || 'USER';
+    const operatorName = profile.name || 'User';
+
+    if (loadedBillSnapshotRef.current) {
+      const baseVersion = loadedBillSnapshotRef.current.version || 1;
+      const baseOperator = loadedBillSnapshotRef.current.lastModifiedBy || userPrefix;
+      if (isBillDirty) {
+        const nextVersion = baseVersion + 1;
+        return {
+          editId: `${userPrefix}-${nextVersion}`,
+          version: nextVersion,
+          operator: operatorName,
+          isModified: true
+        };
+      } else {
+        return {
+          editId: loadedBillSnapshotRef.current.editId || `${baseOperator}-${baseVersion}`,
+          version: baseVersion,
+          operator: loadedBillSnapshotRef.current.lastModifiedBy || operatorName,
+          isModified: baseVersion > 1
+        };
+      }
+    } else {
+      return {
+        editId: `${userPrefix}-1`,
+        version: 1,
+        operator: operatorName,
+        isModified: false
+      };
+    }
+  }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol, isBillDirty]);
 
   // Database Save & Navigation Handlers
   const handleSaveCurrentBill = useCallback(async () => {
@@ -457,7 +498,10 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       createdAt: loadedBillSnapshotRef.current?.createdAt || Date.now(),
       updatedAt: Date.now(),
       synced: false,
-      version: (loadedBillSnapshotRef.current?.version || 0) + 1
+      version: activeEditInfo.version,
+      editId: activeEditInfo.editId,
+      lastModifiedBy: activeEditInfo.operator,
+      notes: noteText
     };
 
     const previousBill = loadedBillSnapshotRef.current || localDb.getBillById(billToSave.id);
@@ -496,6 +540,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setRawItems(blankRaws);
     setFinishedItems([]);
     setDynamicCols([]);
+    setNoteText('');
     setActiveTable('left');
 
     lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], []);
@@ -515,7 +560,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         docTypeSelect.focus();
       }
     }, 120);
-  }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol]);
+  }, [header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol, activeEditInfo]);
 
   // Keyboard-Friendly Skip / Clear Bill Handler
   const handleClearToNewBill = useCallback(() => {
@@ -548,6 +593,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setFinishedItems([]);
     setDynamicCols([]);
     setHasPartyCodeCol(false);
+    setNoteText('');
 
     lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], [], false);
     setConfirmClearDialog(null);
@@ -606,6 +652,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     }
 
     if (target) {
+      loadedBillSnapshotRef.current = target;
       setHeader({
         docType: normalizeDocType(target.docType),
         partyName: target.party,
@@ -617,6 +664,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
       setDynamicCols(target.dynamicCols || []);
+      setNoteText((target as any).notes || (target as any).note || '');
       const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
       setHasPartyCodeCol(partyCodeCol);
       lastSavedSnapshotRef.current = getBillFingerprint(
@@ -679,6 +727,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     // Move to newer bill (e.g. 570 -> 580)
     const target = categoryBills[currentIdx - 1];
     if (target) {
+      loadedBillSnapshotRef.current = target;
       setHeader({
         docType: normalizeDocType(target.docType),
         partyName: target.party,
@@ -690,6 +739,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
       setDynamicCols(target.dynamicCols || []);
+      setNoteText((target as any).notes || (target as any).note || '');
       const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
       setHasPartyCodeCol(partyCodeCol);
       lastSavedSnapshotRef.current = getBillFingerprint(
@@ -724,6 +774,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const calcSummaryRef = useRef<(() => void) | null>(null);
   const loadOldPriceRef = useRef<(() => void) | null>(null);
   const openPrintRef = useRef<((mode: 'estimate' | 'summary_only' | 'loading_slip') => void) | null>(null);
+  const combineItemsRef = useRef<(() => void) | null>(null);
+  const voiceSummaryRef = useRef<(() => void) | null>(null);
 
   const escapeClearRef = useRef<() => void>(() => {});
   const confirmSaveAndClearRef = useRef<() => Promise<void>>(() => Promise.resolve());
@@ -887,6 +939,20 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
+      // Alt+M: Combine Duplicate Items in Left Table
+      if (e.altKey && !isCtrlOrCmd && !e.shiftKey && (e.key === 'm' || e.key === 'M')) {
+        e.preventDefault();
+        combineItemsRef.current?.();
+        return;
+      }
+
+      // Ctrl+K: Speak Voice Summary in Hindi
+      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        voiceSummaryRef.current?.();
+        return;
+      }
+
       // Chrome View Source (Ctrl+U)
       if (isCtrlOrCmd && (e.key === 'u' || e.key === 'U')) {
         e.preventDefault();
@@ -948,6 +1014,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [activeTable, setActiveTable] = useState<'left' | 'right' | null>('left');
 
   const handleLoadSlip = (slip: SavedSlipData) => {
+    const foundBill = (slip as any).id
+      ? localDb.getBillById((slip as any).id)
+      : localDb.getBills().find(b => String(b.token) === String(slip.tokenNo));
+    loadedBillSnapshotRef.current = foundBill || null;
+
     setHeader({
       docType: slip.docType,
       partyName: slip.partyName,
@@ -1053,7 +1124,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [isOcrOpen, setIsOcrOpen] = useState<boolean>(false);
   const [isNoteOpen, setIsNoteOpen] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(false);
-  const [noteText, setNoteText] = useState<string>('Urgent delivery for Apex Industries scheduled by end of week.');
+  const [isPendingSlipOpen, setIsPendingSlipOpen] = useState<boolean>(false);
+  const [noteText, setNoteText] = useState<string>('');
 
   const handleOpenPrintModal = useCallback((mode: 'estimate' | 'summary_only' | 'loading_slip') => {
     macAudio.playPop();
@@ -1211,6 +1283,15 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   };
 
   const handleDeleteRawRows = (indices: number[]) => {
+    const hasData = indices.some(idx => {
+      const it = rawItems[idx];
+      return it && (it.name?.trim() || it.qty > 0 || it.uCap > 0 || it.lCap > 0);
+    });
+    if (hasData) {
+      macAudio.playPop();
+      setDeleteRowConfirm({ table: 'raw', indices });
+      return;
+    }
     setRawItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
     showToast(`Deleted ${indices.length} Row(s)`, 'warning');
   };
@@ -1237,6 +1318,98 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     });
     showToast(`Cleared ${cells.length} Cell(s)`, 'info');
   };
+
+  // Combine Duplicate Raw Items in Left Table (Merge double entries into single row by summing quantities)
+  const handleCombineDuplicateItems = useCallback(() => {
+    if (!rawItems || rawItems.length === 0) {
+      showToast('No items in the table to combine!', 'info');
+      return;
+    }
+
+    const itemMap = new Map<string, RawItem>();
+    const orderKeys: string[] = [];
+    const blankRows: RawItem[] = [];
+    let duplicateCount = 0;
+
+    rawItems.forEach(item => {
+      const trimmedName = (item.name || '').trim();
+      if (!trimmedName) {
+        // preserve blank row as is
+        blankRows.push({ ...item });
+        return;
+      }
+
+      const key = trimmedName.toLowerCase();
+      if (itemMap.has(key)) {
+        duplicateCount++;
+        const target = itemMap.get(key)!;
+
+        // Sum Base Qty (10 FT)
+        target.qty = (Number(target.qty) || 0) + (Number(item.qty) || 0);
+        // Sum Upper Cap
+        target.uCap = (Number(target.uCap) || 0) + (Number(item.uCap) || 0);
+        // Sum Lower Cap
+        target.lCap = (Number(target.lCap) || 0) + (Number(item.lCap) || 0);
+
+        // Sum Dynamic Columns (e.g. qty_12, qty_15, etc.)
+        dynamicCols.forEach(col => {
+          const colField = col.field;
+          const val1 = Number(target[colField]) || 0;
+          const val2 = Number(item[colField]) || 0;
+          if (val1 || val2) {
+            target[colField] = val1 + val2;
+          }
+        });
+
+        // Also check any other dynamic numeric keys present on item
+        Object.keys(item).forEach(k => {
+          if (!['id', 'name', 'partyCode', 'qty', 'uCap', 'lCap', 'selected'].includes(k)) {
+            const v1 = Number(target[k]) || 0;
+            const v2 = Number(item[k]) || 0;
+            if (v1 || v2) {
+              target[k] = v1 + v2;
+            }
+          }
+        });
+
+        // Retain party code if target didn't have one
+        if (!target.partyCode && item.partyCode) {
+          target.partyCode = item.partyCode;
+        }
+      } else {
+        itemMap.set(key, { ...item });
+        orderKeys.push(key);
+      }
+    });
+
+    if (duplicateCount === 0) {
+      showToast('No duplicate items found to combine.', 'info');
+      return;
+    }
+
+    const mergedList: RawItem[] = [
+      ...orderKeys.map(k => itemMap.get(k)!),
+      ...blankRows
+    ];
+
+    setRawItems(mergedList);
+    showToast(`${duplicateCount} duplicate item(s) merged & combined successfully!`, 'success');
+    playTapSound();
+  }, [rawItems, dynamicCols, showToast]);
+
+  combineItemsRef.current = handleCombineDuplicateItems;
+
+  const handleVoiceSummary = useCallback(() => {
+    speakVoiceSummaryHindi({
+      partyName: header.partyName,
+      activeTable,
+      rawItems,
+      finishedItems,
+      dynamicCols
+    });
+  }, [header.partyName, activeTable, rawItems, finishedItems, dynamicCols]);
+
+  voiceSummaryRef.current = handleVoiceSummary;
 
   // Intelligent Excel Paste for Raw Items: Dynamically maps all columns (Name, PartyCode, all dynamic size columns, U Cap, L Cap)
   const handleBulkPasteRaw = (rows: string[][], startRow?: number, startCol: number = 0) => {
@@ -1481,8 +1654,30 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   };
 
   const handleDeleteFinishedRows = (indices: number[]) => {
+    const hasData = indices.some(idx => {
+      const it = finishedItems[idx];
+      return it && (it.mould?.trim() || it.qty > 0 || (it as any).price > 0);
+    });
+    if (hasData) {
+      macAudio.playPop();
+      setDeleteRowConfirm({ table: 'finished', indices });
+      return;
+    }
     setFinishedItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
     showToast(`Deleted ${indices.length} Row(s)`, 'warning');
+  };
+
+  const handleConfirmDeleteRows = () => {
+    if (!deleteRowConfirm) return;
+    const { table, indices } = deleteRowConfirm;
+    if (table === 'raw') {
+      setRawItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
+    } else {
+      setFinishedItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
+    }
+    macAudio.playSuccess();
+    showToast(`Deleted ${indices.length} Row(s)`, 'warning');
+    setDeleteRowConfirm(null);
   };
 
   const handleJumpToRightGrid = (row: number) => {
@@ -2329,12 +2524,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                 onSave={handleSaveCurrentBill}
                 onPrintSlip={() => handleOpenPrintModal('estimate')}
                 onAddRawRow={handleAddRawItem}
-                onOpenOcr={() => setIsOcrOpen(true)}
                 onOpenNote={() => setIsNoteOpen(true)}
+                noteText={noteText}
+                onOpenPendingSlip={() => setIsPendingSlipOpen(true)}
                 onPartyCode={() => showToast('Party Code Dialog', 'info')}
-                onRecheck={() => showToast('Totals Verified Clean', 'success')}
-                onSpeakSelection={() => showToast('Voice: Reading Selection', 'info')}
-                onCombine={() => showToast('Items Combined', 'info')}
+                onCombine={handleCombineDuplicateItems}
+                onSpeakSelection={handleVoiceSummary}
                 onExportJson={() => setIsJsonOpen(true)}
                 onReset={handleTriggerEscapeClear}
                 onPrevRecord={handlePrevBill}
@@ -2387,6 +2582,19 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       highlightedCells={highlightedSourceCells}
                       isActiveTable={activeTable === 'left'}
                       onActivateTable={() => setActiveTable('left')}
+                      editId={activeEditInfo.editId}
+                      editVersion={activeEditInfo.version}
+                      editOperator={activeEditInfo.operator}
+                      isModifiedBill={activeEditInfo.isModified}
+                      onOpenAuditHistory={() => {
+                        const curBill = loadedBillSnapshotRef.current || localDb.getBills().find(b => String(b.token) === String(header.tokenNo));
+                        if (curBill) {
+                          setAuditTarget({ id: curBill.id, token: curBill.token, party: curBill.party });
+                          setIsAuditModalOpen(true);
+                        } else {
+                          showToast('No saved audit revisions yet for this new bill', 'info');
+                        }
+                      }}
                     />
                   </div>
 
@@ -2597,6 +2805,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         billNo={header.tokenNo || '0001'}
         dynamicCols={dynamicCols}
         hasPartyCodeCol={hasPartyCodeCol}
+        editId={activeEditInfo.editId}
       />
 
       <OcrModal
@@ -2619,6 +2828,29 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         }}
       />
 
+      <PendingSlipModal
+        isOpen={isPendingSlipOpen}
+        onClose={() => setIsPendingSlipOpen(false)}
+        currentHeader={header}
+        currentRawItems={rawItems}
+        dynamicCols={dynamicCols}
+        onApplyPendingSlip={(pendingHeader, pendingRawItems, noteString) => {
+          setHeader(pendingHeader);
+          setRawItems(pendingRawItems);
+          setFinishedItems([]);
+          setNoteText(noteString);
+          setActiveTab('F1');
+          triggerCelebrationBlast();
+        }}
+        onDirectPrintPending={(pendingHeader, pendingRawItems) => {
+          setHeader(pendingHeader);
+          setRawItems(pendingRawItems);
+          setIsPendingSlipOpen(false);
+          handleOpenPrintModal('loading_slip');
+        }}
+        onToast={showToast}
+      />
+
       <JsonModal
         isOpen={isJsonOpen}
         onClose={() => setIsJsonOpen(false)}
@@ -2638,6 +2870,17 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           onSave={handleConfirmSaveAndClear}
           onDiscard={handleConfirmDiscardAndClear}
           onCancel={() => setConfirmClearDialog(null)}
+        />
+      )}
+
+      {/* Row Deletion Confirmation Modal */}
+      {deleteRowConfirm && (
+        <UnsavedChangesModal
+          titleText="Delete Table Row?"
+          descText={`Kya aap sach me selected ${deleteRowConfirm.indices.length} row(s) ko delete karna chahte hain? Iska data table se permanently remove ho jayega.`}
+          discardLabel="Haan, Delete Karo"
+          onDiscard={handleConfirmDeleteRows}
+          onCancel={() => setDeleteRowConfirm(null)}
         />
       )}
 
@@ -2724,12 +2967,7 @@ export default function App() {
 
   // Set to true temporarily to bypass login panel during development
   const [isAuthenticated, setIsAuthenticated] = React.useState(true);
-  const [isAppLoading, setIsAppLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsAppLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
+  const [isAppLoading, setIsAppLoading] = React.useState(false);
 
   const handleLogin = () => {
     setIsAuthenticated(true);

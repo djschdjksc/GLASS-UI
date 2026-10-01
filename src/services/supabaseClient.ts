@@ -65,6 +65,11 @@ export const getNextUserToken = (allBills: BillRecord[], userPrefix: string): st
 
 // Convert internal BillRecord to Supabase public.bills row
 export const billRecordToSupabase = (bill: BillRecord, userName: string) => {
+  const ver = bill.version || 1;
+  const operatorName = userName || bill.lastModifiedBy || 'User';
+  const prefix = getUserPrefix(operatorName);
+  const editId = bill.editId || `${prefix}-${ver}`;
+
   return {
     id: bill.id,
     token: String(bill.token || ''),
@@ -78,14 +83,20 @@ export const billRecordToSupabase = (bill: BillRecord, userName: string) => {
     raw_items: bill.rawItems || [],
     finished_items: bill.finishedItems || [],
     dynamic_cols: bill.dynamicCols || [],
-    last_modified_by: userName || 'User',
+    last_modified_by: operatorName,
     updated_at: new Date().toISOString(),
-    version: (bill.version || 1) + 1
+    version: ver,
+    edit_id: editId
   };
 };
 
 // Convert Supabase public.bills row to internal BillRecord
 export const supabaseToBillRecord = (row: any): BillRecord => {
+  const modUser = row.last_modified_by || 'User';
+  const ver = Number(row.version) || 1;
+  const prefix = getUserPrefix(modUser);
+  const editId = row.edit_id || `${prefix}-${ver}`;
+
   return {
     id: row.id,
     token: String(row.token || ''),
@@ -115,6 +126,8 @@ export const supabaseToBillRecord = (row: any): BillRecord => {
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
     synced: true,
-    version: row.version || 1
+    version: ver,
+    lastModifiedBy: modUser,
+    editId: editId
   };
 };

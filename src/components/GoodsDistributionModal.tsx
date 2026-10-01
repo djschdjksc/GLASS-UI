@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatedCounter } from './common/AnimatedCounter';
 import { macAudio } from '../utils/macAudio';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import {
@@ -305,7 +306,9 @@ export const GoodsDistributionModal: React.FC<Props> = ({
         }}>
           <div style={{ fontSize: '12px' }}>
             <span style={{ color: '#cbd5e1' }}>Calculated Total Value (+18% GST): </span>
-            <strong style={{ color: '#34d399', fontSize: '14px' }}>₹{grandTotalWithGst.toLocaleString('en-IN')}</strong>
+            <strong style={{ color: '#34d399', fontSize: '14px' }}>
+              <AnimatedCounter value={grandTotalWithGst} prefix="₹" formatIndian={true} />
+            </strong>
           </div>
 
           <div style={{ display: 'flex', gap: '8px' }}>

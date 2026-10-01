@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { AnimatedCounter } from './common/AnimatedCounter';
 import { 
   Package, 
   ArrowDownLeft, 
@@ -31,6 +32,7 @@ import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import { macAudio } from '../utils/macAudio';
+import UnsavedChangesModal from './UnsavedChangesModal';
 
 // =========================================================================
 // TYPES & DATA CONTRACTS
@@ -162,6 +164,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
   // --- TAB 1: ENTER STOCK STATE ---
   const [editingVoucherId, setEditingVoucherId] = useState<number | null>(null);
+  const [voucherToDelete, setVoucherToDelete] = useState<number | null>(null);
   const [voucherDate, setVoucherDate] = useState<string>(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -978,14 +981,20 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
   // Delete Voucher
   const handleDeleteVoucher = (voucherId: number) => {
-    if (window.confirm(`Are you sure you want to delete Stock Voucher #${voucherId}?`)) {
-      macAudio.playTrash();
-      setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
-      if (editingVoucherId === voucherId) {
-        handleCancelEdit();
-      }
-      showToast(`Voucher #${voucherId} deleted`, 'info');
+    macAudio.playPop();
+    setVoucherToDelete(voucherId);
+  };
+
+  const confirmDeleteVoucher = () => {
+    if (voucherToDelete === null) return;
+    const voucherId = voucherToDelete;
+    macAudio.playSuccess();
+    setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
+    if (editingVoucherId === voucherId) {
+      handleCancelEdit();
     }
+    showToast(`Voucher #${voucherId} deleted`, 'info');
+    setVoucherToDelete(null);
   };
 
   // =========================================================================
@@ -2765,7 +2774,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               >
                 <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL QTY BALANCE</span>
                 <span style={{ fontSize: '20px', fontWeight: 900, color: totalStats.totalQty >= 0 ? '#34d399' : '#f87171' }}>
-                  {totalStats.totalQty} <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>PCS</span>
+                  <AnimatedCounter value={totalStats.totalQty} suffix={<span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '4px' }}>PCS</span>} />
                 </span>
               </div>
 
@@ -2783,7 +2792,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               >
                 <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL U-CAP BALANCE</span>
                 <span style={{ fontSize: '20px', fontWeight: 900, color: '#818cf8' }}>
-                  {totalStats.totalUCap} <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>PCS</span>
+                  <AnimatedCounter value={totalStats.totalUCap} suffix={<span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '4px' }}>PCS</span>} />
                 </span>
               </div>
 
@@ -2801,7 +2810,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               >
                 <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL L-CAP BALANCE</span>
                 <span style={{ fontSize: '20px', fontWeight: 900, color: '#fb923c' }}>
-                  {totalStats.totalLCap} <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>PCS</span>
+                  <AnimatedCounter value={totalStats.totalLCap} suffix={<span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '4px' }}>PCS</span>} />
                 </span>
               </div>
             </div>
@@ -3705,6 +3714,16 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {voucherToDelete !== null && (
+        <UnsavedChangesModal
+          titleText={`Delete Stock Voucher #${voucherToDelete}?`}
+          descText={`Kya aap sach me Stock Voucher #${voucherToDelete} ko delete karna chahte hain?`}
+          discardLabel="Haan, Delete Karo"
+          onDiscard={confirmDeleteVoucher}
+          onCancel={() => setVoucherToDelete(null)}
+        />
       )}
     </div>
   );

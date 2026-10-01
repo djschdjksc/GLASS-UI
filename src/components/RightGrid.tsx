@@ -6,6 +6,7 @@ import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History, FileSpreadsheet } from 'lucide-react';
 import { downloadCSV } from '../utils/exportCsv';
+import { AnimatedCounter } from './common/AnimatedCounter';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -1098,7 +1099,7 @@ export const RightGrid: React.FC<Props> = ({
                   setSelectedCellKeys(keys);
                   toggleSort('mould');
                 }} 
-                className={((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === 0) ? 'header-active' : '')}
+                className={(isActiveTable && selectedCol === 0) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <span>MOULD SPECIFICATION {sortField === 'mould' ? (sortOrder === 'asc' ? ' ↑ (A-Z)' : ' ↓ (Z-A)') : ''}</span>
@@ -1124,7 +1125,7 @@ export const RightGrid: React.FC<Props> = ({
                   setSelectedCellKeys(keys);
                   toggleSort('qty');
                 }}
-                className={((isActiveTable && selectedCol === 1) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === 1) ? 'header-active' : '')}
+                className={(isActiveTable && selectedCol === 1) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <span>QTY {sortField === 'qty' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
@@ -1150,7 +1151,7 @@ export const RightGrid: React.FC<Props> = ({
                   setSelectedCellKeys(keys);
                   toggleSort('price');
                 }}
-                className={((isActiveTable && selectedCol === 2) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === 2) ? 'header-active' : '')}
+                className={(isActiveTable && selectedCol === 2) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <span>PRICE {sortField === 'price' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
@@ -1176,7 +1177,7 @@ export const RightGrid: React.FC<Props> = ({
                   setSelectedCellKeys(keys);
                   toggleSort('total');
                 }}
-                className={((isActiveTable && selectedCol === 3) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === 3) ? 'header-active' : '')}
+                className={(isActiveTable && selectedCol === 3) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <span>TOTAL {sortField === 'total' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
@@ -1270,6 +1271,12 @@ export const RightGrid: React.FC<Props> = ({
                       type="text"
                       className="excel-cell-input"
                       value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.mould || '')}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      data-lpignore="true"
+                      data-form-type="other"
                       onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
                       onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
                       onPaste={(e) => handleInputPaste(rIdx, 0, e)}
@@ -1302,6 +1309,12 @@ export const RightGrid: React.FC<Props> = ({
                       className="excel-cell-input"
                       style={{ textAlign: 'center', fontWeight: 600 }}
                       value={cellDrafts[rIdx + '-1'] !== undefined ? cellDrafts[rIdx + '-1'] : (item.qty === 0 ? '' : item.qty)}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      data-lpignore="true"
+                      data-form-type="other"
                       onMouseDown={(e) => handleInputMouseDown(rIdx, 1, e)}
                       onMouseEnter={() => handleInputMouseEnter(rIdx, 1)}
                       onPaste={(e) => handleInputPaste(rIdx, 1, e)}
@@ -1335,6 +1348,12 @@ export const RightGrid: React.FC<Props> = ({
                       className="excel-cell-input"
                       style={{ textAlign: 'center' }}
                       value={cellDrafts[rIdx + '-2'] !== undefined ? cellDrafts[rIdx + '-2'] : (item.price === 0 ? '' : item.price)}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      data-lpignore="true"
+                      data-form-type="other"
                       onMouseDown={(e) => handleInputMouseDown(rIdx, 2, e)}
                       onMouseEnter={() => handleInputMouseEnter(rIdx, 2)}
                       onPaste={(e) => handleInputPaste(rIdx, 2, e)}
@@ -1376,11 +1395,20 @@ export const RightGrid: React.FC<Props> = ({
           <tfoot>
             <tr>
               <td style={{ textAlign: 'center', color: '#a1a1aa' }}>TOTAL</td>
-              <td style={{ color: '#a1a1aa', fontSize: '11px' }}>{items.length} Moulds Active</td>
-              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>{totalQty}</td>
+              <td style={{ color: '#a1a1aa', fontSize: '11px' }}>
+                <AnimatedCounter value={items.length} suffix=" Moulds Active" />
+              </td>
+              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>
+                <AnimatedCounter value={totalQty} />
+              </td>
               <td style={{ textAlign: 'center', color: '#a1a1aa' }}>-</td>
               <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '14px', color: '#34c759', fontFamily: "'JetBrains Mono', monospace" }}>
-                {formatCurrency(grandTotal)}
+                <AnimatedCounter
+                  value={grandTotal}
+                  prefix="₹ "
+                  formatIndian={true}
+                  style={{ color: '#34c759', fontSize: '14px', fontWeight: 800 }}
+                />
               </td>
             </tr>
           </tfoot>

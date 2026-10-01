@@ -18,6 +18,9 @@ export interface BillRecord {
   updatedAt: number;
   synced: boolean;
   version: number;
+  lastModifiedBy?: string;
+  editId?: string;
+  notes?: string;
 }
 
 export interface PartyRecord {

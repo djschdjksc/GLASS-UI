@@ -40,6 +40,7 @@ export interface BillPrintModalProps {
   billNo?: string | number;
   dynamicCols?: Array<{ field: string; label: string }>;
   hasPartyCodeCol?: boolean;
+  editId?: string;
 }
 
 export const BillPrintModal: React.FC<BillPrintModalProps> = ({
@@ -51,7 +52,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   initialMode = 'estimate',
   billNo = '0001',
   dynamicCols,
-  hasPartyCodeCol
+  hasPartyCodeCol,
+  editId
 }) => {
   const [printMode, setPrintMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>(initialMode);
   const [currentPage, setCurrentPage] = useState<number>(0);
@@ -128,6 +130,15 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       ? Boolean(hasPartyCodeCol)
       : rawItems.some(r => (r.partyCode || '').trim().length > 0);
 
+    // Build skip group entries from localStorage for Python native print
+    let skipGroupEntries: Array<{ prefix: string; group: string }> = [];
+    try {
+      const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
+      skipGroupEntries = raw
+        .filter((it: any) => it.itemPrefix && it.mainGroup)
+        .map((it: any) => ({ prefix: it.itemPrefix.trim().toLowerCase(), group: it.mainGroup.trim() }));
+    } catch {}
+
     return {
       docType: header.docType || 'Bill',
       billNo: billNo,
@@ -137,7 +148,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       showPartyCode,
       mode: printMode,
       dynamicCols,
+      editId,
       pageNum: currentPage,
+      skipGroupEntries,
       items: rawItems.map(r => ({
         ...r,
         name: r.name,
@@ -157,7 +170,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       subTotal,
       finalBalance
     };
-  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol, currentPage]);
+  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol, editId, currentPage]);
 
   // Live Canvas Rendering & Native PyQt6 Engine fetch
   useEffect(() => {

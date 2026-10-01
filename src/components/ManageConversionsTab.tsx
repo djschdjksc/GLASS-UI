@@ -4,6 +4,7 @@ import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Layers, Tag, Hash, Percent, FileText, Scale, Package, ClipboardPaste } from 'lucide-react';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import type { SqliteControlRow } from '../data/sqliteControlPanel';
+import UnsavedChangesModal from './UnsavedChangesModal';
 
 const CONV_COL_DEFAULTS = {
   srNo: 40,
@@ -35,6 +36,7 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
   const search = externalSearch !== undefined ? externalSearch : internalSearch;
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [rowToDelete, setRowToDelete] = useState<{ item: SqliteControlRow; index: number } | null>(null);
 
   const [colWidths, setColWidths] = useState(() => {
     try {
@@ -92,14 +94,28 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     setEditingIdx(0);
   };
 
-  const handleDeleteRow = (index: number) => {
+  const promptDeleteRow = (item: SqliteControlRow, index: number) => {
     macAudio.playPop();
+    setRowToDelete({ item, index });
+  };
+
+  const confirmDeleteRow = () => {
+    if (!rowToDelete) return;
+    const index = rowToDelete.index;
+    macAudio.playSuccess();
     const next = conversions.filter((_, i) => i !== index);
     saveToStorage(next);
     if (selectedIdx === index) {
-      setSelectedIdx(null);
+      if (index < next.length) {
+        setSelectedIdx(index);
+      } else if (index - 1 >= 0) {
+        setSelectedIdx(index - 1);
+      } else {
+        setSelectedIdx(null);
+      }
       setEditingIdx(null);
     }
+    setRowToDelete(null);
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -300,15 +316,16 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
         setSelectedIdx(filtered[prevPos].originalIndex);
       } else if (e.key === 'Delete') {
         e.preventDefault();
-        if (selectedIdx !== null) {
-          handleDeleteRow(selectedIdx);
+        if (selectedIdx !== null && !rowToDelete) {
+          const item = conversions[selectedIdx];
+          if (item) promptDeleteRow(item, selectedIdx);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filtered, selectedIdx, editingIdx, conversions]);
+  }, [filtered, selectedIdx, editingIdx, conversions, rowToDelete]);
 
   useEffect(() => {
     if (onAddRef) {
@@ -581,23 +598,38 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
                     )}
                   </td>
 
-                  {/* ACTIONS: SAVE BUTTON ONLY WHEN ACTIVE */}
+                  {/* ACTIONS: SAVE OR DELETE BUTTON */}
                   <td style={{ textAlign: 'center', padding: '1px' }}>
-                    {isEditing && (
-                      <button
-                        type="button"
-                        className="mac-btn primary"
-                        style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          macAudio.playSuccess();
-                          setEditingIdx(null);
-                        }}
-                        title="Add / Save Row"
-                      >
-                        <Plus size={12} /> Add
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      {isEditing ? (
+                        <button
+                          type="button"
+                          className="mac-btn primary"
+                          style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            macAudio.playSuccess();
+                            setEditingIdx(null);
+                          }}
+                          title="Save Row"
+                        >
+                          <Check size={12} /> Save
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="mac-btn danger"
+                          style={{ padding: '2px 6px', height: '22px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            promptDeleteRow(conv, originalIndex);
+                          }}
+                          title="Delete conversion rule"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -606,6 +638,16 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
         </table>
         <div style={{ height: '36px' }} />
       </div>
+
+      {rowToDelete && (
+        <UnsavedChangesModal
+          titleText="Delete Conversion Rule?"
+          descText={`Kya aap sach me shortcut "${rowToDelete.item.shortcut || 'Selected Rule'}" (${rowToDelete.item.conversion || 'No Name'}) ko delete karna chahte hain? Isse billing calculations change ho sakti hain.`}
+          discardLabel="Haan, Delete Karo"
+          onDiscard={confirmDeleteRow}
+          onCancel={() => setRowToDelete(null)}
+        />
+      )}
     </div>
   );
 };

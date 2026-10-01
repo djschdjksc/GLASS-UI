@@ -2,6 +2,8 @@ import { ControlPanelView } from './ControlPanelView';
 import { SettingsTabView } from './SettingsTabView';
 import { StockInventoryView } from './StockInventoryView';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
+import { AnimatedCounter } from './common/AnimatedCounter';
+import { Tooltip } from 'antd';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { NavKey } from '../types';
 import { macAudio } from '../utils/macAudio';
@@ -703,6 +705,7 @@ export const OtherTabsView: React.FC<Props> = ({
   const [selectedPartyId, setSelectedPartyId] = useState<string | null>('P-1');
   const [isEditingParty, setIsEditingParty] = useState(false);
   const [partyToast, setPartyToast] = useState<string | null>(null);
+  const [partyToDelete, setPartyToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // iPhone Cards vs Table View Mode ('cards' | 'table')
   const [partyViewMode, setPartyViewMode] = useState<'cards' | 'table'>(() => {
@@ -1026,13 +1029,12 @@ export const OtherTabsView: React.FC<Props> = ({
 
       if (e.key === 'Delete') {
         e.preventDefault();
-        if (selectedPartyId && currentIndex >= 0) {
-          macAudio.playTrash();
-          const targetId = selectedPartyId;
-          const nextSelected = paginatedParties[currentIndex + 1] || paginatedParties[currentIndex - 1];
-          setSelectedPartyId(nextSelected ? nextSelected.id : null);
-          setEditingPartyId(null);
-          deleteParty(targetId);
+        if (selectedPartyId && currentIndex >= 0 && !partyToDelete) {
+          const target = paginatedParties[currentIndex];
+          if (target) {
+            macAudio.playPop();
+            setPartyToDelete({ id: target.id, name: target.name || target.id });
+          }
         }
         return;
       }
@@ -1040,7 +1042,7 @@ export const OtherTabsView: React.FC<Props> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, deleteParty]);
+  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, deleteParty, partyToDelete]);
 
   const handleStartEditParty = (p: typeof parties[0]) => {
     setPartyForm({
@@ -1123,12 +1125,22 @@ export const OtherTabsView: React.FC<Props> = ({
     showPartyToast(`Imported ${lines.length} parties in bulk`);
   };
 
-  const handleDeletePartyAction = async (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to remove party "${name}"?`)) {
-      await deleteParty(id);
-      showPartyToast(`Party "${name}" removed`);
-      macAudio.playClick();
-    }
+  const handleDeletePartyAction = (id: string, name: string) => {
+    macAudio.playPop();
+    setPartyToDelete({ id, name });
+  };
+
+  const confirmDeleteParty = async () => {
+    if (!partyToDelete) return;
+    const { id, name } = partyToDelete;
+    const currentIndex = paginatedParties.findIndex(p => p.id === id);
+    const nextSelected = paginatedParties[currentIndex + 1] || paginatedParties[currentIndex - 1];
+    setSelectedPartyId(nextSelected ? nextSelected.id : null);
+    setEditingPartyId(null);
+    await deleteParty(id);
+    showPartyToast(`Party "${name}" removed`);
+    macAudio.playSuccess();
+    setPartyToDelete(null);
   };
 
   // F8 Stock Inventory state
@@ -1571,38 +1583,46 @@ export const OtherTabsView: React.FC<Props> = ({
                         );
                       })}
                     </tbody>
+                    <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 5 }}>
+                      <tr style={{ background: 'rgba(10, 15, 28, 0.97)', borderTop: '1px solid rgba(255, 255, 255, 0.12)', height: `${activeRowHeight}px` }}>
+                        <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px' }}></td>
+                        <td style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
+                          <Tooltip title={`Grand Total: ${grandTotalAllCols}`} placement="top" color="#0f172a">
+                            <span style={{ display: 'inline-block' }}>
+                              <AnimatedCounter value={grandTotalAllCols} style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 800 }} />
+                            </span>
+                          </Tooltip>
+                        </td>
+                        {showPartyCode && <td></td>}
+                        {f2AllSizeCols.map(sc => {
+                          const colTotal = displayRawItems.reduce((acc, r) => acc + (Number((r as any)[sc.field]) || 0), 0);
+                          return (
+                            <td key={sc.field} style={{ textAlign: 'right', color: sc.isBase ? '#38bdf8' : '#34d399', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", paddingRight: '6px' }}>
+                              <Tooltip title={`${sc.label} Total: ${colTotal}`} placement="top" color="#0f172a">
+                                <span style={{ display: 'inline-block' }}>
+                                  <AnimatedCounter value={colTotal} />
+                                </span>
+                              </Tooltip>
+                            </td>
+                          );
+                        })}
+                        <td style={{ textAlign: 'right', color: '#a78bfa', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", paddingRight: '6px' }}>
+                          <Tooltip title={`UCAP Total: ${totalRawUCap}`} placement="top" color="#0f172a">
+                            <span style={{ display: 'inline-block' }}>
+                              <AnimatedCounter value={totalRawUCap} />
+                            </span>
+                          </Tooltip>
+                        </td>
+                        <td style={{ textAlign: 'right', color: '#f472b6', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", paddingRight: '6px' }}>
+                          <Tooltip title={`LCAP Total: ${totalRawLCap}`} placement="top" color="#0f172a">
+                            <span style={{ display: 'inline-block' }}>
+                              <AnimatedCounter value={totalRawLCap} />
+                            </span>
+                          </Tooltip>
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
-                </div>
-
-                {/* Left Table Bottom Total Footer */}
-                <div style={{ 
-                  padding: '6px 8px', 
-                  background: 'rgba(0, 0, 0, 0.35)', 
-                  borderRadius: '6px', 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  marginTop: 'auto',
-                  flexWrap: 'wrap',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    {f2AllSizeCols.map(sc => {
-                      const colTotal = displayRawItems.reduce((acc, r) => acc + (Number((r as any)[sc.field]) || 0), 0);
-                      return (
-                        <span key={sc.field}>
-                          {sc.label}: <strong style={{ color: sc.isBase ? '#38bdf8' : '#34d399' }}>{colTotal}</strong>
-                        </span>
-                      );
-                    })}
-                    <span>UCap: <strong style={{ color: '#a78bfa' }}>{totalRawUCap}</strong></span>
-                    <span>LCap: <strong style={{ color: '#f472b6' }}>{totalRawLCap}</strong></span>
-                  </div>
-                  <div style={{ marginLeft: 'auto', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.12)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
-                    ALL TOTAL: <strong>{grandTotalAllCols}</strong>
-                  </div>
                 </div>
               </div>
 
@@ -1689,22 +1709,30 @@ export const OtherTabsView: React.FC<Props> = ({
                         );
                       })}
                     </tbody>
+                    <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 5 }}>
+                      <tr style={{ background: 'rgba(10, 15, 28, 0.97)', borderTop: '1px solid rgba(255, 255, 255, 0.12)', height: `${activeRowHeight}px` }}>
+                        <td></td>
+                        <td style={{ color: '#e2e8f0', fontWeight: 600, fontSize: '11px', paddingLeft: '8px' }}>
+                          {displayFinishedItems.length} Moulds
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#a78bfa', fontFamily: "'JetBrains Mono', monospace", paddingRight: '6px' }}>
+                          <Tooltip title={`Total Moulds Qty: ${totalFinishedQty}`} placement="top" color="#0f172a">
+                            <span style={{ display: 'inline-block' }}>
+                              <AnimatedCounter value={totalFinishedQty} />
+                            </span>
+                          </Tooltip>
+                        </td>
+                        <td></td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#34d399', fontFamily: "'JetBrains Mono', monospace", paddingRight: '6px' }}>
+                          <Tooltip title={`Grand Total: ₹${totalFinishedAmount.toLocaleString('en-IN')}`} placement="top" color="#0f172a">
+                            <span style={{ display: 'inline-block' }}>
+                              <AnimatedCounter value={totalFinishedAmount} prefix="₹" formatIndian={true} />
+                            </span>
+                          </Tooltip>
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
-                </div>
-
-                {/* Right Table Bottom Total Footer */}
-                <div style={{ 
-                  padding: '6px 8px', 
-                  background: 'rgba(0, 0, 0, 0.35)', 
-                  borderRadius: '6px', 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  marginTop: 'auto'
-                }}>
-                  <span style={{ color: '#e2e8f0' }}>Total Moulds: <strong style={{ color: '#a78bfa' }}>{totalFinishedQty} pcs</strong></span>
-                  <span>Grand Total: <strong style={{ color: '#34d399', fontSize: '12px' }}>₹{totalFinishedAmount.toLocaleString('en-IN')}</strong></span>
                 </div>
               </div>
             </div>
@@ -2993,6 +3021,7 @@ export const OtherTabsView: React.FC<Props> = ({
               ? Boolean(selectedBill.hasPartyCodeCol)
               : (selectedBill.rawItems || []).some(r => r.partyCode && r.partyCode.trim() !== '')
           }
+          editId={selectedBill.editId || (selectedBill.version ? `${selectedBill.lastModifiedBy || 'USER'}-${selectedBill.version}` : undefined)}
         />
       )}
 
@@ -3034,6 +3063,16 @@ export const OtherTabsView: React.FC<Props> = ({
           />
         );
       })()}
+
+      {partyToDelete && (
+        <UnsavedChangesModal
+          titleText="Delete Party Record?"
+          descText={`Kya aap sach me party "${partyToDelete.name}" ko database se delete karna chahte hain? Isse party details permanently delete ho jayengi.`}
+          discardLabel="Haan, Delete Karo"
+          onDiscard={confirmDeleteParty}
+          onCancel={() => setPartyToDelete(null)}
+        />
+      )}
 
       {/* iOS 3D Stack Party Detail Modal (Inspired by deepseek_html_20260930_5ff871.html) */}
       <PartyDetailStackModal

@@ -26,3 +26,17 @@ dist-ssr
 # Python
 __pycache__/
 *.pyc
+
+# SQLite Local Database
+*.db
+*.db-shm
+*.db-wal
+
+# Tauri / Rust target
+src-tauri/target/
+
+# Large media files
+*.mp4
+*.avi
+*.mkv
+

@@ -12,6 +12,7 @@ interface Props {
   billNo?: string | number;
   dynamicCols?: Array<{ field: string; label: string }>;
   hasPartyCodeCol?: boolean;
+  editId?: string;
 }
 
 export const SlipModal: React.FC<Props> = (props) => {

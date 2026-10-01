@@ -135,6 +135,12 @@ export const AppleHeader: React.FC<Props> = ({
               className="apple-input"
               placeholder="Search or Enter Party..."
               value={header.partyName}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-lpignore="true"
+              data-form-type="other"
               onFocus={() => setShowPartySuggestions(true)}
               onBlur={() => setTimeout(() => setShowPartySuggestions(false), 240)}
               onChange={(e) => {
@@ -289,6 +295,12 @@ export const AppleHeader: React.FC<Props> = ({
             className="apple-input"
             placeholder="Vehicle No..."
             value={header.vehicleNo}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-lpignore="true"
+            data-form-type="other"
             onChange={(e) => onChange({ vehicleNo: e.target.value })}
             style={{ width: '100%' }}
             onKeyDown={(e) => {

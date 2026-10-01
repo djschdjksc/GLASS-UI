@@ -7,6 +7,7 @@ import { useSettings } from '../context/SettingsContext';
 import { GlassInput, GlassSelect } from './common/GlassInput';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
+import UnsavedChangesModal from './UnsavedChangesModal';
 import {
   Plus,
   Trash2,
@@ -287,15 +288,10 @@ export const ControlPanelView: React.FC = () => {
   };
 
   const handleDeleteGroup = (id: string) => {
-    macAudio.playPop();
-    setGroups(prev => {
-      const next = prev.filter(g => g.id !== id);
-      try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
-      return next;
-    });
-    if (selectedGroupId === id) {
-      setSelectedGroupId(null);
-      setEditingGroupId(null);
+    const grp = groups.find(g => g.id === id);
+    if (grp) {
+      macAudio.playPop();
+      setGroupToDelete(grp);
     }
   };
 
@@ -958,63 +954,24 @@ export const ControlPanelView: React.FC = () => {
       {/* DELETE CONFIRMATION DIALOG (TRIGGERED VIA "DELETE" KEY) */}
       {/* ========================================================================= */}
       {groupToDelete && (
-        <div className="mac-modal-backdrop" onClick={() => setGroupToDelete(null)}>
-          <div
-            className="mac-modal-card glass-panel"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '380px',
-              maxWidth: '90vw',
-              borderRadius: '12px',
-              padding: '18px 20px',
-              background: 'linear-gradient(135deg, rgba(20, 10, 15, 0.96) 0%, rgba(10, 5, 10, 0.98) 100%)',
-              border: '1px solid rgba(248, 113, 113, 0.4)',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 24px rgba(248, 113, 113, 0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(248, 113, 113, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Trash2 size={16} color="#f87171" />
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>Delete Group Configuration?</div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  Group: <strong style={{ color: '#f87171' }}>{groupToDelete.groupName}</strong> ({groupToDelete.groupIndex})
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setGroupToDelete(null)}
-                className="mac-btn"
-                style={{ padding: '5px 14px', fontSize: '11px', fontWeight: 600 }}
-              >
-                Cancel (Esc)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setGroups(prev => prev.filter(g => g.id !== groupToDelete.id));
-                  if (selectedGroupId === groupToDelete.id) {
-                    setSelectedGroupId(null);
-                  }
-                  setGroupToDelete(null);
-                  macAudio.playClick();
-                }}
-                className="mac-btn danger"
-                style={{ padding: '5px 16px', fontSize: '11px', fontWeight: 700 }}
-                autoFocus
-              >
-                Yes, Delete (Enter)
-              </button>
-            </div>
-          </div>
-        </div>
+        <UnsavedChangesModal
+          titleText="Delete Group Configuration?"
+          descText={`Kya aap sach me group "${groupToDelete.groupName}" (${groupToDelete.groupIndex}) ko delete karna chahte hain? Isse related bill calculations par asar pad sakta hai.`}
+          discardLabel="Haan, Delete Karo"
+          onDiscard={() => {
+            setGroups(prev => {
+              const next = prev.filter(g => g.id !== groupToDelete.id);
+              try { localStorage.setItem('control_group_rules', JSON.stringify(next)); } catch {}
+              return next;
+            });
+            if (selectedGroupId === groupToDelete.id) {
+              setSelectedGroupId(null);
+            }
+            setGroupToDelete(null);
+            macAudio.playSuccess();
+          }}
+          onCancel={() => setGroupToDelete(null)}
+        />
       )}
     </div>
   );

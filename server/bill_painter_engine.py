@@ -278,8 +278,9 @@ class BillPainter:
         bill_label = f"{pfx}NO:" if pfx else "BILL NO:"
         if self.d.get("is_loading_slip") and not self.d.get("is_estimate"):
             bill_label = f"{pfx}SLIP NO:" if pfx else "SLIP NO:"
-        
-        painter.drawText(self.margin, y, f"{bill_label} {self.d.get('bill_no', 'N/A')}")
+
+        edit_sfx = f" [{self.d.get('edit_id')}]" if self.d.get('edit_id') else ""
+        painter.drawText(self.margin, y, f"{bill_label} {self.d.get('bill_no', 'N/A')}{edit_sfx}")
         painter.drawText(self.W - 400, y, f"DATE: {format_display_date(self.d.get('date', 'N/A'))}")
         
         if not self.d.get("is_equation"):
@@ -432,7 +433,7 @@ class BillPainter:
                         italic_f.setItalic(True)
                         painter.save()
                         painter.setFont(italic_f)
-                        note_x = x + 10 + base_w + 5
+                        note_x = x + 10 + base_w + 22
                         if note_x < x + w - 10:
                             painter.drawText(QRect(note_x, self.cur_y, w - (note_x - x) - 10, row_h),
                                              Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, note_text)

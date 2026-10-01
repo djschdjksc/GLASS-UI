@@ -17,6 +17,7 @@ export interface BillPrintPayload {
   vehicleType?: string;
   showPartyCode?: boolean;
   dynamicCols?: Array<{ field: string; label: string }>;
+  editId?: string;
   mode: 'estimate' | 'summary_only' | 'loading_slip';
   items: Array<{
     name: string;
@@ -37,6 +38,8 @@ export interface BillPrintPayload {
   subTotal: number;
   finalBalance: number;
   pageNum?: number;
+  /** Skip group lookup — passed to Python native print server for inline group labels */
+  skipGroupEntries?: Array<{ prefix: string; group: string }>;
 }
 
 export function formatIndianCurrency(num: number): string {
@@ -162,7 +165,8 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   let y = 130;
 
   const billLabel = isLoadingSlip ? `${pfx}SLIP NO:` : (pfx ? `${pfx}NO:` : 'BILL NO:');
-  ctx.fillText(`${billLabel} ${data.billNo || 'N/A'}`, margin, y);
+  const editIdTag = data.editId ? ` [${data.editId}]` : '';
+  ctx.fillText(`${billLabel} ${data.billNo || 'N/A'}${editIdTag}`, margin, y);
 
   ctx.textAlign = 'right';
   ctx.fillText(`DATE: ${formatDisplayDate(data.date)}`, W - 400, y);

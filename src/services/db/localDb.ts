@@ -22,12 +22,27 @@ class LocalDatabase {
   private listeners: Map<string, Set<Listener<any>>> = new Map();
 
   constructor() {
+    // Read deleted IDs blocklists to guarantee deleted items NEVER resurrect on reload
+    let deletedBillIds = new Set<string>();
+    let deletedPartyIds = new Set<string>();
+    try {
+      const dbIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_bill_ids') || '[]');
+      deletedBillIds = new Set(dbIds);
+      const dpIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_party_ids') || '[]');
+      deletedPartyIds = new Set(dpIds);
+    } catch {}
+
     // Pre-populate with all 521 real SQLite bills synchronously
     if (SQLITE_BILLS && SQLITE_BILLS.length > 0) {
       SQLITE_BILLS.forEach((raw: any) => {
+        const rawId = raw.id || `B-${raw.token || Math.random().toString(36).substring(2, 7)}`;
+        const rawToken = String(raw.token || '0');
+        // Do not add if user previously deleted this bill
+        if (deletedBillIds.has(rawId) || deletedBillIds.has(rawToken)) return;
+
         const bill: BillRecord = {
-          id: raw.id || `B-${raw.token || Math.random().toString(36).substring(2, 7)}`,
-          token: String(raw.token || '0'),
+          id: rawId,
+          token: rawToken,
           date: raw.date || '2026-07-23',
           party: raw.party || 'Standard Account',
           docType: raw.docType || 'SALE BILL',
@@ -89,9 +104,10 @@ class LocalDatabase {
     if (SQLITE_PARTIES && SQLITE_PARTIES.length > 0) {
       SQLITE_PARTIES.forEach((p: any, i: number) => {
         const partyName = (p.party_name || '').trim();
-        if (!partyName) return;
+        const partyId = `P-${i + 1}`;
+        if (!partyName || deletedPartyIds.has(partyId) || deletedPartyIds.has(partyName.toLowerCase())) return;
         const party: PartyRecord = {
-          id: `P-${i + 1}`,
+          id: partyId,
           name: partyName,
           phone: (p.contacts || '').trim(),
           station: (p.station || '').trim(),
@@ -431,9 +447,21 @@ class LocalDatabase {
       const currentSavedBills: BillRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_bills') || '[]');
       const filtered = currentSavedBills.filter(b => b.id !== bill.id && b.token !== bill.token);
       localStorage.setItem('modern_saved_custom_bills', JSON.stringify([bill, ...filtered]));
+
+      // Unblock if it was previously marked deleted
+      const deletedIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_bill_ids') || '[]');
+      const unblocked = deletedIds.filter(x => x !== bill.id && x !== String(bill.token));
+      localStorage.setItem('modern_deleted_bill_ids', JSON.stringify(unblocked));
     } catch (e) {
       console.warn('localStorage save warning:', e);
     }
+
+    // Direct background SQLite persistence to billapp.db (USB drive)
+    fetch('http://127.0.0.1:5006/api/db/bills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bill)
+    }).catch(() => {});
 
     this.notify('bills', this.getBills());
 
@@ -446,7 +474,27 @@ class LocalDatabase {
   }
 
   public async deleteBill(id: string, enqueueSync = true): Promise<void> {
+    const existing = this.billsCache.get(id);
     this.billsCache.delete(id);
+
+    // Save to deleted blocklist so it NEVER re-appears on page refresh
+    try {
+      const deletedIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_bill_ids') || '[]');
+      if (!deletedIds.includes(id)) deletedIds.push(id);
+      if (existing && existing.token && !deletedIds.includes(String(existing.token))) {
+        deletedIds.push(String(existing.token));
+      }
+      localStorage.setItem('modern_deleted_bill_ids', JSON.stringify(deletedIds));
+
+      // Remove from saved custom bills
+      const currentSavedBills: BillRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_bills') || '[]');
+      const filtered = currentSavedBills.filter(b => b.id !== id && (!existing || b.token !== existing.token));
+      localStorage.setItem('modern_saved_custom_bills', JSON.stringify(filtered));
+    } catch {}
+
+    // Direct background SQLite deletion from billapp.db
+    fetch(`http://127.0.0.1:5006/api/db/bills/${id}`, { method: 'DELETE' }).catch(() => {});
+
     this.notify('bills', this.getBills());
 
     await this.deleteFromStore('bills', id);
@@ -464,9 +512,21 @@ class LocalDatabase {
       const currentSaved: PartyRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');
       const filtered = currentSaved.filter(p => p.id !== party.id && p.name !== party.name);
       localStorage.setItem('modern_saved_custom_parties', JSON.stringify([party, ...filtered]));
+
+      // Unblock if previously marked deleted
+      const deletedIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_party_ids') || '[]');
+      const unblocked = deletedIds.filter(x => x !== party.id && x !== party.name.toLowerCase());
+      localStorage.setItem('modern_deleted_party_ids', JSON.stringify(unblocked));
     } catch (e) {
       console.warn('localStorage save party warning:', e);
     }
+
+    // Direct background SQLite persistence to billapp.db
+    fetch('http://127.0.0.1:5006/api/db/parties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(party)
+    }).catch(() => {});
 
     this.notify('parties', this.getParties());
     await this.putToStore('parties', party);
@@ -478,12 +538,25 @@ class LocalDatabase {
   }
 
   public async deleteParty(id: string, enqueueSync = true): Promise<void> {
+    const existing = this.partiesCache.get(id);
     this.partiesCache.delete(id);
     try {
       const currentSaved: PartyRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');
       const filtered = currentSaved.filter(p => p.id !== id);
       localStorage.setItem('modern_saved_custom_parties', JSON.stringify(filtered));
+
+      // Add to deleted party blocklist
+      const deletedIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_party_ids') || '[]');
+      if (!deletedIds.includes(id)) deletedIds.push(id);
+      if (existing && existing.name && !deletedIds.includes(existing.name.toLowerCase())) {
+        deletedIds.push(existing.name.toLowerCase());
+      }
+      localStorage.setItem('modern_deleted_party_ids', JSON.stringify(deletedIds));
     } catch {}
+
+    // Direct background SQLite deletion from billapp.db
+    fetch(`http://127.0.0.1:5006/api/db/parties/${id}`, { method: 'DELETE' }).catch(() => {});
+
     this.notify('parties', this.getParties());
     await this.deleteFromStore('parties', id);
     if (enqueueSync) {

@@ -7,6 +7,8 @@ import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History, FileSpreadsheet } from 'lucide-react';
 import { downloadCSV } from '../utils/exportCsv';
+import { AnimatedCounter } from './common/AnimatedCounter';
+import { Tooltip } from 'antd';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -57,6 +59,11 @@ interface Props {
   onTogglePartyCodeCol?: (enabled: boolean) => void;
   onLoadOldPrice?: () => void;
   highlightedCells?: Set<string>;
+  editId?: string;
+  editVersion?: number;
+  editOperator?: string;
+  isModifiedBill?: boolean;
+  onOpenAuditHistory?: () => void;
 }
 
 const DEFAULT_LEFT_COLS = {
@@ -95,7 +102,12 @@ export const LeftGrid: React.FC<Props> = ({
   hasPartyCodeCol: propsHasPartyCodeCol,
   onTogglePartyCodeCol,
   onLoadOldPrice,
-  highlightedCells
+  highlightedCells,
+  editId = 'USER-1',
+  editVersion = 1,
+  editOperator = 'User',
+  isModifiedBill = false,
+  onOpenAuditHistory
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -155,6 +167,65 @@ export const LeftGrid: React.FC<Props> = ({
     // Sort descending by size (e.g. 12 FT -> 10 FT -> 9.5 FT)
     return list.sort((a, b) => b.size - a.size);
   }, [dynamicCols]);
+
+  // Set of lowercase trimmed item names that appear 2 or more times (Double entries)
+  const duplicateItemNames = useMemo(() => {
+    const counts = new Map<string, number>();
+    items.forEach(it => {
+      const name = (it.name || '').trim().toLowerCase();
+      if (name) {
+        counts.set(name, (counts.get(name) || 0) + 1);
+      }
+    });
+    const dupes = new Set<string>();
+    counts.forEach((count, name) => {
+      if (count > 1) {
+        dupes.add(name);
+      }
+    });
+    return dupes;
+  }, [items]);
+
+  // Skip Item → Main Group lookup map (itemPrefix lowercase → mainGroup name)
+  const buildSkipMap = (): Map<string, string> => {
+    try {
+      const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
+      const map = new Map<string, string>();
+      raw.forEach((it: any) => {
+        if (it.itemPrefix && it.mainGroup) {
+          map.set(it.itemPrefix.trim().toLowerCase(), it.mainGroup.trim());
+        }
+      });
+      return map;
+    } catch {
+      return new Map();
+    }
+  };
+
+  const [skipGroupMap, setSkipGroupMap] = useState<Map<string, string>>(buildSkipMap);
+
+  useEffect(() => {
+    const onStorage = () => setSkipGroupMap(buildSkipMap());
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Get main group label for a given item name (exact match first, then longest-prefix match)
+  const getSkipGroupLabel = (name: string): string | null => {
+    if (!name || skipGroupMap.size === 0) return null;
+    const lower = name.trim().toLowerCase();
+    if (!lower) return null;
+    if (skipGroupMap.has(lower)) return skipGroupMap.get(lower)!;
+    let bestMatch: string | null = null;
+    let bestLen = 0;
+    skipGroupMap.forEach((group, prefix) => {
+      if (lower.startsWith(prefix) && prefix.length > bestLen) {
+        bestLen = prefix.length;
+        bestMatch = group;
+      }
+    });
+    return bestMatch;
+  };
 
   const handleAddSizeColumn = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -1267,7 +1338,7 @@ export const LeftGrid: React.FC<Props> = ({
                   setSelectedCellKeys(keys);
                   toggleSort('name');
                 }} 
-                className={((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === 0) ? 'header-active' : '')}
+                className={(isActiveTable && selectedCol === 0) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -1320,7 +1391,7 @@ export const LeftGrid: React.FC<Props> = ({
                     setSelectedCellKeys(keys);
                     toggleSort('partyCode');
                   }} 
-                  className={((isActiveTable && selectedCol === 1) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === 1) ? 'header-active' : '')}
+                  className={(isActiveTable && selectedCol === 1) ? 'col-selected' : ''}
                   title="Click to select column, drag right border to resize"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -1366,7 +1437,7 @@ export const LeftGrid: React.FC<Props> = ({
                       setSelectedCellKeys(keys);
                       toggleSort(sc.field);
                     }}
-                    className={((isActiveTable && selectedCol === cIdx) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === cIdx) ? 'header-active' : '')}
+                    className={(isActiveTable && selectedCol === cIdx) ? 'col-selected' : ''}
                     title="Click to select column, drag right border to resize"
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -1429,7 +1500,7 @@ export const LeftGrid: React.FC<Props> = ({
                   setSelectedCellKeys(keys);
                   toggleSort('uCap');
                 }}
-                className={((isActiveTable && selectedCol === ((hasPartyCodeCol ? 2 : 1) + allSizeCols.length)) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === ((hasPartyCodeCol ? 2 : 1) + allSizeCols.length)) ? 'header-active' : '')}
+                className={(isActiveTable && selectedCol === ((hasPartyCodeCol ? 2 : 1) + allSizeCols.length)) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <span>U CAP {sortField === 'uCap' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
@@ -1456,8 +1527,8 @@ export const LeftGrid: React.FC<Props> = ({
                   filteredItems.forEach((_, idx) => keys.add(idx + '-' + cIdx));
                   setSelectedCellKeys(keys);
                   toggleSort('lCap');
-                }}
-                className={((isActiveTable && selectedCol === ((hasPartyCodeCol ? 3 : 2) + allSizeCols.length)) ? 'col-selected ' : '') + ((isActiveTable && activeCell?.c === ((hasPartyCodeCol ? 3 : 2) + allSizeCols.length)) ? 'header-active' : '')}
+                }} 
+                className={(isActiveTable && selectedCol === ((hasPartyCodeCol ? 3 : 2) + allSizeCols.length)) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
                 <span>L CAP {sortField === 'lCap' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
@@ -1537,38 +1608,65 @@ export const LeftGrid: React.FC<Props> = ({
                     />
                   </td>
 
-                  {/* Col 0: ITEM NAME (Never highlighted, as requested: "OR ITEM COLUMN NA HO") */}
-                  <td 
-                    style={{ width: `${colWidths.name}px`, height: `${rowHeight}px`, padding: 0 }}
-                    className={
-                      ((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + 
-                      ((isActiveTable && selectedCellKeys.has(rIdx + '-0')) ? 'cell-selected ' : '')
-                    }
-                  >
-                    <input
-                      id={'left-cell-' + rIdx + '-0'}
-                      type="text"
-                      className="excel-cell-input"
-                      value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.name || '')}
-                      onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
-                      onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
-                      onPaste={(e) => handleInputPaste(rIdx, 0, e)}
-                      onFocus={() => {
-                        onActivateTable?.();
-                        setActiveCell({ r: rIdx, c: 0 });
-                        setAnchorCell({ r: rIdx, c: 0 });
-                        setSelectedCellKeys(new Set([`${rIdx}-0`]));
-                        setSelectedCol(null);
-                        setSelectedRows([]);
-                      }}
-                      onChange={(e) => {
-                        const rawVal = e.target.value;
-                        setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
-                      }}
-                      onBlur={() => commitCell(rIdx, 0, 'name')}
-                      onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
-                    />
-                  </td>
+                  {/* Col 0: ITEM NAME — inline right-side Skip Group chip */}
+                  {(() => {
+                    const rawName = cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.name || '');
+                    const currentVal = rawName.trim().toLowerCase();
+                    const isDuplicate = Boolean(currentVal && duplicateItemNames.has(currentVal));
+                    const groupLabel = getSkipGroupLabel(rawName);
+                    const isFocused = activeCell?.r === rIdx && activeCell?.c === 0;
+                    const showBadge = Boolean(groupLabel && !isFocused && rawName.trim());
+
+                    return (
+                      <td 
+                        style={{ width: `${colWidths.name}px`, height: `${rowHeight}px`, padding: 0 }}
+                        className={
+                          ((isActiveTable && selectedCol === 0) ? 'col-selected ' : '') + 
+                          ((isActiveTable && selectedCellKeys.has(rIdx + '-0')) ? 'cell-selected ' : '') +
+                          (isDuplicate ? 'duplicate-item-cell ' : '')
+                        }
+                        title={isDuplicate ? '⚠️ Duplicate Item: Double entry detected! Use "Combine Items (Alt+M)" on the left dock to merge.' : groupLabel ? `Group: ${groupLabel}` : undefined}
+                      >
+                        <div className="item-name-cell-wrap">
+                          <input
+                            id={'left-cell-' + rIdx + '-0'}
+                            type="text"
+                            className={`excel-cell-input item-name-input ${isDuplicate ? 'duplicate-item-input' : ''}`}
+                            style={isDuplicate ? { color: '#ff4d4f', fontWeight: 700, textShadow: '0 0 8px rgba(255, 77, 79, 0.45)' } : undefined}
+                            value={rawName}
+                            autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck={false}
+                            data-lpignore="true"
+                            data-form-type="other"
+                            onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
+                            onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
+                            onPaste={(e) => handleInputPaste(rIdx, 0, e)}
+                            onFocus={() => {
+                              onActivateTable?.();
+                              setActiveCell({ r: rIdx, c: 0 });
+                              setAnchorCell({ r: rIdx, c: 0 });
+                              setSelectedCellKeys(new Set([`${rIdx}-0`]));
+                              setSelectedCol(null);
+                              setSelectedRows([]);
+                            }}
+                            onChange={(e) => {
+                              const rawVal = e.target.value;
+                              setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
+                            }}
+                            onBlur={() => commitCell(rIdx, 0, 'name')}
+                            onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
+                          />
+                          {showBadge && (
+                            <span className="skip-group-chip" aria-hidden>
+                              {groupLabel}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })()}
 
                   {/* Col 1 (Optional): PARTY CODE */}
                   {hasPartyCodeCol && (
@@ -1581,6 +1679,12 @@ export const LeftGrid: React.FC<Props> = ({
                         type="text"
                         className="excel-cell-input"
                         value={cellDrafts[rIdx + '-1'] !== undefined ? cellDrafts[rIdx + '-1'] : (item.partyCode || '')}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        data-lpignore="true"
+                        data-form-type="other"
                         onMouseDown={(e) => handleInputMouseDown(rIdx, 1, e)}
                         onMouseEnter={() => handleInputMouseEnter(rIdx, 1)}
                         onPaste={(e) => handleInputPaste(rIdx, 1, e)}
@@ -1632,6 +1736,12 @@ export const LeftGrid: React.FC<Props> = ({
                           className="excel-cell-input"
                           style={{ textAlign: 'center' }}
                           value={displayVal}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          data-lpignore="true"
+                          data-form-type="other"
                           onMouseDown={(e) => handleInputMouseDown(rIdx, cIdx, e)}
                           onMouseEnter={() => handleInputMouseEnter(rIdx, cIdx)}
                           onPaste={(e) => handleInputPaste(rIdx, cIdx, e)}
@@ -1678,6 +1788,12 @@ export const LeftGrid: React.FC<Props> = ({
                           className="excel-cell-input"
                           style={{ textAlign: 'center' }}
                           value={cellDrafts[draftKey] !== undefined ? cellDrafts[draftKey] : (item.uCap === 0 ? '' : item.uCap)}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          data-lpignore="true"
+                          data-form-type="other"
                           onMouseDown={(e) => handleInputMouseDown(rIdx, cIdx, e)}
                           onMouseEnter={() => handleInputMouseEnter(rIdx, cIdx)}
                           onPaste={(e) => handleInputPaste(rIdx, cIdx, e)}
@@ -1724,6 +1840,12 @@ export const LeftGrid: React.FC<Props> = ({
                           className="excel-cell-input"
                           style={{ textAlign: 'center' }}
                           value={cellDrafts[draftKey] !== undefined ? cellDrafts[draftKey] : (item.lCap === 0 ? '' : item.lCap)}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          data-lpignore="true"
+                          data-form-type="other"
                           onMouseDown={(e) => handleInputMouseDown(rIdx, cIdx, e)}
                           onMouseEnter={() => handleInputMouseEnter(rIdx, cIdx)}
                           onPaste={(e) => handleInputPaste(rIdx, cIdx, e)}
@@ -1754,7 +1876,38 @@ export const LeftGrid: React.FC<Props> = ({
           {/* Table Footer Row */}
           <tfoot>
             <tr>
-              <td style={{ textAlign: 'center', color: '#a1a1aa' }}>TOTAL</td>
+              <td style={{ textAlign: 'center', padding: '0 2px' }}>
+                <Tooltip
+                  title={`Edit ID: ${editId} | Operator: ${editOperator} | Version: ${editVersion} (${isModifiedBill ? 'MODIFIED REVISION' : 'ORIGINAL'})`}
+                  placement="top"
+                  color="#0f172a"
+                >
+                  <div
+                    onClick={onOpenAuditHistory}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '2px 4px',
+                      borderRadius: '4px',
+                      fontSize: '9.5px',
+                      fontWeight: 800,
+                      letterSpacing: '0.03em',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      cursor: onOpenAuditHistory ? 'pointer' : 'default',
+                      border: isModifiedBill ? '1px solid rgba(239, 68, 68, 0.7)' : '1px solid rgba(56, 189, 248, 0.45)',
+                      background: isModifiedBill ? 'rgba(239, 68, 68, 0.18)' : 'rgba(56, 189, 248, 0.12)',
+                      color: isModifiedBill ? '#fca5a5' : '#7dd3fc',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {editId}
+                  </div>
+                </Tooltip>
+              </td>
               <td 
                 style={{ 
                   color: '#38bdf8', 
@@ -1764,10 +1917,15 @@ export const LeftGrid: React.FC<Props> = ({
                   fontFamily: "'JetBrains Mono', monospace",
                   padding: '0 8px'
                 }}
-                title={`Grand Total of all cells across all columns: ${grandTotalAllCols}`}
               >
-                <span style={{ color: '#94a3b8', fontSize: '10px', marginRight: '6px', fontWeight: 600 }}>ALL TOTAL:</span>
-                <span style={{ color: '#38bdf8', fontSize: '13px' }}>{grandTotalAllCols}</span>
+                <Tooltip title={`Grand Total: ${grandTotalAllCols}`} placement="top" color="#0f172a">
+                  <span style={{ display: 'inline-block' }}>
+                    <AnimatedCounter
+                      value={grandTotalAllCols}
+                      style={{ color: '#38bdf8', fontSize: '13px', fontWeight: 800 }}
+                    />
+                  </span>
+                </Tooltip>
               </td>
               {hasPartyCodeCol && <td></td>}
               {allSizeCols.map(sc => {
@@ -1777,12 +1935,28 @@ export const LeftGrid: React.FC<Props> = ({
                     key={sc.field}
                     style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}
                   >
-                    {totalForSize}
+                    <Tooltip title={`${sc.label} Total: ${totalForSize}`} placement="top" color="#0f172a">
+                      <span style={{ display: 'inline-block' }}>
+                        <AnimatedCounter value={totalForSize} />
+                      </span>
+                    </Tooltip>
                   </td>
                 );
               })}
-              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>{totalUCap}</td>
-              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>{totalLCap}</td>
+              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>
+                <Tooltip title={`UCAP Total: ${totalUCap}`} placement="top" color="#0f172a">
+                  <span style={{ display: 'inline-block' }}>
+                    <AnimatedCounter value={totalUCap} />
+                  </span>
+                </Tooltip>
+              </td>
+              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>
+                <Tooltip title={`LCAP Total: ${totalLCap}`} placement="top" color="#0f172a">
+                  <span style={{ display: 'inline-block' }}>
+                    <AnimatedCounter value={totalLCap} />
+                  </span>
+                </Tooltip>
+              </td>
             </tr>
           </tfoot>
         </table>

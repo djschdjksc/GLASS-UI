@@ -4,6 +4,7 @@ import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Tag, Hash, FileText, Layers, Banknote } from 'lucide-react';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
 import type { BillNameMap } from '../data/billMapsData';
+import UnsavedChangesModal from './UnsavedChangesModal';
 
 const DEFAULT_BILL_COLS = { srNo: 40, on: 45, shortCode: 150, printName: 300, rate: 90, category: 140, actions: 50 };
 
@@ -21,6 +22,7 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
   const search = externalSearch !== undefined ? externalSearch : internalSearch;
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [rowToDelete, setRowToDelete] = useState<{ item: BillNameMap; index: number } | null>(null);
 
   const [colWidths, setColWidths] = useState(() => {
     try {
@@ -76,14 +78,28 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
     setEditingIdx(0);
   };
 
-  const handleDeleteRow = (index: number) => {
+  const promptDeleteRow = (item: BillNameMap, index: number) => {
     macAudio.playPop();
+    setRowToDelete({ item, index });
+  };
+
+  const confirmDeleteRow = () => {
+    if (!rowToDelete) return;
+    const index = rowToDelete.index;
+    macAudio.playSuccess();
     const next = maps.filter((_, i) => i !== index);
     saveMaps(next);
     if (selectedIdx === index) {
-      setSelectedIdx(null);
+      if (index < next.length) {
+        setSelectedIdx(index);
+      } else if (index - 1 >= 0) {
+        setSelectedIdx(index - 1);
+      } else {
+        setSelectedIdx(null);
+      }
       setEditingIdx(null);
     }
+    setRowToDelete(null);
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -278,15 +294,16 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
         setSelectedIdx(filtered[prevPos].originalIndex);
       } else if (e.key === 'Delete') {
         e.preventDefault();
-        if (selectedIdx !== null) {
-          handleDeleteRow(selectedIdx);
+        if (selectedIdx !== null && !rowToDelete) {
+          const item = maps[selectedIdx];
+          if (item) promptDeleteRow(item, selectedIdx);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filtered, selectedIdx, editingIdx, maps]);
+  }, [filtered, selectedIdx, editingIdx, maps, rowToDelete]);
 
   useEffect(() => {
     if (onAddRef) {
@@ -439,23 +456,38 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
                     )}
                   </td>
 
-                  {/* ACTIONS: SAVE BUTTON ONLY WHEN ACTIVE */}
+                  {/* ACTIONS: SAVE OR DELETE BUTTON */}
                   <td style={{ textAlign: 'center', padding: '1px' }}>
-                    {isEditing && (
-                      <button
-                        type="button"
-                        className="mac-btn primary"
-                        style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          macAudio.playSuccess();
-                          setEditingIdx(null);
-                        }}
-                        title="Add / Save Row"
-                      >
-                        <Plus size={12} /> Add
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      {isEditing ? (
+                        <button
+                          type="button"
+                          className="mac-btn primary"
+                          style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            macAudio.playSuccess();
+                            setEditingIdx(null);
+                          }}
+                          title="Save Row"
+                        >
+                          <Check size={12} /> Save
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="mac-btn danger"
+                          style={{ padding: '2px 6px', height: '22px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            promptDeleteRow(m, originalIndex);
+                          }}
+                          title="Delete mapping"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -464,6 +496,16 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
         </table>
         <div style={{ height: '36px' }} />
       </div>
+
+      {rowToDelete && (
+        <UnsavedChangesModal
+          titleText="Delete Bill Item Mapping?"
+          descText={`Kya aap sach me item mapping "${rowToDelete.item.printName || rowToDelete.item.shortCode || 'Selected Item'}" ko delete karna chahte hain?`}
+          discardLabel="Haan, Delete Karo"
+          onDiscard={confirmDeleteRow}
+          onCancel={() => setRowToDelete(null)}
+        />
+      )}
     </div>
   );
 };

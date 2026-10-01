@@ -16,17 +16,18 @@ import {
   ChevronRight,
   History,
   Calculator,
-  User
+  User,
+  Clock
 } from 'lucide-react';
 
 interface Props {
   onSave: () => void;
   onPrintSlip: () => void;
   onAddRawRow: () => void;
-  onOpenOcr: () => void;
+  onOpenOcr?: () => void;
   onOpenNote: () => void;
   onPartyCode: () => void;
-  onRecheck: () => void;
+  onRecheck?: () => void;
   onSpeakSelection: () => void;
   onCombine: () => void;
   onExportJson: () => void;
@@ -38,6 +39,8 @@ interface Props {
   onOpenCalculator?: () => void;
   onOpenAuditHistory?: () => void;
   onOpenUserProfile?: () => void;
+  noteText?: string;
+  onOpenPendingSlip?: () => void;
 }
 
 export const LeftActionRail: React.FC<Props> = ({
@@ -58,7 +61,9 @@ export const LeftActionRail: React.FC<Props> = ({
   onLoadOldPrice,
   onOpenCalculator,
   onOpenAuditHistory,
-  onOpenUserProfile
+  onOpenUserProfile,
+  noteText,
+  onOpenPendingSlip
 }) => {
   const BUTTONS = [
     { id: 'summary', name: 'Calculate Summary (Ctrl+G)', icon: <Layers size={17} color="#10b981" />, action: onSummary },
@@ -69,12 +74,11 @@ export const LeftActionRail: React.FC<Props> = ({
     { id: 'save', name: 'Save Bill', icon: <Save size={17} color="currentColor" />, action: onSave },
     { id: 'slip', name: 'Print / Estimate / Loading Slip (Ctrl+P / Ctrl+E / Ctrl+L / Alt+S)', icon: <Printer size={17} color="#38bdf8" />, action: onPrintSlip },
     { id: 'add', name: 'Add Raw Item', icon: <PlusCircle size={17} color="currentColor" />, action: onAddRawRow },
-    { id: 'ocr', name: 'AI Slip Scan', icon: <Camera size={17} color="currentColor" />, action: onOpenOcr },
-    { id: 'note', name: 'Bill Notes', icon: <FileEdit size={17} color="currentColor" />, action: onOpenNote },
+    { id: 'note', name: 'Bill Notes (Alt+N)', icon: <FileEdit size={17} color="currentColor" />, action: onOpenNote },
+    { id: 'pending', name: 'Pending Balance Slip (पेंडिंग माल स्लिप)', icon: <Clock size={17} color="#fbbf24" />, action: () => onOpenPendingSlip?.() },
     { id: 'partycode', name: 'Party Code', icon: <Key size={17} color="currentColor" />, action: onPartyCode },
-    { id: 'recheck', name: 'Recheck Totals', icon: <CheckCircle2 size={17} color="currentColor" />, action: onRecheck },
+    { id: 'combine', name: 'Combine Duplicate Items (Alt+M)', icon: <Layers size={17} color="#38bdf8" />, action: onCombine },
     { id: 'speak', name: 'Voice Summary', icon: <Volume2 size={17} color="currentColor" />, action: onSpeakSelection },
-    { id: 'combine', name: 'Combine Items', icon: <Layers size={17} color="currentColor" />, action: onCombine },
     { id: 'json', name: 'JSON Export', icon: <Code size={17} color="currentColor" />, action: onExportJson },
     { id: 'prev', name: 'Previous Bill', icon: <ChevronLeft size={17} color="currentColor" />, action: onPrevRecord },
     { id: 'next', name: 'Next Bill', icon: <ChevronRight size={17} color="currentColor" />, action: onNextRecord },
@@ -161,6 +165,34 @@ export const LeftActionRail: React.FC<Props> = ({
           >
             <span className="box-tooltip-right">{b.name}</span>
             {b.icon}
+            {b.id === 'note' && Boolean(noteText && noteText.trim().length > 0) && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-3px',
+                  right: '-3px',
+                  minWidth: '17px',
+                  height: '17px',
+                  padding: '0 4px',
+                  borderRadius: '10px',
+                  background: noteText!.toUpperCase().includes('PENDING') ? '#ef4444' : '#22c55e',
+                  color: '#ffffff',
+                  fontSize: '9.5px',
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1.5px solid #0f172a',
+                  boxShadow: noteText!.toUpperCase().includes('PENDING')
+                    ? '0 0 8px rgba(239, 68, 68, 0.9)'
+                    : '0 0 8px rgba(34, 197, 94, 0.9)',
+                  pointerEvents: 'none',
+                  zIndex: 25
+                }}
+              >
+                1
+              </span>
+            )}
           </button>
         );
       })}

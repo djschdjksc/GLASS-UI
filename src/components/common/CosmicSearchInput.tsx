@@ -91,7 +91,12 @@ export const CosmicSearchInput: React.FC<CosmicSearchInputProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             autoFocus={autoFocus}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
             spellCheck={false}
+            data-lpignore="true"
+            data-form-type="other"
           />
 
           {/* Right Filter / Clear Action Badge */}
