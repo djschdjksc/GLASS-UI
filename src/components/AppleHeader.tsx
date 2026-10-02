@@ -156,8 +156,11 @@ export const AppleHeader: React.FC<Props> = ({
                   setFocusedIndex(prev => Math.max(prev - 1, 0));
                 } else if (e.key === 'Enter') {
                   e.preventDefault();
-                  if (showPartySuggestions && focusedIndex >= 0 && focusedIndex < filteredParties.length) {
-                    onChange({ partyName: filteredParties[focusedIndex] });
+                  if (showPartySuggestions && filteredParties.length > 0) {
+                    const chosen = (focusedIndex >= 0 && focusedIndex < filteredParties.length)
+                      ? filteredParties[focusedIndex]
+                      : filteredParties[0];
+                    onChange({ partyName: chosen });
                     setShowPartySuggestions(false);
                   } else {
                     handleQuickAdd();
@@ -195,7 +198,15 @@ export const AppleHeader: React.FC<Props> = ({
                   <div
                     key={party}
                     className="anim-cascade"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onChange({ partyName: party });
+                      setShowPartySuggestions(false);
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       onChange({ partyName: party });
                       setShowPartySuggestions(false);
                     }}

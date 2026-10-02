@@ -3,6 +3,7 @@ import { SettingsTabView } from './SettingsTabView';
 import { StockInventoryView } from './StockInventoryView';
 import { ShadcnDashboardView } from './ShadcnDashboardView';
 import { LedgerTabView } from './LedgerTabView';
+import { EquationTabView } from './EquationTabView';
 
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { AnimatedCounter } from './common/AnimatedCounter';
@@ -55,6 +56,7 @@ import {
 } from 'lucide-react';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { downloadCSV } from '../utils/exportCsv';
+import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 import { BillPrintModal } from './BillPrintModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { LockScreenStack } from './LockScreenStack';
@@ -973,6 +975,54 @@ export const OtherTabsView: React.FC<Props> = ({
     return filteredParties[0] || parties[0] || null;
   }, [parties, selectedPartyId, filteredParties]);
 
+  // CSV Columns definition for Parties Directory
+  const partyCsvColumns: CsvColumnDef<PartyRecord>[] = useMemo(() => [
+    { header: 'Party Name', key: 'name', sample: 'Sharma Aluminium Works', required: true },
+    { header: 'Phone Number', key: 'phone', sample: '9876543210' },
+    { header: 'Station / City', key: 'station', sample: 'Jaipur' },
+    { header: 'District', key: 'district', sample: 'Jaipur' },
+    { header: 'State', key: 'state', sample: 'Rajasthan' },
+    { header: 'Pincode', key: 'pincode', sample: '302001' },
+    { header: 'GSTIN', key: 'gstin', sample: '08AAAAA0000A1Z5' },
+    {
+      header: 'Opening Balance',
+      key: 'balance',
+      sample: 0,
+      formatter: (val) => Number(val || 0).toLocaleString('en-IN'),
+      parser: (raw) => Number(String(raw).replace(/[^0-9.-]/g, '')) || 0
+    }
+  ], []);
+
+  // Universal CSV/Excel import for Parties Directory
+  const handleImportParties = useCallback(async (imported: Partial<PartyRecord>[]) => {
+    let count = 0;
+    for (const row of imported) {
+      if (!row.name || !row.name.trim()) continue;
+      const cleanName = row.name.trim();
+      const existing = parties.find(p => p.name.trim().toLowerCase() === cleanName.toLowerCase());
+      const cleanCity = row.station ? String(row.station).trim() : (row.city ? String(row.city).trim() : (existing?.city || ''));
+      const pRecord: PartyRecord = {
+        id: existing ? existing.id : `P-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        name: cleanName,
+        contact: cleanName,
+        phone: row.phone ? String(row.phone).trim() : (existing?.phone || ''),
+        city: cleanCity,
+        station: cleanCity,
+        district: row.district ? String(row.district).trim() : (existing?.district || ''),
+        state: row.state ? String(row.state).trim() : (existing?.state || ''),
+        pincode: row.pincode ? String(row.pincode).trim() : (existing?.pincode || ''),
+        gstin: row.gstin ? String(row.gstin).trim() : (existing?.gstin || ''),
+        balance: row.balance !== undefined ? Number(row.balance) || 0 : (existing?.balance || 0),
+        limit: (row as any).creditLimit !== undefined ? Number((row as any).creditLimit) || 0 : (existing?.limit || 0),
+        updatedAt: Date.now(),
+        synced: false
+      };
+      await saveParty(pRecord);
+      count++;
+    }
+    showPartyToast(`Successfully imported ${count} parties!`);
+  }, [parties, saveParty]);
+
   // F5 Keyboard Navigation (Enter to edit/save, Delete key to delete row, Arrow keys to navigate)
   useEffect(() => {
     if (activeTab !== 'F5') return;
@@ -1057,16 +1107,80 @@ export const OtherTabsView: React.FC<Props> = ({
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         macAudio.playHover();
-        const nextIdx = currentIndex < paginatedParties.length - 1 ? currentIndex + 1 : currentIndex;
-        setSelectedPartyId(paginatedParties[nextIdx].id);
+        if (currentIndex < paginatedParties.length - 1) {
+          const nextIdx = currentIndex + 1;
+          setSelectedPartyId(paginatedParties[nextIdx].id);
+        } else if (currentIndex === paginatedParties.length - 1) {
+          // Reached last row! Auto-focus Next Page button if available
+          if (partyCurrentPage < totalPartyPages) {
+            const nextBtn = document.getElementById('parties-pagination-next') as HTMLButtonElement | null;
+            if (nextBtn && !nextBtn.disabled) {
+              nextBtn.focus();
+              macAudio.playPop();
+            }
+          }
+        }
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         macAudio.playHover();
-        const prevIdx = currentIndex > 0 ? currentIndex - 1 : 0;
-        setSelectedPartyId(paginatedParties[prevIdx].id);
+        if (currentIndex > 0) {
+          const prevIdx = currentIndex - 1;
+          setSelectedPartyId(paginatedParties[prevIdx].id);
+        } else if (currentIndex === 0) {
+          // Reached first row! Auto-focus Previous Page button if available
+          if (partyCurrentPage > 1) {
+            const prevBtn = document.getElementById('parties-pagination-prev') as HTMLButtonElement | null;
+            if (prevBtn && !prevBtn.disabled) {
+              prevBtn.focus();
+              macAudio.playPop();
+            }
+          }
+        }
+        return;
+      }
+
+      // PageDown: Fast jump down
+      if (e.key === 'PageDown') {
+        e.preventDefault();
+        macAudio.playHover();
+        if (e.ctrlKey) {
+          setSelectedPartyId(paginatedParties[paginatedParties.length - 1].id);
+        } else {
+          const nextIdx = Math.min(currentIndex + 10, paginatedParties.length - 1);
+          setSelectedPartyId(paginatedParties[nextIdx].id);
+        }
+        return;
+      }
+
+      // PageUp: Fast jump up
+      if (e.key === 'PageUp') {
+        e.preventDefault();
+        macAudio.playHover();
+        if (e.ctrlKey) {
+          setSelectedPartyId(paginatedParties[0].id);
+        } else {
+          const prevIdx = Math.max(currentIndex - 10, 0);
+          setSelectedPartyId(paginatedParties[prevIdx].id);
+        }
+        return;
+      }
+
+      // Home: First row
+      if (e.key === 'Home') {
+        e.preventDefault();
+        macAudio.playHover();
+        setSelectedPartyId(paginatedParties[0].id);
+        return;
+      }
+
+      // End: Last row
+      if (e.key === 'End') {
+        e.preventDefault();
+        macAudio.playHover();
+        setSelectedPartyId(paginatedParties[paginatedParties.length - 1].id);
         return;
       }
 
@@ -1102,7 +1216,17 @@ export const OtherTabsView: React.FC<Props> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, deleteParty, partyToDelete]);
+  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, deleteParty, partyToDelete, partyCurrentPage, totalPartyPages]);
+
+  // Auto-scroll selected party row smoothly into view on arrow navigation
+  useEffect(() => {
+    if (activeTab === 'F5' && selectedPartyId) {
+      const el = document.getElementById(`party-row-${selectedPartyId}`);
+      if (el) {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [activeTab, selectedPartyId]);
 
   const handleStartEditParty = (p: typeof parties[0]) => {
     setPartyForm({
@@ -1802,179 +1926,9 @@ export const OtherTabsView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB F3: EQUATION & PRODUCTION SIMULATOR */}
+      {/* TAB F3: EQUATION & MULTI-PARTY GOODS DISTRIBUTION (SHADCN/UI)             */}
       {/* ========================================================================= */}
-      {activeTab === 'F3' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '8px', minHeight: 0 }}>
-          {/* Equation Matrix */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px', borderRadius: '8px', minHeight: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.05em' }}>PRODUCTION EQUATIONS MATRIX</span>
-                <span style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>{eqFormulas.length} MOULDS</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleExportEquationCsv}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
-                  border: '1px solid rgba(16, 185, 129, 0.4)',
-                  color: '#34d399',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  cursor: 'pointer'
-                }}
-                title="Download Equations as CSV / Excel"
-              >
-                <FileSpreadsheet size={13} />
-                <span>Export CSV</span>
-              </button>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: `${tableCols.f3Matrix.mouldName}px`, position: 'relative', userSelect: 'none' }}>
-                      MOULD NAME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f3Matrix', 'mouldName', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f3Matrix.stdWt}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      STD WT
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f3Matrix', 'stdWt', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f3Matrix.uCapRatio}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      U-CAP
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f3Matrix', 'uCapRatio', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f3Matrix.lCapRatio}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      L-CAP
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f3Matrix', 'lCapRatio', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f3Matrix.recoveryRate}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      YIELD
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f3Matrix', 'recoveryRate', e)} title="Drag to resize column" />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {eqFormulas.map((eq) => {
-                    const isSelected = selectedEqId === eq.id;
-                    return (
-                      <tr 
-                        key={eq.id} 
-                        className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                        style={{ height: `${activeRowHeight}px` }}
-                        onMouseEnter={() => macAudio.playHover()}
-                        onClick={() => {
-                          macAudio.playClick();
-                          setSelectedEqId(eq.id);
-                        }}
-                      >
-                        <td style={{ fontWeight: 600, color: '#f8fafc', position: 'relative' }}>
-                          {eq.mouldName}
-                          <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                        </td>
-                        <td style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{eq.stdWt} kg</td>
-                        <td style={{ textAlign: 'center', color: '#a78bfa' }}>{(eq.uCapRatio * 100).toFixed(0)}%</td>
-                        <td style={{ textAlign: 'center', color: '#f472b6' }}>{(eq.lCapRatio * 100).toFixed(0)}%</td>
-                        <td style={{ textAlign: 'center', color: '#34d399', fontWeight: 700 }}>{eq.recoveryRate}%</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Interactive Simulation Sandbox */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#fbbf24' }}>Batch Simulator</span>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '2px' }}>
-                  <span>Ingot Input:</span>
-                  <strong style={{ color: '#38bdf8' }}>{calcInputKg} KG</strong>
-                </div>
-                <input
-                  type="range"
-                  min={10}
-                  max={1000}
-                  step={5}
-                  value={calcInputKg}
-                  onChange={(e) => setCalcInputKg(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#38bdf8' }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '2px' }}>
-                  <span>Upper Cap (%):</span>
-                  <strong style={{ color: '#a78bfa' }}>{calcUCap}%</strong>
-                </div>
-                <input
-                  type="range"
-                  min={50}
-                  max={100}
-                  value={calcUCap}
-                  onChange={(e) => setCalcUCap(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#a78bfa' }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '2px' }}>
-                  <span>Lower Cap (%):</span>
-                  <strong style={{ color: '#f472b6' }}>{calcLCap}%</strong>
-                </div>
-                <input
-                  type="range"
-                  min={40}
-                  max={95}
-                  value={calcLCap}
-                  onChange={(e) => setCalcLCap(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#f472b6' }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#f8fafc', marginBottom: '2px' }}>
-                  <span>Density (g/cm³):</span>
-                  <strong style={{ color: '#fbbf24' }}>{calcDensity}</strong>
-                </div>
-                <input
-                  type="range"
-                  min={2.4}
-                  max={3.2}
-                  step={0.05}
-                  value={calcDensity}
-                  onChange={(e) => setCalcDensity(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: '#fbbf24' }}
-                />
-              </div>
-            </div>
-
-            {/* Calculated Results */}
-            <div style={{ marginTop: 'auto', background: 'rgba(0,0,0,0.3)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                <div>
-                  <span style={{ fontSize: '10px', color: '#e2e8f0' }}>Finished Output:</span>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#34d399' }}>{((calcInputKg * (calcUCap / 100) * (calcLCap / 100))).toFixed(1)} KG</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '10px', color: '#e2e8f0' }}>Estimated Value:</span>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#38bdf8' }}>₹{Math.round(calcInputKg * 215 * 1.35).toLocaleString('en-IN')}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {activeTab === 'F3' && <EquationTabView />}
 
       {/* ========================================================================= */}
       {/* TAB F4: EXECUTIVE BUSINESS INTELLIGENCE DASHBOARD (SHADCN/UI FLAGSHIP) */}
@@ -2103,18 +2057,14 @@ export const OtherTabsView: React.FC<Props> = ({
                 </button>
               </div>
 
-              {/* Export Parties CSV / Excel */}
-              <ShadcnButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleExportPartiesCsv}
-                style={{ height: '32px', fontSize: '12px', gap: '5px', whiteSpace: 'nowrap' }}
-                title="Download Party List in CSV"
-              >
-                <FileSpreadsheet size={13} />
-                <span>Export CSV</span>
-              </ShadcnButton>
+              {/* Universal Excel/CSV Export, Import & Template */}
+              <ExcelCsvActions<PartyRecord>
+                title="Parties Directory"
+                filenamePrefix="Parties_Directory"
+                data={filteredParties}
+                columns={partyCsvColumns}
+                onImport={handleImportParties}
+              />
 
               {/* New Party Button */}
               <ShadcnButton
@@ -2445,6 +2395,7 @@ export const OtherTabsView: React.FC<Props> = ({
                         return (
                           <tr
                             key={p.id || idx}
+                            id={`party-row-${p.id}`}
                             style={{
                               height: `${activeRowHeight}px`,
                               borderBottom: '1px solid #27272a',
@@ -2619,10 +2570,34 @@ export const OtherTabsView: React.FC<Props> = ({
 
           {/* Shadcn Pagination Footer */}
           <ShadcnPagination
+            idPrefix="parties-pagination"
             totalCount={filteredParties.length}
             pageSize={PARTIES_PER_PAGE}
             currentPage={partyCurrentPage}
-            onPageChange={setPartyCurrentPage}
+            onPageChange={(newPage, targetRow) => {
+              setPartyCurrentPage(newPage);
+              setTimeout(() => {
+                const nextList = filteredParties.slice((newPage - 1) * PARTIES_PER_PAGE, newPage * PARTIES_PER_PAGE);
+                if (nextList.length > 0) {
+                  const targetIdx = targetRow === 'last' ? nextList.length - 1 : 0;
+                  setSelectedPartyId(nextList[targetIdx].id);
+                  const el = document.getElementById(`party-row-${nextList[targetIdx].id}`);
+                  if (el) el.scrollIntoView({ block: 'nearest' });
+                }
+              }, 50);
+            }}
+            onFocusTableFirstRow={() => {
+              if (paginatedParties.length > 0) {
+                setSelectedPartyId(paginatedParties[0].id);
+                document.getElementById(`party-row-${paginatedParties[0].id}`)?.scrollIntoView({ block: 'nearest' });
+              }
+            }}
+            onFocusTableLastRow={() => {
+              if (paginatedParties.length > 0) {
+                setSelectedPartyId(paginatedParties[paginatedParties.length - 1].id);
+                document.getElementById(`party-row-${paginatedParties[paginatedParties.length - 1].id}`)?.scrollIntoView({ block: 'nearest' });
+              }
+            }}
             style={{ borderRadius: '0' }}
           />
         </div>

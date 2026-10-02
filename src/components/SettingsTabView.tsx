@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Segmented, Slider, Switch, Tag, Button, Input, InputNumber, Tooltip } from 'antd';
 import { macAudio } from '../utils/macAudio';
 import { useDatabase } from '../context/DatabaseContext';
+import { useSettings } from '../context/SettingsContext';
 import {
   Palette,
   Keyboard,
@@ -86,7 +87,7 @@ import type {
 } from '../utils/barcodeConfigHelper';
 import { KeyboardShortcutsVisualizer } from './KeyboardShortcutsVisualizer';
 
-export type SettingsMainTab = 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'BARCODE';
+export type SettingsMainTab = 'GENERAL' | 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'BARCODE';
 export type BarcodeSubTab = 'PRESETS' | 'MARG_RULES' | 'DIMENSIONS' | 'THERMAL_HEAD' | 'CONTENT' | 'PRINTER_CMDS' | 'SCANNER';
 export type AppThemeMode = 'dark' | 'glass';
 
@@ -218,20 +219,89 @@ export const SettingsTabView: React.FC<Props> = ({
   onShowToast = () => {}
 }) => {
   const { bills, parties, stockItems } = useDatabase();
+  const { preferences, updatePreferences, defaultPrinter, setDefaultPrinter } = useSettings();
 
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<SettingsMainTab>('THEME');
+  // Active Tab - Defaulting to GENERAL
+  const [activeTab, setActiveTab] = useState<SettingsMainTab>('GENERAL');
 
-  // Universal Alt+1..5 Subtab Switch listener for Settings Tab
+  // General Settings - Printers & Native Spooler State
+  const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
+  const [systemDefaultPrinter, setSystemDefaultPrinter] = useState<string>('');
+  const [isPrinterChecking, setIsPrinterChecking] = useState<boolean>(false);
+  const [isTestPrinting, setIsTestPrinting] = useState<boolean>(false);
+  const [printerEngineStatus, setPrinterEngineStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  
+  // Station & general hardware routing
+  const [stationName, setStationName] = useState<string>(() => localStorage.getItem('modern_app_station_name') || 'COUNTER-01');
+  const [printPaperSize, setPrintPaperSize] = useState<string>(() => localStorage.getItem('modern_app_paper_size') || 'A4');
+
+  // Fetch printers list from PyQt print service (:5005)
+  const fetchPrintersList = useCallback(async () => {
+    setIsPrinterChecking(true);
+    setPrinterEngineStatus('checking');
+    try {
+      const resp = await fetch('http://127.0.0.1:5005/api/status');
+      const data = await resp.json();
+      if (data && data.status === 'ok') {
+        setPrinterEngineStatus('online');
+        const list = Array.isArray(data.availablePrinters) ? data.availablePrinters : [];
+        setAvailablePrinters(list);
+        setSystemDefaultPrinter(data.printer || '');
+        if (!defaultPrinter && data.printer) {
+          setDefaultPrinter(data.printer);
+        }
+      } else {
+        setPrinterEngineStatus('offline');
+      }
+    } catch {
+      setPrinterEngineStatus('offline');
+    } finally {
+      setIsPrinterChecking(false);
+    }
+  }, [defaultPrinter, setDefaultPrinter]);
+
+  useEffect(() => {
+    fetchPrintersList();
+  }, [fetchPrintersList]);
+
+  // Test Print handler
+  const handleTestPrint = async () => {
+    setIsTestPrinting(true);
+    macAudio.playClick();
+    const target = defaultPrinter || systemDefaultPrinter || 'Default Printer';
+    try {
+      const resp = await fetch('http://127.0.0.1:5005/api/print/test-print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ printerName: target })
+      });
+      const data = await resp.json();
+      if (data && data.success) {
+        macAudio.playSuccess();
+        onShowToast?.(data.message || `Test page sent to ${target}!`, 'success');
+      } else {
+        macAudio.playError();
+        onShowToast?.(data?.error || 'Failed to print test page.', 'error');
+      }
+    } catch {
+      macAudio.playError();
+      onShowToast?.('Native print service (:5005) not reachable. Please start Python spooler.', 'error');
+    } finally {
+      setIsTestPrinting(false);
+    }
+  };
+
+  // Universal Alt+1..6 Subtab Switch listener for Settings Tab
   useEffect(() => {
     const handleSubtabSwitch = (e: Event) => {
       const custom = e as CustomEvent<{ index: number }>;
       const idx = custom.detail?.index;
-      if (idx === 1) { macAudio.playClick(); setActiveTab('THEME'); }
-      else if (idx === 2) { macAudio.playClick(); setActiveTab('PROFILE'); }
-      else if (idx === 3) { macAudio.playClick(); setActiveTab('SHORTCUTS'); }
-      else if (idx === 4) { macAudio.playClick(); setActiveTab('BACKUP'); }
-      else if (idx === 5) { macAudio.playClick(); setActiveTab('BARCODE'); }
+      if (idx === 1) { macAudio.playClick(); setActiveTab('GENERAL'); }
+      else if (idx === 2) { macAudio.playClick(); setActiveTab('THEME'); }
+      else if (idx === 3) { macAudio.playClick(); setActiveTab('PROFILE'); }
+      else if (idx === 4) { macAudio.playClick(); setActiveTab('SHORTCUTS'); }
+      else if (idx === 5) { macAudio.playClick(); setActiveTab('BACKUP'); }
+      else if (idx === 6) { macAudio.playClick(); setActiveTab('BARCODE'); }
     };
     window.addEventListener('app-subtab-switch', handleSubtabSwitch);
     return () => window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
@@ -615,6 +685,10 @@ export const SettingsTabView: React.FC<Props> = ({
             }}
           >
             <ShadcnTabsList>
+              <ShadcnTabsTrigger value="GENERAL">
+                <SlidersHorizontal size={13} style={{ marginRight: 6 }} />
+                <span>General</span>
+              </ShadcnTabsTrigger>
               <ShadcnTabsTrigger value="THEME">
                 <Palette size={13} style={{ marginRight: 6 }} />
                 <span>Theme & Wallpaper</span>
@@ -639,6 +713,441 @@ export const SettingsTabView: React.FC<Props> = ({
           </ShadcnTabs>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* TAB 0: GENERAL SETTINGS (GERNAL SETTING - DEFAULT PRINTER & SYSTEM CONFIG) */}
+      {/* ========================================================================= */}
+      {activeTab === 'GENERAL' && (
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '12px', minHeight: 0, overflow: 'hidden' }}>
+          {/* Left Column: Default Hardware & PyQt6 Native Vector Spooler */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              overflowY: 'auto',
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '10px'
+            }}
+          >
+            {/* Header: Default Printer Configuration */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#38bdf8'
+                  }}
+                >
+                  <Printer size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#f4f4f5', letterSpacing: '-0.2px' }}>
+                    DEFAULT SYSTEM PRINTER
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    Native PyQt6 Vector Print Spooler (:5005) • Direct Hardware Output
+                  </div>
+                </div>
+              </div>
+
+              {/* Server Engine Status Pill */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {printerEngineStatus === 'online' ? (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: 'rgba(34, 197, 94, 0.15)',
+                      color: '#4ade80',
+                      border: '1px solid rgba(34, 197, 94, 0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
+                    SPOOLER ONLINE (:5005)
+                  </span>
+                ) : printerEngineStatus === 'checking' ? (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: 'rgba(234, 179, 8, 0.15)',
+                      color: '#facc15',
+                      border: '1px solid rgba(234, 179, 8, 0.3)'
+                    }}
+                  >
+                    DETECTING...
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#f87171',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
+                    SERVER OFFLINE
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Printer Selection Card */}
+            <div
+              style={{
+                background: '#18181b',
+                border: '1px solid #27272a',
+                borderRadius: '8px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}
+            >
+              <div>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#e4e4e7', marginBottom: '6px', display: 'block' }}>
+                  Select Default Windows Printer:
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    value={defaultPrinter || systemDefaultPrinter || ''}
+                    onChange={(e) => {
+                      const selected = e.target.value;
+                      setDefaultPrinter(selected);
+                      macAudio.playClick();
+                      onShowToast?.(`Default printer set to: ${selected}`, 'success');
+                    }}
+                    style={{
+                      flex: 1,
+                      height: '36px',
+                      background: '#09090b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
+                      color: '#f4f4f5',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {availablePrinters.length > 0 ? (
+                      availablePrinters.map((p) => (
+                        <option key={p} value={p} style={{ background: '#18181b', color: '#f4f4f5' }}>
+                          {p} {p === systemDefaultPrinter ? '★ (Windows Default)' : ''}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={defaultPrinter || 'Default Printer'} style={{ background: '#18181b', color: '#f4f4f5' }}>
+                        {defaultPrinter || 'Default System Printer'}
+                      </option>
+                    )}
+                  </select>
+
+                  <ShadcnButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchPrintersList}
+                    disabled={isPrinterChecking}
+                    title="Refresh Windows Printers List"
+                    style={{
+                      height: '36px',
+                      padding: '0 12px',
+                      background: '#27272a',
+                      color: '#f4f4f5',
+                      border: '1px solid #3f3f46',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <RefreshCw size={13} className={isPrinterChecking ? 'animate-spin' : ''} />
+                    <span>Refresh</span>
+                  </ShadcnButton>
+                </div>
+              </div>
+
+              {/* Printer Hardware Info Details */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '8px',
+                  background: '#09090b',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #27272a'
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '10.5px', color: '#71717a' }}>Current Default:</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {defaultPrinter || systemDefaultPrinter || 'Windows Default'}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '10.5px', color: '#71717a' }}>Spool Mode:</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>
+                    Direct PyQt6 Vector (Zero Web Print)
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons: Test Print */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>
+                  Sends a vector calibration test page directly to this printer
+                </span>
+                <ShadcnButton
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={handleTestPrint}
+                  disabled={isTestPrinting || printerEngineStatus === 'offline'}
+                  title="Dispatch High-Resolution Test Page"
+                  style={{
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '11.5px',
+                    height: '32px',
+                    padding: '0 14px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Printer size={13} />
+                  <span>{isTestPrinting ? 'SPOOLING...' : 'Test Print Page'}</span>
+                </ShadcnButton>
+              </div>
+            </div>
+
+            {/* Quality & Zero Web Print Notice */}
+            <div
+              style={{
+                background: 'rgba(56, 189, 248, 0.05)',
+                border: '1px solid rgba(56, 189, 248, 0.2)',
+                borderRadius: '8px',
+                padding: '12px',
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'flex-start'
+              }}
+            >
+              <Info size={16} style={{ color: '#38bdf8', flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.45 }}>
+                <strong style={{ color: '#f4f4f5' }}>Zero Web Printer Policy Active:</strong> Web browser printing is permanently bypassed across Estimate, Loading Slip, Multi-Party Distribution (F3), and Ledgers. Every document is rendered directly by the native Python vector engine at the printer's native DPI.
+              </div>
+            </div>
+
+            {/* Hardware Routing & Paper Size Card */}
+            <div
+              style={{
+                background: '#18181b',
+                border: '1px solid #27272a',
+                borderRadius: '8px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5', textTransform: 'uppercase' }}>
+                Station & Hardware Routing
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Counter / Station Name</label>
+                  <input
+                    type="text"
+                    value={stationName}
+                    onChange={(e) => {
+                      setStationName(e.target.value);
+                      localStorage.setItem('modern_app_station_name', e.target.value);
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '32px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      borderRadius: '5px',
+                      padding: '0 8px',
+                      color: '#f4f4f5',
+                      fontSize: '11.5px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Standard Paper Size</label>
+                  <select
+                    value={printPaperSize}
+                    onChange={(e) => {
+                      setPrintPaperSize(e.target.value);
+                      localStorage.setItem('modern_app_paper_size', e.target.value);
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '32px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      borderRadius: '5px',
+                      padding: '0 8px',
+                      color: '#f4f4f5',
+                      fontSize: '11.5px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="A4">A4 (Portrait 210 x 297 mm)</option>
+                    <option value="A4_LANDSCAPE">A4 (Landscape)</option>
+                    <option value="THERMAL_3INCH">3-Inch Thermal Roll (80mm)</option>
+                    <option value="THERMAL_4INCH">4-Inch Shipping Label (100mm)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: General Workflow, Document Naming & Toggles */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              overflowY: 'auto',
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '10px'
+            }}
+          >
+            <div style={{ borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#f4f4f5' }}>
+                GENERAL WORKFLOW & SYSTEM PREFERENCES
+              </div>
+              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                Key navigation styles, numbering formats & audio feedback
+              </div>
+            </div>
+
+            {/* Slip Prefix & Numbering */}
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5' }}>
+                Document Numbering & Titles
+              </div>
+              <div>
+                <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Slip Number Prefix</label>
+                <input
+                  type="text"
+                  value={slipPrefix}
+                  onChange={(e) => {
+                    setSlipPrefix(e.target.value);
+                    localStorage.setItem('modern_setting_slip_prefix', e.target.value);
+                  }}
+                  placeholder="e.g. S-, INV-, BILL-"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '5px',
+                    padding: '0 8px',
+                    color: '#f4f4f5',
+                    fontSize: '11.5px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Default Slip Header Title</label>
+                <input
+                  type="text"
+                  value={slipHeaderTitle}
+                  onChange={(e) => {
+                    setSlipHeaderTitle(e.target.value);
+                    localStorage.setItem('modern_setting_slip_title', e.target.value);
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '5px',
+                    padding: '0 8px',
+                    color: '#f4f4f5',
+                    fontSize: '11.5px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Toggles */}
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <LuxuryToggle
+                title="Tally / Marg ERP Enter Key Navigation"
+                desc="Pressing Enter advances from input to input, Tab jumps columns, and Down Arrow jumps to the next row."
+                checked={tallyNavigation}
+                onChange={(val) => {
+                  setTallyNavigation(val);
+                  localStorage.setItem('modern_setting_tally_nav', val ? '1' : '0');
+                  onShowToast?.(`Tally navigation ${val ? 'enabled' : 'disabled'}`, 'info');
+                }}
+              />
+              <LuxuryToggle
+                title="Fast Item Autocomplete"
+                desc="Shows instant search dropdown when typing party names, moulds, and inventory items."
+                checked={itemAutoSuggest}
+                onChange={(val) => {
+                  setItemAutoSuggest(val);
+                  localStorage.setItem('modern_setting_item_auto', val ? '1' : '0');
+                }}
+              />
+              <LuxuryToggle
+                title="Sound Effects (macAudio Engine)"
+                desc="Play tactile feedback audio on click, enter key, save, and print spooling events."
+                checked={audioFeedback}
+                onChange={(val) => {
+                  setAudioFeedback(val);
+                  if (val) macAudio.playSuccess();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 1: THEME & BACKGROUND (ALAG TAB - BACKGROUND COLOR & WALLPAPER)       */}

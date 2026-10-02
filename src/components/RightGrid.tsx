@@ -6,6 +6,7 @@ import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History, FileSpreadsheet } from 'lucide-react';
 import { downloadCSV } from '../utils/exportCsv';
+import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 import { AnimatedCounter } from './common/AnimatedCounter';
 
 const evaluateMathExpression = (val: string): number => {
@@ -493,6 +494,30 @@ export const RightGrid: React.FC<Props> = ({
     }
   };
 
+  const mouldCsvColumns: CsvColumnDef<any>[] = [
+    { header: 'Mould Name', key: 'mould', sampleValue: 'Standard Frame Mould', required: true },
+    { header: 'Qty', key: 'qty', sampleValue: 10 },
+    { header: 'Price', key: 'price', sampleValue: 650 },
+    { header: 'Total', key: 'total', sampleValue: 6500 }
+  ];
+
+  const handleImportMoulds = (imported: any[], mode: 'append' | 'replace') => {
+    const valid = imported.filter(r => r.mould && String(r.mould).trim());
+    if (valid.length === 0) {
+      onToast('No valid mould rows found in CSV', 'warning');
+      return;
+    }
+    const startRow = mode === 'replace' ? 0 : items.filter(x => x.mould && x.mould.trim()).length;
+    const lines = valid.map(r => [
+      String(r.mould).trim(),
+      String(Number(r.qty) || 0),
+      String(Number(r.price) || 0),
+      String(Number(r.total) || ((Number(r.qty) || 0) * (Number(r.price) || 0)))
+    ]);
+    onBulkPaste(lines, startRow, 0);
+    onToast(`Successfully imported ${valid.length} mould items!`, 'success');
+  };
+
   const executeGridPaste = (text: string, startR: number, startC: number) => {
     if (!text || !text.trim()) return;
 
@@ -954,16 +979,15 @@ export const RightGrid: React.FC<Props> = ({
             <ClipboardPaste size={13} />
           </button>
 
-          {/* Download CSV / Excel */}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px', color: '#10b981' }}
-            title="Download Mould Summary in CSV (Excel)"
-          >
-            <FileSpreadsheet size={14} />
-          </button>
+          {/* Universal Excel & CSV Data Center */}
+          <ExcelCsvActions<any>
+            entityName="Moulds / Finished Goods"
+            filenamePrefix="Finished_Moulds"
+            columns={mouldCsvColumns}
+            data={filteredItems.filter(x => x.mould && x.mould.trim() !== '')}
+            onImport={handleImportMoulds}
+            compact={true}
+          />
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (

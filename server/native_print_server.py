@@ -410,6 +410,187 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
+
+        elif self.path in ('/api/print/equation-direct', '/api/print/equation'):
+            try:
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                target_printer = payload.get('printerName')
+                if target_printer:
+                    printer.setPrinterName(target_printer)
+                printer.setPageOrientation(QPageLayout.Orientation.Portrait)
+                printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+
+                printer_name = printer.printerName() or 'Default Printer'
+                is_pdf_virtual = any(k in printer_name.upper() for k in ('PDF', 'XPS', 'ONENOTE', 'PORTPROMPT'))
+
+                show_dialog = bool(payload.get('showDialog', False))
+                if show_dialog:
+                    from PyQt6.QtPrintSupport import QPrintDialog
+                    dialog = QPrintDialog(printer)
+                    dialog.setWindowTitle(f"Print Equation Report - {payload.get('party', 'Report')}")
+                    if dialog.exec() != QPrintDialog.DialogCode.Accepted:
+                        self.send_response(200)
+                        self._send_cors_headers()
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({'success': False, 'message': 'Print cancelled by user'}).encode('utf-8'))
+                        return
+                    printer_name = printer.printerName() or 'Selected Printer'
+                    is_pdf_virtual = 'PDF' in printer_name.upper() or 'XPS' in printer_name.upper()
+
+                output_pdf_path = None
+                if is_pdf_virtual and not show_dialog:
+                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    bill_token = str(payload.get('billToken') or payload.get('billNo') or 'REPORT').replace('/', '_')
+                    output_pdf_path = os.path.join(desktop_dir, f"EQUATION_REPORT_{bill_token}.pdf")
+                    printer.setOutputFileName(output_pdf_path)
+
+                # Format items for BillPainter equation mode
+                raw_items = payload.get('items', [])
+                mapped_items = []
+                for it in raw_items:
+                    if isinstance(it, dict):
+                        mapped_items.append({
+                            'party': str(it.get('party', '')),
+                            'share_per': str(it.get('sharePct', it.get('share_per', ''))).replace('%', '').strip(),
+                            'desc': str(it.get('desc', it.get('item', it.get('itemName', it.get('name', ''))))),
+                            'actual_qty': float(it.get('actual_qty', it.get('pcs', it.get('pcsQty', 0))) or 0),
+                            'boxes': float(it.get('boxes', 0) or 0),
+                            'mult': str(it.get('mult', '1')),
+                            'bill_qty': str(it.get('bill_qty', it.get('billQty', it.get('billQtyShare', '0')))),
+                            'rate': float(it.get('rate', it.get('price', 0)) or 0),
+                            'weight': float(it.get('weight', it.get('weightKg', 0)) or 0),
+                            'total': float(it.get('total', it.get('totalGst', 0)) or 0),
+                            'paid_amt': str(it.get('paid_amt', it.get('partyPaidAmt', it.get('paidAmount', '0'))))
+                        })
+                    elif isinstance(it, list):
+                        mapped_items.append(it)
+
+                eq_data = {
+                    'bill_no': str(payload.get('billToken') or payload.get('billNo') or 'EQUATION'),
+                    'date': str(payload.get('date', '')),
+                    'party': str(payload.get('party', 'MULTI-PARTY REPORT')),
+                    'bill_type': 'Bill',
+                    'is_equation': True,
+                    'is_estimate': True,
+                    'grand_total': float(payload.get('grandTotal', 0.0) or 0.0),
+                    'items': mapped_items
+                }
+
+                p = QPainter(printer)
+                bp = BillPainter(eq_data)
+                rect = printer.pageRect(QPrinter.Unit.DevicePixel).toRect()
+                bp.paint(p, rect, page_num=0)
+                total_p = getattr(bp, 'total_pages', 1)
+                for pg in range(1, total_p):
+                    printer.newPage()
+                    bp.paint(p, rect, page_num=pg)
+                p.end()
+
+                if output_pdf_path and os.path.exists(output_pdf_path):
+                    try:
+                        os.startfile(output_pdf_path)
+                    except Exception:
+                        pass
+
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'success': True,
+                    'message': f"Equation Report sent directly to {printer_name} ({total_p} page{'s' if total_p > 1 else ''}) in High-Resolution Vector mode!",
+                    'printer': printer_name,
+                    'totalPages': total_p,
+                    'filePath': output_pdf_path
+                }).encode('utf-8'))
+            except Exception as ex:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
+
+        elif self.path == '/api/print/test-print':
+            try:
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                target_printer = payload.get('printerName')
+                if target_printer:
+                    printer.setPrinterName(target_printer)
+                printer.setPageOrientation(QPageLayout.Orientation.Portrait)
+                printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+                printer_name = printer.printerName() or 'Default Printer'
+                is_pdf_virtual = any(k in printer_name.upper() for k in ('PDF', 'XPS', 'ONENOTE', 'PORTPROMPT'))
+                output_pdf_path = None
+                if is_pdf_virtual:
+                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    output_pdf_path = os.path.join(desktop_dir, "PRINTER_TEST_PAGE.pdf")
+                    printer.setOutputFileName(output_pdf_path)
+
+                p = QPainter(printer)
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                p.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+
+                rect = printer.pageRect(QPrinter.Unit.DevicePixel).toRect()
+                p.fillRect(rect, QColor('#FFFFFF'))
+
+                from PyQt6.QtGui import QFont, QPen
+                from datetime import datetime
+
+                # Title
+                f_title = QFont("Segoe UI", 0, QFont.Weight.Bold)
+                f_title.setPixelSize(42)
+                p.setFont(f_title)
+                p.setPen(QPen(QColor('#0f172a')))
+                p.drawText(120, 180, "MODERN ACCOUNTING OS / GLASS-UI")
+
+                f_sub = QFont("Segoe UI", 0, QFont.Weight.DemiBold)
+                f_sub.setPixelSize(26)
+                p.setFont(f_sub)
+                p.setPen(QPen(QColor('#0284c7')))
+                p.drawText(120, 240, "PyQt6 High-Resolution Native Vector Printer Test Page")
+
+                # Horizontal separator
+                p.setPen(QPen(QColor('#cbd5e1'), 2))
+                p.drawLine(120, 270, 1200, 270)
+
+                # Info block
+                f_body = QFont("Segoe UI", 0, QFont.Weight.Normal)
+                f_body.setPixelSize(22)
+                p.setFont(f_body)
+                p.setPen(QPen(QColor('#334155')))
+                p.drawText(120, 330, f"Target Printer: {printer_name}")
+                p.drawText(120, 380, f"Print Timestamp: {datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}")
+                p.drawText(120, 430, "Spooling Quality: 100% Native Vector Mode (Zero Browser Degradation)")
+                p.drawText(120, 480, "Status: SUCCESS - Direct Python Hardware Spooler Verified")
+
+                p.setPen(QPen(QColor('#10b981'), 3))
+                p.drawLine(120, 520, 1200, 520)
+
+                p.end()
+
+                if output_pdf_path and os.path.exists(output_pdf_path):
+                    try:
+                        os.startfile(output_pdf_path)
+                    except Exception:
+                        pass
+
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'success': True,
+                    'message': f"Test page successfully sent to {printer_name}!",
+                    'printer': printer_name,
+                    'filePath': output_pdf_path
+                }).encode('utf-8'))
+            except Exception as ex:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()

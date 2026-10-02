@@ -48,14 +48,14 @@ export const RightSidebar: React.FC<Props> = ({
   onNextRecord
 }) => {
   const NAV_ITEMS: { key: NavKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'F1', label: 'F1 Bill UI', icon: <Receipt size={13} /> },
-    { key: 'F2', label: 'F2 Bill History', icon: <History size={13} /> },
-    { key: 'F3', label: 'F3 Equation', icon: <Calculator size={13} /> },
-    { key: 'F5', label: 'F5 Party Panel', icon: <Users size={13} /> },
-    { key: 'F6', label: 'F6 Control Panel', icon: <Sliders size={13} /> },
-    { key: 'F8', label: 'F8 Stock', icon: <Package size={13} /> },
-    { key: 'F9', label: 'F9 Ledger', icon: <BookOpen size={13} /> },
-    { key: 'F10', label: 'F10 Settings', icon: <Settings size={13} /> }
+    { key: 'F1', label: 'Bill UI', icon: <Receipt size={13} /> },
+    { key: 'F2', label: 'Bill History', icon: <History size={13} /> },
+    { key: 'F3', label: 'Equation', icon: <Calculator size={13} /> },
+    { key: 'F5', label: 'Party Panel', icon: <Users size={13} /> },
+    { key: 'F6', label: 'Control Panel', icon: <Sliders size={13} /> },
+    { key: 'F8', label: 'Stock', icon: <Package size={13} /> },
+    { key: 'F9', label: 'Ledger', icon: <BookOpen size={13} /> },
+    { key: 'F10', label: 'Settings', icon: <Settings size={13} /> }
   ];
 
   return (
@@ -83,17 +83,6 @@ export const RightSidebar: React.FC<Props> = ({
         <span style={{ fontSize: '11px', fontWeight: '700', color: '#a1a1aa', letterSpacing: '0.5px' }}>
           FUNCTION & CONTROLS
         </span>
-
-        <button
-          type="button"
-          onClick={onCloseApp}
-          className="apple-btn apple-btn-danger"
-          style={{ padding: '3px 8px', fontSize: '11px', fontWeight: '700' }}
-          title="Close Software Window"
-        >
-          <X size={12} strokeWidth={2.5} />
-          <span>CLOSE</span>
-        </button>
       </div>
 
       <div>
@@ -133,65 +122,60 @@ export const RightSidebar: React.FC<Props> = ({
             type="button"
             onClick={onSave}
             className="apple-btn apple-btn-success"
-            style={{ justifyContent: 'space-between', padding: '5px 10px', fontSize: '11px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 12px', fontSize: '11px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Save size={12} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Save size={13} />
               <strong>SAVE</strong>
             </span>
-            <span style={{ fontSize: '10px', opacity: 0.8, fontFamily: 'monospace' }}>Ctrl+S</span>
           </button>
 
           <button
             type="button"
             onClick={onCombine}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '5px 10px', fontSize: '11px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 12px', fontSize: '11px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Layers size={12} color="#38bdf8" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Layers size={13} color="#38bdf8" />
               <span>COMBINE</span>
             </span>
-            <span style={{ fontSize: '10px', opacity: 0.6, fontFamily: 'monospace' }}>Ctrl+Shift+D</span>
           </button>
 
           <button
             type="button"
             onClick={onOpenNote}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '5px 10px', fontSize: '11px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 12px', fontSize: '11px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FileEdit size={12} color="#fbbf24" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileEdit size={13} color="#fbbf24" />
               <span>ADD/EDIT NOTE</span>
             </span>
-            <span style={{ fontSize: '10px', opacity: 0.6, fontFamily: 'monospace' }}>Alt+N</span>
           </button>
 
           <button
             type="button"
             onClick={onPartyCode}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '5px 10px', fontSize: '11px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 12px', fontSize: '11px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Key size={12} color="#a855f7" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Key size={13} color="#a855f7" />
               <span>PARTY CODE</span>
             </span>
-            <span style={{ fontSize: '10px', opacity: 0.6, fontFamily: 'monospace' }}>Ctrl+P</span>
           </button>
 
           <button
             type="button"
             onClick={onRecheck}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '5px 10px', fontSize: '11px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 12px', fontSize: '11px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <CheckCircle size={12} color="#34c759" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle size={13} color="#34c759" />
               <span>RECHECK</span>
             </span>
-            <span style={{ fontSize: '10px', opacity: 0.6, fontFamily: 'monospace' }}>Alt+K</span>
           </button>
         </div>
       </div>
@@ -205,48 +189,45 @@ export const RightSidebar: React.FC<Props> = ({
             type="button"
             onClick={onPrintEstimate}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '4px 8px', fontSize: '10.5px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 8px', fontSize: '10.5px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <FileText size={11} color="#60a5fa" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FileText size={12} color="#60a5fa" />
               <span>ESTIMATE</span>
             </span>
-            <span style={{ fontSize: '9px', opacity: 0.5 }}>^E</span>
           </button>
 
           <button
             type="button"
             onClick={onPrintSummary}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '4px 8px', fontSize: '10.5px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 8px', fontSize: '10.5px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <BarChart3 size={11} color="#f472b6" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <BarChart3 size={12} color="#f472b6" />
               <span>SUMMARY</span>
             </span>
-            <span style={{ fontSize: '9px', opacity: 0.5 }}>Alt+S</span>
           </button>
 
           <button
             type="button"
             onClick={onPrintSlip}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'space-between', padding: '4px 8px', fontSize: '10.5px', gridColumn: 'span 2', background: 'rgba(0, 113, 227, 0.18)', borderColor: 'rgba(0, 113, 227, 0.4)' }}
+            style={{ justifyContent: 'center', padding: '6px 8px', fontSize: '10.5px', gridColumn: 'span 2', background: 'rgba(0, 113, 227, 0.18)', borderColor: 'rgba(0, 113, 227, 0.4)' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#38bdf8', fontWeight: 600 }}>
-              <Printer size={12} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#38bdf8', fontWeight: 600 }}>
+              <Printer size={13} />
               <span>PRINT SLIP</span>
             </span>
-            <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'monospace' }}>Ctrl+L</span>
           </button>
 
           <button
             type="button"
             onClick={onExportJson}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'flex-start', padding: '4px 8px', fontSize: '10px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 8px', fontSize: '10px' }}
           >
-            <Code size={11} color="#fb923c" />
+            <Code size={12} color="#fb923c" />
             <span>JSON EXP/IMP</span>
           </button>
 
@@ -254,9 +235,9 @@ export const RightSidebar: React.FC<Props> = ({
             type="button"
             onClick={onPasteJson}
             className="apple-btn apple-btn-glass"
-            style={{ justifyContent: 'flex-start', padding: '4px 8px', fontSize: '10px' }}
+            style={{ justifyContent: 'flex-start', padding: '6px 8px', fontSize: '10px' }}
           >
-            <ClipboardPaste size={11} color="#a3e635" />
+            <ClipboardPaste size={12} color="#a3e635" />
             <span>PASTE JSON</span>
           </button>
         </div>
@@ -272,20 +253,18 @@ export const RightSidebar: React.FC<Props> = ({
               type="button"
               onClick={onSummaryTool}
               className="apple-btn apple-btn-glass"
-              style={{ justifyContent: 'space-between', padding: '4px 8px', fontSize: '10.5px' }}
+              style={{ justifyContent: 'flex-start', padding: '6px 8px', fontSize: '10.5px' }}
             >
               <span>SUMMARY</span>
-              <span style={{ fontSize: '9px', opacity: 0.5 }}>Ctrl+G</span>
             </button>
 
             <button
               type="button"
               onClick={onLoadLatest}
               className="apple-btn apple-btn-glass"
-              style={{ justifyContent: 'space-between', padding: '4px 8px', fontSize: '10.5px' }}
+              style={{ justifyContent: 'flex-start', padding: '6px 8px', fontSize: '10.5px' }}
             >
               <span>LOAD LATEST</span>
-              <span style={{ fontSize: '9px', opacity: 0.5 }}>Alt+P</span>
             </button>
           </div>
 
@@ -294,19 +273,18 @@ export const RightSidebar: React.FC<Props> = ({
             onClick={onSpeakSelection}
             className="apple-btn apple-btn-glass"
             style={{ 
-              justifyContent: 'space-between', 
-              padding: '5px 10px', 
+              justifyContent: 'flex-start', 
+              padding: '6px 12px', 
               fontSize: '11px',
               background: 'rgba(168, 85, 247, 0.15)',
               borderColor: 'rgba(168, 85, 247, 0.35)',
               color: '#c084fc'
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Volume2 size={12} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Volume2 size={13} />
               <span>SPEAK SELECTION</span>
             </span>
-            <span style={{ fontSize: '10px', opacity: 0.7, fontFamily: 'monospace' }}>Ctrl+K</span>
           </button>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '2px' }}>

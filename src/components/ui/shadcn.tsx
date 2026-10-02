@@ -822,10 +822,13 @@ export interface PaginationProps {
   totalCount: number;
   pageSize: number;
   currentPage: number;
-  onPageChange: (page: number) => void;
+  onPageChange: (page: number, targetRow?: 'first' | 'last') => void;
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
   selectedCount?: number;
+  idPrefix?: string;
+  onFocusTableLastRow?: () => void;
+  onFocusTableFirstRow?: () => void;
   style?: React.CSSProperties;
 }
 
@@ -837,6 +840,9 @@ export const Pagination: React.FC<PaginationProps> = ({
   onPageSizeChange,
   pageSizeOptions = [10, 25, 50, 100],
   selectedCount = 0,
+  idPrefix = 'pagination',
+  onFocusTableLastRow,
+  onFocusTableFirstRow,
   style
 }) => {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -845,11 +851,44 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
 
+  const handleBtnKeyDown = (key: string, disabled: boolean, onClick: () => void, e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+      return;
+    }
+
+    if (key === 'next') {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        onFocusTableLastRow?.();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevEl = document.getElementById(`${idPrefix}-prev`) as HTMLButtonElement | null;
+        if (prevEl && !prevEl.disabled) prevEl.focus();
+      }
+    } else if (key === 'prev') {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        onFocusTableFirstRow?.();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const nextEl = document.getElementById(`${idPrefix}-next`) as HTMLButtonElement | null;
+        if (nextEl && !nextEl.disabled) nextEl.focus();
+      }
+    }
+  };
+
   const navBtn = (key: string, disabled: boolean, onClick: () => void, title: string, icon: React.ReactNode) => (
     <button
+      id={`${idPrefix}-${key}`}
       type="button"
+      tabIndex={disabled ? -1 : 0}
       disabled={disabled}
       onClick={onClick}
+      onKeyDown={(e) => handleBtnKeyDown(key, disabled, onClick, e)}
       onMouseEnter={() => setHoveredBtn(key)}
       onMouseLeave={() => setHoveredBtn(null)}
       title={title}
@@ -869,6 +908,16 @@ export const Pagination: React.FC<PaginationProps> = ({
         transition: 'all 0.12s ease',
         padding: 0,
         flexShrink: 0
+      }}
+      onFocus={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.borderColor = '#38bdf8';
+          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(56, 189, 248, 0.35)';
+        }
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = hoveredBtn === key && !disabled ? '#52525b' : '#27272a';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
       {icon}
@@ -921,14 +970,27 @@ export const Pagination: React.FC<PaginationProps> = ({
         <span style={{ fontSize: '12px', color: '#52525b', marginRight: '6px' }}>
           Page {currentPage} of {totalPages}
         </span>
-        {navBtn('first', currentPage === 1, () => onPageChange(1), 'First page', <ChevronsLeft size={13} />)}
-        {navBtn('prev', currentPage === 1, () => onPageChange(currentPage - 1), 'Previous page', <ChevronLeft size={13} />)}
-        {navBtn('next', currentPage === totalPages, () => onPageChange(currentPage + 1), 'Next page', <ChevronRight size={13} />)}
-        {navBtn('last', currentPage === totalPages, () => onPageChange(totalPages), 'Last page', <ChevronsRight size={13} />)}
+        {navBtn('first', currentPage === 1, () => onPageChange(1, 'first'), 'First page', <ChevronsLeft size={13} />)}
+        {navBtn('prev', currentPage === 1, () => onPageChange(currentPage - 1, 'last'), 'Previous page', <ChevronLeft size={13} />)}
+        {navBtn('next', currentPage === totalPages, () => onPageChange(currentPage + 1, 'first'), 'Next page', <ChevronRight size={13} />)}
+        {navBtn('last', currentPage === totalPages, () => onPageChange(totalPages, 'last'), 'Last page', <ChevronsRight size={13} />)}
       </div>
     </div>
   );
 };
 Pagination.displayName = 'Pagination';
+
+// =========================================================================
+// 12. DATE PICKER COMPONENTS (ui.shadcn.com/docs/components/date-picker)
+// =========================================================================
+export {
+  ShadcnDatePicker as DatePicker,
+  ShadcnDateRangePicker as DateRangePicker
+} from '../common/ShadcnDatePicker';
+export type {
+  ShadcnDatePickerProps as DatePickerProps,
+  ShadcnDateRangePickerProps as DateRangePickerProps
+} from '../common/ShadcnDatePicker';
+
 
 

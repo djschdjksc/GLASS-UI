@@ -143,6 +143,24 @@ export async function deleteConversion(id: string): Promise<void> {
   await dbDelete(`/api/db/conversions/${id}`);
 }
 
+// ─── Control Groups (Manage Groups) ──────────────────────────────────────────
+
+export async function getControlGroups(): Promise<any[]> {
+  return dbGet('/api/db/groups');
+}
+
+export async function saveControlGroup(group: any): Promise<void> {
+  await dbPost('/api/db/groups', group);
+}
+
+export async function deleteControlGroup(id: string): Promise<void> {
+  await dbDelete(`/api/db/groups/${id}`);
+}
+
+export async function saveControlGroupsBulk(groups: any[]): Promise<void> {
+  await dbPost('/api/db/groups/bulk', groups);
+}
+
 // ─── Stock ────────────────────────────────────────────────────────────────────
 
 export async function getStockItems(): Promise<any[]> {

@@ -93,5 +93,6 @@ export interface AppPreferences {
   glassOpacity: number;
   autoSyncIntervalMs: number;
   serverEndpointUrl: string;
+  defaultPrinter?: string;
   columnWidths: Record<string, number>;
 }

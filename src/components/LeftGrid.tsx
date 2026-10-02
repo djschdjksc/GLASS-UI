@@ -7,6 +7,7 @@ import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History, FileSpreadsheet } from 'lucide-react';
 import { downloadCSV } from '../utils/exportCsv';
+import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from 'antd';
 
@@ -777,6 +778,32 @@ export const LeftGrid: React.FC<Props> = ({
     }
   };
 
+  const rawCsvColumns: CsvColumnDef<any>[] = useMemo(() => [
+    { header: 'Item Name', key: 'name', sampleValue: 'Aluminium Section 6063 T6', required: true },
+    ...(hasPartyCodeCol ? [{ header: 'Party Code', key: 'partyCode', sampleValue: 'CUST-01' }] : []),
+    { header: '10 FT Qty', key: 'qty', sampleValue: 20 },
+    { header: 'U-Cap', key: 'uCap', sampleValue: 4 },
+    { header: 'L-Cap', key: 'lCap', sampleValue: 4 }
+  ], [hasPartyCodeCol]);
+
+  const handleImportRawItems = (imported: any[], mode: 'append' | 'replace') => {
+    const valid = imported.filter(r => r.name && String(r.name).trim());
+    if (valid.length === 0) {
+      onToast('No valid item rows found in CSV', 'warning');
+      return;
+    }
+    const startRow = mode === 'replace' ? 0 : items.filter(x => x.name && x.name.trim()).length;
+    const lines = valid.map(r => [
+      String(r.name).trim(),
+      ...(hasPartyCodeCol ? [r.partyCode ? String(r.partyCode).trim() : ''] : []),
+      String(Number(r.qty) || 0),
+      String(Number(r.uCap) || 0),
+      String(Number(r.lCap) || 0)
+    ]);
+    onBulkPaste(lines, startRow, 0);
+    onToast(`Successfully imported ${valid.length} raw items!`, 'success');
+  };
+
   const executeGridPaste = (text: string, startR: number, startC: number) => {
     if (!text || !text.trim()) return;
 
@@ -1202,16 +1229,15 @@ export const LeftGrid: React.FC<Props> = ({
             <ClipboardPaste size={13} />
           </button>
 
-          {/* Download CSV / Excel */}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px', color: '#10b981' }}
-            title="Download Raw Items in CSV (Excel)"
-          >
-            <FileSpreadsheet size={14} />
-          </button>
+          {/* Universal Excel & CSV Data Center */}
+          <ExcelCsvActions<any>
+            entityName="Raw Materials"
+            filenamePrefix="Raw_Items"
+            columns={rawCsvColumns}
+            data={filteredItems.filter(x => x.name && x.name.trim() !== '')}
+            onImport={handleImportRawItems}
+            compact={true}
+          />
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (

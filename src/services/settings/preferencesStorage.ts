@@ -16,6 +16,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   glassOpacity: 0.75,
   autoSyncIntervalMs: 8000,
   serverEndpointUrl: 'http://localhost:8080/api/v1/sync',
+  defaultPrinter: '',
   columnWidths: {
     leftTable_name: 200,
     leftTable_qty: 65,

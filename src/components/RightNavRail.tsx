@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import type { NavKey } from '../types';
 import { macAudio } from '../utils/macAudio';
 import { 
-  X,
   Receipt, 
   History, 
   Calculator, 
@@ -18,7 +17,7 @@ import {
 interface Props {
   activeTab: NavKey;
   onSelectTab: (tab: NavKey) => void;
-  onCloseApp: () => void;
+  onCloseApp?: () => void;
   onToggleChat?: () => void;
   isChatOpen?: boolean;
   unreadChatCount?: number;
@@ -74,7 +73,7 @@ export const RightNavRail: React.FC<Props> = ({
     return 1;
   };
 
-  const chatBtnIdx = TABS.length + 1; // Index after all tabs
+  const chatBtnIdx = TABS.length; // Index after all tabs
   const chatScale = getScale(chatBtnIdx);
 
   return (
@@ -96,38 +95,9 @@ export const RightNavRail: React.FC<Props> = ({
         position: 'relative'
       }}
     >
-      {/* Close App Button (Index 0) */}
-      <button
-        ref={(el) => { btnRefs.current[0] = el; }}
-        type="button"
-        onMouseEnter={() => {
-          if (lastHoveredIndex !== 0) {
-            macAudio.playHover();
-            setLastHoveredIndex(0);
-          }
-        }}
-        onClick={() => {
-          macAudio.playClick();
-          onCloseApp();
-        }}
-        className="mac-dock-btn"
-        style={{
-          transform: `scale(${getScale(0)}) translateX(${getScale(0) > 1.05 ? -(getScale(0) - 1) * 8 : 0}px)`,
-          zIndex: getScale(0) > 1.25 ? 70 : 10,
-          transition: mouseY === null 
-            ? 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s' 
-            : 'transform 0.08s ease-out, background 0.2s, box-shadow 0.2s'
-        }}
-      >
-        <span className="box-tooltip-left">Close App</span>
-        <X size={17} color="#f87171" />
-      </button>
-
-      <div style={{ width: '28px', height: '1px', background: 'rgba(255, 255, 255, 0.12)', margin: '3px 0' }} />
-
-      {/* Navigation Tabs (Index 1..N) */}
+      {/* Navigation Tabs (Index 0..N-1) */}
       {TABS.map((t, idx) => {
-        const itemIdx = idx + 1;
+        const itemIdx = idx;
         const isActive = activeTab === t.key;
         const scale = getScale(itemIdx);
         const isTarget = scale > 1.25;

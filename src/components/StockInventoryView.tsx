@@ -59,8 +59,11 @@ import {
   Label as ShadcnLabel,
   Separator as ShadcnSeparator,
   Select as ShadcnSelect,
-  Pagination as ShadcnPagination
+  Pagination as ShadcnPagination,
+  DatePicker as ShadcnDatePicker
 } from './ui/shadcn';
+import { useTableKeyboardNavigation } from '../hooks/useTableKeyboardNavigation';
+import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 
 
 // =========================================================================
@@ -273,6 +276,46 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   useEffect(() => { setOutwardPage(1); }, [outwardSearch, outwardTypeFilter]);
   useEffect(() => { setBalancePage(1); }, [balanceSearch, balanceFilter, balanceCategory]);
   useEffect(() => { setBarcodePage(1); }, [barcodeSearch, barcodeCategory]);
+
+  // Selected row index state for Tally Keyboard Navigation
+  const [inwardSelectedIndex, setInwardSelectedIndex] = useState(0);
+  const [outwardSelectedIndex, setOutwardSelectedIndex] = useState(0);
+  const [balanceSelectedIndex, setBalanceSelectedIndex] = useState(0);
+  const [barcodeSelectedIndex, setBarcodeSelectedIndex] = useState(0);
+
+  const inwardTableWrapperRef = useRef<HTMLDivElement>(null);
+  const outwardTableWrapperRef = useRef<HTMLDivElement>(null);
+  const balanceTableWrapperRef = useRef<HTMLDivElement>(null);
+  const barcodeTableWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll selected row into view
+  useEffect(() => {
+    if (activeTab === 'inward') {
+      const el = document.getElementById(`inward-row-${inwardSelectedIndex}`);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [inwardSelectedIndex, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'outward') {
+      const el = document.getElementById(`outward-row-${outwardSelectedIndex}`);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [outwardSelectedIndex, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'balance') {
+      const el = document.getElementById(`balance-row-${balanceSelectedIndex}`);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [balanceSelectedIndex, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'barcode') {
+      const el = document.getElementById(`barcode-row-${barcodeSelectedIndex}`);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [barcodeSelectedIndex, activeTab]);
 
   // --- REPOSITORIES & DATA STORAGE ---
   const [vouchers, setVouchers] = useState<StockVoucher[]>(() => {
@@ -1112,6 +1155,170 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   };
 
   // =========================================================================
+  // KEYBOARD NAVIGATION & PAGINATION HOOKS FOR TABS 2, 3, 4
+  // =========================================================================
+  // Inward filtered & paginated
+  const filteredInwardItems = useMemo(() => {
+    return inwardItems.filter((item) => {
+      const matchType = inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
+      const q = inwardSearch.toLowerCase();
+      const matchSearch = !q || item.voucherId.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q);
+      return matchType && matchSearch;
+    });
+  }, [inwardItems, inwardTypeFilter, inwardSearch]);
+
+  const inwardPageSlice = useMemo(() => {
+    const start = (inwardPage - 1) * inwardPageSize;
+    return filteredInwardItems.slice(start, start + inwardPageSize);
+  }, [filteredInwardItems, inwardPage, inwardPageSize]);
+
+  const inwardKeyNav = useTableKeyboardNavigation({
+    tableId: 'inward',
+    itemCount: inwardPageSlice.length,
+    selectedIndex: inwardSelectedIndex,
+    onSelectIndex: setInwardSelectedIndex,
+    isPaginated: filteredInwardItems.length > inwardPageSize,
+    currentPage: inwardPage,
+    totalPages: Math.max(1, Math.ceil(filteredInwardItems.length / inwardPageSize)),
+    onPageChange: (newPage) => setInwardPage(newPage),
+    onRowSubmit: (idx) => {
+      const item = inwardPageSlice[idx];
+      if (item && item.rawVoucherId !== null) {
+        handleLoadVoucherForEdit(item.rawVoucherId);
+      }
+    },
+    tableContainerRef: inwardTableWrapperRef
+  });
+
+  // Outward filtered & paginated
+  const filteredOutwardItems = useMemo(() => {
+    return outwardItems.filter((item) => {
+      const matchType = outwardTypeFilter === 'ALL TYPES' || item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
+      const q = outwardSearch.toLowerCase();
+      const matchSearch = !q || item.token.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q);
+      return matchType && matchSearch;
+    });
+  }, [outwardItems, outwardTypeFilter, outwardSearch]);
+
+  const outwardPageSlice = useMemo(() => {
+    const start = (outwardPage - 1) * outwardPageSize;
+    return filteredOutwardItems.slice(start, start + outwardPageSize);
+  }, [filteredOutwardItems, outwardPage, outwardPageSize]);
+
+  const outwardKeyNav = useTableKeyboardNavigation({
+    tableId: 'outward',
+    itemCount: outwardPageSlice.length,
+    selectedIndex: outwardSelectedIndex,
+    onSelectIndex: setOutwardSelectedIndex,
+    isPaginated: filteredOutwardItems.length > outwardPageSize,
+    currentPage: outwardPage,
+    totalPages: Math.max(1, Math.ceil(filteredOutwardItems.length / outwardPageSize)),
+    onPageChange: (newPage) => setOutwardPage(newPage),
+    onRowSubmit: (idx) => {
+      const item = outwardPageSlice[idx];
+      if (item && onOpenBillDetails) {
+        onOpenBillDetails(item.billId);
+      }
+    },
+    tableContainerRef: outwardTableWrapperRef
+  });
+
+  // Balance filtered & paginated
+  const filteredBalanceList = useMemo(() => {
+    return stockBalanceList.filter((row) => {
+      const q = balanceSearch.toLowerCase();
+      const matchSearch = !q || row.itemName.toLowerCase().includes(q);
+      const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
+      let matchBal = true;
+      if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
+      if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
+      if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
+      return matchSearch && matchCat && matchBal;
+    });
+  }, [stockBalanceList, balanceSearch, balanceCategory, balanceFilter]);
+
+  const balancePageSlice = useMemo(() => {
+    const start = (balancePage - 1) * balancePageSize;
+    return filteredBalanceList.slice(start, start + balancePageSize);
+  }, [filteredBalanceList, balancePage, balancePageSize]);
+
+  const balanceKeyNav = useTableKeyboardNavigation({
+    tableId: 'balance',
+    itemCount: balancePageSlice.length,
+    selectedIndex: balanceSelectedIndex,
+    onSelectIndex: setBalanceSelectedIndex,
+    isPaginated: filteredBalanceList.length > balancePageSize,
+    currentPage: balancePage,
+    totalPages: Math.max(1, Math.ceil(filteredBalanceList.length / balancePageSize)),
+    onPageChange: (newPage) => setBalancePage(newPage),
+    tableContainerRef: balanceTableWrapperRef
+  });
+
+  // =========================================================================
+  // UNIVERSAL CSV / EXCEL DEFINITIONS & HANDLERS
+  // =========================================================================
+  const voucherItemCsvColumns: CsvColumnDef<StockVoucherItem>[] = useMemo(() => [
+    { header: 'Item Name', key: 'name', sample: 'Aluminium Section 6063 T6', required: true },
+    { header: '10 FT Qty', key: 'qty', sample: 25 },
+    { header: 'U-Cap', key: 'uCap', sample: 5 },
+    { header: 'L-Cap', key: 'lCap', sample: 5 },
+    { header: 'Rate', key: 'price', sample: 420 },
+    { header: 'Total', key: 'total', sample: 10500 }
+  ], []);
+
+  const handleImportVoucherItems = (imported: Partial<StockVoucherItem>[], mode: 'append' | 'replace') => {
+    const validRows = imported
+      .filter(r => r.name && String(r.name).trim() !== '')
+      .map((r, i) => ({
+        id: `row-${Date.now()}-${i}`,
+        name: String(r.name).trim(),
+        qty: Number(r.qty) || 0,
+        uCap: Number(r.uCap) || 0,
+        lCap: Number(r.lCap) || 0,
+        price: Number(r.price) || 0,
+        total: Number(r.total) || ((Number(r.qty) || 0) * (Number(r.price) || 0))
+      }));
+
+    if (validRows.length === 0) {
+      showToast('No valid item rows found in CSV', 'error');
+      return;
+    }
+
+    if (mode === 'replace') {
+      setStockRows(validRows);
+    } else {
+      setStockRows(prev => [...prev.filter(r => r.name && r.name.trim() !== ''), ...validRows]);
+    }
+    showToast(`Loaded ${validRows.length} items into voucher`, 'success');
+  };
+
+  const stockBalanceCsvColumns: CsvColumnDef<StockBalanceRow>[] = useMemo(() => [
+    { header: 'Item Name', key: 'itemName', sample: 'Aluminium Profile 6063', required: true },
+    { header: 'Category', key: 'category', sample: 'PROFILES' },
+    { header: 'Inward Qty', key: 'inwardQty', sample: 100 },
+    { header: 'Outward Qty', key: 'outwardQty', sample: 30 },
+    { header: 'Balance Qty', key: 'balanceQty', sample: 70 },
+    { header: 'Inward U-Cap', key: 'inwardUCap', sample: 10 },
+    { header: 'Outward U-Cap', key: 'outwardUCap', sample: 3 },
+    { header: 'Balance U-Cap', key: 'balanceUCap', sample: 7 },
+    { header: 'Inward L-Cap', key: 'inwardLCap', sample: 10 },
+    { header: 'Outward L-Cap', key: 'outwardLCap', sample: 3 },
+    { header: 'Balance L-Cap', key: 'balanceLCap', sample: 7 },
+    { header: 'Status', key: 'status', sample: 'IN STOCK' }
+  ], []);
+
+  const inwardHistoryCsvColumns: CsvColumnDef<any>[] = useMemo(() => [
+    { header: 'Voucher ID', key: 'voucherId', sample: 'VCH-1001', required: true },
+    { header: 'Voucher Type', key: 'voucherType', sample: 'STOCK VOUCHER' },
+    { header: 'Date', key: 'date', sample: '03/10/2026' },
+    { header: 'Party / Remarks', key: 'party', sample: 'Hindalco Industries' },
+    { header: 'Item Name', key: 'name', sample: 'Aluminium Ingot 6063 Grade' },
+    { header: 'Qty', key: 'qty', sample: 50 },
+    { header: 'U-Cap', key: 'uCap', sample: 10 },
+    { header: 'L-Cap', key: 'lCap', sample: 10 }
+  ], []);
+
+  // =========================================================================
   // TAB 4: STOCK BALANCE TOOLS (EXPORT CSV & PRINT REPORT)
   // =========================================================================
 
@@ -1273,6 +1480,23 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       return matchSearch && matchCat;
     });
   }, [stockBalanceList, barcodeSearch, barcodeCategory]);
+
+  const barcodePageSlice = useMemo(() => {
+    const start = (barcodePage - 1) * barcodePageSize;
+    return filteredBarcodeItems.slice(start, start + barcodePageSize);
+  }, [filteredBarcodeItems, barcodePage, barcodePageSize]);
+
+  const barcodeKeyNav = useTableKeyboardNavigation({
+    tableId: 'barcode',
+    itemCount: barcodePageSlice.length,
+    selectedIndex: barcodeSelectedIndex,
+    onSelectIndex: setBarcodeSelectedIndex,
+    isPaginated: filteredBarcodeItems.length > barcodePageSize,
+    currentPage: barcodePage,
+    totalPages: Math.max(1, Math.ceil(filteredBarcodeItems.length / barcodePageSize)),
+    onPageChange: (newPage) => setBarcodePage(newPage),
+    tableContainerRef: barcodeTableWrapperRef
+  });
 
   // Toggle all checkboxes
   const handleToggleAllBarcode = (field: 'qtyChecked' | 'uCapChecked' | 'lCapChecked', targetState: boolean) => {
@@ -1584,21 +1808,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Date:</span>
-                  <input
-                    type="date"
+                  <ShadcnDatePicker
                     value={voucherDate}
-                    onChange={(e) => setVoucherDate(e.target.value)}
-                    style={{
-                      height: '32px',
-                      background: '#09090b',
-                      border: '1px solid #27272a',
-                      color: '#f4f4f5',
-                      padding: '0 8px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      outline: 'none',
-                      fontFamily: 'inherit'
-                    }}
+                    onChange={(val) => setVoucherDate(val)}
+                    size="sm"
+                    placeholder="Voucher Date"
                   />
                 </div>
 
@@ -2562,6 +2776,15 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
               {/* Right: Actions */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Universal Excel/CSV Export, Import & Template */}
+                <ExcelCsvActions<StockVoucherItem>
+                  title="Inward Voucher Items"
+                  filenamePrefix="Inward_Voucher_Items"
+                  data={stockRows.filter(r => r.name && r.name.trim() !== '')}
+                  columns={voucherItemCsvColumns}
+                  onImport={handleImportVoucherItems}
+                />
+
                 <ShadcnButton
                   type="button"
                   variant="outline"
@@ -2697,17 +2920,30 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               >
                 Clear
               </ShadcnButton>
+
+              {/* Universal Excel/CSV Export, Import & Template */}
+              <ExcelCsvActions<any>
+                title="Inward History"
+                filenamePrefix="Stock_Inward_History"
+                data={filteredInwardItems}
+                columns={inwardHistoryCsvColumns}
+              />
             </div>
 
             {/* History Table */}
             <div 
+              id="inward-wrapper"
+              ref={inwardTableWrapperRef}
+              tabIndex={0}
+              onKeyDown={inwardKeyNav.handleKeyDown}
               style={{
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
                 background: '#09090b',
                 border: '1px solid #27272a',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                outline: 'none'
               }}
             >
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -2725,19 +2961,16 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                    const filtered = inwardItems.filter((item) => {
-                      const matchType = inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
-                      const q = inwardSearch.toLowerCase();
-                      const matchSearch = !q || item.voucherId.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q);
-                      return matchType && matchSearch;
-                    });
-                    const totalFiltered = filtered.length;
-                    const pageStart = (inwardPage - 1) * inwardPageSize;
-                    const pageSlice = filtered.slice(pageStart, pageStart + inwardPageSize);
-                    return pageSlice.map((item, idx) => (
+                  {inwardPageSlice.map((item, idx) => {
+                    const isSelected = inwardSelectedIndex === idx;
+                    return (
                       <tr
                         key={item.id}
+                        id={`inward-row-${idx}`}
+                        onClick={() => {
+                          setInwardSelectedIndex(idx);
+                          macAudio.playClick();
+                        }}
                         onDoubleClick={() => {
                           if (item.rawVoucherId !== null) {
                             handleLoadVoucherForEdit(item.rawVoucherId);
@@ -2745,7 +2978,8 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         }}
                         style={{
                           borderBottom: '1px solid #27272a',
-                          background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent',
+                          background: isSelected ? '#27272a' : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                          borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
                           cursor: item.rawVoucherId !== null ? 'pointer' : 'default',
                           transition: 'background-color 0.15s ease'
                         }}
@@ -2786,22 +3020,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           )}
                         </td>
                       </tr>
-                    ));
-                  })()}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
             {/* Inward Pagination */}
             <ShadcnPagination
-              totalCount={inwardItems.filter((item) => {
-                const matchType = inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
-                const q = inwardSearch.toLowerCase();
-                return matchType && (!q || item.voucherId.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q));
-              }).length}
+              idPrefix={inwardKeyNav.paginationIdPrefix}
+              totalCount={filteredInwardItems.length}
               pageSize={inwardPageSize}
               currentPage={inwardPage}
-              onPageChange={setInwardPage}
+              onPageChange={inwardKeyNav.handlePageChange}
               onPageSizeChange={(s) => { setInwardPageSize(s); setInwardPage(1); }}
+              onFocusTableFirstRow={() => inwardKeyNav.focusTable('first')}
+              onFocusTableLastRow={() => inwardKeyNav.focusTable('last')}
             />
           </div>
         )}
@@ -2884,13 +3117,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
             {/* Outward Table */}
             <div 
+              id="outward-wrapper"
+              ref={outwardTableWrapperRef}
+              tabIndex={0}
+              onKeyDown={outwardKeyNav.handleKeyDown}
               style={{
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
                 background: '#09090b',
                 border: '1px solid #27272a',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                outline: 'none'
               }}
             >
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -2908,20 +3146,24 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                    const filtered = outwardItems.filter((item) => {
-                      const matchType = outwardTypeFilter === 'ALL TYPES' || item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
-                      const q = outwardSearch.toLowerCase();
-                      const matchSearch = !q || item.token.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q);
-                      return matchType && matchSearch;
-                    });
-                    const pageStart = (outwardPage - 1) * outwardPageSize;
-                    const pageSlice = filtered.slice(pageStart, pageStart + outwardPageSize);
-                    return pageSlice.map((item, idx) => (
+                  {outwardPageSlice.map((item, idx) => {
+                    const isSelected = outwardSelectedIndex === idx;
+                    return (
                       <tr
                         key={item.id}
+                        id={`outward-row-${idx}`}
+                        onClick={() => {
+                          setOutwardSelectedIndex(idx);
+                          macAudio.playClick();
+                        }}
                         onDoubleClick={() => { if (onOpenBillDetails) { onOpenBillDetails(item.billId); } }}
-                        style={{ borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent', cursor: 'pointer', transition: 'background-color 0.15s ease' }}
+                        style={{
+                          borderBottom: '1px solid #27272a',
+                          background: isSelected ? '#27272a' : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                          borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.15s ease'
+                        }}
                         title="Double-click to open bill details"
                       >
                         <td style={{ padding: '8px 10px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>#{item.token}</td>
@@ -2942,22 +3184,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           </ShadcnButton>
                         </td>
                       </tr>
-                    ));
-                  })()}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
             {/* Outward Pagination */}
             <ShadcnPagination
-              totalCount={outwardItems.filter((item) => {
-                const matchType = outwardTypeFilter === 'ALL TYPES' || item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
-                const q = outwardSearch.toLowerCase();
-                return matchType && (!q || item.token.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q));
-              }).length}
+              idPrefix={outwardKeyNav.paginationIdPrefix}
+              totalCount={filteredOutwardItems.length}
               pageSize={outwardPageSize}
               currentPage={outwardPage}
-              onPageChange={setOutwardPage}
+              onPageChange={outwardKeyNav.handlePageChange}
               onPageSizeChange={(s) => { setOutwardPageSize(s); setOutwardPage(1); }}
+              onFocusTableFirstRow={() => outwardKeyNav.focusTable('first')}
+              onFocusTableLastRow={() => outwardKeyNav.focusTable('last')}
             />
           </div>
         )}
@@ -3100,23 +3341,13 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
               {/* Action Buttons: Export CSV & Print */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShadcnButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportStockCsv}
-                  style={{
-                    height: '32px',
-                    fontSize: '12px',
-                    borderColor: '#27272a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <FileSpreadsheet size={13} />
-                  <span>Export CSV</span>
-                </ShadcnButton>
+                {/* Universal Excel/CSV Export, Import & Template */}
+                <ExcelCsvActions<StockBalanceRow>
+                  title="Stock Balance"
+                  filenamePrefix="Stock_Balance"
+                  data={stockBalanceList}
+                  columns={stockBalanceCsvColumns}
+                />
 
                 <ShadcnButton
                   type="button"
@@ -3141,13 +3372,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
             {/* Multi-Column Grouped Table (10 Columns Exact Schema) */}
             <div 
+              id="balance-wrapper"
+              ref={balanceTableWrapperRef}
+              tabIndex={0}
+              onKeyDown={balanceKeyNav.handleKeyDown}
               style={{
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
                 background: '#09090b',
                 border: '1px solid #27272a',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                outline: 'none'
               }}
             >
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -3187,23 +3423,23 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                    const filtered = stockBalanceList.filter((row) => {
-                      const q = balanceSearch.toLowerCase();
-                      const matchSearch = !q || row.itemName.toLowerCase().includes(q);
-                      const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
-                      let matchBal = true;
-                      if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
-                      if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
-                      if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
-                      return matchSearch && matchCat && matchBal;
-                    });
-                    const pageStart = (balancePage - 1) * balancePageSize;
-                    const pageSlice = filtered.slice(pageStart, pageStart + balancePageSize);
-                    return pageSlice.map((row, idx) => (
+                  {balancePageSlice.map((row, idx) => {
+                    const isSelected = balanceSelectedIndex === idx;
+                    return (
                       <tr 
                         key={row.itemName}
-                        style={{ borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent', transition: 'background-color 0.15s ease' }}
+                        id={`balance-row-${idx}`}
+                        onClick={() => {
+                          setBalanceSelectedIndex(idx);
+                          macAudio.playClick();
+                        }}
+                        style={{
+                          borderBottom: '1px solid #27272a',
+                          background: isSelected ? '#27272a' : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                          borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.15s ease'
+                        }}
                       >
                         {/* Item Name */}
                         <td style={{ padding: '8px 12px', color: '#f4f4f5', fontWeight: 500, borderRight: '1px solid #27272a', fontSize: '12px' }}>
@@ -3247,27 +3483,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           </ShadcnBadge>
                         </td>
                       </tr>
-                    ));
-                  })()}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
             {/* Balance Pagination */}
             <ShadcnPagination
-              totalCount={stockBalanceList.filter((row) => {
-                const q = balanceSearch.toLowerCase();
-                const matchSearch = !q || row.itemName.toLowerCase().includes(q);
-                const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
-                let matchBal = true;
-                if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
-                if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
-                if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
-                return matchSearch && matchCat && matchBal;
-              }).length}
+              idPrefix={balanceKeyNav.paginationIdPrefix}
+              totalCount={filteredBalanceList.length}
               pageSize={balancePageSize}
               currentPage={balancePage}
-              onPageChange={setBalancePage}
+              onPageChange={balanceKeyNav.handlePageChange}
               onPageSizeChange={(s) => { setBalancePageSize(s); setBalancePage(1); }}
+              onFocusTableFirstRow={() => balanceKeyNav.focusTable('first')}
+              onFocusTableLastRow={() => balanceKeyNav.focusTable('last')}
             />
           </div>
         )}
@@ -3386,13 +3616,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
             {/* Barcode Item Configuration Table */}
             <div 
+              id="barcode-wrapper"
+              ref={barcodeTableWrapperRef}
+              tabIndex={0}
+              onKeyDown={barcodeKeyNav.handleKeyDown}
               style={{
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
                 background: '#09090b',
                 border: '1px solid #27272a',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                outline: 'none'
               }}
             >
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -3410,9 +3645,8 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBarcodeItems
-                    .slice((barcodePage - 1) * barcodePageSize, barcodePage * barcodePageSize)
-                    .map((item, idx) => {
+                  {barcodePageSlice.map((item, idx) => {
+                    const isSelected = barcodeSelectedIndex === idx;
                     const st = barcodeStates[item.itemName] || {
                       itemName: item.itemName,
                       category: item.category,
@@ -3429,7 +3663,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     return (
                       <tr 
                         key={item.itemName}
-                        style={{ borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent', transition: 'background-color 0.15s ease' }}
+                        id={`barcode-row-${idx}`}
+                        onClick={() => {
+                          setBarcodeSelectedIndex(idx);
+                          macAudio.playClick();
+                        }}
+                        style={{
+                          borderBottom: '1px solid #27272a',
+                          background: isSelected ? '#27272a' : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                          borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.15s ease'
+                        }}
                       >
                         <td style={{ padding: '8px 12px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.itemName}</td>
 
@@ -3517,11 +3762,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
             </div>
             {/* Barcode Pagination */}
             <ShadcnPagination
+              idPrefix={barcodeKeyNav.paginationIdPrefix}
               totalCount={filteredBarcodeItems.length}
               pageSize={barcodePageSize}
               currentPage={barcodePage}
-              onPageChange={setBarcodePage}
+              onPageChange={barcodeKeyNav.handlePageChange}
               onPageSizeChange={(s) => { setBarcodePageSize(s); setBarcodePage(1); }}
+              onFocusTableFirstRow={() => barcodeKeyNav.focusTable('first')}
+              onFocusTableLastRow={() => barcodeKeyNav.focusTable('last')}
             />
           </div>
         )}

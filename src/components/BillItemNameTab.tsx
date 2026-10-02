@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { macAudio } from '../utils/macAudio';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Tag, Hash, FileText, Layers, Banknote } from 'lucide-react';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
 import type { BillNameMap } from '../data/billMapsData';
 import UnsavedChangesModal from './UnsavedChangesModal';
+import { Pagination as ShadcnPagination } from './ui/shadcn';
 
 const DEFAULT_BILL_COLS = { srNo: 40, on: 45, shortCode: 150, printName: 300, rate: 90, category: 140, actions: 50 };
 
@@ -23,6 +24,10 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [rowToDelete, setRowToDelete] = useState<{ item: BillNameMap; index: number } | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
 
   const [colWidths, setColWidths] = useState(() => {
     try {
@@ -158,6 +163,27 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
       item.category.toLowerCase().includes(search.toLowerCase())
     );
 
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedFiltered = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
+
+  // Smoothly scroll selected row into view
+  useEffect(() => {
+    if (selectedIdx !== null) {
+      const el = document.getElementById(`billmap-row-${selectedIdx}`);
+      if (el) {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedIdx]);
+
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
@@ -282,19 +308,41 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
         return;
       }
 
-      if (filtered.length === 0) return;
-      const currentPos = filtered.findIndex(f => f.originalIndex === selectedIdx);
+      if (paginatedFiltered.length === 0) return;
+      const currentPos = paginatedFiltered.findIndex(f => f.originalIndex === selectedIdx);
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         macAudio.playHover();
-        const nextPos = currentPos < filtered.length - 1 ? currentPos + 1 : currentPos;
-        setSelectedIdx(filtered[nextPos].originalIndex);
+        if (currentPos >= 0 && currentPos < paginatedFiltered.length - 1) {
+          setSelectedIdx(paginatedFiltered[currentPos + 1].originalIndex);
+        } else if (currentPos === paginatedFiltered.length - 1) {
+          // Reached last row! Auto-focus Next Page button if available
+          if (currentPage < totalPages) {
+            const nextBtn = document.getElementById('billmap-pagination-next') as HTMLButtonElement | null;
+            if (nextBtn && !nextBtn.disabled) {
+              nextBtn.focus();
+              macAudio.playPop();
+            }
+          }
+        } else if (currentPos === -1 && paginatedFiltered.length > 0) {
+          setSelectedIdx(paginatedFiltered[0].originalIndex);
+        }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         macAudio.playHover();
-        const prevPos = currentPos > 0 ? currentPos - 1 : 0;
-        setSelectedIdx(filtered[prevPos].originalIndex);
+        if (currentPos > 0) {
+          setSelectedIdx(paginatedFiltered[currentPos - 1].originalIndex);
+        } else if (currentPos === 0) {
+          // Reached first row! Auto-focus Previous Page button if available
+          if (currentPage > 1) {
+            const prevBtn = document.getElementById('billmap-pagination-prev') as HTMLButtonElement | null;
+            if (prevBtn && !prevBtn.disabled) {
+              prevBtn.focus();
+              macAudio.playPop();
+            }
+          }
+        }
       } else if (e.key === 'Delete') {
         e.preventDefault();
         if (selectedIdx !== null && !rowToDelete) {
@@ -306,7 +354,7 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filtered, selectedIdx, editingIdx, maps, rowToDelete]);
+  }, [paginatedFiltered, selectedIdx, editingIdx, maps, rowToDelete, currentPage, totalPages]);
 
   useEffect(() => {
     if (onAddRef) {
@@ -369,13 +417,15 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
             </tr>
           </thead>
           <tbody>
-            {filtered.map(({ item: m, originalIndex }, idx) => {
+            {paginatedFiltered.map(({ item: m, originalIndex }, idx) => {
               const isSelected = selectedIdx === originalIndex;
               const isEditing = editingIdx === originalIndex;
 
               return (
                 <tr 
                   key={m.id || originalIndex} 
+                  id={`billmap-row-${originalIndex}`}
+                  data-row-index={idx}
                   style={{
                     height: '28px',
                     borderBottom: '1px solid #27272a',
@@ -517,6 +567,45 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Shadcn Pagination Footer */}
+      {filtered.length > 0 && (
+        <ShadcnPagination
+          idPrefix="billmap-pagination"
+          totalCount={filtered.length}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          onPageChange={(p, targetRow) => {
+            setCurrentPage(p);
+            setTimeout(() => {
+              const start = (p - 1) * pageSize;
+              const slice = filtered.slice(start, start + pageSize);
+              if (slice.length > 0) {
+                const targetIdx = targetRow === 'last' ? slice.length - 1 : 0;
+                setSelectedIdx(slice[targetIdx].originalIndex);
+                document.getElementById(`billmap-row-${slice[targetIdx].originalIndex}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
+            }, 50);
+          }}
+          onPageSizeChange={(s) => {
+            setPageSize(s);
+            setCurrentPage(1);
+          }}
+          pageSizeOptions={[25, 50, 100, 200]}
+          onFocusTableFirstRow={() => {
+            if (paginatedFiltered.length > 0) {
+              setSelectedIdx(paginatedFiltered[0].originalIndex);
+              document.getElementById(`billmap-row-${paginatedFiltered[0].originalIndex}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          }}
+          onFocusTableLastRow={() => {
+            if (paginatedFiltered.length > 0) {
+              setSelectedIdx(paginatedFiltered[paginatedFiltered.length - 1].originalIndex);
+              document.getElementById(`billmap-row-${paginatedFiltered[paginatedFiltered.length - 1].originalIndex}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          }}
+        />
+      )}
 
       {rowToDelete && (
         <UnsavedChangesModal

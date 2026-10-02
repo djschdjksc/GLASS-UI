@@ -36,6 +36,7 @@ import { useDatabase } from '../context/DatabaseContext';
 import { macAudio } from '../utils/macAudio';
 import type { BillRecord } from '../services/db/schema';
 import { downloadCSV } from '../utils/exportCsv';
+import { DateRangePicker } from './ui/shadcn';
 
 interface Props {
   themeMode?: 'dark' | 'glass';
@@ -102,7 +103,10 @@ export const ShadcnDashboardView: React.FC<Props> = ({
   const [overviewChartMode, setOverviewChartMode] = useState<'bar' | 'flow'>('bar');
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
   const [hoveredWaveIndex, setHoveredWaveIndex] = useState<number | null>(null);
-  const [dateRangeText, setDateRangeText] = useState('Jan 20, 2026 - Feb 09, 2026');
+  const [dashboardDateRange, setDashboardDateRange] = useState<{ startDate: string; endDate: string }>({
+    startDate: '2026-01-20',
+    endDate: '2026-02-09'
+  });
   const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -557,32 +561,13 @@ export const ShadcnDashboardView: React.FC<Props> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Date Range Picker Pill */}
-            <button
-              type="button"
-              onClick={() => {
-                setDateRangeText(
-                  dateRangeText.includes('Jan 20') ? 'Oct 01, 2026 - Dec 31, 2026' : 'Jan 20, 2026 - Feb 09, 2026'
-                );
-                macAudio.playClick();
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                borderRadius: '6px',
-                border: `1px solid ${colors.border}`,
-                background: 'transparent',
-                color: colors.foreground,
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: 'pointer'
-              }}
-            >
-              <Calendar size={14} color={colors.mutedForeground} />
-              <span>{dateRangeText}</span>
-            </button>
+            {/* Authentic Shadcn Date Range Picker */}
+            <DateRangePicker
+              startDate={dashboardDateRange.startDate}
+              endDate={dashboardDateRange.endDate}
+              onChange={(range) => setDashboardDateRange(range)}
+              size="default"
+            />
 
             {/* Download Button */}
             <button

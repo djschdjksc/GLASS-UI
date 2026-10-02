@@ -76,6 +76,15 @@ class BillPainter:
             self.full_h = min(h_base + h_items + h_footer, 30000)
             self.H = 2000
             self.margin = 30
+        elif self.d.get("is_equation"):
+            h_base = 350
+            raw_items = self.d.get("items", [])
+            party_count = len(set(str(it.get('party') if isinstance(it, dict) else it[0]) for it in raw_items)) or 1
+            h_items = len(raw_items) * 85 + (party_count * 160)
+            h_footer = 200
+            self.full_h = min(h_base + h_items + h_footer, 30000)
+            self.H = 2000
+            self.margin = 62
             self.cur_y = 20
         else:
             self.H = 2000
@@ -704,16 +713,16 @@ class BillPainter:
             f.setPixelSize(30)
             f.setWeight(QFont.Weight.Bold)
             painter.setFont(f)
-            # Alignment with columns: %, ITEM, PCS, BOXES, MULT, BILL, PRICE, TOTAL
-            # Widths: 110, 280, 110, 110, 150, 150, 150, 230
-            x_pcs = self.margin + 110 + 280
+            # Alignment with cols: [("ITEM NAME", 330), ("PCS", 100), ("BOXES", 90), ("MULT", 100), ("BILL QTY", 140), ("PRICE", 140), ("WEIGHT", 150), ("TOTAL", 240)]
+            painter.drawText(QRect(self.margin, self.cur_y, 330, 60), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, "GRAND TOTAL:")
+            x_pcs = self.margin + 330
             painter.drawText(QRect(x_pcs, self.cur_y, 100, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_pcs:g}")
-            painter.drawText(QRect(x_pcs + 100, self.cur_y, 90, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_boxes:g}")
-            # Total Column
-            x_weight = x_pcs + 100 + 90 + 100 + 140 + 140
+            x_boxes = x_pcs + 100
+            painter.drawText(QRect(x_boxes, self.cur_y, 90, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_boxes:g}")
+            x_weight = self.margin + 330 + 100 + 90 + 100 + 140 + 140
             painter.drawText(QRect(x_weight, self.cur_y, 150, 60), Qt.AlignmentFlag.AlignCenter, f"{self.sum_weight:.2f}")
             x_total = x_weight + 150
-            painter.drawText(QRect(x_total, self.cur_y, 240, 60), Qt.AlignmentFlag.AlignCenter, f"₹ {self.sum_amt:,.2f}")
+            painter.drawText(QRect(x_total, self.cur_y, 240, 60), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, format_indian_currency(self.sum_amt))
 
         elif self.d.get("is_estimate") or self.d.get("is_summary_only"):
             # --- SHARED ALIGNMENT CONFIG (Aligns flush with 1290px tables) ---

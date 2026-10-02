@@ -15,6 +15,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ExternalLink,
   Building,
   AlertTriangle
@@ -24,10 +25,14 @@ import {
   Input as ShadcnInput,
   Badge as ShadcnBadge,
   Card as ShadcnCard,
-  Label as ShadcnLabel
+  Label as ShadcnLabel,
+  DatePicker as ShadcnDatePicker,
+  Pagination as ShadcnPagination
 } from './ui/shadcn';
+import { useTableKeyboardNavigation } from '../hooks/useTableKeyboardNavigation';
 import { macAudio } from '../utils/macAudio';
 import { downloadCSV } from '../utils/exportCsv';
+import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 import { useDatabase } from '../context/DatabaseContext';
 
 export interface LedgerEntry {
@@ -59,7 +64,9 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   const [selectedParty, setSelectedParty] = useState<string>('');
   const [partySearchQuery, setPartySearchQuery] = useState<string>('');
   const [isPartyDropdownOpen, setIsPartyDropdownOpen] = useState<boolean>(false);
+  const [highlightedPartyIndex, setHighlightedPartyIndex] = useState<number>(-1);
   const partyDropdownRef = useRef<HTMLDivElement>(null);
+  const partyListDropdownRef = useRef<HTMLDivElement>(null);
 
   // Date filters
   const [dateFrom, setDateFrom] = useState<string>(() => {
@@ -85,11 +92,17 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   const [tableSearchQuery, setTableSearchQuery] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'SALE BILL' | 'RECEIPT' | 'SALE RETURN'>('ALL');
 
+  // Pagination state
+  const [ledgerPage, setLedgerPage] = useState<number>(1);
+  const [ledgerPageSize, setLedgerPageSize] = useState<number>(50);
+
   const [totalDebit, setTotalDebit] = useState<number>(0);
   const [totalCredit, setTotalCredit] = useState<number>(0);
   const [netBalance, setNetBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  const ledgerTableWrapperRef = useRef<HTMLDivElement>(null);
 
   // Modals
   const [isAddReceiptOpen, setIsAddReceiptOpen] = useState<boolean>(false);
@@ -111,6 +124,11 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   const [selectedPrinter, setSelectedPrinter] = useState<string>('');
   const [isDirectPrinting, setIsDirectPrinting] = useState<boolean>(false);
   const [printStatusMsg, setPrintStatusMsg] = useState<string | null>(null);
+
+  // Reset page when filter or party changes
+  useEffect(() => {
+    setLedgerPage(1);
+  }, [selectedParty, dateFrom, dateTo, tableSearchQuery, typeFilter]);
 
   // Filtered displayed entries based on in-table search & type filter
   const displayedEntries = useMemo(() => {
@@ -135,6 +153,15 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
     return result;
   }, [entries, typeFilter, tableSearchQuery]);
+
+  const totalLedgerPages = Math.max(1, Math.ceil(displayedEntries.length / ledgerPageSize));
+
+  // Current page entries slice
+  const paginatedEntries = useMemo(() => {
+    if (displayedEntries.length <= ledgerPageSize) return displayedEntries;
+    const start = (ledgerPage - 1) * ledgerPageSize;
+    return displayedEntries.slice(start, start + ledgerPageSize);
+  }, [displayedEntries, ledgerPage, ledgerPageSize]);
 
   // Load parties on mount
   useEffect(() => {
@@ -357,6 +384,18 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     }
   }, [selectedParty]);
 
+  // Robust party selection handler with immediate execution
+  const handleSelectParty = useCallback((partyName: string) => {
+    const trimmed = (partyName || '').trim();
+    if (!trimmed) return;
+    macAudio.playClick();
+    setSelectedParty(trimmed);
+    setPartySearchQuery(trimmed);
+    setIsPartyDropdownOpen(false);
+    setHighlightedPartyIndex(-1);
+    loadLedger(trimmed);
+  }, [loadLedger]);
+
   // Clear date filters
   const handleClearFilter = () => {
     macAudio.playClick();
@@ -464,6 +503,70 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     downloadCSV(`Ledger_${selectedParty.replace(/\s+/g, '_')}_${dateFrom}_to_${dateTo}.csv`, headers, rows);
   };
 
+  // CSV Columns definition for Ledger Statement & Receipts
+  const ledgerCsvColumns: CsvColumnDef<LedgerEntry>[] = useMemo(() => [
+    { header: 'Date', key: 'date', sample: '2026-10-03', required: true },
+    { header: 'Type', key: 'type', sample: 'RECEIPT' },
+    { header: 'Voucher No', key: 'voucher', sample: 'REC-101' },
+    { header: 'Particulars', key: 'particulars', sample: 'Payment Received via Bank' },
+    {
+      header: 'Debit (Dr)',
+      key: 'debit',
+      sample: 0,
+      formatter: (v) => Number(v || 0) > 0 ? Number(v).toLocaleString('en-IN') : '',
+      parser: (raw) => Number(String(raw).replace(/[^0-9.-]/g, '')) || 0
+    },
+    {
+      header: 'Credit (Cr)',
+      key: 'credit',
+      sample: 50000,
+      formatter: (v) => Number(v || 0) > 0 ? Number(v).toLocaleString('en-IN') : '',
+      parser: (raw) => Number(String(raw).replace(/[^0-9.-]/g, '')) || 0
+    },
+    {
+      header: 'Balance',
+      key: 'balance',
+      sample: 25000,
+      formatter: (v) => Number(v || 0).toLocaleString('en-IN'),
+      parser: (raw) => Number(String(raw).replace(/[^0-9.-]/g, '')) || 0
+    }
+  ], []);
+
+  const handleImportLedgerReceipts = useCallback(async (imported: Partial<LedgerEntry>[]) => {
+    if (!selectedParty) {
+      alert('Pehle party select karein jisme receipts import karni hai.');
+      return;
+    }
+    let count = 0;
+    for (const row of imported) {
+      const amt = Number(row.credit || (row as any).amount || row.debit || 0);
+      if (amt <= 0) continue;
+      const recDate = row.date ? String(row.date).trim() : new Date().toISOString().split('T')[0];
+      const remarks = row.particulars ? String(row.particulars).trim() : 'Payment Received via CSV';
+
+      try {
+        await fetch(`${DB_API_URL}/api/db/receipts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            party: selectedParty,
+            amount: amt,
+            receipt_date: recDate,
+            remarks: remarks
+          })
+        });
+        count++;
+      } catch (e) {
+        console.error('Error importing receipt:', e);
+      }
+    }
+    if (count > 0) {
+      macAudio.playSuccess();
+      loadLedger();
+      alert(`${count} payment receipts successfully imported into Ledger!`);
+    }
+  }, [selectedParty, loadLedger]);
+
   // Print Preview
   const handleOpenPrintModal = async () => {
     macAudio.playClick();
@@ -556,35 +659,60 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     }
   };
 
-  // Keyboard navigation on ledger rows
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (displayedEntries.length === 0) return;
-    const currentIndex = displayedEntries.findIndex(item => item.id === selectedRowId);
+  const currentSelectedIndex = useMemo(() => {
+    const idx = paginatedEntries.findIndex(e => e.id === selectedRowId);
+    return idx >= 0 ? idx : 0;
+  }, [paginatedEntries, selectedRowId]);
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const nextIndex = Math.min(currentIndex + 1, displayedEntries.length - 1);
-      setSelectedRowId(displayedEntries[nextIndex].id);
-      macAudio.playHover();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prevIndex = Math.max(currentIndex - 1, 0);
-      setSelectedRowId(displayedEntries[prevIndex].id);
-      macAudio.playHover();
-    } else if (e.key === 'Enter') {
-      const current = displayedEntries.find(item => item.id === selectedRowId);
-      if (current && current.type !== 'RECEIPT' && current.type !== 'OPENING BALANCE' && onLoadBillToEditor && current.rawId) {
-        e.preventDefault();
-        onLoadBillToEditor(String(current.rawId));
+  // Unified Tally Keyboard Navigation on ledger rows & pagination
+  const {
+    handleKeyDown: handleTableKeyDown,
+    handlePageChange: handleTablePageChange,
+    focusTable,
+    paginationIdPrefix
+  } = useTableKeyboardNavigation({
+    tableId: 'ledger',
+    itemCount: paginatedEntries.length,
+    selectedIndex: currentSelectedIndex,
+    onSelectIndex: (idx) => {
+      if (paginatedEntries[idx]) {
+        setSelectedRowId(paginatedEntries[idx].id);
       }
-    } else if (e.key === 'Delete') {
-      const current = displayedEntries.find(item => item.id === selectedRowId);
-      if (current && current.type === 'RECEIPT') {
-        e.preventDefault();
-        setReceiptToDelete(current);
+    },
+    isPaginated: displayedEntries.length > ledgerPageSize,
+    currentPage: ledgerPage,
+    totalPages: totalLedgerPages,
+    onPageChange: (newPage, targetRow) => {
+      setLedgerPage(newPage);
+      if (targetRow) {
+        setTimeout(() => focusTable(targetRow), 40);
+      }
+    },
+    onRowSubmit: (idx) => {
+      const item = paginatedEntries[idx];
+      if (item && item.type !== 'RECEIPT' && item.type !== 'OPENING BALANCE' && onLoadBillToEditor && item.rawId) {
+        onLoadBillToEditor(String(item.rawId));
+      }
+    },
+    onRowDelete: (idx) => {
+      const item = paginatedEntries[idx];
+      if (item && item.type === 'RECEIPT') {
+        setReceiptToDelete(item);
+      }
+    },
+    tableContainerRef: ledgerTableWrapperRef
+  });
+
+  // Auto-scroll selected row into view
+  useEffect(() => {
+    if (selectedRowId) {
+      const idx = paginatedEntries.findIndex(e => e.id === selectedRowId);
+      const el = (idx >= 0 ? document.getElementById(`ledger-row-${idx}`) : null) || document.getElementById(`ledger-row-${selectedRowId}`);
+      if (el) {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
-  };
+  }, [selectedRowId, paginatedEntries]);
 
   // Filter parties for autocomplete
   const filteredParties = useMemo(() => {
@@ -620,8 +748,10 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
   return (
     <div
+      id="ledger-wrapper"
+      ref={ledgerTableWrapperRef}
       tabIndex={0}
-      onKeyDown={handleKeyDown}
+      onKeyDown={handleTableKeyDown}
       style={{
         flex: 1,
         display: 'flex',
@@ -657,36 +787,140 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
           {/* Party Searchable Combobox */}
           <div ref={partyDropdownRef} style={{ position: 'relative', width: '280px' }}>
             <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-              <Building size={14} style={{ position: 'absolute', left: '10px', color: '#71717a' }} />
+              <Building size={14} style={{ position: 'absolute', left: '10px', color: '#71717a', pointerEvents: 'none' }} />
               <input
                 id="ledger-party-search"
                 data-search-box="true"
                 type="text"
+                autoComplete="off"
                 placeholder="Search party name..."
                 value={partySearchQuery}
-                onFocus={() => setIsPartyDropdownOpen(true)}
+                onFocus={() => {
+                  setIsPartyDropdownOpen(true);
+                  setHighlightedPartyIndex(-1);
+                }}
                 onChange={(e) => {
                   setPartySearchQuery(e.target.value);
                   setIsPartyDropdownOpen(true);
+                  setHighlightedPartyIndex(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!isPartyDropdownOpen) {
+                      setIsPartyDropdownOpen(true);
+                      setHighlightedPartyIndex(0);
+                    } else {
+                      setHighlightedPartyIndex((prev) => {
+                        const next = Math.min(prev + 1, filteredParties.length - 1);
+                        const el = document.getElementById(`ledger-party-opt-${next}`);
+                        if (el) el.scrollIntoView({ block: 'nearest' });
+                        return next;
+                      });
+                    }
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setHighlightedPartyIndex((prev) => {
+                      const next = Math.max(prev - 1, 0);
+                      const el = document.getElementById(`ledger-party-opt-${next}`);
+                      if (el) el.scrollIntoView({ block: 'nearest' });
+                      return next;
+                    });
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (filteredParties.length > 0) {
+                      const target = (highlightedPartyIndex >= 0 && highlightedPartyIndex < filteredParties.length)
+                        ? filteredParties[highlightedPartyIndex]
+                        : filteredParties[0];
+                      handleSelectParty(target);
+                    } else if (partySearchQuery.trim()) {
+                      handleSelectParty(partySearchQuery.trim());
+                    }
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setIsPartyDropdownOpen(false);
+                  }
                 }}
                 style={{
                   width: '100%',
                   height: '34px',
                   background: '#09090b',
-                  border: '1px solid #27272a',
+                  border: isPartyDropdownOpen ? '1px solid #38bdf8' : '1px solid #27272a',
                   borderRadius: '6px',
                   paddingLeft: '32px',
-                  paddingRight: '10px',
+                  paddingRight: '54px',
                   color: '#f4f4f5',
                   fontSize: '13px',
                   fontWeight: 500,
-                  outline: 'none'
+                  outline: 'none',
+                  boxShadow: isPartyDropdownOpen ? '0 0 0 2px rgba(56, 189, 248, 0.25)' : 'none',
+                  boxSizing: 'border-box'
                 }}
               />
+
+              {/* Action Icons: Clear & Dropdown Toggle */}
+              <div style={{ position: 'absolute', right: '6px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                {partySearchQuery && (
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => {
+                      setPartySearchQuery('');
+                      setIsPartyDropdownOpen(true);
+                      setHighlightedPartyIndex(-1);
+                      document.getElementById('ledger-party-search')?.focus();
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#71717a',
+                      cursor: 'pointer',
+                      padding: '3px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      borderRadius: '4px'
+                    }}
+                    title="Clear search"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => {
+                    setIsPartyDropdownOpen((prev) => !prev);
+                    if (!isPartyDropdownOpen) {
+                      document.getElementById('ledger-party-search')?.focus();
+                    }
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#71717a',
+                    cursor: 'pointer',
+                    padding: '3px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: '4px'
+                  }}
+                  title="Toggle party list"
+                >
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      transition: 'transform 0.15s ease',
+                      transform: isPartyDropdownOpen ? 'rotate(180deg)' : 'none'
+                    }}
+                  />
+                </button>
+              </div>
             </div>
 
-            {isPartyDropdownOpen && filteredParties.length > 0 && (
+            {/* Dropdown List */}
+            {isPartyDropdownOpen && (
               <div
+                ref={partyListDropdownRef}
                 style={{
                   position: 'absolute',
                   top: '38px',
@@ -694,81 +928,85 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                   width: '100%',
                   maxHeight: '260px',
                   overflowY: 'auto',
-                  background: '#18181b',
+                  background: '#09090b',
                   border: '1px solid #27272a',
                   borderRadius: '6px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                  zIndex: 999
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.85)',
+                  zIndex: 999999
                 }}
               >
-                {filteredParties.map(pName => (
+                {filteredParties.length === 0 ? (
                   <div
-                    key={pName}
-                    onClick={() => {
-                      setSelectedParty(pName);
-                      setPartySearchQuery(pName);
-                      setIsPartyDropdownOpen(false);
-                      macAudio.playClick();
-                    }}
                     style={{
-                      padding: '8px 12px',
-                      fontSize: '12.5px',
-                      color: selectedParty === pName ? '#38bdf8' : '#e4e4e7',
-                      background: selectedParty === pName ? '#27272a' : 'transparent',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      borderBottom: '1px solid #27272a'
+                      padding: '10px 12px',
+                      fontSize: '12px',
+                      color: '#71717a',
+                      textAlign: 'center'
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#27272a')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = selectedParty === pName ? '#27272a' : 'transparent')}
                   >
-                    <span>{pName}</span>
-                    {selectedParty === pName && <Check size={14} style={{ color: '#38bdf8' }} />}
+                    No parties match "{partySearchQuery}". Press Enter to search.
                   </div>
-                ))}
+                ) : (
+                  filteredParties.map((pName, idx) => {
+                    const isSelected = selectedParty.toLowerCase() === pName.toLowerCase();
+                    const isHighlighted = idx === highlightedPartyIndex;
+                    return (
+                      <div
+                        id={`ledger-party-opt-${idx}`}
+                        key={pName}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectParty(pName);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectParty(pName);
+                        }}
+                        onMouseEnter={() => setHighlightedPartyIndex(idx)}
+                        style={{
+                          padding: '8px 12px',
+                          fontSize: '12.5px',
+                          color: isSelected ? '#38bdf8' : isHighlighted ? '#ffffff' : '#e4e4e7',
+                          background: isHighlighted ? '#27272a' : isSelected ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          borderBottom: '1px solid #18181b',
+                          userSelect: 'none'
+                        }}
+                      >
+                        <span style={{ fontWeight: isSelected || isHighlighted ? 600 : 400 }}>{pName}</span>
+                        {isSelected && <Check size={14} style={{ color: '#38bdf8' }} />}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             )}
           </div>
 
           {/* Date From */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', color: '#71717a' }}>From:</span>
-            <input
-              type="date"
+            <span style={{ fontSize: '12px', color: '#71717a', fontWeight: 500 }}>From:</span>
+            <ShadcnDatePicker
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              style={{
-                height: '34px',
-                background: '#09090b',
-                border: '1px solid #27272a',
-                borderRadius: '6px',
-                color: '#f4f4f5',
-                fontSize: '12.5px',
-                padding: '0 8px',
-                outline: 'none'
-              }}
+              onChange={(val) => setDateFrom(val)}
+              size="sm"
+              placeholder="From date"
             />
           </div>
 
           {/* Date To */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', color: '#71717a' }}>To:</span>
-            <input
-              type="date"
+            <span style={{ fontSize: '12px', color: '#71717a', fontWeight: 500 }}>To:</span>
+            <ShadcnDatePicker
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              style={{
-                height: '34px',
-                background: '#09090b',
-                border: '1px solid #27272a',
-                borderRadius: '6px',
-                color: '#f4f4f5',
-                fontSize: '12.5px',
-                padding: '0 8px',
-                outline: 'none'
-              }}
+              onChange={(val) => setDateTo(val)}
+              size="sm"
+              placeholder="To date"
             />
           </div>
 
@@ -830,11 +1068,14 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
             <span>Print</span>
           </ShadcnButton>
 
-          {/* Export CSV */}
-          <ShadcnButton variant="outline" size="sm" onClick={handleExportCSV}>
-            <FileSpreadsheet size={13} />
-            <span>Export CSV</span>
-          </ShadcnButton>
+          {/* Universal Excel/CSV Export, Import & Template */}
+          <ExcelCsvActions<LedgerEntry>
+            title="Party Ledger Statement"
+            filenamePrefix={`Ledger_${(selectedParty || 'All').replace(/\s+/g, '_')}`}
+            data={entries}
+            columns={ledgerCsvColumns}
+            onImport={handleImportLedgerReceipts}
+          />
         </div>
       </div>
 
@@ -1172,7 +1413,7 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                   </td>
                 </tr>
               ) : (
-                displayedEntries.map((item) => {
+                paginatedEntries.map((item, idx) => {
                   const isSelected = selectedRowId === item.id;
                   const isOpening = item.type === 'OPENING BALANCE';
                   const isDebit = item.debit > 0;
@@ -1181,6 +1422,10 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                   return (
                     <tr
                       key={item.id}
+                      id={`ledger-row-${idx}`}
+                      data-row-id={item.id}
+                      data-row-index={idx}
+                      data-row-selected={isSelected ? 'true' : undefined}
                       onClick={() => {
                         setSelectedRowId(item.id);
                         macAudio.playClick();
@@ -1419,6 +1664,25 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
             </div>
           </div>
         </div>
+
+        {/* Shadcn Pagination Footer */}
+        {displayedEntries.length > 0 && (
+          <ShadcnPagination
+            idPrefix={paginationIdPrefix}
+            totalCount={displayedEntries.length}
+            pageSize={ledgerPageSize}
+            currentPage={ledgerPage}
+            onPageChange={handleTablePageChange}
+            onPageSizeChange={(sz) => {
+              setLedgerPageSize(sz);
+              setLedgerPage(1);
+            }}
+            pageSizeOptions={[25, 50, 100, 200]}
+            onFocusTableFirstRow={() => focusTable('first')}
+            onFocusTableLastRow={() => focusTable('last')}
+            style={{ borderRadius: '0', borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}
+          />
+        )}
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -1498,24 +1762,12 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: 500 }}>Date</label>
-                <input
-                  type="date"
+                <label style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Date</label>
+                <ShadcnDatePicker
                   value={receiptDate}
-                  onChange={(e) => setReceiptDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '36px',
-                    background: '#18181b',
-                    border: '1px solid #27272a',
-                    borderRadius: '6px',
-                    padding: '0 10px',
-                    color: '#f4f4f5',
-                    fontSize: '13px',
-                    outline: 'none',
-                    marginTop: '4px',
-                    boxSizing: 'border-box'
-                  }}
+                  onChange={(val) => setReceiptDate(val)}
+                  style={{ width: '100%' }}
+                  placeholder="Select payment date"
                 />
               </div>
 

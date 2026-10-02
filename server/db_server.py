@@ -113,6 +113,19 @@ def init_db():
                 balance REAL DEFAULT 0,
                 updated_at INTEGER NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS control_groups (
+                id TEXT PRIMARY KEY,
+                group_name TEXT NOT NULL,
+                group_index TEXT DEFAULT '',
+                weight_per_pc REAL DEFAULT 0,
+                pcs_per_box INTEGER DEFAULT 1,
+                multiplication REAL DEFAULT 1.0,
+                real_item_name TEXT DEFAULT '',
+                skip_eq INTEGER DEFAULT 0,
+                chain_parent TEXT DEFAULT 'NONE',
+                sort_order INTEGER DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
@@ -123,8 +136,27 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_skip_items_prefix ON skip_items(item_prefix);
             CREATE INDEX IF NOT EXISTS idx_ledger_party ON ledger(party_id);
             CREATE INDEX IF NOT EXISTS idx_party_receipts_party ON party_receipts(party);
-
+            CREATE INDEX IF NOT EXISTS idx_ctrl_groups_name ON control_groups(group_name);
         """)
+
+        # Auto-seed default groups if empty
+        grp_cnt = conn.execute("SELECT COUNT(*) FROM control_groups").fetchone()[0]
+        if grp_cnt == 0:
+            defaults = [
+                ('grp-1', 'BFP', 'G-101', 0.85, 1, 1.0, 'BFP Gold Series Aluminium', 0, 'RAW-ALUM-6063', 1),
+                ('grp-2', 'JOINTER', 'G-102', 1.20, 12, 1.25, 'Jointer Clamp 10mm Standard', 0, 'RAW-ALUM-6063', 2),
+                ('grp-3', 'CAPS', 'G-103', 4.80, 6, 1.10, 'Die Core Cap 50mm Precision', 1, 'NONE', 3),
+                ('grp-4', 'MOULDS', 'G-104', 12.50, 1, 1.50, 'Mould 14x20 Standard Housing', 0, 'RAW-HARDENER-H88', 4),
+                ('grp-5', 'ACCESSORIES', 'G-105', 0.45, 24, 1.0, 'Flange Coupling Pin Alloy', 1, 'NONE', 5),
+            ]
+            now_ms = int(time.time() * 1000)
+            for g in defaults:
+                conn.execute("""
+                    INSERT INTO control_groups (id, group_name, group_index, weight_per_pc, pcs_per_box, multiplication, real_item_name, skip_eq, chain_parent, sort_order, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (*g, now_ms))
+            print(f"[DB] Initialized {len(defaults)} default control groups")
+
     print(f"[DB] SQLite initialized at: {DB_PATH}")
 
 # ─── Helper ───────────────────────────────────────────────────────────────────
@@ -145,6 +177,10 @@ class DBHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', len(body))
         self.send_header('Access-Control-Allow-Origin', '*')
+        # ZERO CACHE: Ensure neither Edge nor Chrome ever caches critical database records
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         self.end_headers()
         self.wfile.write(body)
 
@@ -302,6 +338,26 @@ class DBHandler(BaseHTTPRequestHandler):
                 elif path == '/api/db/conversions':
                     rows = conn.execute("SELECT * FROM conversions").fetchall()
                     self.send_json(rows_to_list(rows))
+
+                # ── Control Groups (Manage Groups) ──
+                elif path == '/api/db/groups':
+                    rows = conn.execute("SELECT * FROM control_groups ORDER BY sort_order ASC, rowid ASC").fetchall()
+                    groups = []
+                    for r in rows:
+                        groups.append({
+                            'id': r['id'],
+                            'groupName': r['group_name'],
+                            'groupIndex': r['group_index'],
+                            'weightPerPc': float(r['weight_per_pc'] or 0),
+                            'pcsPerBox': int(r['pcs_per_box'] or 1),
+                            'multiplication': float(r['multiplication'] or 1.0),
+                            'realItemName': r['real_item_name'] or '',
+                            'skipEq': bool(r['skip_eq']),
+                            'chainParent': r['chain_parent'] or 'NONE',
+                            'sortOrder': int(r['sort_order'] or 0),
+                            'updatedAt': int(r['updated_at'] or 0)
+                        })
+                    self.send_json(groups)
 
                 # ── Stock ──
                 elif path == '/api/db/stock':
@@ -604,6 +660,53 @@ class DBHandler(BaseHTTPRequestHandler):
                         (c['id'], c.get('rule',''), c.get('value',0), c.get('description','')))
                     self.send_json({'success': True})
 
+                # ── Save Control Group ──
+                elif path == '/api/db/groups':
+                    g = body
+                    gid = g.get('id') or f"grp-{now}"
+                    conn.execute("""
+                        INSERT OR REPLACE INTO control_groups
+                        (id, group_name, group_index, weight_per_pc, pcs_per_box, multiplication, real_item_name, skip_eq, chain_parent, sort_order, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        gid,
+                        g.get('groupName', ''),
+                        g.get('groupIndex', ''),
+                        float(g.get('weightPerPc', 0)),
+                        int(g.get('pcsPerBox', 1)),
+                        float(g.get('multiplication', 1.0)),
+                        g.get('realItemName', ''),
+                        1 if g.get('skipEq') else 0,
+                        g.get('chainParent', 'NONE'),
+                        int(g.get('sortOrder', 0)),
+                        now
+                    ))
+                    self.send_json({'success': True, 'id': gid})
+
+                # ── Bulk Save Control Groups (Atomic Replacement) ──
+                elif path == '/api/db/groups/bulk':
+                    items = body if isinstance(body, list) else body.get('groups', [])
+                    conn.execute("DELETE FROM control_groups")
+                    for idx, g in enumerate(items):
+                        conn.execute("""
+                            INSERT OR REPLACE INTO control_groups
+                            (id, group_name, group_index, weight_per_pc, pcs_per_box, multiplication, real_item_name, skip_eq, chain_parent, sort_order, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            g.get('id') or f"grp-{idx+1}",
+                            g.get('groupName', ''),
+                            g.get('groupIndex', ''),
+                            float(g.get('weightPerPc', 0)),
+                            int(g.get('pcsPerBox', 1)),
+                            float(g.get('multiplication', 1.0)),
+                            g.get('realItemName', ''),
+                            1 if g.get('skipEq') else 0,
+                            g.get('chainParent', 'NONE'),
+                            idx + 1,
+                            now
+                        ))
+                    self.send_json({'success': True, 'count': len(items)})
+
                 # ── Save Stock Item ──
                 elif path == '/api/db/stock':
                     s = body
@@ -708,6 +811,11 @@ class DBHandler(BaseHTTPRequestHandler):
                 elif '/api/db/conversions/' in path:
                     cid = path.split('/')[-1]
                     conn.execute("DELETE FROM conversions WHERE id=?", (cid,))
+                    self.send_json({'success': True})
+
+                elif '/api/db/groups/' in path:
+                    gid = path.split('/')[-1]
+                    conn.execute("DELETE FROM control_groups WHERE id=?", (gid,))
                     self.send_json({'success': True})
 
                 elif '/api/db/stock/' in path:
