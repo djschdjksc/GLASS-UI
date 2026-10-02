@@ -321,98 +321,182 @@ class DBHandler(BaseHTTPRequestHandler):
                     date_to = params.get('dateTo', '').strip()
 
                     entries = []
+                    opening_balance = 0.0
+                    party_info = {}
+                    running_bal = 0.0
+                    total_dr = 0.0
+                    total_cr = 0.0
+
                     if party_name:
-                        # 1. Bills
-                        sql_bills = "SELECT id, token, date, doc_type, total FROM bills WHERE LOWER(party) = LOWER(?)"
+                        # Helper for computing true bill total
+                        def extract_bill_total(b_row):
+                            try:
+                                tot = round(float(b_row['total'] or 0.0), 2)
+                            except Exception:
+                                tot = 0.0
+                            if tot == 0.0:
+                                try:
+                                    fin = b_row['finished_items']
+                                    if fin:
+                                        items = json.loads(fin)
+                                        tot = round(sum(float(it.get('total', 0) or 0) for it in items), 2)
+                                except Exception:
+                                    pass
+                            return tot
+
+                        # 0. Fetch Party metadata (phone, station, gstin, state)
+                        p_row = conn.execute("SELECT * FROM parties WHERE TRIM(LOWER(name)) = TRIM(LOWER(?)) LIMIT 1", (party_name,)).fetchone()
+                        if p_row:
+                            party_info = {
+                                'name': p_row['name'],
+                                'phone': p_row['phone'] or '',
+                                'station': p_row['station'] or '',
+                                'district': p_row['district'] or '',
+                                'state': p_row['state_name'] or '',
+                                'gstin': p_row['gstin'] or ''
+                            }
+                            if p_row['balance']:
+                                try:
+                                    opening_balance = round(float(p_row['balance'] or 0), 2)
+                                except Exception:
+                                    pass
+
+                        # 0.1 Calculate Opening Balance (B/F) prior to date_from
+                        if date_from:
+                            # Prior Bills (Debits and Returns)
+                            prior_bills = conn.execute(
+                                "SELECT doc_type, total, finished_items FROM bills WHERE TRIM(LOWER(party)) = TRIM(LOWER(?)) AND substr(date, 1, 10) < ?",
+                                (party_name, date_from)
+                            ).fetchall()
+                            for pb in prior_bills:
+                                pb_type = (pb['doc_type'] or '').upper()
+                                is_ret = 'RETURN' in pb_type
+                                tot = extract_bill_total(pb)
+                                if is_ret:
+                                    opening_balance = round(opening_balance - tot, 2)
+                                else:
+                                    opening_balance = round(opening_balance + tot, 2)
+
+                            # Prior Receipts (Credits)
+                            prior_rcpts = conn.execute(
+                                "SELECT amount FROM party_receipts WHERE TRIM(LOWER(party)) = TRIM(LOWER(?)) AND substr(receipt_date, 1, 10) < ?",
+                                (party_name, date_from)
+                            ).fetchall()
+                            for pr in prior_rcpts:
+                                amt = round(float(pr['amount'] or 0), 2)
+                                opening_balance = round(opening_balance - amt, 2)
+
+                        # 1. Bills in selected date range
+                        current_entries = []
+                        sql_bills = "SELECT id, token, date, doc_type, total, finished_items FROM bills WHERE TRIM(LOWER(party)) = TRIM(LOWER(?))"
                         params_bills = [party_name]
                         if date_from:
-                            sql_bills += " AND date >= ?"
+                            sql_bills += " AND substr(date, 1, 10) >= ?"
                             params_bills.append(date_from)
                         if date_to:
-                            sql_bills += " AND date <= ?"
+                            sql_bills += " AND substr(date, 1, 10) <= ?"
                             params_bills.append(date_to)
-                        
+
                         b_rows = conn.execute(sql_bills, params_bills).fetchall()
                         for b in b_rows:
                             b_type = (b['doc_type'] or '').upper()
                             is_return = 'RETURN' in b_type
                             is_order = 'ORDER' in b_type
-                            tot = float(b['total'] or 0)
+                            tot = extract_bill_total(b)
+                            b_date = (b['date'] or '')[:10]
 
                             if is_return:
-                                entries.append({
+                                current_entries.append({
                                     'id': 'b_' + str(b['id']),
                                     'rawId': b['id'],
-                                    'date': b['date'],
+                                    'date': b_date,
                                     'type': 'SALE RETURN',
                                     'voucher': f"R-{b['token']}",
                                     'particulars': 'Sale Return',
-                                    'debit': 0,
+                                    'debit': 0.0,
                                     'credit': tot,
                                     'canDelete': False
                                 })
                             elif is_order:
-                                entries.append({
+                                current_entries.append({
                                     'id': 'b_' + str(b['id']),
                                     'rawId': b['id'],
-                                    'date': b['date'],
+                                    'date': b_date,
                                     'type': 'ORDER',
                                     'voucher': f"O-{b['token']}",
                                     'particulars': 'Order Estimate',
                                     'debit': tot,
-                                    'credit': 0,
+                                    'credit': 0.0,
                                     'canDelete': False
                                 })
                             else:
-                                entries.append({
+                                current_entries.append({
                                     'id': 'b_' + str(b['id']),
                                     'rawId': b['id'],
-                                    'date': b['date'],
+                                    'date': b_date,
                                     'type': 'SALE BILL',
                                     'voucher': f"B-{b['token']}",
                                     'particulars': 'Sale Bill',
                                     'debit': tot,
-                                    'credit': 0,
+                                    'credit': 0.0,
                                     'canDelete': False
                                 })
 
-                        # 2. Receipts
-                        sql_rcpt = "SELECT id, amount, receipt_date, remarks FROM party_receipts WHERE LOWER(party) = LOWER(?)"
+                        # 2. Receipts in selected date range
+                        sql_rcpt = "SELECT id, amount, receipt_date, remarks FROM party_receipts WHERE TRIM(LOWER(party)) = TRIM(LOWER(?))"
                         params_rcpt = [party_name]
                         if date_from:
-                            sql_rcpt += " AND receipt_date >= ?"
+                            sql_rcpt += " AND substr(receipt_date, 1, 10) >= ?"
                             params_rcpt.append(date_from)
                         if date_to:
-                            sql_rcpt += " AND receipt_date <= ?"
+                            sql_rcpt += " AND substr(receipt_date, 1, 10) <= ?"
                             params_rcpt.append(date_to)
 
                         r_rows = conn.execute(sql_rcpt, params_rcpt).fetchall()
                         for r in r_rows:
-                            entries.append({
+                            current_entries.append({
                                 'id': 'rcpt_' + str(r['id']),
                                 'rawId': r['id'],
-                                'date': r['receipt_date'],
+                                'date': (r['receipt_date'] or '')[:10],
                                 'type': 'RECEIPT',
                                 'voucher': f"RCP-{r['id']}",
                                 'particulars': r['remarks'] or 'Payment Received',
-                                'debit': 0,
-                                'credit': float(r['amount'] or 0),
+                                'debit': 0.0,
+                                'credit': round(float(r['amount'] or 0), 2),
                                 'canDelete': True
                             })
 
-                        # Sort chronologically by date
-                        entries.sort(key=lambda x: (x['date'] or '', x['id']))
+                        # Stable chronological sort: date, invoices/returns before receipts on same day, then id
+                        current_entries.sort(key=lambda x: (x['date'] or '', 0 if x['type'] != 'RECEIPT' else 1, str(x['id'])))
 
-                        # Compute running balance
-                        running_bal = 0.0
-                        for e in entries:
-                            running_bal += e['debit'] - e['credit']
+                        # Compute Running Balances & Assemble Final Entries
+                        if date_from:
+                            entries.append({
+                                'id': 'opening_bf',
+                                'rawId': 0,
+                                'date': date_from,
+                                'type': 'OPENING BALANCE',
+                                'voucher': 'B/F',
+                                'particulars': 'Opening Balance (Brought Forward)',
+                                'debit': opening_balance if opening_balance > 0 else 0.0,
+                                'credit': abs(opening_balance) if opening_balance < 0 else 0.0,
+                                'balance': opening_balance,
+                                'canDelete': False
+                            })
+
+                        running_bal = opening_balance
+                        for e in current_entries:
+                            running_bal = round(running_bal + e['debit'] - e['credit'], 2)
                             e['balance'] = running_bal
+                            entries.append(e)
 
-                    total_dr = sum(e['debit'] for e in entries)
-                    total_cr = sum(e['credit'] for e in entries)
+                        total_dr = round(sum(e['debit'] for e in current_entries), 2)
+                        total_cr = round(sum(e['credit'] for e in current_entries), 2)
+
                     self.send_json({
                         'party': party_name,
+                        'partyInfo': party_info,
+                        'openingBalance': opening_balance,
                         'entries': entries,
                         'totalDebit': total_dr,
                         'totalCredit': total_cr,

@@ -71,6 +71,20 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
   // Ledger entries and state
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
+  const [openingBalance, setOpeningBalance] = useState<number>(0);
+  const [partyInfo, setPartyInfo] = useState<{
+    name?: string;
+    phone?: string;
+    station?: string;
+    district?: string;
+    state?: string;
+    gstin?: string;
+  } | null>(null);
+
+  // In-table search & quick type filter
+  const [tableSearchQuery, setTableSearchQuery] = useState<string>('');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'SALE BILL' | 'RECEIPT' | 'SALE RETURN'>('ALL');
+
   const [totalDebit, setTotalDebit] = useState<number>(0);
   const [totalCredit, setTotalCredit] = useState<number>(0);
   const [netBalance, setNetBalance] = useState<number>(0);
@@ -97,6 +111,30 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   const [selectedPrinter, setSelectedPrinter] = useState<string>('');
   const [isDirectPrinting, setIsDirectPrinting] = useState<boolean>(false);
   const [printStatusMsg, setPrintStatusMsg] = useState<string | null>(null);
+
+  // Filtered displayed entries based on in-table search & type filter
+  const displayedEntries = useMemo(() => {
+    let result = entries;
+
+    if (typeFilter !== 'ALL') {
+      result = result.filter(e => e.type === typeFilter || e.type === 'OPENING BALANCE');
+    }
+
+    const q = tableSearchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter(e => 
+        (e.voucher || '').toLowerCase().includes(q) ||
+        (e.particulars || '').toLowerCase().includes(q) ||
+        (e.type || '').toLowerCase().includes(q) ||
+        (e.date || '').includes(q) ||
+        String(e.debit).includes(q) ||
+        String(e.credit).includes(q) ||
+        String(e.balance).includes(q)
+      );
+    }
+
+    return result;
+  }, [entries, typeFilter, tableSearchQuery]);
 
   // Load parties on mount
   useEffect(() => {
@@ -157,10 +195,28 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.entries || []);
+        const list: LedgerEntry[] = Array.isArray(data) ? data : (data.entries || []);
         setEntries(list);
-        setTotalDebit(data.totalDebit !== undefined ? data.totalDebit : list.reduce((s: number, e: any) => s + (e.debit || 0), 0));
-        setTotalCredit(data.totalCredit !== undefined ? data.totalCredit : list.reduce((s: number, e: any) => s + (e.credit || 0), 0));
+        setOpeningBalance(data.openingBalance !== undefined ? data.openingBalance : 0);
+        if (data.partyInfo && Object.keys(data.partyInfo).length > 0) {
+          setPartyInfo(data.partyInfo);
+        } else {
+          const found = contextParties.find(p => p.name.toLowerCase() === targetParty.toLowerCase());
+          if (found) {
+            setPartyInfo({
+              name: found.name,
+              phone: found.phone || '',
+              station: found.station || '',
+              district: found.district || '',
+              state: found.state || '',
+              gstin: found.gstin || ''
+            });
+          } else {
+            setPartyInfo({ name: targetParty });
+          }
+        }
+        setTotalDebit(data.totalDebit !== undefined ? data.totalDebit : list.filter(e => e.type !== 'OPENING BALANCE').reduce((s: number, e: any) => s + (e.debit || 0), 0));
+        setTotalCredit(data.totalCredit !== undefined ? data.totalCredit : list.filter(e => e.type !== 'OPENING BALANCE').reduce((s: number, e: any) => s + (e.credit || 0), 0));
         setNetBalance(data.netBalance !== undefined ? data.netBalance : (list.length > 0 ? list[list.length - 1].balance : 0));
         if (list.length > 0) {
           setSelectedRowId(list[0].id);
@@ -168,7 +224,6 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
           setSelectedRowId(null);
         }
       } else {
-        // Local calculation fallback from contextBills
         calculateFallbackLedger(targetParty);
       }
     } catch {
@@ -176,29 +231,92 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     } finally {
       setIsLoading(false);
     }
-  }, [selectedParty, dateFrom, dateTo, contextBills]);
+  }, [selectedParty, dateFrom, dateTo, contextBills, contextParties]);
 
   // Fallback calculation if server offline
   const calculateFallbackLedger = (party: string) => {
-    const filtered = contextBills.filter(b => b.party?.toLowerCase() === party.toLowerCase());
+    const partyLower = party.toLowerCase();
+    const partyBills = contextBills.filter(b => (b.party || '').toLowerCase() === partyLower);
+    const foundParty = contextParties.find(p => p.name.toLowerCase() === partyLower);
+
+    if (foundParty) {
+      setPartyInfo({
+        name: foundParty.name,
+        phone: foundParty.phone || '',
+        station: foundParty.station || '',
+        district: foundParty.district || '',
+        state: foundParty.state || '',
+        gstin: foundParty.gstin || ''
+      });
+    } else {
+      setPartyInfo({ name: party });
+    }
+
+    // 1. Calculate opening balance prior to dateFrom
+    let openBal = 0;
+    if (dateFrom) {
+      for (const b of partyBills) {
+        const bDate = (b.date || '').slice(0, 10);
+        if (bDate < dateFrom) {
+          const tot = Math.round((Number(b.total || 0) + Number.EPSILON) * 100) / 100;
+          const isReturn = (b.docType || '').toUpperCase().includes('RETURN');
+          if (isReturn) {
+            openBal = Math.round((openBal - tot + Number.EPSILON) * 100) / 100;
+          } else {
+            openBal = Math.round((openBal + tot + Number.EPSILON) * 100) / 100;
+          }
+        }
+      }
+    }
+    setOpeningBalance(openBal);
+
+    // 2. Bills in range
+    const inRangeBills = partyBills.filter(b => {
+      const bDate = (b.date || '').slice(0, 10);
+      if (dateFrom && bDate < dateFrom) return false;
+      if (dateTo && bDate > dateTo) return false;
+      return true;
+    });
+
+    inRangeBills.sort((a, b) => {
+      const cmp = (a.date || '').localeCompare(b.date || '');
+      if (cmp !== 0) return cmp;
+      return String(a.token || a.id).localeCompare(String(b.token || b.id));
+    });
+
     const list: LedgerEntry[] = [];
-    let running = 0;
+    if (dateFrom) {
+      list.push({
+        id: 'opening_bf',
+        rawId: 0,
+        date: dateFrom,
+        type: 'OPENING BALANCE',
+        voucher: 'B/F',
+        particulars: 'Opening Balance (Brought Forward)',
+        debit: openBal > 0 ? openBal : 0,
+        credit: openBal < 0 ? Math.abs(openBal) : 0,
+        balance: openBal,
+        canDelete: false
+      });
+    }
+
+    let running = openBal;
     let drSum = 0;
     let crSum = 0;
 
-    filtered.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    for (const b of filtered) {
+    for (const b of inRangeBills) {
       const isReturn = (b.docType || '').toUpperCase().includes('RETURN');
       const isOrder = (b.docType || '').toUpperCase().includes('ORDER');
-      const tot = Number(b.total || 0);
+      const tot = Math.round((Number(b.total || 0) + Number.EPSILON) * 100) / 100;
+      const bDate = (b.date || '').slice(0, 10);
 
       if (isReturn) {
-        running -= tot;
-        crSum += tot;
+        running = Math.round((running - tot + Number.EPSILON) * 100) / 100;
+        crSum = Math.round((crSum + tot + Number.EPSILON) * 100) / 100;
         list.push({
           id: `b_${b.id}`,
           rawId: b.id,
-          date: b.date,
+          date: bDate,
           type: 'SALE RETURN',
           voucher: `R-${b.token}`,
           particulars: 'Sale Return',
@@ -208,12 +326,12 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
           canDelete: false
         });
       } else {
-        running += tot;
-        drSum += tot;
+        running = Math.round((running + tot + Number.EPSILON) * 100) / 100;
+        drSum = Math.round((drSum + tot + Number.EPSILON) * 100) / 100;
         list.push({
           id: `b_${b.id}`,
           rawId: b.id,
-          date: b.date,
+          date: bDate,
           type: isOrder ? 'ORDER' : 'SALE BILL',
           voucher: isOrder ? `O-${b.token}` : `B-${b.token}`,
           particulars: isOrder ? 'Order Estimate' : 'Sale Bill',
@@ -224,6 +342,7 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
         });
       }
     }
+
     setEntries(list);
     setTotalDebit(drSum);
     setTotalCredit(crSum);
@@ -314,32 +433,33 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   // Export CSV
   const handleExportCSV = () => {
     macAudio.playClick();
-    if (entries.length === 0) {
+    if (displayedEntries.length === 0) {
       alert('Export karne ke liye koi data nahi hai.');
       return;
     }
 
     const headers = ['Date', 'Type', 'Voucher #', 'Particulars', 'Debit (Dr)', 'Credit (Cr)', 'Running Balance'];
-    const rows = entries.map(e => [
-      e.date,
-      e.type,
-      e.voucher,
-      e.particulars,
-      e.debit > 0 ? e.debit.toFixed(2) : '0.00',
-      e.credit > 0 ? e.credit.toFixed(2) : '0.00',
-      `${Math.abs(e.balance).toFixed(2)} ${e.balance >= 0 ? 'Dr' : 'Cr'}`
-    ]);
-
-    // Summary row
-    rows.push([
-      'TOTALS / BALANCE',
-      '',
-      '',
-      '',
-      totalDebit.toFixed(2),
-      totalCredit.toFixed(2),
-      `${Math.abs(netBalance).toFixed(2)} ${netBalance >= 0 ? 'Dr' : 'Cr'}`
-    ]);
+    const rows = [
+      [`Party: ${partyInfo?.name || selectedParty}`, `Phone: ${partyInfo?.phone || '—'}`, `GSTIN: ${partyInfo?.gstin || '—'}`, `Station: ${[partyInfo?.station, partyInfo?.district].filter(Boolean).join(', ') || '—'}`, `Period: ${dateFrom} to ${dateTo}`, `Opening Bal (B/F): ${openingBalance.toFixed(2)}`, ''],
+      ...displayedEntries.map(e => [
+        e.date,
+        e.type,
+        e.voucher,
+        e.particulars,
+        e.debit > 0 ? e.debit.toFixed(2) : '0.00',
+        e.credit > 0 ? e.credit.toFixed(2) : '0.00',
+        `${Math.abs(e.balance).toFixed(2)} ${e.balance > 0 ? 'Dr' : (e.balance < 0 ? 'Cr' : '')}`
+      ]),
+      [
+        'TOTALS / CLOSING BALANCE',
+        '',
+        '',
+        '',
+        totalDebit.toFixed(2),
+        totalCredit.toFixed(2),
+        `${Math.abs(netBalance).toFixed(2)} ${netBalance > 0 ? 'Dr' : (netBalance < 0 ? 'Cr' : 'Nil')}`
+      ]
+    ];
 
     downloadCSV(`Ledger_${selectedParty.replace(/\s+/g, '_')}_${dateFrom}_to_${dateTo}.csv`, headers, rows);
   };
@@ -369,9 +489,11 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     try {
       const payload = {
         party: selectedParty,
+        partyInfo,
+        openingBalance,
         dateFrom,
         dateTo,
-        entries,
+        entries: displayedEntries,
         totalDebit,
         totalCredit,
         netBalance,
@@ -403,9 +525,11 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     try {
       const payload = {
         party: selectedParty,
+        partyInfo,
+        openingBalance,
         dateFrom,
         dateTo,
-        entries,
+        entries: displayedEntries,
         totalDebit,
         totalCredit,
         netBalance,
@@ -434,21 +558,27 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
   // Keyboard navigation on ledger rows
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (entries.length === 0) return;
-    const currentIndex = entries.findIndex(item => item.id === selectedRowId);
+    if (displayedEntries.length === 0) return;
+    const currentIndex = displayedEntries.findIndex(item => item.id === selectedRowId);
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const nextIndex = Math.min(currentIndex + 1, entries.length - 1);
-      setSelectedRowId(entries[nextIndex].id);
+      const nextIndex = Math.min(currentIndex + 1, displayedEntries.length - 1);
+      setSelectedRowId(displayedEntries[nextIndex].id);
       macAudio.playHover();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       const prevIndex = Math.max(currentIndex - 1, 0);
-      setSelectedRowId(entries[prevIndex].id);
+      setSelectedRowId(displayedEntries[prevIndex].id);
       macAudio.playHover();
+    } else if (e.key === 'Enter') {
+      const current = displayedEntries.find(item => item.id === selectedRowId);
+      if (current && current.type !== 'RECEIPT' && current.type !== 'OPENING BALANCE' && onLoadBillToEditor && current.rawId) {
+        e.preventDefault();
+        onLoadBillToEditor(String(current.rawId));
+      }
     } else if (e.key === 'Delete') {
-      const current = entries.find(item => item.id === selectedRowId);
+      const current = displayedEntries.find(item => item.id === selectedRowId);
       if (current && current.type === 'RECEIPT') {
         e.preventDefault();
         setReceiptToDelete(current);
@@ -709,89 +839,289 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. SUMMARY KPI CARDS (Dr, Cr, Net Balance)                         */}
+      {/* 2. PARTY INFORMATION & STATEMENT PERIOD BANNER                     */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-        {/* Total Billed (Dr) */}
-        <div
-          style={{
-            background: '#18181b',
-            border: '1px solid #27272a',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '12px', color: '#71717a', fontWeight: 500 }}>Total Billed (Dr)</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: '#f87171', marginTop: '2px' }}>
-              ₹{totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: '#18181b',
+          border: '1px solid #27272a',
+          borderRadius: '8px',
+          padding: '8px 14px',
+          fontSize: '12.5px',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Building size={14} style={{ color: '#38bdf8' }} />
+            <span style={{ fontWeight: 700, color: '#f4f4f5', fontSize: '13.5px' }}>
+              {partyInfo?.name || selectedParty || 'Select Party'}
+            </span>
+          </div>
+
+          {partyInfo?.phone && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#a1a1aa' }}>
+              <span style={{ color: '#71717a' }}>Tel:</span>
+              <span style={{ color: '#f4f4f5', fontFamily: 'monospace' }}>{partyInfo.phone}</span>
             </div>
-          </div>
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '8px', color: '#ef4444' }}>
-            <ArrowUpRight size={20} />
-          </div>
+          )}
+
+          {partyInfo?.gstin && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#a1a1aa' }}>
+              <span style={{ color: '#71717a' }}>GSTIN:</span>
+              <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>{partyInfo.gstin}</span>
+            </div>
+          )}
+
+          {(partyInfo?.station || partyInfo?.district) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#a1a1aa' }}>
+              <span style={{ color: '#71717a' }}>Station:</span>
+              <span style={{ color: '#f4f4f5' }}>{[partyInfo.station, partyInfo.district].filter(Boolean).join(', ')}</span>
+            </div>
+          )}
         </div>
 
-        {/* Total Received & Return (Cr) */}
-        <div
-          style={{
-            background: '#18181b',
-            border: '1px solid #27272a',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '12px', color: '#71717a', fontWeight: 500 }}>Total Received & Return (Cr)</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: '#34d399', marginTop: '2px' }}>
-              ₹{totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-          </div>
-          <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '8px', borderRadius: '8px', color: '#10b981' }}>
-            <ArrowDownLeft size={20} />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#71717a', fontSize: '12px' }}>
+          <Calendar size={13} style={{ color: '#71717a' }} />
+          <span>Statement:</span>
+          <span style={{ color: '#e4e4e7', fontFamily: 'monospace', fontWeight: 600 }}>{dateFrom}</span>
+          <span>to</span>
+          <span style={{ color: '#e4e4e7', fontFamily: 'monospace', fontWeight: 600 }}>{dateTo}</span>
         </div>
+      </div>
 
-        {/* Net Balance (Bakaya) */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 3. SUMMARY KPI CARDS (B/F Opening, Dr, Cr, Net Balance)            */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+        {/* 1. Opening Balance (Brought Forward) */}
         <div
           style={{
             background: '#18181b',
             border: '1px solid #27272a',
             borderRadius: '8px',
-            padding: '12px 16px',
+            padding: '10px 14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}
         >
           <div>
-            <div style={{ fontSize: '12px', color: '#71717a', fontWeight: 500 }}>Net Balance (Bakaya)</div>
+            <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Opening Balance (B/F)
+            </div>
             <div
               style={{
-                fontSize: '20px',
+                fontSize: '18px',
                 fontWeight: 700,
-                color: netBalance > 0 ? '#f87171' : netBalance < 0 ? '#34d399' : '#a1a1aa',
-                marginTop: '2px'
+                color: openingBalance > 0 ? '#f87171' : (openingBalance < 0 ? '#34d399' : '#a1a1aa'),
+                marginTop: '2px',
+                fontVariantNumeric: 'tabular-nums'
+              }}
+            >
+              ₹{Math.abs(openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>{openingBalance > 0 ? 'Dr' : (openingBalance < 0 ? 'Cr' : 'Nil')}</span>
+            </div>
+            <div style={{ fontSize: '10px', color: '#71717a', marginTop: '1px' }}>
+              Prior to {dateFrom}
+            </div>
+          </div>
+          <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '7px', borderRadius: '8px', color: '#f59e0b' }}>
+            <Calendar size={18} />
+          </div>
+        </div>
+
+        {/* 2. Total Billed (Dr) */}
+        <div
+          style={{
+            background: '#18181b',
+            border: '1px solid #27272a',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Billed (Dr)
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#f87171', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>
+              ₹{totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontSize: '10px', color: '#71717a', marginTop: '1px' }}>
+              Sales & Invoices
+            </div>
+          </div>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '7px', borderRadius: '8px', color: '#ef4444' }}>
+            <ArrowUpRight size={18} />
+          </div>
+        </div>
+
+        {/* 3. Total Received & Return (Cr) */}
+        <div
+          style={{
+            background: '#18181b',
+            border: '1px solid #27272a',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Received & Return (Cr)
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#34d399', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>
+              ₹{totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontSize: '10px', color: '#71717a', marginTop: '1px' }}>
+              Receipts & Returns
+            </div>
+          </div>
+          <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '7px', borderRadius: '8px', color: '#10b981' }}>
+            <ArrowDownLeft size={18} />
+          </div>
+        </div>
+
+        {/* 4. Net Closing Balance */}
+        <div
+          style={{
+            background: '#18181b',
+            border: '1px solid #27272a',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Net Closing Balance
+            </div>
+            <div
+              style={{
+                fontSize: '18px',
+                fontWeight: 700,
+                color: netBalance > 0 ? '#f87171' : (netBalance < 0 ? '#34d399' : '#a1a1aa'),
+                marginTop: '2px',
+                fontVariantNumeric: 'tabular-nums'
               }}
             >
               ₹{Math.abs(netBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
-              <span style={{ fontSize: '13px', fontWeight: 600 }}>{netBalance > 0 ? 'Dr' : netBalance < 0 ? 'Cr' : ''}</span>
+              <span style={{ fontSize: '11px', fontWeight: 600 }}>{netBalance > 0 ? 'Dr' : (netBalance < 0 ? 'Cr' : '')}</span>
+            </div>
+            <div style={{ fontSize: '10px', marginTop: '1px', fontWeight: 600, color: netBalance > 0 ? '#f87171' : (netBalance < 0 ? '#34d399' : '#10b981') }}>
+              {netBalance === 0 ? 'Settled / Nil (₹0.00)' : (netBalance < 0 ? 'Advance Jama (Credit)' : 'Receivable / Udhari (Debit)')}
             </div>
           </div>
-          <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '8px', borderRadius: '8px', color: '#38bdf8' }}>
-            <Wallet size={20} />
+          <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '7px', borderRadius: '8px', color: '#38bdf8' }}>
+            <Wallet size={18} />
           </div>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 3. LEDGER TABLE (Flat dark, no zebra striping, shadcn styling)     */}
+      {/* 4. TABLE TOOLBAR (Search & Type Filter Pills)                      */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+          flexWrap: 'wrap'
+        }}
+      >
+        {/* Left: Quick Search */}
+        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', width: '320px' }}>
+          <Search size={14} style={{ position: 'absolute', left: '10px', color: '#71717a' }} />
+          <input
+            type="text"
+            placeholder="Search voucher, particulars, amount..."
+            value={tableSearchQuery}
+            onChange={(e) => setTableSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              height: '32px',
+              background: '#18181b',
+              border: '1px solid #27272a',
+              borderRadius: '6px',
+              paddingLeft: '32px',
+              paddingRight: tableSearchQuery ? '28px' : '10px',
+              color: '#f4f4f5',
+              fontSize: '12.5px',
+              outline: 'none'
+            }}
+          />
+          {tableSearchQuery && (
+            <button
+              type="button"
+              onClick={() => setTableSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                background: 'transparent',
+                border: 'none',
+                color: '#71717a',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px'
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
+        {/* Center: Type Filter Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#18181b', padding: '3px', borderRadius: '6px', border: '1px solid #27272a' }}>
+          {(['ALL', 'SALE BILL', 'RECEIPT', 'SALE RETURN'] as const).map(f => {
+            const isActive = typeFilter === f;
+            const label = f === 'ALL' ? 'All' : (f === 'SALE BILL' ? 'Sale Bills' : (f === 'RECEIPT' ? 'Receipts' : 'Returns'));
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => {
+                  macAudio.playClick();
+                  setTypeFilter(f);
+                }}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: '4px',
+                  fontSize: '11.5px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: isActive ? '#27272a' : 'transparent',
+                  color: isActive ? '#f4f4f5' : '#a1a1aa',
+                  transition: 'background 0.15s ease'
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right: Record count */}
+        <div style={{ fontSize: '12px', color: '#71717a' }}>
+          Showing <span style={{ color: '#f4f4f5', fontWeight: 600 }}>{displayedEntries.length}</span> of {entries.length} entries
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 5. LEDGER TABLE (Flat dark, no zebra striping, shadcn styling)     */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div
         style={{
@@ -817,21 +1147,34 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                 <th style={{ padding: '10px 14px', width: '130px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>DEBIT (Dr)</th>
                 <th style={{ padding: '10px 14px', width: '130px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>CREDIT (Cr)</th>
                 <th style={{ padding: '10px 14px', width: '140px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>BALANCE</th>
-                <th style={{ padding: '10px 14px', width: '60px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>ACTION</th>
+                <th style={{ padding: '10px 14px', width: '70px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>ACTION</th>
               </tr>
             </thead>
 
             {/* Body */}
             <tbody>
-              {entries.length === 0 ? (
+              {displayedEntries.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '48px 16px', color: '#71717a' }}>
-                    {isLoading ? 'Loading ledger statement...' : `No records found for ${selectedParty || 'selected party'}`}
+                    {isLoading ? (
+                      'Loading ledger statement...'
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <Receipt size={28} style={{ color: '#52525b' }} />
+                        <div style={{ fontWeight: 600, color: '#e4e4e7', fontSize: '14px' }}>
+                          No transactions found
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#71717a' }}>
+                          No records match for {selectedParty || 'selected party'} in this period/filter.
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ) : (
-                entries.map((item) => {
+                displayedEntries.map((item) => {
                   const isSelected = selectedRowId === item.id;
+                  const isOpening = item.type === 'OPENING BALANCE';
                   const isDebit = item.debit > 0;
                   const isCredit = item.credit > 0;
 
@@ -843,21 +1186,26 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                         macAudio.playClick();
                       }}
                       onDoubleClick={() => {
-                        if (item.type !== 'RECEIPT' && onLoadBillToEditor && item.rawId) {
+                        if (item.type !== 'RECEIPT' && item.type !== 'OPENING BALANCE' && onLoadBillToEditor && item.rawId) {
                           onLoadBillToEditor(String(item.rawId));
                         }
                       }}
                       style={{
-                        background: isSelected ? '#27272a' : 'transparent',
+                        background: isOpening
+                          ? 'rgba(245, 158, 11, 0.06)'
+                          : isSelected
+                          ? '#27272a'
+                          : 'transparent',
                         borderBottom: '1px solid #18181b',
+                        borderLeft: isOpening ? '3px solid #f59e0b' : (isSelected ? '3px solid #38bdf8' : '3px solid transparent'),
                         cursor: 'pointer',
                         transition: 'background-color 0.1s ease'
                       }}
                       onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.background = '#18181b';
+                        if (!isSelected && !isOpening) e.currentTarget.style.background = '#18181b';
                       }}
                       onMouseLeave={(e) => {
-                        if (!isSelected) e.currentTarget.style.background = 'transparent';
+                        if (!isSelected && !isOpening) e.currentTarget.style.background = 'transparent';
                       }}
                     >
                       {/* Date */}
@@ -876,7 +1224,9 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                             fontWeight: 600,
                             letterSpacing: '0.2px',
                             background:
-                              item.type === 'SALE BILL'
+                              isOpening
+                                ? 'rgba(245, 158, 11, 0.15)'
+                                : item.type === 'SALE BILL'
                                 ? 'rgba(56, 189, 248, 0.12)'
                                 : item.type === 'ORDER'
                                 ? 'rgba(168, 85, 247, 0.12)'
@@ -886,7 +1236,9 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                                 ? 'rgba(52, 211, 153, 0.12)'
                                 : 'rgba(161, 161, 170, 0.12)',
                             color:
-                              item.type === 'SALE BILL'
+                              isOpening
+                                ? '#f59e0b'
+                                : item.type === 'SALE BILL'
                                 ? '#38bdf8'
                                 : item.type === 'ORDER'
                                 ? '#c084fc'
@@ -896,7 +1248,9 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                                 ? '#34d399'
                                 : '#a1a1aa',
                             border: `1px solid ${
-                              item.type === 'SALE BILL'
+                              isOpening
+                                ? 'rgba(245, 158, 11, 0.3)'
+                                : item.type === 'SALE BILL'
                                 ? 'rgba(56, 189, 248, 0.25)'
                                 : item.type === 'ORDER'
                                 ? 'rgba(168, 85, 247, 0.25)'
@@ -908,39 +1262,66 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                             }`
                           }}
                         >
-                          {item.type}
+                          {isOpening ? 'B/F OPENING' : item.type}
                         </span>
                       </td>
 
                       {/* Voucher # */}
-                      <td style={{ padding: '8px 14px', color: '#38bdf8', fontWeight: 600, fontFamily: 'monospace' }}>
+                      <td style={{ padding: '8px 14px', color: isOpening ? '#f59e0b' : '#38bdf8', fontWeight: 600, fontFamily: 'monospace' }}>
                         {item.voucher}
                       </td>
 
                       {/* Particulars */}
-                      <td style={{ padding: '8px 14px', color: '#f4f4f5' }}>
+                      <td style={{ padding: '8px 14px', color: isOpening ? '#fbbf24' : '#f4f4f5' }}>
                         {item.particulars}
                       </td>
 
                       {/* Debit (Dr) */}
-                      <td style={{ padding: '8px 14px', textAlign: 'right', fontWeight: 600, color: isDebit ? '#f87171' : '#52525b' }}>
+                      <td
+                        style={{
+                          padding: '8px 14px',
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          color: isDebit ? '#f87171' : '#52525b',
+                          fontVariantNumeric: 'tabular-nums',
+                          fontFamily: 'monospace'
+                        }}
+                      >
                         {isDebit ? `₹${item.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
                       </td>
 
                       {/* Credit (Cr) */}
-                      <td style={{ padding: '8px 14px', textAlign: 'right', fontWeight: 600, color: isCredit ? '#34d399' : '#52525b' }}>
+                      <td
+                        style={{
+                          padding: '8px 14px',
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          color: isCredit ? '#34d399' : '#52525b',
+                          fontVariantNumeric: 'tabular-nums',
+                          fontFamily: 'monospace'
+                        }}
+                      >
                         {isCredit ? `₹${item.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
                       </td>
 
                       {/* Balance */}
-                      <td style={{ padding: '8px 14px', textAlign: 'right', fontWeight: 700, color: item.balance > 0 ? '#f87171' : item.balance < 0 ? '#34d399' : '#e4e4e7' }}>
+                      <td
+                        style={{
+                          padding: '8px 14px',
+                          textAlign: 'right',
+                          fontWeight: 700,
+                          color: item.balance > 0 ? '#f87171' : (item.balance < 0 ? '#34d399' : '#e4e4e7'),
+                          fontVariantNumeric: 'tabular-nums',
+                          fontFamily: 'monospace'
+                        }}
+                      >
                         ₹{Math.abs(item.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}{' '}
-                        <span style={{ fontSize: '11px', fontWeight: 600 }}>{item.balance > 0 ? 'Dr' : item.balance < 0 ? 'Cr' : ''}</span>
+                        <span style={{ fontSize: '11px', fontWeight: 600 }}>{item.balance > 0 ? 'Dr' : (item.balance < 0 ? 'Cr' : '')}</span>
                       </td>
 
                       {/* Action */}
                       <td style={{ padding: '8px 14px', textAlign: 'center' }}>
-                        {item.type === 'RECEIPT' && (
+                        {item.type === 'RECEIPT' ? (
                           <button
                             type="button"
                             title="Delete this payment receipt"
@@ -963,7 +1344,32 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                           >
                             <Trash2 size={13} />
                           </button>
-                        )}
+                        ) : !isOpening && onLoadBillToEditor && item.rawId ? (
+                          <button
+                            type="button"
+                            title="Open Bill in Editor"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              macAudio.playClick();
+                              onLoadBillToEditor(String(item.rawId));
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#71717a',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = '#38bdf8')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
+                          >
+                            <ExternalLink size={13} />
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   );
@@ -987,23 +1393,28 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
           }}
         >
           <div style={{ color: '#a1a1aa' }}>
-            TOTAL ENTRIES: <span style={{ color: '#f4f4f5' }}>{entries.length}</span>
+            ENTRIES: <span style={{ color: '#f4f4f5' }}>{displayedEntries.length}</span>
+            {displayedEntries.length !== entries.length && (
+              <span style={{ color: '#71717a', fontSize: '11px', marginLeft: '6px' }}>
+                (of {entries.length} total)
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div>
+            <div style={{ fontVariantNumeric: 'tabular-nums' }}>
               <span style={{ color: '#71717a', marginRight: '6px' }}>Total Dr:</span>
               <span style={{ color: '#f87171' }}>₹{totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
-            <div>
+            <div style={{ fontVariantNumeric: 'tabular-nums' }}>
               <span style={{ color: '#71717a', marginRight: '6px' }}>Total Cr:</span>
               <span style={{ color: '#34d399' }}>₹{totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
-            <div>
+            <div style={{ fontVariantNumeric: 'tabular-nums' }}>
               <span style={{ color: '#71717a', marginRight: '6px' }}>Final Balance:</span>
-              <span style={{ color: netBalance > 0 ? '#f87171' : netBalance < 0 ? '#34d399' : '#f4f4f5' }}>
+              <span style={{ color: netBalance > 0 ? '#f87171' : (netBalance < 0 ? '#34d399' : '#f4f4f5') }}>
                 ₹{Math.abs(netBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}{' '}
-                {netBalance > 0 ? 'Dr' : netBalance < 0 ? 'Cr' : ''}
+                {netBalance > 0 ? 'Dr' : (netBalance < 0 ? 'Cr' : 'Nil')}
               </span>
             </div>
           </div>
