@@ -36,21 +36,42 @@ export default function UnsavedChangesModal({
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
 
-      if (onSave && (e.key === "1" || e.code === "Numpad1")) {
-        e.preventDefault();
-        e.stopPropagation();
-        macAudio.playSuccess();
-        onSave?.();
-      } else if (e.key === "2" || e.code === "Numpad2" || (!onSave && (e.key === "1" || e.code === "Numpad1"))) {
-        e.preventDefault();
-        e.stopPropagation();
-        macAudio.playClick();
-        handleDiscardAction?.();
-      } else if (e.key === "3" || e.code === "Numpad3" || e.key === "Escape" || (!onSave && (e.key === "2" || e.code === "Numpad2"))) {
-        e.preventDefault();
-        e.stopPropagation();
-        macAudio.playClick();
-        onCancel?.();
+      const isOne = e.key === "1" || e.code === "Digit1" || e.code === "Numpad1";
+      const isTwo = e.key === "2" || e.code === "Digit2" || e.code === "Numpad2";
+      const isThree = e.key === "3" || e.code === "Digit3" || e.code === "Numpad3";
+      const isEscape = e.key === "Escape";
+
+      if (onSave) {
+        // Mode 1 (Save Dialog): 1 = Save & Clear, 2 = Discard, 3/Esc = Cancel
+        if (isOne) {
+          e.preventDefault();
+          e.stopPropagation();
+          macAudio.playSuccess();
+          onSave();
+        } else if (isTwo) {
+          e.preventDefault();
+          e.stopPropagation();
+          macAudio.playClick();
+          handleDiscardAction?.();
+        } else if (isThree || isEscape) {
+          e.preventDefault();
+          e.stopPropagation();
+          macAudio.playClick();
+          onCancel?.();
+        }
+      } else {
+        // Mode 2 (Delete / Confirm Dialog): 1 = Confirm Delete, 2/Esc = Cancel
+        if (isOne) {
+          e.preventDefault();
+          e.stopPropagation();
+          macAudio.playClick();
+          handleDiscardAction?.();
+        } else if (isTwo || isEscape) {
+          e.preventDefault();
+          e.stopPropagation();
+          macAudio.playClick();
+          onCancel?.();
+        }
       }
     };
 
@@ -109,7 +130,8 @@ export default function UnsavedChangesModal({
             <button
               type="button"
               className="action-btn save-btn"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 macAudio.playSuccess();
                 onSave?.();
               }}
@@ -134,11 +156,12 @@ export default function UnsavedChangesModal({
             </button>
           )}
 
-          {/* 2: Discard / Delete */}
+          {/* 2 / 1: Discard / Delete */}
           <button
             type="button"
             className="action-btn discard-btn"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               macAudio.playClick();
               handleDiscardAction?.();
             }}
@@ -160,15 +183,16 @@ export default function UnsavedChangesModal({
               <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
 
-            <span>{discardLabel || 'Discard &amp; Clear'}</span>
+            <span>{discardLabel || (onSave ? 'Discard & Clear' : 'Delete')}</span>
             <kbd>{onSave ? '2' : '1'}</kbd>
           </button>
 
-          {/* 3: Keep Editing / Cancel */}
+          {/* 3 / 2: Cancel */}
           <button
             type="button"
             className="action-btn cancel-btn"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               macAudio.playClick();
               onCancel?.();
             }}

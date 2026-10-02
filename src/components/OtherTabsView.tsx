@@ -595,6 +595,59 @@ export const OtherTabsView: React.FC<Props> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, f2FocusArea, filteredBills, selectedBill, onLoadBillToEditor, onBackToBill]);
 
+  // Universal Alt+1..4 Subtab Switch listener for Bill History (F2)
+  useEffect(() => {
+    const handleSubtabSwitch = (e: Event) => {
+      if (activeTab !== 'F2') return;
+      const custom = e as CustomEvent<{ index: number }>;
+      const idx = custom.detail?.index;
+      if (idx === 1) { macAudio.playClick(); setHistorySubTab('SALE'); }
+      else if (idx === 2) { macAudio.playClick(); setHistorySubTab('SALE_RETURN'); }
+      else if (idx === 3) { macAudio.playClick(); setHistorySubTab('ORDER'); }
+      else if (idx === 4) { macAudio.playClick(); setHistorySubTab('PURCHASE'); }
+    };
+    window.addEventListener('app-subtab-switch', handleSubtabSwitch);
+    return () => window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
+  }, [activeTab]);
+
+  // Universal Action listeners for Bill History (F2)
+  useEffect(() => {
+    const handleUniversalPrint = () => {
+      if (activeTab === 'F2' && selectedBill && selectedBill.id !== 'empty') {
+        macAudio.playClick();
+        setIsPrintModalOpen(true);
+      }
+    };
+
+    const handleUniversalDelete = () => {
+      if (activeTab === 'F2' && selectedBill && selectedBill.id !== 'empty') {
+        macAudio.playPop();
+        setDeleteConfirmBillId(selectedBill.id);
+      }
+    };
+
+    const handleUniversalHome = () => {
+      if (activeTab === 'F2') {
+        setF2FocusArea('bills');
+        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search" i]');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+      }
+    };
+
+    window.addEventListener('app-print', handleUniversalPrint);
+    window.addEventListener('app-delete-row', handleUniversalDelete);
+    window.addEventListener('app-home-focus', handleUniversalHome);
+
+    return () => {
+      window.removeEventListener('app-print', handleUniversalPrint);
+      window.removeEventListener('app-delete-row', handleUniversalDelete);
+      window.removeEventListener('app-home-focus', handleUniversalHome);
+    };
+  }, [activeTab, selectedBill]);
+
   // Discover and sort all size columns for the selected bill in Bill History (e.g. 12 FT -> 10 FT -> 9.5 FT)
   const f2AllSizeCols = useMemo(() => {
     const dynamicList = (selectedBill.dynamicCols && selectedBill.dynamicCols.length > 0)
@@ -2690,17 +2743,21 @@ export const OtherTabsView: React.FC<Props> = ({
             discardLabel="Haan, Delete Karo"
             onSave={undefined}
             onDiscard={async () => {
-              // Confirmed: Delete the bill
-              const currentIdx = filteredBills.findIndex(b => b.id === deleteConfirmBillId);
+              // Confirmed: Permanently delete the bill from SQLite & state
+              const targetId = deleteConfirmBillId;
+              if (!targetId) return;
+              const currentIdx = filteredBills.findIndex(b => b.id === targetId);
               try {
                 macAudio.playTrash();
               } catch {
                 macAudio.playClick();
               }
               setDeleteConfirmBillId(null);
+              await deleteBill(targetId);
+
               // Auto-select next or previous bill after deletion
               setTimeout(() => {
-                const remaining = filteredBills.filter(b => b.id !== deleteConfirmBillId);
+                const remaining = filteredBills.filter(b => b.id !== targetId);
                 if (remaining.length > 0) {
                   const nextIdx = Math.min(currentIdx, remaining.length - 1);
                   setSelectedBillId(remaining[nextIdx]?.id || remaining[0]?.id || '');

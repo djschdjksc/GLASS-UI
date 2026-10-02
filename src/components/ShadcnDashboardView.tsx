@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   DollarSign,
   Users,
@@ -84,6 +84,20 @@ export const ShadcnDashboardView: React.FC<Props> = ({
 }) => {
   const { bills, parties, stockItems, refreshAll } = useDatabase();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+
+  // Universal Alt+1..4 Subtab Switch listener for Dashboard
+  useEffect(() => {
+    const handleSubtabSwitch = (e: Event) => {
+      const custom = e as CustomEvent<{ index: number }>;
+      const idx = custom.detail?.index;
+      if (idx === 1) { macAudio.playClick(); setActiveTab('overview'); }
+      else if (idx === 2) { macAudio.playClick(); setActiveTab('analytics'); }
+      else if (idx === 3) { macAudio.playClick(); setActiveTab('reports'); }
+      else if (idx === 4) { macAudio.playClick(); setActiveTab('notifications'); }
+    };
+    window.addEventListener('app-subtab-switch', handleSubtabSwitch);
+    return () => window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
+  }, []);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('30days');
   const [overviewChartMode, setOverviewChartMode] = useState<'bar' | 'flow'>('bar');
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);

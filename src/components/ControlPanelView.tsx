@@ -549,6 +549,52 @@ export const ControlPanelView: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, filteredGroups, selectedGroupId, editingGroupId, groups, groupToDelete]);
 
+  // Universal Alt+1..4 Subtab Switch and Action Listeners for Control Panel
+  useEffect(() => {
+    const handleSubtabSwitch = (e: Event) => {
+      const custom = e as CustomEvent<{ index: number }>;
+      const idx = custom.detail?.index;
+      if (idx === 1) { macAudio.playClick(); setActiveTab('MANAGE_GROUPS'); }
+      else if (idx === 2) { macAudio.playClick(); setActiveTab('SKIP_ITEM_NAME'); }
+      else if (idx === 3) { macAudio.playClick(); setActiveTab('BILL_ITEM_NAME'); }
+      else if (idx === 4) { macAudio.playClick(); setActiveTab('MANAGE_CONVERSIONS'); }
+    };
+
+    const handleInsert = () => {
+      handleAddForActiveTab();
+    };
+
+    const handleDelete = () => {
+      if (activeTab === 'MANAGE_GROUPS' && filteredGroups.length > 0) {
+        const currentIndex = filteredGroups.findIndex(g => g.id === selectedGroupId);
+        if (currentIndex >= 0) {
+          macAudio.playClick();
+          setGroupToDelete(filteredGroups[currentIndex]);
+        }
+      }
+    };
+
+    const handleHomeFocus = () => {
+      const searchBox = document.querySelector<HTMLInputElement>('input[placeholder*="Search" i]');
+      if (searchBox) {
+        searchBox.focus();
+        searchBox.select();
+      }
+    };
+
+    window.addEventListener('app-subtab-switch', handleSubtabSwitch);
+    window.addEventListener('app-insert-row', handleInsert);
+    window.addEventListener('app-delete-row', handleDelete);
+    window.addEventListener('app-home-focus', handleHomeFocus);
+
+    return () => {
+      window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
+      window.removeEventListener('app-insert-row', handleInsert);
+      window.removeEventListener('app-delete-row', handleDelete);
+      window.removeEventListener('app-home-focus', handleHomeFocus);
+    };
+  }, [activeTab, filteredGroups, selectedGroupId]);
+
   const handleExportActiveTabCsv = () => {
     macAudio.playPop();
     const today = new Date().toISOString().split('T')[0];

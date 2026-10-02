@@ -782,12 +782,27 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const confirmDiscardAndClearRef = useRef<() => void>(() => {});
   const confirmClearDialogRef = useRef<{ isOpen: boolean; tokenNo: string } | null>(null);
   const dialogFocusRef = useRef<'save' | 'discard' | 'cancel'>('save');
+  const activeTabRef = useRef<any>('F1');
 
   // Global Browser Interceptor: Disable Chrome shortcuts and Chrome native contextmenu
   useEffect(() => {
     // 1. Prevent default Chrome right-click browser menu everywhere
     const handleGlobalContextMenu = (e: MouseEvent) => {
       e.preventDefault();
+    };
+
+    // Helper to robustly extract digit 1-9 across standard numbers, numpads, and international layouts
+    const getDigitFromEvent = (ev: KeyboardEvent): string | null => {
+      if (ev.key >= '1' && ev.key <= '9') return ev.key;
+      if (ev.code && ev.code.startsWith('Digit')) {
+        const d = ev.code.slice(5);
+        if (d >= '1' && d <= '9') return d;
+      }
+      if (ev.code && ev.code.startsWith('Numpad')) {
+        const d = ev.code.slice(6);
+        if (d >= '1' && d <= '9') return d;
+      }
+      return null;
     };
 
     // 2. Intercept and block Chrome default keyboard shortcuts
@@ -800,34 +815,45 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
       // Ctrl + 1..9: Unified Switch to Right Nav Rail Main Tabs
-      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && ['1','2','3','4','5','6','7','8','9'].includes(e.key)) {
-        e.preventDefault();
-        const tabMap: Record<string, NavKey> = {
-          '1': 'F1',  // Bill UI
-          '2': 'F2',  // Bill History
-          '3': 'F3',  // Equation
-          '4': 'F4',  // Dashboard
-          '5': 'F5',  // Party Panel
-          '6': 'F6',  // Control Panel
-          '7': 'F8',  // Stock Inventory
-          '8': 'F9',  // Ledger
-          '9': 'F10'  // Settings
-        };
-        const targetTab = tabMap[e.key];
-        if (targetTab) {
-          setActiveTab(targetTab);
-          playTapSound();
+      if (isCtrlOrCmd && !e.shiftKey && !e.altKey) {
+        const digit = getDigitFromEvent(e);
+        if (digit) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          const tabMap: Record<string, NavKey> = {
+            '1': 'F1',  // Bill UI
+            '2': 'F2',  // Bill History
+            '3': 'F3',  // Equation
+            '4': 'F4',  // Dashboard
+            '5': 'F5',  // Party Panel
+            '6': 'F6',  // Control Panel
+            '7': 'F8',  // Stock Inventory
+            '8': 'F9',  // Ledger
+            '9': 'F10'  // Settings
+          };
+          const targetTab = tabMap[digit];
+          if (targetTab) {
+            activeTabRef.current = targetTab;
+            setActiveTab(targetTab);
+            playTapSound();
+          }
+          return;
         }
-        return;
       }
 
       // Alt + 1..5: Unified Switch to Subtabs inside Current Active Tab
-      if (e.altKey && !isCtrlOrCmd && !e.shiftKey && ['1','2','3','4','5'].includes(e.key)) {
-        e.preventDefault();
-        const subIndex = parseInt(e.key, 10);
-        window.dispatchEvent(new CustomEvent('app-subtab-switch', { detail: { index: subIndex } }));
-        playTapSound();
-        return;
+      if (e.altKey && !isCtrlOrCmd && !e.shiftKey) {
+        const digit = getDigitFromEvent(e);
+        if (digit && ['1','2','3','4','5'].includes(digit)) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          const subIndex = parseInt(digit, 10);
+          window.dispatchEvent(new CustomEvent('app-subtab-switch', { detail: { index: subIndex } }));
+          playTapSound();
+          return;
+        }
       }
 
       // '/' (Slash): Instant focus Search or First Textbox of current active view
@@ -850,7 +876,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       // Insert Key: Universal Add Row / Record
       if (e.key === 'Insert' && !isCtrlOrCmd && !e.altKey) {
         e.preventDefault();
-        if (activeTab === 'F1') {
+        if (activeTabRef.current === 'F1') {
           handleAddRawItem();
         } else {
           window.dispatchEvent(new CustomEvent('app-insert-row'));
@@ -880,34 +906,68 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         }
       }
 
-      // F8: Instant Switch to Stock Inventory module (as requested: "ISKA F8 SHORTCUT HAI USME")
-      if (e.key === 'F8') {
-        e.preventDefault();
-        setActiveTab('F8');
-        playTapSound();
-        return;
-      }
-
-      // F1: Switch to Bill UI
+      // F1..F10 Direct Tab Switching:
       if (e.key === 'F1') {
         e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F1';
         setActiveTab('F1');
         playTapSound();
         return;
       }
-
-      // F2: Switch to Bill History
       if (e.key === 'F2') {
         e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F2';
         setActiveTab('F2');
         playTapSound();
         return;
       }
-
-      // F4: Switch to Executive Dashboard (shadcn/ui style)
+      if (e.key === 'F3') {
+        e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F3';
+        setActiveTab('F3');
+        playTapSound();
+        return;
+      }
       if (e.key === 'F4') {
         e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F4';
         setActiveTab('F4');
+        playTapSound();
+        return;
+      }
+      if (e.key === 'F5') {
+        e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F5';
+        setActiveTab('F5');
+        playTapSound();
+        return;
+      }
+      if (e.key === 'F6') {
+        e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F6';
+        setActiveTab('F6');
+        playTapSound();
+        return;
+      }
+      if (e.key === 'F8') {
+        e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F8';
+        setActiveTab('F8');
+        playTapSound();
+        return;
+      }
+      if (e.key === 'F10') {
+        e.preventDefault();
+        e.stopPropagation();
+        activeTabRef.current = 'F10';
+        setActiveTab('F10');
         playTapSound();
         return;
       }
@@ -934,7 +994,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
       // Escape key: SKIP current loaded bill or clear panel to new blank bill (only in F1/HOME)
       if (e.key === 'Escape') {
-        if (activeTab === 'F1' || activeTab === 'HOME') {
+        if (activeTabRef.current === 'F1' || activeTabRef.current === 'HOME') {
           e.preventDefault();
           escapeClearRef.current();
         }
@@ -950,7 +1010,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           return;
         }
         e.preventDefault();
-        if (activeTab === 'F1') {
+        if (activeTabRef.current === 'F1') {
           const docTypeSelect = document.getElementById('header-doc-type') as HTMLElement | null;
           if (docTypeSelect) docTypeSelect.focus();
         } else {
@@ -983,7 +1043,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       // Ctrl+S: Universal Save across all modules
       if (isCtrlOrCmd && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
-        if (activeTab === 'F1') {
+        if (activeTabRef.current === 'F1') {
           saveBillRef.current();
         } else {
           window.dispatchEvent(new CustomEvent('app-save'));
@@ -1008,7 +1068,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       // Ctrl+P: Universal Print across all modules
       if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
-        if (activeTab === 'F1') {
+        if (activeTabRef.current === 'F1') {
           openPrintRef.current?.('estimate');
         } else {
           window.dispatchEvent(new CustomEvent('app-print'));
@@ -1099,15 +1159,16 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     };
 
     window.addEventListener('contextmenu', handleGlobalContextMenu, { capture: true });
-    window.addEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
 
     return () => {
       window.removeEventListener('contextmenu', handleGlobalContextMenu, { capture: true });
-      window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
     };
   }, []);
 
   const [activeTab, setActiveTab] = useState<any>('F1');
+  activeTabRef.current = activeTab;
   const [activeMode, setActiveMode] = useState<AppMode>('ENTRY');
   const [activeTable, setActiveTable] = useState<'left' | 'right' | null>('left');
 

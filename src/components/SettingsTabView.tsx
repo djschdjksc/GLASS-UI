@@ -222,6 +222,21 @@ export const SettingsTabView: React.FC<Props> = ({
   // Active Tab
   const [activeTab, setActiveTab] = useState<SettingsMainTab>('THEME');
 
+  // Universal Alt+1..5 Subtab Switch listener for Settings Tab
+  useEffect(() => {
+    const handleSubtabSwitch = (e: Event) => {
+      const custom = e as CustomEvent<{ index: number }>;
+      const idx = custom.detail?.index;
+      if (idx === 1) { macAudio.playClick(); setActiveTab('THEME'); }
+      else if (idx === 2) { macAudio.playClick(); setActiveTab('PROFILE'); }
+      else if (idx === 3) { macAudio.playClick(); setActiveTab('SHORTCUTS'); }
+      else if (idx === 4) { macAudio.playClick(); setActiveTab('BACKUP'); }
+      else if (idx === 5) { macAudio.playClick(); setActiveTab('BARCODE'); }
+    };
+    window.addEventListener('app-subtab-switch', handleSubtabSwitch);
+    return () => window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
+  }, []);
+
   // User's custom wallpaper upload state & persistence
   const [customMediaName, setCustomMediaName] = useState<string>(() => localStorage.getItem('modern_app_custom_media_name') || '');
 
