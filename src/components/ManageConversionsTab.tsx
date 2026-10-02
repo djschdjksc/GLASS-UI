@@ -182,27 +182,29 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    background: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
+    background: '#27272a',
+    border: '1px solid #3f3f46',
     outline: 'none',
-    color: '#ffffff',
-    fontSize: '11.5px',
-    padding: '3px 6px',
+    color: '#f4f4f5',
+    fontSize: '12px',
+    padding: '3px 8px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: '4px',
-    transition: 'background 0.15s ease, box-shadow 0.15s ease'
+    fontWeight: 500
   };
 
   const cellTextStyle: React.CSSProperties = {
-    padding: '3px 6px',
-    fontSize: '11.5px',
-    color: '#ffffff',
+    padding: '4px 10px',
+    fontSize: '12px',
+    color: '#f4f4f5',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    display: 'block'
+    display: 'block',
+    fontWeight: 500
   };
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -360,47 +362,47 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
       )}
 
       {/* Main Full-Width In-Table Editor */}
-      <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '4px' }}>
-        <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ width: colWidths.srNo, textAlign: 'center', position: 'relative' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', border: '1px solid #27272a', background: '#09090b' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+            <tr style={{ borderBottom: '1px solid #27272a' }}>
+              <th style={{ width: colWidths.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 #<div className="th-resizer" onMouseDown={e => startColResize('srNo', e)} />
               </th>
-              <th style={{ width: colWidths.shortcut, position: 'relative' }}>
+              <th style={{ width: colWidths.shortcut, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 SHORTCUT<div className="th-resizer" onMouseDown={e => startColResize('shortcut', e)} />
               </th>
-              <th style={{ width: colWidths.conversion, position: 'relative' }}>
+              <th style={{ width: colWidths.conversion, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 CONVERSION<div className="th-resizer" onMouseDown={e => startColResize('conversion', e)} />
               </th>
-              <th style={{ width: colWidths.size, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.size, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 SIZE (FT)<div className="th-resizer" onMouseDown={e => startColResize('size', e)} />
               </th>
-              <th style={{ width: colWidths.uCap, position: 'relative' }}>
+              <th style={{ width: colWidths.uCap, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 U CAP<div className="th-resizer" onMouseDown={e => startColResize('uCap', e)} />
               </th>
-              <th style={{ width: colWidths.lCap, position: 'relative' }}>
+              <th style={{ width: colWidths.lCap, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 L CAP<div className="th-resizer" onMouseDown={e => startColResize('lCap', e)} />
               </th>
-              <th style={{ width: colWidths.multiplication, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.multiplication, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 MULT<div className="th-resizer" onMouseDown={e => startColResize('multiplication', e)} />
               </th>
-              <th style={{ width: colWidths.color, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.color, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 COLOR<div className="th-resizer" onMouseDown={e => startColResize('color', e)} />
               </th>
-              <th style={{ width: colWidths.boxSize, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.boxSize, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 BOX<div className="th-resizer" onMouseDown={e => startColResize('boxSize', e)} />
               </th>
-              <th style={{ width: colWidths.weight, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.weight, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 WT/PC<div className="th-resizer" onMouseDown={e => startColResize('weight', e)} />
               </th>
-              <th style={{ width: colWidths.realItemName, position: 'relative' }}>
+              <th style={{ width: colWidths.realItemName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 REAL ITEM NAME<div className="th-resizer" onMouseDown={e => startColResize('realItemName', e)} />
               </th>
-              <th style={{ width: colWidths.groupName, position: 'relative' }}>
+              <th style={{ width: colWidths.groupName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 GROUP NAME<div className="th-resizer" onMouseDown={e => startColResize('groupName', e)} />
               </th>
-              <th style={{ width: '65px', textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: '65px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 ACTION
               </th>
             </tr>
@@ -414,31 +416,39 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
               return (
                 <tr 
                   key={originalIndex} 
-                  className={`mac-table-row ${isSelected ? 'selected' : ''}`}
+                  style={{
+                    height: '28px',
+                    borderBottom: '1px solid #27272a',
+                    background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
+                    outline: isSelected ? '1px solid #3f3f46' : 'none',
+                    outlineOffset: '-1px',
+                    cursor: 'pointer',
+                    transition: 'background 0.1s ease'
+                  }}
                   onClick={() => setSelectedIdx(originalIndex)}
                   onDoubleClick={() => setEditingIdx(originalIndex)}
-                  style={{ cursor: 'pointer' }}
                 >
                   {/* # */}
-                  <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                  <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
                     {idx + 1}
                   </td>
 
                   {/* SHORTCUT */}
-                  <td style={{ padding: '1px' }}>
+                  <td style={{ padding: '2px 4px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
+                        style={{ ...cellInputStyle, fontWeight: 600 }}
                         value={shortcutDisplay}
                         onChange={e => handleCellChange(originalIndex, 'shortcut', e.target.value)}
                         autoFocus
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>
+                      <span style={{ ...cellTextStyle, fontWeight: 600 }}>
                         {shortcutDisplay || '—'}
                       </span>
                     )}
                   </td>
+
 
                   {/* CONVERSION */}
                   <td style={{ padding: '1px' }}>
@@ -599,13 +609,18 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
                   </td>
 
                   {/* ACTIONS: SAVE OR DELETE BUTTON */}
-                  <td style={{ textAlign: 'center', padding: '1px' }}>
+                  <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                       {isEditing ? (
                         <button
                           type="button"
-                          className="mac-btn primary"
-                          style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            padding: '2px 10px', height: '24px', borderRadius: '4px',
+                            background: '#f4f4f5', color: '#09090b',
+                            border: 'none', fontSize: '11px', fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             macAudio.playSuccess();
@@ -613,20 +628,27 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
                           }}
                           title="Save Row"
                         >
-                          <Check size={12} /> Save
+                          <Check size={11} /> Save
                         </button>
                       ) : (
                         <button
                           type="button"
-                          className="mac-btn danger"
-                          style={{ padding: '2px 6px', height: '22px' }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: '24px', height: '24px', borderRadius: '4px',
+                            background: 'transparent', color: '#52525b',
+                            border: '1px solid transparent', cursor: 'pointer',
+                            transition: 'all 0.12s ease'
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
                           onClick={(e) => {
                             e.stopPropagation();
                             promptDeleteRow(conv, originalIndex);
                           }}
                           title="Delete conversion rule"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={12} />
                         </button>
                       )}
                     </div>
@@ -636,7 +658,6 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
             })}
           </tbody>
         </table>
-        <div style={{ height: '36px' }} />
       </div>
 
       {rowToDelete && (

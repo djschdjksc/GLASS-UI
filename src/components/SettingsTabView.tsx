@@ -34,8 +34,31 @@ import {
   QrCode,
   Tag as TagIcon,
   Maximize2,
-  Volume2
+  Volume2,
+  Wifi,
+  Cloud,
+  Radio,
+  Terminal,
+  Shield,
+  Activity
 } from 'lucide-react';
+import {
+  Button as ShadcnButton,
+  Input as ShadcnInput,
+  Card as ShadcnCard,
+  CardHeader as ShadcnCardHeader,
+  CardTitle as ShadcnCardTitle,
+  CardDescription as ShadcnCardDescription,
+  CardContent as ShadcnCardContent,
+  Tabs as ShadcnTabs,
+  TabsList as ShadcnTabsList,
+  TabsTrigger as ShadcnTabsTrigger,
+  Switch as ShadcnSwitch,
+  Badge as ShadcnBadge,
+  Label as ShadcnLabel
+} from './ui/shadcn';
+import { getUserProfile, setUserProfile, getUserPrefix } from '../services/supabaseClient';
+import { supabaseSyncService } from '../services/supabaseSync';
 import { saveMediaToDB, clearMediaFromDB } from '../services/mediaStorage';
 import {
   BARCODE_PRESETS,
@@ -61,8 +84,9 @@ import type {
   MargCreationStyle,
   ThermalSensorMode
 } from '../utils/barcodeConfigHelper';
+import { KeyboardShortcutsVisualizer } from './KeyboardShortcutsVisualizer';
 
-export type SettingsMainTab = 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'GENERAL' | 'BARCODE';
+export type SettingsMainTab = 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'BARCODE';
 export type BarcodeSubTab = 'PRESETS' | 'MARG_RULES' | 'DIMENSIONS' | 'THERMAL_HEAD' | 'CONTENT' | 'PRINTER_CMDS' | 'SCANNER';
 export type AppThemeMode = 'dark' | 'glass';
 
@@ -114,49 +138,7 @@ const WALLPAPERS = [
   { name: 'Carbon Weave',      url: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&w=1920&q=90' },
 ];
 
-// PURE GRID & TABLE SHORTCUTS ONLY (All legacy keys eliminated)
-const GRID_SHORTCUTS = [
-  {
-    key: 'Enter / Return',
-    action: 'Move to next cell horizontally, then wraps down to next row (Tally Flow Mode)',
-    tag: 'Navigation'
-  },
-  {
-    key: '0 + Enter',
-    action: 'Quick-copy quantity or capacity directly from the row above',
-    tag: 'Data Entry'
-  },
-  {
-    key: 'Arrow Keys (↑, ↓, ←, →)',
-    action: 'Smooth cell-to-cell navigation and instant cell activation',
-    tag: 'Navigation'
-  },
-  {
-    key: 'Delete (Plain)',
-    action: 'Clear selected cell value without deleting table row (Excel Mode)',
-    tag: 'Editing'
-  },
-  {
-    key: 'Insert Key',
-    action: 'Insert a new blank item row at the current position',
-    tag: 'Row Control'
-  },
-  {
-    key: 'Ctrl + Delete',
-    action: 'Delete currently highlighted row and recalculate totals',
-    tag: 'Row Control'
-  },
-  {
-    key: '+ / - / * / /',
-    action: 'Direct real-time arithmetic calculation inside Quantity & Capacity cells (e.g. 50*2+10)',
-    tag: 'Smart Math'
-  },
-  {
-    key: 'Spacebar',
-    action: 'Toggle row checkmark / selection state inside tables',
-    tag: 'Selection'
-  }
-];
+
 
 // Reusable Luxury Toggle Switch Component
 interface LuxuryToggleProps {
@@ -370,13 +352,19 @@ export const SettingsTabView: React.FC<Props> = ({
   };
 
 
-  // User Profile & Chat DP State
+  // User Profile & Multi-Device Sync State
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
   const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Main Billing Counter');
   const [userAvatar, setUserAvatar] = useState<string>(() => localStorage.getItem('modern_app_user_avatar') || '');
   const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Counter #1');
   const [userPhone, setUserPhone] = useState<string>(() => localStorage.getItem('modern_app_user_phone') || '+91 98765 43210');
   const [userStatus, setUserStatus] = useState<string>(() => localStorage.getItem('modern_app_user_status') || 'Active on Billing Desk - Ready to Chat');
+  const [userPrefix, setUserPrefix] = useState<string>(() => localStorage.getItem('modern_app_user_prefix') || getUserPrefix(localStorage.getItem('modern_app_user_name') || 'ROHIT'));
+  const [isPrefixCustomized, setIsPrefixCustomized] = useState<boolean>(() => Boolean(localStorage.getItem('modern_app_user_prefix')));
+  const [autoCloudSync, setAutoCloudSync] = useState<boolean>(() => localStorage.getItem('modern_app_auto_sync') !== '0');
+  const [soundOnSync, setSoundOnSync] = useState<boolean>(() => localStorage.getItem('modern_app_sync_sound') !== '0');
+  const [deviceOnlineStatus, setDeviceOnlineStatus] = useState<boolean>(true);
+  const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false);
   const dpInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -398,16 +386,54 @@ export const SettingsTabView: React.FC<Props> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleNameChange = (val: string) => {
+    setUserName(val);
+    if (!isPrefixCustomized) {
+      setUserPrefix(getUserPrefix(val));
+    }
+  };
+
   const handleSaveProfile = () => {
-    localStorage.setItem('modern_app_user_name', userName);
+    const trimmed = userName.trim();
+    if (!trimmed) {
+      onShowToast?.('Please enter a valid operator name', 'warning');
+      return;
+    }
+    const cleanPrefix = (userPrefix.trim() || getUserPrefix(trimmed)).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    setUserProfile({
+      name: trimmed,
+      prefix: cleanPrefix,
+      role: userRole,
+      terminal: userTerminal
+    });
+    localStorage.setItem('modern_app_user_name', trimmed);
+    localStorage.setItem('modern_app_user_prefix', cleanPrefix);
     localStorage.setItem('modern_app_user_role', userRole);
     localStorage.setItem('modern_app_user_avatar', userAvatar);
     localStorage.setItem('modern_app_user_terminal', userTerminal);
     localStorage.setItem('modern_app_user_phone', userPhone);
     localStorage.setItem('modern_app_user_status', userStatus);
+    localStorage.setItem('modern_app_auto_sync', autoCloudSync ? '1' : '0');
+    localStorage.setItem('modern_app_sync_sound', soundOnSync ? '1' : '0');
     window.dispatchEvent(new Event('storage'));
-    onShowToast?.('User Profile & Chat Details Saved!', 'success');
+    onShowToast?.('User Profile & Multi-Device Sync Settings Saved!', 'success');
     macAudio.playSuccess();
+  };
+
+  const handleForceResync = async () => {
+    setIsSyncingNow(true);
+    macAudio.playClick();
+    onShowToast?.('Synchronizing data with Cloud and other counters...', 'info');
+    try {
+      await supabaseSyncService.pullAllCloudBills();
+      macAudio.playSuccess();
+      onShowToast?.('Multi-device cloud synchronization complete!', 'success');
+    } catch (err: any) {
+      console.error('Cloud sync error:', err);
+      onShowToast?.('Sync notice: ' + (err.message || 'Offline mode active'), 'info');
+    } finally {
+      setIsSyncingNow(false);
+    }
   };
 
   // Export JSON Backup
@@ -471,57 +497,131 @@ export const SettingsTabView: React.FC<Props> = ({
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px' }}>
       {/* ========================================================================= */}
-      {/* TOP HEADER: LIQUID GLASS SEGMENTED TAB SWITCHER                           */}
+      {/* TOP HEADER: APPLE CONTROL CENTER & SYSTEM SETTINGS SEGMENTED TAB BAR       */}
       {/* ========================================================================= */}
       <div
         className="glass-panel"
         style={{
-          padding: '6px 14px',
+          padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderRadius: '10px'
+          borderRadius: '12px',
+          background: 'rgba(15, 23, 42, 0.72)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Left: macOS Control Center Brand Badge with Live System Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '26px',
-              height: '26px',
-              borderRadius: '7px',
+              width: '30px',
+              height: '30px',
+              borderRadius: '8px',
               background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(56, 189, 248, 0.4)'
+              boxShadow: '0 2px 10px rgba(56, 189, 248, 0.45)'
             }}
           >
-            <Sliders size={14} color="#ffffff" />
+            <Sliders size={15} color="#ffffff" />
           </div>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.4px', display: 'block' }}>
-              SETTINGS & SYSTEM CONTROL
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.3px' }}>
+                Control Center
+              </span>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 800,
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  background: 'rgba(34, 197, 94, 0.2)',
+                  color: '#4ade80',
+                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}
+              >
+                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e' }} />
+                ACTIVE
+              </span>
+            </div>
+            <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+              macOS System Settings & Multi-Device Station Control
             </span>
           </div>
         </div>
 
-        {/* Ant Design Glass Segmented Navigation */}
-        <div style={{ maxWidth: '920px' }}>
-          <Segmented
+        {/* Center: Live Station Diagnostics */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '3px 10px',
+              borderRadius: '20px',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}
+          >
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
+            <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 600 }}>Sync: Live</span>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '3px 10px',
+              borderRadius: '20px',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}
+          >
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 6px #38bdf8' }} />
+            <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 600 }}>SQLite :5006</span>
+          </div>
+        </div>
+
+        {/* Right: Authentic shadcn/ui Tabs Navigation */}
+        <div style={{ maxWidth: '960px' }}>
+          <ShadcnTabs
             value={activeTab}
-            onChange={(val: any) => {
+            onValueChange={(val: string) => {
               macAudio.playClick();
               setActiveTab(val as SettingsMainTab);
             }}
-            options={[
-              { value: 'THEME', label: 'Theme & Wallpaper', icon: <Palette size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
-              { value: 'PROFILE', label: 'User Profile & Chat DP', icon: <User size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
-              { value: 'SHORTCUTS', label: 'Shortcuts & NumPad', icon: <Keyboard size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
-              { value: 'BACKUP', label: 'Backup & Restore', icon: <Database size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
-              { value: 'GENERAL', label: 'General Preferences', icon: <SlidersHorizontal size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> },
-              { value: 'BARCODE', label: 'Barcode Designer', icon: <Barcode size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} /> }
-            ]}
-          />
+          >
+            <ShadcnTabsList>
+              <ShadcnTabsTrigger value="THEME">
+                <Palette size={13} style={{ marginRight: 6 }} />
+                <span>Theme & Wallpaper</span>
+              </ShadcnTabsTrigger>
+              <ShadcnTabsTrigger value="PROFILE">
+                <User size={13} style={{ marginRight: 6 }} />
+                <span>User Profile & Sync</span>
+              </ShadcnTabsTrigger>
+              <ShadcnTabsTrigger value="SHORTCUTS">
+                <Keyboard size={13} style={{ marginRight: 6 }} />
+                <span>Shortcuts & NumPad</span>
+              </ShadcnTabsTrigger>
+              <ShadcnTabsTrigger value="BACKUP">
+                <Database size={13} style={{ marginRight: 6 }} />
+                <span>Backup & Restore</span>
+              </ShadcnTabsTrigger>
+              <ShadcnTabsTrigger value="BARCODE">
+                <Barcode size={13} style={{ marginRight: 6 }} />
+                <span>Barcode Designer</span>
+              </ShadcnTabsTrigger>
+            </ShadcnTabsList>
+          </ShadcnTabs>
         </div>
       </div>
 
@@ -557,72 +657,192 @@ export const SettingsTabView: React.FC<Props> = ({
                 </Tag>
               </div>
 
-              {/* 2 Cards for Dark and Glass */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
-                {/* 1. Dark Mode */}
+              {/* Animated Sun & Moon Phone Theme Switcher (Matching Provided Component) */}
+              <div className="theme-phone-wrapper">
+                <style>{`
+                  .theme-phone-wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    padding: 4px 0 10px 0;
+                  }
+                  .theme-phone-card {
+                    position: relative;
+                    width: 250px;
+                    height: 236px;
+                    background-color: ${themeMode === 'dark' ? '#18181b' : 'rgba(255, 255, 255, 0.12)'};
+                    backdrop-filter: blur(20px);
+                    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                    box-shadow: ${themeMode === 'dark' ? '0 10px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.15)' : '0 10px 35px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)'};
+                    border: 1px solid ${themeMode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(255, 255, 255, 0.18)'};
+                    border-radius: 36px;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    user-select: none;
+                    cursor: pointer;
+                  }
+                  .theme-phone-menu {
+                    font-size: 11px;
+                    opacity: 0.65;
+                    padding: 8px 16px 2px 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    color: ${themeMode === 'dark' ? '#f8fafc' : '#ffffff'};
+                  }
+                  .theme-phone-menu .icons {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                  }
+                  .theme-phone-menu .battery {
+                    width: 13px;
+                    height: 7px;
+                    background-color: currentColor;
+                    border-radius: 2px;
+                  }
+                  .theme-phone-menu .network {
+                    width: 0;
+                    height: 0;
+                    border-style: solid;
+                    border-width: 0 4.5px 5.5px 4.5px;
+                    border-color: transparent transparent currentColor transparent;
+                    transform: rotate(135deg);
+                  }
+                  .theme-phone-content {
+                    display: flex;
+                    flex-direction: column;
+                    margin: auto;
+                    text-align: center;
+                    width: 76%;
+                    transform: translateY(2px);
+                  }
+                  .theme-phone-circle {
+                    position: relative;
+                    border-radius: 100%;
+                    width: 76px;
+                    height: 76px;
+                    background: linear-gradient(
+                      40deg,
+                      #ff0080,
+                      #ff8c00,
+                      #e8e8e8,
+                      #8983f7,
+                      #a3dafb 80%
+                    );
+                    background-size: 400%;
+                    background-position: ${themeMode === 'dark' ? '100% 100%' : '0% 0%'};
+                    transition: all 0.6s ease;
+                    margin: auto;
+                    box-shadow: ${themeMode === 'dark' ? '0 0 25px rgba(137, 131, 247, 0.45)' : '0 0 25px rgba(255, 140, 0, 0.5)'};
+                    cursor: pointer;
+                  }
+                  .theme-phone-crescent {
+                    position: absolute;
+                    border-radius: 100%;
+                    right: 0;
+                    width: 58px;
+                    height: 58px;
+                    background: ${themeMode === 'dark' ? '#18181b' : '#e8e8e8'};
+                    transform: ${themeMode === 'dark' ? 'scale(1)' : 'scale(0)'};
+                    transform-origin: top right;
+                    transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1), background-color 0.6s;
+                  }
+                  .theme-phone-toggle-bar {
+                    width: 100%;
+                    height: 36px;
+                    background-color: rgba(0, 0, 0, 0.25);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 100px;
+                    position: relative;
+                    margin: 14px 0 6px 0;
+                    cursor: pointer;
+                    display: block;
+                  }
+                  .theme-phone-toggle-slider {
+                    position: absolute;
+                    top: 3px;
+                    left: 3px;
+                    width: calc(50% - 3px);
+                    height: calc(100% - 6px);
+                    border-radius: 100px;
+                    background-color: ${themeMode === 'dark' ? '#0284c7' : '#ffffff'};
+                    box-shadow: ${themeMode === 'dark' ? '0 0 12px rgba(2, 132, 199, 0.6)' : '0 2px 10px rgba(0, 0, 0, 0.25)'};
+                    transform: ${themeMode === 'dark' ? 'translateX(100%)' : 'translateX(0)'};
+                    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.35s, box-shadow 0.35s;
+                  }
+                  .theme-phone-labels {
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    justify-content: space-around;
+                    align-items: center;
+                    font-size: 11px;
+                    font-weight: 800;
+                    user-select: none;
+                    pointer-events: none;
+                    z-index: 2;
+                  }
+                  .theme-phone-label-light {
+                    transition: all 0.3s;
+                    color: ${themeMode === 'dark' ? '#94a3b8' : '#0f172a'};
+                    font-weight: ${themeMode === 'dark' ? 600 : 900};
+                    opacity: ${themeMode === 'dark' ? 0.65 : 1};
+                  }
+                  .theme-phone-label-dark {
+                    transition: all 0.3s;
+                    color: ${themeMode === 'dark' ? '#ffffff' : '#94a3b8'};
+                    font-weight: ${themeMode === 'dark' ? 900 : 600};
+                    opacity: ${themeMode === 'dark' ? 1 : 0.65};
+                  }
+                `}</style>
+
                 <div
+                  className="theme-phone-card"
                   onClick={() => {
+                    const newMode = themeMode === 'dark' ? 'glass' : 'dark';
                     macAudio.playClick();
-                    onChangeThemeMode?.('dark');
-                    onShowToast?.('Dark Mode Activated (Obsidian dark)', 'success');
+                    onChangeThemeMode?.(newMode);
+                    onShowToast?.(
+                      newMode === 'dark' ? 'Dark Mode Activated (Obsidian Dark)' : 'Glass Mode Activated (Liquid Retina)',
+                      'success'
+                    );
                   }}
-                  style={{
-                    background: '#09090b',
-                    border: themeMode === 'dark' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
-                    boxShadow: themeMode === 'dark' ? '0 0 16px rgba(56, 189, 248, 0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '90px',
-                    transition: 'all 0.2s ease'
-                  }}
+                  title="Click to toggle between Glass and Dark modes"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Moon size={15} color="#38bdf8" />
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>Dark Mode</span>
+                  <div className="theme-phone-menu">
+                    <span style={{ fontWeight: 700, fontFamily: 'monospace' }}>4:20</span>
+                    <div className="icons">
+                      <div className="network" />
+                      <div className="battery" />
                     </div>
-                    {themeMode === 'dark' && <Check size={14} color="#38bdf8" />}
                   </div>
-                  <span style={{ fontSize: '9.5px', color: '#a1a1aa', lineHeight: 1.3, marginTop: '6px' }}>
-                    Obsidian zinc canvas, neutral borders, high contrast & sleek.
-                  </span>
+
+                  <div className="theme-phone-content">
+                    {/* Animated Sun / Moon Circle */}
+                    <div className="theme-phone-circle">
+                      <div className="theme-phone-crescent" />
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <div className="theme-phone-toggle-bar">
+                      <div className="theme-phone-toggle-slider" />
+                      <div className="theme-phone-labels">
+                        <span className="theme-phone-label-light">Light / Glass</span>
+                        <span className="theme-phone-label-dark">Dark</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* 2. Glass Mode */}
-                <div
-                  onClick={() => {
-                    macAudio.playClick();
-                    onChangeThemeMode?.('glass');
-                    onShowToast?.('Glass Mode Activated (Liquid Retina)', 'success');
-                  }}
-                  style={{
-                    background: 'rgba(15, 23, 42, 0.75)',
-                    backdropFilter: 'blur(16px)',
-                    border: themeMode === 'glass' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: themeMode === 'glass' ? '0 0 16px rgba(56, 189, 248, 0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '90px',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Sparkles size={15} color="#38bdf8" />
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>Glass Mode</span>
-                    </div>
-                    {themeMode === 'glass' && <Check size={14} color="#38bdf8" />}
-                  </div>
-                  <span style={{ fontSize: '9.5px', color: '#94a3b8', lineHeight: 1.3, marginTop: '6px' }}>
-                    Frosted translucent glassmorphism with HD wallpaper backing.
+                {/* Subtext info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                  <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>Active Display Mode:</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: themeMode === 'dark' ? '#38bdf8' : '#34d399' }}>
+                    {themeMode === 'dark' ? 'Obsidian Dark (Neutral Sleek)' : 'Liquid Retina Glass (Frosted Wallpaper)'}
                   </span>
                 </div>
               </div>
@@ -941,755 +1161,519 @@ export const SettingsTabView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB: USER PROFILE & CHAT DP (TEAM NETWORK CHAT IDENTIFICATION)            */}
+      {/* TAB 2: USER PROFILE & MULTI-DEVICE SYNC (SHADCN/UI DESIGN SYSTEM)         */}
       {/* ========================================================================= */}
       {activeTab === 'PROFILE' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: Operator Identity & DP Editor */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              overflowY: 'auto'
-            }}
-          >
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', minHeight: 0, overflowY: 'auto', padding: '4px 12px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '16px' }}>
             <div>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--foreground, #f8fafc)', letterSpacing: '0.3px', display: 'block' }}>
-                OPERATOR IDENTITY & CHAT DP
-              </span>
-              <span style={{ fontSize: '10.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
-                Customize your name, counter title, and profile picture (DP) visible to all colleagues in the chat panel
-              </span>
+              <h2 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.6px', color: '#f4f4f5', margin: 0 }}>
+                Profile & Synchronization
+              </h2>
+              <p style={{ fontSize: '13px', color: '#a1a1aa', margin: '4px 0 0' }}>
+                Manage your operator credentials, multi-terminal bill prefixing, and real-time cloud data sync.
+              </p>
             </div>
-
-            {/* Profile Picture (DP) Section */}
-            <div
-              style={{
-                background: 'var(--card, rgba(0, 0, 0, 0.28))',
-                border: '1px solid var(--border, rgba(255, 255, 255, 0.1))',
-                borderRadius: '10px',
-                padding: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px'
-              }}
-            >
-              {/* DP Circle with Online Dot */}
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div
-                  style={{
-                    width: '76px',
-                    height: '76px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    border: '3px solid #25D366',
-                    boxShadow: '0 0 16px rgba(37, 211, 102, 0.35)',
-                    background: userAvatar ? 'transparent' : 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  {userAvatar ? (
-                    <img
-                      src={userAvatar}
-                      alt="User DP"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff' }}>
-                      {userName.slice(0, 2).toUpperCase() || 'OP'}
-                    </span>
-                  )}
-                </div>
-
-                {/* Online Indicator Badge */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '2px',
-                    right: '2px',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    background: '#25D366',
-                    border: '2px solid #090d16',
-                    boxShadow: '0 0 8px #25D366'
-                  }}
-                  title="Online on Network"
-                />
-              </div>
-
-              {/* DP Controls */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <input
-                  type="file"
-                  ref={dpInputRef}
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  style={{ display: 'none' }}
-                />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => dpInputRef.current?.click()}
-                    className="apple-box-btn"
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '7px',
-                      background: 'linear-gradient(135deg, #10b981, #059669)',
-                      border: 'none',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Camera size={13} color="#ffffff" />
-                    <span>Upload Custom DP</span>
-                  </button>
-
-                  {userAvatar && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserAvatar('');
-                        localStorage.removeItem('modern_app_user_avatar');
-                        window.dispatchEvent(new Event('storage'));
-                        onShowToast?.('Reset to default avatar initials', 'info');
-                        macAudio.playTrash();
-                      }}
-                      className="apple-box-btn"
-                      style={{
-                        padding: '6px 10px',
-                        borderRadius: '7px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#ef4444'
-                      }}
-                    >
-                      Remove DP
-                    </button>
-                  )}
-                </div>
-
-                {/* Quick Avatar Emojis */}
-                <div>
-                  <span style={{ fontSize: '10px', color: 'var(--muted-foreground, #94a3b8)', display: 'block', marginBottom: '4px' }}>
-                    Or choose a quick preset avatar:
-                  </span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    {['👨‍💼', '👩‍💼', '🧑‍💻', '⚡', '👑', '💼', '🚀', '🏢'].map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => {
-                          // Generate canvas image from emoji
-                          const canvas = document.createElement('canvas');
-                          canvas.width = 120;
-                          canvas.height = 120;
-                          const ctx = canvas.getContext('2d');
-                          if (ctx) {
-                            ctx.fillStyle = '#0f172a';
-                            ctx.fillRect(0, 0, 120, 120);
-                            ctx.font = '64px sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText(emoji, 60, 65);
-                            const url = canvas.toDataURL('image/png');
-                            setUserAvatar(url);
-                            localStorage.setItem('modern_app_user_avatar', url);
-                            window.dispatchEvent(new Event('storage'));
-                            onShowToast?.(`Avatar updated to ${emoji}!`, 'success');
-                            macAudio.playSuccess();
-                          }
-                        }}
-                        style={{
-                          width: '26px',
-                          height: '26px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border, rgba(255,255,255,0.12))',
-                          background: 'var(--secondary, rgba(255,255,255,0.06))',
-                          fontSize: '13px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
-                  Operator / User Display Name
-                </label>
-                <input
-                  type="text"
-                  className="apple-input"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="e.g. Rohit (Billing Desk)"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
-                    Counter Role / Department
-                  </label>
-                  <input
-                    type="text"
-                    className="apple-input"
-                    value={userRole}
-                    onChange={(e) => setUserRole(e.target.value)}
-                    placeholder="e.g. Main Billing Desk"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
-                    Terminal / Counter ID
-                  </label>
-                  <input
-                    type="text"
-                    className="apple-input"
-                    value={userTerminal}
-                    onChange={(e) => setUserTerminal(e.target.value)}
-                    placeholder="e.g. Counter #1"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
-                  Contact / WhatsApp Phone Number
-                </label>
-                <input
-                  type="text"
-                  className="apple-input"
-                  value={userPhone}
-                  onChange={(e) => setUserPhone(e.target.value)}
-                  placeholder="e.g. +91 98765 43210"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '4px' }}>
-                  Live Status Message (Visible in Team Chat)
-                </label>
-                <input
-                  type="text"
-                  className="apple-input"
-                  value={userStatus}
-                  onChange={(e) => setUserStatus(e.target.value)}
-                  placeholder="e.g. Active on Billing Desk - Ready to Chat"
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
-              <button
-                type="button"
-                onClick={handleSaveProfile}
-                className="apple-box-btn"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                  border: 'none',
-                  color: '#ffffff',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
-                  cursor: 'pointer'
-                }}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShadcnButton
+                variant="outline"
+                size="sm"
+                onClick={handleForceResync}
+                disabled={isSyncingNow}
               >
-                <Check size={14} color="#ffffff" />
-                <span>Save Profile & Chat Identity</span>
-              </button>
+                <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} />
+                <span>{isSyncingNow ? 'Syncing...' : 'Sync Cloud'}</span>
+              </ShadcnButton>
+              <ShadcnButton
+                variant="default"
+                size="sm"
+                onClick={handleSaveProfile}
+              >
+                <Check size={14} />
+                <span>Save Changes</span>
+              </ShadcnButton>
             </div>
           </div>
 
-          {/* Right Column: Live Chat & Network Terminal Preview */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              overflowY: 'auto'
-            }}
-          >
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--foreground, #f8fafc)', letterSpacing: '0.3px', display: 'block' }}>
-                LIVE TEAM CHAT PREVIEW
-              </span>
-              <span style={{ fontSize: '10.5px', color: 'var(--muted-foreground, #94a3b8)' }}>
-                How other connected terminals and operators see your messages in real time
-              </span>
+          {/* 2-Column Responsive Layout */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+            {/* LEFT COLUMN: Operator Identity & Profile Studio */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Card 1: Operator Details */}
+              <ShadcnCard>
+                <ShadcnCardHeader>
+                  <ShadcnCardTitle>Operator Identity</ShadcnCardTitle>
+                  <ShadcnCardDescription>
+                    Personalize your display avatar, counter designation, and presence.
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+
+                <ShadcnCardContent style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Avatar Studio */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '16px', borderRadius: '10px', background: '#18181b', border: '1px solid #27272a' }}>
+                    {/* Circular Avatar */}
+                    <div
+                      style={{
+                        width: '72px',
+                        height: '72px',
+                        borderRadius: '50%',
+                        background: '#09090b',
+                        border: '2px solid #27272a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        flexShrink: 0
+                      }}
+                    >
+                      {userAvatar ? (
+                        <img src={userAvatar} alt="DP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ fontSize: '22px', fontWeight: 700, color: '#f4f4f5' }}>
+                          {userName.slice(0, 2).toUpperCase() || 'OP'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <input
+                        type="file"
+                        ref={dpInputRef}
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <ShadcnButton
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => dpInputRef.current?.click()}
+                        >
+                          Change Avatar
+                        </ShadcnButton>
+                        {userAvatar && (
+                          <ShadcnButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            style={{ color: '#ef4444' }}
+                            onClick={() => {
+                              setUserAvatar('');
+                              localStorage.removeItem('modern_app_user_avatar');
+                              window.dispatchEvent(new Event('storage'));
+                              macAudio.playTrash();
+                            }}
+                          >
+                            Remove
+                          </ShadcnButton>
+                        )}
+                      </div>
+                      {/* Quick Preset Emojis */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        {['👨‍💼', '👩‍💼', '🧑‍💻', '⚡', '👑', '💼'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                              const canvas = document.createElement('canvas');
+                              canvas.width = 120;
+                              canvas.height = 120;
+                              const ctx = canvas.getContext('2d');
+                              if (ctx) {
+                                ctx.fillStyle = '#09090b';
+                                ctx.fillRect(0, 0, 120, 120);
+                                ctx.font = '64px sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(emoji, 60, 65);
+                                const url = canvas.toDataURL('image/png');
+                                setUserAvatar(url);
+                                localStorage.setItem('modern_app_user_avatar', url);
+                                window.dispatchEvent(new Event('storage'));
+                                macAudio.playSuccess();
+                              }
+                            }}
+                            style={{
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '6px',
+                              border: '1px solid #27272a',
+                              background: '#09090b',
+                              fontSize: '13px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Form fields */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* Name */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <ShadcnLabel>Display Name</ShadcnLabel>
+                      <ShadcnInput
+                        type="text"
+                        value={userName}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        placeholder="e.g. Rohit (Billing Desk)"
+                      />
+                      <span style={{ fontSize: '12px', color: '#71717a' }}>
+                        Name shown on exported receipts, chat presence, and invoice audit stamps.
+                      </span>
+                    </div>
+
+                    {/* Counter Role / Department */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <ShadcnLabel>Counter Department</ShadcnLabel>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                        {['Main Billing Counter', 'Warehouse / Godown', 'Accounts & Dispatch', 'Manager / Admin'].map((r) => {
+                          const isSelected = userRole === r;
+                          return (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => {
+                                setUserRole(r);
+                                macAudio.playClick();
+                              }}
+                              style={{
+                                padding: '10px 12px',
+                                borderRadius: '8px',
+                                border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
+                                background: isSelected ? '#27272a' : '#18181b',
+                                color: isSelected ? '#ffffff' : '#a1a1aa',
+                                fontSize: '12px',
+                                fontWeight: isSelected ? 600 : 400,
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {r}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Terminal Identifier */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <ShadcnLabel>Terminal / Counter Machine</ShadcnLabel>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                        {['Counter #1', 'Counter #2', 'Godown PC', 'Laptop / Remote'].map((t) => {
+                          const isSelected = userTerminal === t;
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => {
+                                setUserTerminal(t);
+                                macAudio.playClick();
+                              }}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
+                                background: isSelected ? '#27272a' : '#18181b',
+                                color: isSelected ? '#ffffff' : '#a1a1aa',
+                                fontSize: '12px',
+                                fontWeight: isSelected ? 600 : 400,
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {t}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Phone & Status */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <ShadcnLabel>Contact Phone</ShadcnLabel>
+                        <ShadcnInput
+                          type="text"
+                          value={userPhone}
+                          onChange={(e) => setUserPhone(e.target.value)}
+                          placeholder="+91 98765 43210"
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <ShadcnLabel>Live Broadcast Status</ShadcnLabel>
+                        <ShadcnInput
+                          type="text"
+                          value={userStatus}
+                          onChange={(e) => setUserStatus(e.target.value)}
+                          placeholder="Active on Billing Desk"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </ShadcnCardContent>
+              </ShadcnCard>
             </div>
 
-            {/* WhatsApp Styled Chat Box Preview */}
-            <div
-              style={{
-                borderRadius: '10px',
-                border: '1px solid var(--border, rgba(255, 255, 255, 0.12))',
-                background: '#0b141a',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 6px 20px rgba(0,0,0,0.3)'
-              }}
-            >
-              {/* WhatsApp Header Preview */}
-              <div
-                style={{
-                  padding: '10px 12px',
-                  background: '#202c33',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  borderBottom: '1px solid var(--border, rgba(255,255,255,0.08))'
-                }}
-              >
-                <div
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    background: userAvatar ? 'transparent' : '#00a884',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  {userAvatar ? (
-                    <img src={userAvatar} alt="DP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>
-                      {userName.slice(0, 2).toUpperCase() || 'OP'}
+            {/* RIGHT COLUMN: Unique Token Prefix Guard & Realtime Cloud Sync Deck */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Card 2: Multi-Device Bill Clash Guard */}
+              <ShadcnCard>
+                <ShadcnCardHeader>
+                  <ShadcnCardTitle>Unique Bill Token Prefix</ShadcnCardTitle>
+                  <ShadcnCardDescription>
+                    Prevents invoice number collisions when multiple computers bill simultaneously.
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+
+                <ShadcnCardContent style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <ShadcnInput
+                    type="text"
+                    value={userPrefix}
+                    onChange={(e) => {
+                      setUserPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                      setIsPrefixCustomized(true);
+                    }}
+                    placeholder="e.g. ROHIT, CTR1, WH1"
+                    style={{
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      letterSpacing: '1px'
+                    }}
+                  />
+
+                  {/* Token Preview Pill */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      background: '#18181b',
+                      border: '1px solid #27272a'
+                    }}
+                  >
+                    <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
+                      Invoice Token Sequence Preview:
                     </span>
-                  )}
-                </div>
+                    <ShadcnBadge variant="outline" style={{ fontFamily: 'monospace', color: '#38bdf8' }}>
+                      {userPrefix ? `${userPrefix}-1, ${userPrefix}-2, ${userPrefix}-3...` : 'BILL-1, BILL-2...'}
+                    </ShadcnBadge>
+                  </div>
+                </ShadcnCardContent>
+              </ShadcnCard>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#e9edef' }}>
-                    {userName || 'Operator Name'}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#25D366', fontWeight: 600 }}>
-                    Online • {userRole || 'Billing Desk'}
-                  </div>
-                </div>
+              {/* Card 3: Realtime Cloud Sync Deck */}
+              <ShadcnCard>
+                <ShadcnCardHeader>
+                  <ShadcnCardTitle>Cloud Synchronization</ShadcnCardTitle>
+                  <ShadcnCardDescription>
+                    Multi-counter database replication and peer terminal discovery.
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
 
-                <Tag color="success" style={{ margin: 0, fontSize: '9px', fontWeight: 700 }}>
-                  {userTerminal || 'Counter #1'}
-                </Tag>
-              </div>
+                <ShadcnCardContent style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  {/* Cloud Status Pill */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '8px',
+                      background: '#18181b',
+                      border: '1px solid #27272a'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
+                        Realtime Channel Active
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace' }}>
+                      latency: 14ms • public:bills:all
+                    </span>
+                  </div>
 
-              {/* Chat Messages Body Preview */}
-              <div
-                style={{
-                  padding: '14px 12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  minHeight: '170px'
-                }}
-              >
-                {/* Incoming Message from Counter 2 */}
-                <div
-                  style={{
-                    alignSelf: 'flex-start',
-                    maxWidth: '82%',
-                    background: '#202c33',
-                    padding: '8px 10px',
-                    borderRadius: '8px 8px 8px 2px',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
-                  }}
-                >
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#53bdeb', marginBottom: '2px' }}>
-                    Counter 2 (Warehouse Dispatch)
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#e9edef', lineHeight: 1.3 }}>
-                    📦 Token #626 stock materials are staged and verified ready for dispatch.
-                  </div>
-                  <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px' }}>
-                    10:45 AM
-                  </div>
-                </div>
+                  {/* Clean shadcn Toggles */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 0',
+                        borderBottom: '1px solid #27272a'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Auto Cloud Delta Sync
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#71717a' }}>
+                          Instantly merge invoices and edits created on other terminals.
+                        </div>
+                      </div>
+                      <ShadcnSwitch
+                        checked={autoCloudSync}
+                        onCheckedChange={(val: boolean) => {
+                          setAutoCloudSync(val);
+                          localStorage.setItem('modern_app_auto_sync', val ? '1' : '0');
+                          macAudio.playClick();
+                        }}
+                      />
+                    </div>
 
-                {/* Outgoing Message from Current User */}
-                <div
-                  style={{
-                    alignSelf: 'flex-end',
-                    maxWidth: '82%',
-                    background: '#005c4b',
-                    padding: '8px 10px',
-                    borderRadius: '8px 8px 2px 8px',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
-                  }}
-                >
-                  <div style={{ fontSize: '11px', color: '#e9edef', lineHeight: 1.3 }}>
-                    👍 Got it! Invoice bill #001 printed and handed to transport vehicle.
-                  </div>
-                  <div style={{ fontSize: '9px', color: '#8696a0', textAlign: 'right', marginTop: '3px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
-                    <span>10:46 AM</span>
-                    <span style={{ color: '#53bdeb', fontWeight: 800 }}>✓✓</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 0',
+                        borderBottom: '1px solid #27272a'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Audio Alerts on Remote Invoices
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#71717a' }}>
+                          Play notification chime when remote colleagues save a bill.
+                        </div>
+                      </div>
+                      <ShadcnSwitch
+                        checked={soundOnSync}
+                        onCheckedChange={(val: boolean) => {
+                          setSoundOnSync(val);
+                          localStorage.setItem('modern_app_sync_sound', val ? '1' : '0');
+                          macAudio.playClick();
+                        }}
+                      />
+                    </div>
 
-            {/* Active Terminals on Network Card */}
-            <div
-              style={{
-                background: 'var(--card, rgba(0,0,0,0.25))',
-                border: '1px solid var(--border, rgba(255,255,255,0.08))',
-                borderRadius: '8px',
-                padding: '10px 12px'
-              }}
-            >
-              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground, #f8fafc)', display: 'block', marginBottom: '6px' }}>
-                ACTIVE SOFTWARE COUNTERS
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#25D366' }} />
-                    <span style={{ fontWeight: 600 }}>{userName} (This Counter)</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 0'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Broadcast Online Presence
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#71717a' }}>
+                          Show this terminal as online in team network chat and peer list.
+                        </div>
+                      </div>
+                      <ShadcnSwitch
+                        checked={deviceOnlineStatus}
+                        onCheckedChange={(val: boolean) => {
+                          setDeviceOnlineStatus(val);
+                          macAudio.playClick();
+                        }}
+                      />
+                    </div>
                   </div>
-                  <Tag color="cyan" style={{ margin: 0, fontSize: '9px' }}>Online</Tag>
-                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#25D366' }} />
-                    <span style={{ fontWeight: 600 }}>Warehouse Dispatch (Counter 2)</span>
-                  </div>
-                  <Tag color="cyan" style={{ margin: 0, fontSize: '9px' }}>Online</Tag>
-                </div>
+                  {/* Connected Stations List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#a1a1aa' }}>
+                      Connected Peer Stations
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          background: '#18181b',
+                          border: '1px solid #27272a'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                          <span style={{ fontSize: '12px', fontWeight: 500, color: '#f4f4f5' }}>
+                            {userName} ({userTerminal} - This Machine)
+                          </span>
+                        </div>
+                        <ShadcnBadge variant="outline" style={{ fontFamily: 'monospace', color: '#38bdf8' }}>
+                          {userPrefix || 'ROHIT'}
+                        </ShadcnBadge>
+                      </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#25D366' }} />
-                    <span style={{ fontWeight: 600 }}>Accounts & Ledger Desk</span>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          background: '#18181b',
+                          border: '1px solid #27272a'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                          <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
+                            Warehouse Dispatch (Counter #2)
+                          </span>
+                        </div>
+                        <ShadcnBadge variant="secondary" style={{ fontFamily: 'monospace', color: '#71717a' }}>
+                          WH
+                        </ShadcnBadge>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          background: '#18181b',
+                          border: '1px solid #27272a'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                          <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
+                            Accounts & Ledger Desk (Counter #3)
+                          </span>
+                        </div>
+                        <ShadcnBadge variant="secondary" style={{ fontFamily: 'monospace', color: '#71717a' }}>
+                          ACC
+                        </ShadcnBadge>
+                      </div>
+                    </div>
                   </div>
-                  <Tag color="cyan" style={{ margin: 0, fontSize: '9px' }}>Online</Tag>
-                </div>
-              </div>
+                </ShadcnCardContent>
+              </ShadcnCard>
             </div>
           </div>
         </div>
       )}
       {/* ========================================================================= */}
+      {/* TAB 3: KEYBOARD SHORTCUTS & NUMPAD ENGINE (ACETERNITY STYLE VISUALIZER)   */}
+      {/* ========================================================================= */}
       {activeTab === 'SHORTCUTS' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: NumPad '.' Masterclass & Step-by-Step Interactive Guide */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              overflowY: 'auto'
-            }}
-          >
-            {/* Header Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                    borderRadius: '8px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '18px',
-                    fontWeight: 900,
-                    color: '#ffffff',
-                    boxShadow: '0 0 12px rgba(56, 189, 248, 0.5)'
-                  }}
-                >
-                  .
-                </div>
-                <div>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', display: 'block' }}>
-                    NUMPAD '.' SHORTCUT ENGINE
-                  </span>
-                  <span style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 600 }}>
-                    Unified single-key navigation across the entire software
-                  </span>
-                </div>
-              </div>
-
-              <span
-                style={{
-                  fontSize: '9.5px',
-                  fontWeight: 800,
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  color: '#38bdf8',
-                  padding: '3px 8px',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(56, 189, 248, 0.3)'
-                }}
-              >
-                PRO EDITION
-              </span>
-            </div>
-
-            {/* 3 Step Visual Card */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1' }}>
-                HOW TO OPERATE WITH NUMPAD:
-              </span>
-
-              {/* Step 1 */}
-              <div
-                style={{
-                  background: 'rgba(15, 23, 42, 0.7)',
-                  border: '1.5px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '10px'
-                }}
-              >
-                <div
-                  style={{
-                    background: '#38bdf8',
-                    color: '#090d16',
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    flexShrink: 0
-                  }}
-                >
-                  1
-                </div>
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc' }}>
-                    Press <span style={{ color: '#38bdf8', fontFamily: 'monospace' }}>[ . ] (Del)</span> on NumPad
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
-                    The entire UI enters Navigator Mode. All 6 main groups highlight with clean glowing borders and corner badges:
-                    <strong style={{ color: '#f8fafc' }}> [1] Header, [2] Left Rail, [3] Raw Grid, [4] Finished Grid, [5] Mode Bar, [6] Right Rail</strong>.
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div
-                style={{
-                  background: 'rgba(15, 23, 42, 0.7)',
-                  border: '1.5px solid rgba(16, 185, 129, 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '10px'
-                }}
-              >
-                <div
-                  style={{
-                    background: '#10b981',
-                    color: '#090d16',
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    flexShrink: 0
-                  }}
-                >
-                  2
-                </div>
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc' }}>
-                    Press Group Number <span style={{ color: '#10b981', fontFamily: 'monospace' }}>[ 1 - 6 ]</span>
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
-                    Selected group activates. All buttons, textboxes, and dropdowns inside that group get numbered corner badges:
-                    <strong style={{ color: '#f8fafc' }}> [1] to [9]</strong>. Background remains 100% visible and unblocked.
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div
-                style={{
-                  background: 'rgba(15, 23, 42, 0.7)',
-                  border: '1.5px solid rgba(245, 158, 11, 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '10px'
-                }}
-              >
-                <div
-                  style={{
-                    background: '#f59e0b',
-                    color: '#090d16',
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    flexShrink: 0
-                  }}
-                >
-                  3
-                </div>
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc' }}>
-                    Press Target Number <span style={{ color: '#f59e0b', fontFamily: 'monospace' }}>[ 1 - 9 ]</span>
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
-                    The target executes instantly (button clicks, dropdown opens, or input focuses & selects all text for high-speed typing).
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Controls Info */}
-              <div
-                style={{
-                  background: 'rgba(56, 189, 248, 0.08)',
-                  border: '1px dashed rgba(56, 189, 248, 0.3)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Info size={13} color="#38bdf8" />
-                  <span style={{ fontSize: '10px', color: '#cbd5e1' }}>
-                    Press <strong style={{ color: '#ffffff' }}>[ . ]</strong> again at any time to instantly close. Press <strong style={{ color: '#ffffff' }}>[ 0 ]</strong> to return to groups.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Pure Table Grid Shortcuts (No Legacy Clutter) */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              overflowY: 'auto'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Grid size={15} color="#34d399" />
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc' }}>
-                  TABLE & GRID DATA ENTRY KEYS
-                </span>
-              </div>
-              <span style={{ fontSize: '9.5px', color: '#94a3b8' }}>Active in Tables</span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {GRID_SHORTCUTS.map(sc => (
-                <div
-                  key={sc.key}
-                  style={{
-                    background: 'rgba(15, 23, 42, 0.5)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '10px'
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                      <span
-                        style={{
-                          background: '#090d16',
-                          border: '1.5px solid rgba(56, 189, 248, 0.4)',
-                          color: '#38bdf8',
-                          padding: '1px 7px',
-                          borderRadius: '5px',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          fontFamily: 'monospace'
-                        }}
-                      >
-                        {sc.key}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '8.5px',
-                          padding: '1px 5px',
-                          borderRadius: '4px',
-                          background: 'rgba(255,255,255,0.08)',
-                          color: '#cbd5e1',
-                          fontWeight: 700
-                        }}
-                      >
-                        {sc.tag}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#94a3b8', lineHeight: 1.25 }}>
-                      {sc.action}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <KeyboardShortcutsVisualizer />
       )}
 
       {/* ========================================================================= */}
@@ -1950,154 +1934,7 @@ export const SettingsTabView: React.FC<Props> = ({
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 4: GENERAL PREFERENCES (DATA ENTRY & TALLY NAV SETTINGS)              */}
-      {/* ========================================================================= */}
-      {activeTab === 'GENERAL' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: Data Entry Settings with Luxury Toggles */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              overflowY: 'auto'
-            }}
-          >
-            <div>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '2px' }}>
-                DATA ENTRY & NAVIGATION SETTINGS
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                Fine-tune keyboard flow, shortcut expansion, and sound
-              </span>
-            </div>
 
-            <LuxuryToggle
-              title="Tally Navigation Mode"
-              desc="Enter moves to next cell horizontally, then wraps down to next row"
-              checked={tallyNavigation}
-              onChange={(val) => {
-                setTallyNavigation(val);
-                localStorage.setItem('modern_setting_tally_nav', val ? '1' : '0');
-                onShowToast(`Tally Navigation ${val ? 'Enabled' : 'Disabled'}`, 'info');
-              }}
-              badge="ENTER FLOW"
-            />
-
-            <LuxuryToggle
-              title="Auto-Convert Item Shortcuts"
-              desc="Instant expansion when typing short codes (e.g. G1 -> Mould Housing)"
-              checked={autoConvertMode}
-              onChange={(val) => {
-                setAutoConvertMode(val);
-                localStorage.setItem('modern_setting_autoconv', val ? '1' : '0');
-                onShowToast(`Auto-Convert ${val ? 'Enabled' : 'Disabled'}`, 'info');
-              }}
-              badge="AUTO-EXPAND"
-            />
-
-            <LuxuryToggle
-              title="Sticky Shortcut Mode"
-              desc="Automatically inherits group and category prefix from the row directly above"
-              checked={stickyShortcuts}
-              onChange={(val) => {
-                setStickyShortcuts(val);
-                localStorage.setItem('modern_setting_sticky', val ? '1' : '0');
-                onShowToast(`Sticky Mode ${val ? 'Enabled' : 'Disabled'}`, 'info');
-              }}
-              badge="STICKY"
-            />
-
-            <LuxuryToggle
-              title="Item Auto-Suggest Popup"
-              desc="Shows interactive dropdown matching typed characters in Item Name"
-              checked={itemAutoSuggest}
-              onChange={(val) => {
-                setItemAutoSuggest(val);
-                localStorage.setItem('modern_setting_item_auto', val ? '1' : '0');
-                onShowToast(`Autosuggest ${val ? 'Enabled' : 'Disabled'}`, 'info');
-              }}
-              badge="POPUP"
-            />
-
-            <LuxuryToggle
-              title="macOS Audio Feedback"
-              desc="Plays realistic tactile sound clicks on button press and key navigation"
-              checked={audioFeedback}
-              onChange={(val) => {
-                setAudioFeedback(val);
-                onShowToast(`Audio feedback ${val ? 'On' : 'Muted'}`, 'info');
-              }}
-              badge="SOUND"
-            />
-          </div>
-
-          {/* Right Column: Invoice Setup & LAN Server Mode */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              overflowY: 'auto'
-            }}
-          >
-            <div>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '2px' }}>
-                INVOICE & PRINTER MEMORANDUM
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                Set default voucher numbering and header title
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#cbd5e1' }}>Invoice Voucher Prefix</span>
-              <Input
-                value={slipPrefix}
-                onChange={(e: any) => {
-                  setSlipPrefix(e.target.value);
-                  localStorage.setItem('modern_setting_slip_prefix', e.target.value);
-                }}
-                prefix={<FileText size={13} style={{ color: '#38bdf8' }} />}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#cbd5e1' }}>Printed Slip Header Title</span>
-              <Input
-                value={slipHeaderTitle}
-                onChange={(e: any) => {
-                  setSlipHeaderTitle(e.target.value);
-                  localStorage.setItem('modern_setting_slip_title', e.target.value);
-                }}
-                prefix={<Printer size={13} style={{ color: '#38bdf8' }} />}
-              />
-            </div>
-
-            {/* LAN Mode */}
-            <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '8px' }}>
-                LAN SERVER / MULTI-USER SYNC
-              </span>
-              <Segmented
-                block
-                value={serverMode}
-                onChange={(val: any) => setServerMode(val as any)}
-                options={[
-                  { label: 'Host Server', value: 'server' },
-                  { label: 'Client Node', value: 'client' },
-                  { label: 'Standalone', value: 'standalone' }
-                ]}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* TAB 5: COMPREHENSIVE BARCODE & THERMAL LABEL DESIGNER                     */}

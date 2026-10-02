@@ -26,7 +26,9 @@ import {
   ExternalLink,
   ChevronRight,
   PlusCircle,
-  Columns
+  Columns,
+  FileText,
+  ShoppingCart
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
@@ -42,6 +44,23 @@ import {
   downloadThermalScriptFile,
   parseWeighingScaleBarcode
 } from '../utils/barcodeConfigHelper';
+import {
+  Button as ShadcnButton,
+  Input as ShadcnInput,
+  Card as ShadcnCard,
+  CardHeader as ShadcnCardHeader,
+  CardTitle as ShadcnCardTitle,
+  CardDescription as ShadcnCardDescription,
+  CardContent as ShadcnCardContent,
+  Tabs as ShadcnTabs,
+  TabsList as ShadcnTabsList,
+  TabsTrigger as ShadcnTabsTrigger,
+  Badge as ShadcnBadge,
+  Label as ShadcnLabel,
+  Separator as ShadcnSeparator,
+  Select as ShadcnSelect,
+  Pagination as ShadcnPagination
+} from './ui/shadcn';
 
 
 // =========================================================================
@@ -238,6 +257,22 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const [barcodeCategory, setBarcodeCategory] = useState<string>('All Categories');
   const [barcodeStates, setBarcodeStates] = useState<Record<string, BarcodeItemState>>({});
   const [isBarcodePreviewOpen, setIsBarcodePreviewOpen] = useState<boolean>(false);
+
+  // --- PAGINATION STATE ---
+  const [inwardPage, setInwardPage] = useState(1);
+  const [inwardPageSize, setInwardPageSize] = useState(25);
+  const [outwardPage, setOutwardPage] = useState(1);
+  const [outwardPageSize, setOutwardPageSize] = useState(25);
+  const [balancePage, setBalancePage] = useState(1);
+  const [balancePageSize, setBalancePageSize] = useState(25);
+  const [barcodePage, setBarcodePage] = useState(1);
+  const [barcodePageSize, setBarcodePageSize] = useState(25);
+
+  // Reset pages when filters change
+  useEffect(() => { setInwardPage(1); }, [inwardSearch, inwardTypeFilter]);
+  useEffect(() => { setOutwardPage(1); }, [outwardSearch, outwardTypeFilter]);
+  useEffect(() => { setBalancePage(1); }, [balanceSearch, balanceFilter, balanceCategory]);
+  useEffect(() => { setBarcodePage(1); }, [barcodeSearch, barcodeCategory]);
 
   // --- REPOSITORIES & DATA STORAGE ---
   const [vouchers, setVouchers] = useState<StockVoucher[]>(() => {
@@ -1338,85 +1373,64 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         }}
       >
         {/* Module Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div 
             style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '7px',
-              background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.25) 0%, rgba(234, 88, 12, 0.4) 100%)',
-              border: '1px solid rgba(251, 146, 60, 0.4)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              background: '#18181b',
+              border: '1px solid #27272a',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fb923c'
+              color: '#f4f4f5'
             }}
           >
-            <Package size={16} />
+            <Package size={18} />
           </div>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
-              STOCK INVENTORY
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#f4f4f5', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Stock Inventory</span>
+              <ShadcnBadge variant="outline" style={{ fontSize: '10px' }}>F8 Module</ShadcnBadge>
             </div>
-            <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 500 }}>
-              Multi-Column Length Tracker • Live Balances (Qty, U-Cap, L-Cap) • F8
+            <div style={{ fontSize: '11px', color: '#a1a1aa' }}>
+              Multi-Length Tracker • Inward/Outward Ledger • Balance Sheet
             </div>
           </div>
         </div>
 
-        {/* 5 Inner Tabs Bar */}
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(15, 23, 42, 0.65)',
-            padding: '3px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.07)',
-            gap: '2px'
+        {/* 5 Inner Tabs Bar (Authentic shadcn/ui Tabs) */}
+        <ShadcnTabs
+          value={activeTab}
+          onValueChange={(val) => {
+            macAudio.playClick();
+            setActiveTab(val as StockInnerTab);
           }}
         >
-          {[
-            { key: 'entry', label: 'ENTER STOCK', icon: <ArrowDownLeft size={13} />, color: '#10b981' },
-            { key: 'inward', label: 'INWARD HISTORY', icon: <Layers size={13} />, color: '#06b6d4' },
-            { key: 'outward', label: 'SALE (OUTWARD)', icon: <ArrowUpRight size={13} />, color: '#f43f5e' },
-            { key: 'balance', label: 'STOCK BALANCE', icon: <Scale size={13} />, color: '#fb923c' },
-            { key: 'barcode', label: 'PRINT BARCODE', icon: <Barcode size={13} />, color: '#a855f7' }
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  macAudio.playClick();
-                  setActiveTab(tab.key as StockInnerTab);
-                }}
-                onMouseEnter={() => macAudio.playHover()}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  fontSize: '11px',
-                  fontWeight: isActive ? 700 : 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  background: isActive 
-                    ? `linear-gradient(135deg, ${tab.color}33 0%, ${tab.color}18 100%)` 
-                    : 'transparent',
-                  color: isActive ? '#f8fafc' : '#94a3b8',
-                  boxShadow: isActive ? `0 0 10px ${tab.color}25, inset 0 0 0 1px ${tab.color}50` : 'none'
-                }}
-              >
-                <span style={{ color: isActive ? tab.color : '#64748b' }}>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+          <ShadcnTabsList>
+            <ShadcnTabsTrigger value="entry">
+              <ArrowDownLeft size={13} style={{ marginRight: 6 }} />
+              <span>Enter Stock</span>
+            </ShadcnTabsTrigger>
+            <ShadcnTabsTrigger value="inward">
+              <Layers size={13} style={{ marginRight: 6 }} />
+              <span>Inward History</span>
+            </ShadcnTabsTrigger>
+            <ShadcnTabsTrigger value="outward">
+              <ArrowUpRight size={13} style={{ marginRight: 6 }} />
+              <span>Sale (Outward)</span>
+            </ShadcnTabsTrigger>
+            <ShadcnTabsTrigger value="balance">
+              <Scale size={13} style={{ marginRight: 6 }} />
+              <span>Stock Balance</span>
+            </ShadcnTabsTrigger>
+            <ShadcnTabsTrigger value="barcode">
+              <Barcode size={13} style={{ marginRight: 6 }} />
+              <span>Print Barcode</span>
+            </ShadcnTabsTrigger>
+          </ShadcnTabsList>
+        </ShadcnTabs>
 
         {/* Quick Back to Bill or Status Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1426,10 +1440,10 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '3px 10px',
+                padding: '4px 10px',
                 borderRadius: '6px',
-                background: 'rgba(239, 68, 68, 0.18)',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
                 color: '#f87171',
                 fontSize: '11px',
                 fontWeight: 700
@@ -1455,29 +1469,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
           )}
 
           {onBackToBill && (
-            <button
+            <ShadcnButton
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 macAudio.playClick();
                 onBackToBill();
               }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                color: '#e2e8f0',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                cursor: 'pointer'
-              }}
             >
               <span>Back to Bill</span>
               <ChevronRight size={13} />
-            </button>
+            </ShadcnButton>
           )}
         </div>
       </div>
@@ -1498,59 +1501,58 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '6px',
-                background: 'rgba(26, 31, 44, 0.7)',
-                padding: '6px 10px',
+                gap: '8px',
+                background: '#18181b',
+                padding: '10px 14px',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid #27272a',
                 flexShrink: 0
               }}
             >
               {/* Row 1: Date, Remarks, Load by ID */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Date:</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Date:</span>
                   <input
                     type="date"
                     value={voucherDate}
                     onChange={(e) => setVoucherDate(e.target.value)}
                     style={{
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      color: '#f8fafc',
-                      padding: '3px 8px',
-                      borderRadius: '5px',
-                      fontSize: '11px',
-                      outline: 'none'
+                      height: '32px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      color: '#f4f4f5',
+                      padding: '0 8px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      outline: 'none',
+                      fontFamily: 'inherit'
                     }}
                   />
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>Remarks:</span>
-                  <input
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Remarks:</span>
+                  <ShadcnInput
                     type="text"
-                    placeholder="Remarks / Supplier Invoice / Reference No (Optional)"
+                    placeholder=""
                     value={voucherRemarks}
                     onChange={(e) => setVoucherRemarks(e.target.value)}
                     style={{
-                      flex: 1,
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      color: '#f8fafc',
-                      padding: '3px 10px',
-                      borderRadius: '5px',
-                      fontSize: '11px',
-                      outline: 'none'
+                      height: '32px',
+                      fontSize: '12px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      borderRadius: '6px'
                     }}
                   />
                 </div>
 
                 {/* Load Voucher by ID */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <input
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ShadcnInput
                     type="number"
-                    placeholder="Voucher ID..."
+                    placeholder=""
                     value={loadVoucherIdInput}
                     onChange={(e) => setLoadVoucherIdInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1559,88 +1561,83 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       }
                     }}
                     style={{
-                      width: '90px',
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      padding: '3px 8px',
-                      borderRadius: '5px',
-                      fontSize: '11px',
-                      fontWeight: 700,
+                      width: '110px',
+                      height: '32px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      color: '#f4f4f5',
+                      fontSize: '12px',
+                      fontWeight: 600,
                       textAlign: 'center',
-                      outline: 'none'
+                      borderRadius: '6px',
+                      fontFamily: 'monospace'
                     }}
                   />
-                  <button
+                  <ShadcnButton
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       if (loadVoucherIdInput) {
                         handleLoadVoucherForEdit(parseInt(loadVoucherIdInput, 10));
                       }
                     }}
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.15)',
-                      border: '1px solid rgba(56, 189, 248, 0.35)',
-                      color: '#38bdf8',
-                      padding: '3px 8px',
-                      borderRadius: '5px',
-                      fontSize: '10.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
+                    style={{ height: '32px', fontSize: '12px' }}
                   >
                     Load
-                  </button>
+                  </ShadcnButton>
                 </div>
               </div>
 
-              {/* Row 2: Multi-Column Size Manager Bar (Quick Add Size Buttons!) */}
+              {/* Row 2: Multi-Column Size Manager Bar (Disciplined Shadcn Toolbar) */}
               <div 
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingTop: '4px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                  paddingTop: '8px',
+                  borderTop: '1px solid #27272a',
                   gap: '8px'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#38bdf8', fontSize: '10.5px', fontWeight: 700 }}>
-                    <Columns size={13} />
-                    <span>MULTI-COLUMNS:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#a1a1aa', fontSize: '12px', fontWeight: 500 }}>
+                    <Columns size={14} />
+                    <span>Columns:</span>
                   </div>
 
                   {/* Base Primary Size Pill */}
-                  <span
-                    style={{
-                      background: 'rgba(52, 211, 153, 0.15)',
-                      border: '1px solid rgba(52, 211, 153, 0.35)',
-                      color: '#34d399',
-                      padding: '1px 7px',
+                  <ShadcnBadge 
+                    variant="secondary" 
+                    style={{ 
+                      background: '#27272a', 
+                      color: '#f4f4f5', 
+                      border: '1px solid #3f3f46', 
+                      fontSize: '12px', 
+                      padding: '3px 8px',
                       borderRadius: '4px',
-                      fontSize: '10px',
-                      fontWeight: 700
+                      fontWeight: 500
                     }}
                   >
-                    (10 FT) Base
-                  </span>
+                    10 FT (Default)
+                  </ShadcnBadge>
 
                   {/* Active Dynamic Columns with Delete Button */}
                   {dynamicCols.map((dc) => (
-                    <span
+                    <ShadcnBadge
                       key={dc.field}
+                      variant="outline"
                       style={{
-                        background: 'rgba(56, 189, 248, 0.15)',
-                        border: '1px solid rgba(56, 189, 248, 0.35)',
-                        color: '#38bdf8',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        fontWeight: 700,
+                        background: '#18181b',
+                        border: '1px solid #3f3f46',
+                        color: '#f4f4f5',
+                        padding: '3px 8px',
+                        fontSize: '12px',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '6px',
+                        borderRadius: '4px',
+                        fontWeight: 500
                       }}
                     >
                       <span>{dc.label}</span>
@@ -1650,20 +1647,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#f87171',
+                          color: '#a1a1aa',
                           cursor: 'pointer',
                           display: 'flex',
-                          padding: 0
+                          padding: 0,
+                          alignItems: 'center'
                         }}
                         title={`Remove ${dc.label} column`}
                       >
-                        <X size={11} />
+                        <X size={12} />
                       </button>
-                    </span>
+                    </ShadcnBadge>
                   ))}
 
                   {/* Quick Add Size Presets */}
-                  <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>Quick Add:</span>
+                  <span style={{ fontSize: '12px', color: '#71717a', marginLeft: '4px' }}>Quick Add:</span>
                   {[
                     { label: '+ 12 FT', val: 12 },
                     { label: '+ 9.5 FT', val: 9.5 },
@@ -1673,51 +1671,51 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   ].map((preset) => {
                     const alreadyHas = dynamicCols.some((dc) => dc.sizeNum === preset.val);
                     return (
-                      <button
+                      <ShadcnButton
                         key={preset.label}
                         type="button"
+                        variant="outline"
+                        size="sm"
                         disabled={alreadyHas}
                         onClick={() => handleAddDynamicCol(preset.val)}
                         style={{
-                          background: alreadyHas ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)',
-                          border: `1px solid ${alreadyHas ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.12)'}`,
-                          color: alreadyHas ? '#475569' : '#e2e8f0',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          fontSize: '9.5px',
-                          fontWeight: 600,
-                          cursor: alreadyHas ? 'not-allowed' : 'pointer'
+                          height: '28px',
+                          padding: '0 9px',
+                          fontSize: '12px',
+                          borderColor: '#27272a',
+                          color: alreadyHas ? '#52525b' : '#f4f4f5',
+                          borderRadius: '6px'
                         }}
                       >
                         {preset.label}
-                      </button>
+                      </ShadcnButton>
                     );
                   })}
 
                   {/* Add Custom Size Button */}
-                  <button
+                  <ShadcnButton
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       macAudio.playPop();
                       setIsAddColModalOpen(true);
                     }}
                     style={{
-                      background: 'rgba(168, 85, 247, 0.15)',
-                      border: '1px solid rgba(168, 85, 247, 0.35)',
-                      color: '#c084fc',
-                      padding: '1px 8px',
-                      borderRadius: '4px',
-                      fontSize: '9.5px',
-                      fontWeight: 700,
+                      height: '28px',
+                      padding: '0 10px',
+                      fontSize: '12px',
+                      borderColor: '#27272a',
+                      color: '#f4f4f5',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '3px',
-                      cursor: 'pointer'
+                      gap: '5px',
+                      borderRadius: '6px'
                     }}
                   >
-                    <Plus size={10} />
+                    <Plus size={12} />
                     <span>Custom Size</span>
-                  </button>
+                  </ShadcnButton>
                 </div>
               </div>
             </div>
@@ -1728,39 +1726,39 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
-                background: 'rgba(15, 23, 42, 0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: '#09090b',
+                border: '1px solid #27272a',
                 borderRadius: '8px'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <th style={{ width: '38px', padding: '6px 4px', textAlign: 'center', color: '#94a3b8' }}>#</th>
-                    <th style={{ minWidth: '180px', padding: '6px 8px', textAlign: 'left', color: '#38bdf8' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                  <tr style={{ borderBottom: '1px solid #27272a' }}>
+                    <th style={{ width: '40px', padding: '8px 4px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' }}>#</th>
+                    <th style={{ minWidth: '280px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       ITEM NAME
                     </th>
 
-                    {/* Primary Base Column (10 FT) with "+" in header */}
-                    <th style={{ width: '85px', padding: '6px 6px', textAlign: 'right', color: '#34d399', background: 'rgba(52, 211, 153, 0.08)' }}>
+                    {/* Primary Base Column (10 FT) */}
+                    <th style={{ width: '75px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                         <span>(10 FT)</span>
                         <button
                           type="button"
                           onClick={() => setIsAddColModalOpen(true)}
                           style={{
-                            background: 'rgba(52, 211, 153, 0.25)',
-                            border: 'none',
-                            color: '#34d399',
-                            borderRadius: '3px',
-                            width: '15px',
-                            height: '15px',
+                            background: '#27272a',
+                            border: '1px solid #3f3f46',
+                            color: '#f4f4f5',
+                            borderRadius: '4px',
+                            width: '16px',
+                            height: '16px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
                             fontSize: '11px',
-                            fontWeight: 900
+                            fontWeight: 600
                           }}
                           title="Add new size column"
                         >
@@ -1774,11 +1772,13 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       <th 
                         key={dc.field} 
                         style={{
-                          width: '85px',
-                          padding: '6px 6px',
+                          width: '75px',
+                          padding: '8px 8px',
                           textAlign: 'right',
-                          color: '#38bdf8',
-                          background: 'rgba(56, 189, 248, 0.08)'
+                          color: '#a1a1aa',
+                          borderLeft: '1px solid #27272a',
+                          fontSize: '11px',
+                          fontWeight: 600
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
@@ -1789,10 +1789,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             style={{
                               background: 'transparent',
                               border: 'none',
-                              color: '#ef4444',
+                              color: '#71717a',
                               cursor: 'pointer',
                               padding: 0,
-                              display: 'flex'
+                              display: 'flex',
+                              alignItems: 'center'
                             }}
                             title={`Remove ${dc.label} column`}
                           >
@@ -1805,26 +1806,26 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     {/* U CAP & L CAP (Hidden in Simple Mode) */}
                     {!simpleMode && (
                       <>
-                        <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#818cf8', background: 'rgba(129, 140, 248, 0.06)' }}>
+                        <th style={{ width: '70px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
                           U CAP
                         </th>
-                        <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#fb923c', background: 'rgba(251, 146, 60, 0.06)' }}>
+                        <th style={{ width: '70px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
                           L CAP
                         </th>
                       </>
                     )}
 
-                    {/* ======================================================= */}
                     {/* 3 DEDICATED LIVE BALANCE TRACKING COLUMNS */}
-                    {/* ======================================================= */}
                     <th 
                       style={{ 
-                        width: '100px', 
-                        padding: '6px 8px', 
+                        width: '85px', 
+                        padding: '8px 10px', 
                         textAlign: 'right', 
-                        color: '#34d399', 
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                        color: '#a1a1aa', 
+                        borderLeft: '1px solid #27272a',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase'
                       }}
                       title="Current live net balance of this item's Qty"
                     >
@@ -1835,11 +1836,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       <>
                         <th 
                           style={{ 
-                            width: '100px', 
-                            padding: '6px 8px', 
+                            width: '85px', 
+                            padding: '8px 10px', 
                             textAlign: 'right', 
-                            color: '#818cf8', 
-                            background: 'rgba(129, 140, 248, 0.12)' 
+                            color: '#a1a1aa', 
+                            borderLeft: '1px solid #27272a',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            textTransform: 'uppercase'
                           }}
                           title="Current live net balance of this item's U-Cap"
                         >
@@ -1848,11 +1852,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                         <th 
                           style={{ 
-                            width: '100px', 
-                            padding: '6px 8px', 
+                            width: '85px', 
+                            padding: '8px 10px', 
                             textAlign: 'right', 
-                            color: '#fb923c', 
-                            background: 'rgba(251, 146, 60, 0.12)' 
+                            color: '#a1a1aa', 
+                            borderLeft: '1px solid #27272a',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            textTransform: 'uppercase'
                           }}
                           title="Current live net balance of this item's L-Cap"
                         >
@@ -1861,7 +1868,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       </>
                     )}
 
-                    <th style={{ width: '40px', padding: '6px 4px', textAlign: 'center', color: '#64748b' }}>DEL</th>
+                    <th style={{ width: '40px', padding: '8px 4px', textAlign: 'center', color: '#71717a', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600 }}>DEL</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1873,18 +1880,19 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       <tr 
                         key={row.id}
                         style={{
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                          background: isDuplicate ? 'rgba(239, 68, 68, 0.08)' : idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
+                          borderBottom: '1px solid #27272a',
+                          background: isDuplicate ? 'rgba(239, 68, 68, 0.08)' : idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent',
+                          transition: 'background-color 0.15s ease'
                         }}
                       >
                         {/* Row Index */}
-                        <td style={{ textAlign: 'center', color: '#64748b', fontWeight: 600 }}>{idx + 1}</td>
+                        <td style={{ textAlign: 'center', color: '#71717a', fontWeight: 500, fontSize: '12px' }}>{idx + 1}</td>
 
                         {/* Item Name Input with Autocomplete */}
                         <td style={{ padding: '4px 6px', position: 'relative' }}>
                           <input
                             type="text"
-                            placeholder="Type item or shortcut (e.g. CM 161, G1)..."
+                            placeholder=""
                             value={row.name}
                             onChange={(e) => {
                               handleStockRowChange(idx, 'name', e.target.value);
@@ -1936,13 +1944,16 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             }}
                             style={{
                               width: '100%',
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#f8fafc',
+                              height: '28px',
+                              background: '#18181b',
+                              border: '1px solid #27272a',
+                              borderRadius: '4px',
+                              color: '#f4f4f5',
                               fontSize: '12px',
-                              fontWeight: 600,
+                              fontWeight: 500,
                               outline: 'none',
-                              padding: '2px 4px'
+                              padding: '0 8px',
+                              boxSizing: 'border-box'
                             }}
                           />
 
@@ -1954,11 +1965,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                 left: 6,
                                 top: '100%',
                                 zIndex: 100,
-                                width: '300px',
-                                background: '#111827',
-                                border: '1px solid rgba(56, 189, 248, 0.4)',
+                                width: '320px',
+                                background: '#18181b',
+                                border: '1px solid #3f3f46',
                                 borderRadius: '6px',
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+                                boxShadow: '0 12px 28px rgba(0,0,0,0.7)',
                                 maxHeight: '200px',
                                 overflowY: 'auto'
                               }}
@@ -1978,19 +1989,19 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                       setActiveSuggestRow(null);
                                     }}
                                     style={{
-                                      padding: '6px 10px',
+                                      padding: '7px 10px',
                                       display: 'flex',
                                       justifyContent: 'space-between',
                                       alignItems: 'center',
-                                      background: isHighlighted ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                                      background: isHighlighted ? '#27272a' : 'transparent',
                                       cursor: 'pointer',
-                                      borderBottom: '1px solid rgba(255,255,255,0.04)'
+                                      borderBottom: '1px solid #27272a'
                                     }}
                                   >
-                                    <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '11.5px' }}>
+                                    <span style={{ color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>
                                       {sug.name}
                                     </span>
-                                    <span style={{ color: '#38bdf8', fontSize: '9.5px' }}>{sug.desc || ''}</span>
+                                    <span style={{ color: '#a1a1aa', fontSize: '11px' }}>{sug.desc || ''}</span>
                                   </div>
                                 );
                               })}
@@ -1999,7 +2010,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         </td>
 
                         {/* Primary Base Column (10 FT) Qty Input */}
-                        <td style={{ padding: '4px 6px', background: 'rgba(52, 211, 153, 0.02)' }}>
+                        <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
                           <input
                             id={`stock-qty-10-${idx}`}
                             type="number"
@@ -2021,21 +2032,24 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             }}
                             style={{
                               width: '100%',
+                              height: '28px',
                               textAlign: 'right',
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#34d399',
+                              background: '#18181b',
+                              border: '1px solid #27272a',
+                              borderRadius: '4px',
+                              color: '#f4f4f5',
                               fontSize: '12px',
-                              fontWeight: 700,
+                              fontWeight: 500,
                               outline: 'none',
-                              padding: '2px 4px'
+                              padding: '0 6px',
+                              boxSizing: 'border-box'
                             }}
                           />
                         </td>
 
                         {/* Dynamic Multi-Column Inputs: (12 FT), (9.5 FT) etc. */}
                         {dynamicCols.map((dc, dcIdx) => (
-                          <td key={dc.field} style={{ padding: '4px 6px', background: 'rgba(56, 189, 248, 0.02)' }}>
+                          <td key={dc.field} style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
                             <input
                               id={`stock-${dc.field}-${idx}`}
                               type="number"
@@ -2057,14 +2071,17 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               }}
                               style={{
                                 width: '100%',
+                                height: '28px',
                                 textAlign: 'right',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#38bdf8',
+                                background: '#18181b',
+                                border: '1px solid #27272a',
+                                borderRadius: '4px',
+                                color: '#f4f4f5',
                                 fontSize: '12px',
-                                fontWeight: 700,
+                                fontWeight: 500,
                                 outline: 'none',
-                                padding: '2px 4px'
+                                padding: '0 6px',
+                                boxSizing: 'border-box'
                               }}
                             />
                           </td>
@@ -2072,7 +2089,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                         {/* U Cap Input */}
                         {!simpleMode && (
-                          <td style={{ padding: '4px 6px', background: 'rgba(129, 140, 248, 0.02)' }}>
+                          <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
                             <input
                               id={`stock-ucap-${idx}`}
                               type="number"
@@ -2087,14 +2104,17 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               }}
                               style={{
                                 width: '100%',
+                                height: '28px',
                                 textAlign: 'right',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#818cf8',
+                                background: '#18181b',
+                                border: '1px solid #27272a',
+                                borderRadius: '4px',
+                                color: '#f4f4f5',
                                 fontSize: '12px',
-                                fontWeight: 700,
+                                fontWeight: 500,
                                 outline: 'none',
-                                padding: '2px 4px'
+                                padding: '0 6px',
+                                boxSizing: 'border-box'
                               }}
                             />
                           </td>
@@ -2102,7 +2122,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                         {/* L Cap Input */}
                         {!simpleMode && (
-                          <td style={{ padding: '4px 6px', background: 'rgba(251, 146, 60, 0.02)' }}>
+                          <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
                             <input
                               id={`stock-lcap-${idx}`}
                               type="number"
@@ -2118,14 +2138,17 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               }}
                               style={{
                                 width: '100%',
+                                height: '28px',
                                 textAlign: 'right',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#fb923c',
+                                background: '#18181b',
+                                border: '1px solid #27272a',
+                                borderRadius: '4px',
+                                color: '#f4f4f5',
                                 fontSize: '12px',
-                                fontWeight: 700,
+                                fontWeight: 500,
                                 outline: 'none',
-                                padding: '2px 4px'
+                                padding: '0 6px',
+                                boxSizing: 'border-box'
                               }}
                             />
                           </td>
@@ -2138,14 +2161,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         {/* QTY BALANCE CELL */}
                         <td 
                           style={{
-                            padding: '6px 8px',
+                            padding: '6px 10px',
                             textAlign: 'right',
-                            fontWeight: 800,
-                            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
-                            background: 'rgba(16, 185, 129, 0.03)',
+                            fontWeight: 500,
+                            fontSize: '12px',
+                            borderLeft: '1px solid #27272a',
                             color: balances.hasItem
-                              ? (balances.qtyBal! > 0 ? '#34d399' : balances.qtyBal! < 0 ? '#f87171' : '#94a3b8')
-                              : '#475569'
+                              ? (balances.qtyBal! < 0 ? '#ef4444' : '#f4f4f5')
+                              : '#71717a'
                           }}
                         >
                           {balances.hasItem ? `${balances.qtyBal! > 0 ? '+' : ''}${balances.qtyBal} pcs` : '-'}
@@ -2155,13 +2178,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         {!simpleMode && (
                           <td 
                             style={{
-                              padding: '6px 8px',
+                              padding: '6px 10px',
                               textAlign: 'right',
-                              fontWeight: 700,
-                              background: 'rgba(129, 140, 248, 0.03)',
+                              fontWeight: 500,
+                              fontSize: '12px',
+                              borderLeft: '1px solid #27272a',
                               color: balances.hasItem
-                                ? (balances.uCapBal! > 0 ? '#818cf8' : balances.uCapBal! < 0 ? '#f87171' : '#94a3b8')
-                                : '#475569'
+                                ? (balances.uCapBal! < 0 ? '#ef4444' : '#f4f4f5')
+                                : '#71717a'
                             }}
                           >
                             {balances.hasItem ? `${balances.uCapBal! > 0 ? '+' : ''}${balances.uCapBal}` : '-'}
@@ -2172,13 +2196,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         {!simpleMode && (
                           <td 
                             style={{
-                              padding: '6px 8px',
+                              padding: '6px 10px',
                               textAlign: 'right',
-                              fontWeight: 700,
-                              background: 'rgba(251, 146, 60, 0.03)',
+                              fontWeight: 500,
+                              fontSize: '12px',
+                              borderLeft: '1px solid #27272a',
                               color: balances.hasItem
-                                ? (balances.lCapBal! > 0 ? '#fb923c' : balances.lCapBal! < 0 ? '#f87171' : '#94a3b8')
-                                : '#475569'
+                                ? (balances.lCapBal! < 0 ? '#ef4444' : '#f4f4f5')
+                                : '#71717a'
                             }}
                           >
                             {balances.hasItem ? `${balances.lCapBal! > 0 ? '+' : ''}${balances.lCapBal}` : '-'}
@@ -2186,22 +2211,22 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         )}
 
                         {/* Delete Row Button */}
-                        <td style={{ textAlign: 'center' }}>
-                          <button
+                        <td style={{ textAlign: 'center', borderLeft: '1px solid #27272a' }}>
+                          <ShadcnButton
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDeleteStockRow(idx)}
                             style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#64748b',
-                              cursor: 'pointer',
-                              padding: '2px',
-                              display: 'inline-flex'
+                              height: '26px',
+                              width: '26px',
+                              padding: 0,
+                              color: '#71717a'
                             }}
                             title="Delete row"
                           >
                             <Trash2 size={13} />
-                          </button>
+                          </ShadcnButton>
                         </td>
                       </tr>
                     );
@@ -2216,51 +2241,47 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '5px 12px',
-                background: 'rgba(26, 31, 44, 0.8)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '6px',
+                padding: '8px 14px',
+                background: '#18181b',
+                border: '1px solid #27272a',
+                borderRadius: '8px',
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '11.5px', fontWeight: 600, flexWrap: 'wrap' }}>
-                <span style={{ color: '#94a3b8' }}>Items: <strong style={{ color: '#f8fafc' }}>{entryTotals.validItems}</strong></span>
-                <span style={{ color: '#94a3b8' }}>10 FT: <strong style={{ color: '#34d399' }}>{entryTotals.main10Qty}</strong></span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', fontWeight: 500, flexWrap: 'wrap' }}>
+                <span style={{ color: '#a1a1aa' }}>Items: <strong style={{ color: '#f4f4f5' }}>{entryTotals.validItems}</strong></span>
+                <span style={{ color: '#a1a1aa' }}>10 FT: <strong style={{ color: '#f4f4f5' }}>{entryTotals.main10Qty}</strong></span>
 
                 {/* Show totals for each dynamic size column */}
                 {dynamicCols.map((dc) => (
-                  <span key={dc.field} style={{ color: '#94a3b8' }}>
-                    {dc.label.replace(/[()]/g, '')}: <strong style={{ color: '#38bdf8' }}>{entryTotals.dynamicQtyTotals[dc.field] || 0}</strong>
+                  <span key={dc.field} style={{ color: '#a1a1aa' }}>
+                    {dc.label.replace(/[()]/g, '')}: <strong style={{ color: '#f4f4f5' }}>{entryTotals.dynamicQtyTotals[dc.field] || 0}</strong>
                   </span>
                 ))}
 
-                <span style={{ color: '#94a3b8', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
-                  Total Pcs: <strong style={{ color: '#34d399', fontSize: '12px' }}>{entryTotals.totalPcs}</strong>
+                <span style={{ color: '#a1a1aa', borderLeft: '1px solid #27272a', paddingLeft: '12px' }}>
+                  Total Pcs: <strong style={{ color: '#f4f4f5', fontSize: '12px' }}>{entryTotals.totalPcs}</strong>
                 </span>
 
                 {!simpleMode && (
                   <>
-                    <span style={{ color: '#94a3b8' }}>Total U Cap: <strong style={{ color: '#818cf8' }}>{entryTotals.uCap}</strong></span>
-                    <span style={{ color: '#94a3b8' }}>Total L Cap: <strong style={{ color: '#fb923c' }}>{entryTotals.lCap}</strong></span>
+                    <span style={{ color: '#a1a1aa' }}>Total U Cap: <strong style={{ color: '#f4f4f5' }}>{entryTotals.uCap}</strong></span>
+                    <span style={{ color: '#a1a1aa' }}>Total L Cap: <strong style={{ color: '#f4f4f5' }}>{entryTotals.lCap}</strong></span>
                   </>
                 )}
               </div>
 
               {/* Duplicate Badge */}
               <div>
-                <span 
+                <ShadcnBadge
+                  variant={duplicateItemSummary.count > 0 ? "destructive" : "secondary"}
                   style={{
-                    fontSize: '10.5px',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '9999px',
-                    background: duplicateItemSummary.count > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(52, 211, 153, 0.15)',
-                    border: `1px solid ${duplicateItemSummary.count > 0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(52, 211, 153, 0.3)'}`,
-                    color: duplicateItemSummary.count > 0 ? '#f87171' : '#34d399'
+                    fontSize: '12px',
+                    padding: '2px 8px'
                   }}
                 >
                   DUPLICATES: {duplicateItemSummary.count}
-                </span>
+                </ShadcnBadge>
               </div>
             </div>
 
@@ -2276,112 +2297,103 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               }}
             >
               {/* Left: Smart Toggles */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShadcnButton
                   type="button"
+                  variant={autoConvert ? "secondary" : "outline"}
+                  size="sm"
                   onClick={() => {
                     macAudio.playClick();
                     setAutoConvert((prev) => !prev);
                   }}
                   style={{
-                    background: autoConvert ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid ${autoConvert ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                    color: autoConvert ? '#34d399' : '#94a3b8',
-                    padding: '4px 10px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    height: '32px',
+                    fontSize: '12px',
+                    color: '#f4f4f5',
+                    borderColor: '#27272a'
                   }}
                 >
                   Auto-Convert: {autoConvert ? 'ON' : 'OFF'}
-                </button>
+                </ShadcnButton>
 
-                <button
+                <ShadcnButton
                   type="button"
+                  variant={autoItem ? "secondary" : "outline"}
+                  size="sm"
                   onClick={() => {
                     macAudio.playClick();
                     setAutoItem((prev) => !prev);
                   }}
                   style={{
-                    background: autoItem ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid ${autoItem ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                    color: autoItem ? '#38bdf8' : '#94a3b8',
-                    padding: '4px 10px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    height: '32px',
+                    fontSize: '12px',
+                    color: '#f4f4f5',
+                    borderColor: '#27272a'
                   }}
                 >
                   Auto Item: {autoItem ? 'ON' : 'OFF'}
-                </button>
+                </ShadcnButton>
 
-                <button
+                <ShadcnButton
                   type="button"
+                  variant={simpleMode ? "secondary" : "outline"}
+                  size="sm"
                   onClick={() => {
                     macAudio.playClick();
                     setSimpleMode((prev) => !prev);
                   }}
                   style={{
-                    background: simpleMode ? 'rgba(251, 191, 36, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid ${simpleMode ? 'rgba(251, 191, 36, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                    color: simpleMode ? '#fbbf24' : '#94a3b8',
-                    padding: '4px 10px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    height: '32px',
+                    fontSize: '12px',
+                    color: '#f4f4f5',
+                    borderColor: '#27272a'
                   }}
                 >
                   Simple Mode: {simpleMode ? 'ON' : 'OFF'}
-                </button>
+                </ShadcnButton>
 
-                {/* Quick Barcode Scanner Input */}
-                <input
+                {/* Quick Barcode Scanner Input without verbose placeholder */}
+                <ShadcnInput
                   type="text"
-                  placeholder="Scan Barcode... (e.g. CM 161)"
+                  placeholder=""
                   value={barcodeScanInput}
                   onChange={(e) => setBarcodeScanInput(e.target.value)}
                   onKeyDown={handleBarcodeScan}
                   style={{
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#f8fafc',
-                    padding: '4px 10px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    width: '180px',
-                    outline: 'none'
+                    height: '32px',
+                    width: '160px',
+                    fontSize: '12px',
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '6px'
                   }}
                 />
               </div>
 
               {/* Right: Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShadcnButton
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleAddStockRow}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#e2e8f0',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 600,
+                    height: '32px',
+                    fontSize: '12px',
+                    borderColor: '#27272a',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    cursor: 'pointer'
+                    gap: '6px'
                   }}
                 >
                   <Plus size={13} />
                   <span>Add Row</span>
-                </button>
+                </ShadcnButton>
 
-                <button
+                <ShadcnButton
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     macAudio.playPop();
                     const freshRow: StockVoucherItem = { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 };
@@ -2393,40 +2405,32 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     setEditingVoucherId(null);
                   }}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    color: '#94a3b8',
-                    padding: '5px 10px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    height: '32px',
+                    fontSize: '12px',
+                    color: '#a1a1aa'
                   }}
                 >
                   Clear
-                </button>
+                </ShadcnButton>
 
-                <button
+                <ShadcnButton
                   type="button"
+                  variant="default"
+                  size="sm"
                   onClick={handleSaveVoucher}
                   style={{
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    color: '#ffffff',
-                    padding: '6px 16px',
-                    borderRadius: '6px',
+                    height: '32px',
                     fontSize: '12px',
-                    fontWeight: 700,
+                    fontWeight: 600,
+                    padding: '0 16px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.35)'
+                    gap: '6px'
                   }}
                 >
-                  <Save size={14} />
+                  <Save size={13} />
                   <span>{editingVoucherId !== null ? 'UPDATE VOUCHER' : 'SAVE STOCK ENTRY'}</span>
-                </button>
+                </ShadcnButton>
               </div>
             </div>
           </div>
@@ -2443,71 +2447,64 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                background: 'rgba(26, 31, 44, 0.7)',
-                padding: '6px 10px',
+                gap: '10px',
+                background: '#18181b',
+                padding: '10px 14px',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid #27272a',
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                <Search size={14} style={{ color: '#94a3b8' }} />
-                <input
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
+                <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
+                <ShadcnInput
                   type="text"
-                  placeholder="Search party, item name, date, voucher no, remarks..."
+                  placeholder=""
                   value={inwardSearch}
                   onChange={(e) => setInwardSearch(e.target.value)}
                   style={{
-                    flex: 1,
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#f8fafc',
+                    height: '32px',
+                    paddingLeft: '32px',
                     fontSize: '12px',
-                    outline: 'none'
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '6px'
                   }}
                 />
               </div>
 
-              <select
+              <ShadcnSelect
                 value={inwardTypeFilter}
                 onChange={(e) => setInwardTypeFilter(e.target.value)}
                 style={{
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#f8fafc',
-                  padding: '4px 8px',
-                  borderRadius: '5px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  outline: 'none'
+                  width: '160px',
+                  height: '32px',
+                  fontSize: '12px'
                 }}
               >
                 <option value="ALL TYPES">ALL TYPES</option>
                 <option value="STOCK VOUCHER">STOCK VOUCHERS</option>
                 <option value="PURCHASE">PURCHASE BILLS</option>
-              </select>
+              </ShadcnSelect>
 
-              <button
+              <ShadcnButton
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   macAudio.playClick();
                   setInwardSearch('');
                   setInwardTypeFilter('ALL TYPES');
                 }}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#94a3b8',
-                  padding: '4px 10px',
-                  borderRadius: '5px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
+                  height: '32px',
+                  fontSize: '12px',
+                  borderColor: '#27272a',
+                  color: '#a1a1aa'
                 }}
               >
-                ✕ Clear
-              </button>
+                Clear
+              </ShadcnButton>
             </div>
 
             {/* History Table */}
@@ -2516,40 +2513,37 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
-                background: 'rgba(15, 23, 42, 0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: '#09090b',
+                border: '1px solid #27272a',
                 borderRadius: '8px'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <th style={{ width: '110px', padding: '7px 8px', textAlign: 'left', color: '#38bdf8' }}>ID</th>
-                    <th style={{ width: '120px', padding: '7px 8px', textAlign: 'left', color: '#a78bfa' }}>TYPE</th>
-                    <th style={{ width: '95px', padding: '7px 8px', textAlign: 'left', color: '#94a3b8' }}>DATE</th>
-                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#e2e8f0' }}>PARTY / REMARKS</th>
-                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME (WITH SIZE)</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#34d399' }}>QTY</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#818cf8' }}>U CAP</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#fb923c' }}>L CAP</th>
-                    <th style={{ width: '70px', padding: '7px 8px', textAlign: 'center', color: '#64748b' }}>ACTION</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                  <tr style={{ borderBottom: '1px solid #27272a' }}>
+                    <th style={{ width: '100px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ID</th>
+                    <th style={{ width: '60px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>TYPE</th>
+                    <th style={{ width: '95px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DATE</th>
+                    <th style={{ minWidth: '160px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>PARTY / REMARKS</th>
+                    <th style={{ minWidth: '240px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME (WITH SIZE)</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U CAP</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L CAP</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {inwardItems
-                    .filter((item) => {
-                      const matchType =
-                        inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
+                  {(() => {
+                    const filtered = inwardItems.filter((item) => {
+                      const matchType = inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
                       const q = inwardSearch.toLowerCase();
-                      const matchSearch =
-                        !q ||
-                        item.voucherId.toLowerCase().includes(q) ||
-                        item.party.toLowerCase().includes(q) ||
-                        item.name.toLowerCase().includes(q) ||
-                        item.date.includes(q);
+                      const matchSearch = !q || item.voucherId.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q);
                       return matchType && matchSearch;
-                    })
-                    .map((item, idx) => (
+                    });
+                    const totalFiltered = filtered.length;
+                    const pageStart = (inwardPage - 1) * inwardPageSize;
+                    const pageSlice = filtered.slice(pageStart, pageStart + inwardPageSize);
+                    return pageSlice.map((item, idx) => (
                       <tr
                         key={item.id}
                         onDoubleClick={() => {
@@ -2558,76 +2552,68 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           }
                         }}
                         style={{
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent',
-                          cursor: item.rawVoucherId !== null ? 'pointer' : 'default'
+                          borderBottom: '1px solid #27272a',
+                          background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent',
+                          cursor: item.rawVoucherId !== null ? 'pointer' : 'default',
+                          transition: 'background-color 0.15s ease'
                         }}
                         title={item.rawVoucherId !== null ? 'Double click to edit voucher' : ''}
                       >
-                        <td style={{ padding: '6px 8px', color: '#38bdf8', fontWeight: 700 }}>{item.voucherId}</td>
-                        <td style={{ padding: '6px 8px' }}>
-                          <span
-                            style={{
-                              fontSize: '9.5px',
-                              fontWeight: 700,
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              background: item.voucherType === 'STOCK VOUCHER' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.2)',
-                              color: item.voucherType === 'STOCK VOUCHER' ? '#34d399' : '#38bdf8'
-                            }}
-                          >
-                            {item.voucherType}
-                          </span>
+                        <td style={{ padding: '8px 10px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.voucherId}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'center' }}>
+                          {item.voucherType === 'STOCK VOUCHER' ? (
+                            <span
+                              title="Stock Voucher"
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '24px', borderRadius: '4px', background: '#27272a', border: '1px solid #3f3f46', color: '#f4f4f5' }}
+                            >
+                              <FileText size={13} />
+                            </span>
+                          ) : (
+                            <span
+                              title="Purchase Bill"
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '24px', borderRadius: '4px', background: '#18181b', border: '1px solid #27272a', color: '#a1a1aa' }}
+                            >
+                              <ShoppingCart size={13} />
+                            </span>
+                          )}
                         </td>
-                        <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{item.date}</td>
-                        <td style={{ padding: '6px 8px', color: '#e2e8f0', fontWeight: 500 }}>{item.party}</td>
-                        <td style={{ padding: '6px 8px', color: '#f8fafc', fontWeight: 600 }}>{item.name}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{item.qty}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#818cf8', fontWeight: 600 }}>{item.uCap}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#fb923c', fontWeight: 600 }}>{item.lCap}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                        <td style={{ padding: '8px 10px', color: '#a1a1aa', fontSize: '12px' }}>{item.date}</td>
+                        <td style={{ padding: '8px 10px', color: '#e4e4e7', fontWeight: 500, fontSize: '12px' }}>{item.party}</td>
+                        <td style={{ padding: '8px 10px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.name}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.qty}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.uCap}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.lCap}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
                           {item.rawVoucherId !== null ? (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                              <button
-                                type="button"
-                                onClick={() => handleLoadVoucherForEdit(item.rawVoucherId!)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#38bdf8',
-                                  cursor: 'pointer',
-                                  padding: 0
-                                }}
-                                title="Edit Voucher"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteVoucher(item.rawVoucherId!)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#ef4444',
-                                  cursor: 'pointer',
-                                  padding: 0
-                                }}
-                                title="Delete Voucher"
-                              >
-                                <Trash2 size={12} />
-                              </button>
+                              <ShadcnButton type="button" variant="outline" size="sm" onClick={() => handleLoadVoucherForEdit(item.rawVoucherId!)} style={{ height: '26px', padding: '0 8px', fontSize: '12px', borderColor: '#27272a', color: '#f4f4f5' }} title="Edit Voucher">Edit</ShadcnButton>
+                              <ShadcnButton type="button" variant="ghost" size="sm" onClick={() => handleDeleteVoucher(item.rawVoucherId!)} style={{ height: '26px', width: '26px', padding: 0, color: '#71717a' }} title="Delete Voucher"><Trash2 size={13} /></ShadcnButton>
                             </div>
                           ) : (
-                            <span style={{ color: '#64748b', fontSize: '10px' }}>Bill</span>
+                            <span style={{ color: '#71717a', fontSize: '12px' }}>Bill</span>
                           )}
                         </td>
                       </tr>
-                    ))}
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
+            {/* Inward Pagination */}
+            <ShadcnPagination
+              totalCount={inwardItems.filter((item) => {
+                const matchType = inwardTypeFilter === 'ALL TYPES' || item.voucherType === inwardTypeFilter;
+                const q = inwardSearch.toLowerCase();
+                return matchType && (!q || item.voucherId.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q));
+              }).length}
+              pageSize={inwardPageSize}
+              currentPage={inwardPage}
+              onPageChange={setInwardPage}
+              onPageSizeChange={(s) => { setInwardPageSize(s); setInwardPage(1); }}
+            />
           </div>
         )}
+
 
         {/* =========================================================== */}
         {/* TAB 3: SALE (OUTWARD) */}
@@ -2640,44 +2626,39 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                background: 'rgba(26, 31, 44, 0.7)',
-                padding: '6px 10px',
+                gap: '10px',
+                background: '#18181b',
+                padding: '10px 14px',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid #27272a',
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                <Search size={14} style={{ color: '#94a3b8' }} />
-                <input
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
+                <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
+                <ShadcnInput
                   type="text"
-                  placeholder="Search party, item name, date, bill no..."
+                  placeholder=""
                   value={outwardSearch}
                   onChange={(e) => setOutwardSearch(e.target.value)}
                   style={{
-                    flex: 1,
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#f8fafc',
+                    height: '32px',
+                    paddingLeft: '32px',
                     fontSize: '12px',
-                    outline: 'none'
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '6px'
                   }}
                 />
               </div>
 
-              <select
+              <ShadcnSelect
                 value={outwardTypeFilter}
                 onChange={(e) => setOutwardTypeFilter(e.target.value)}
                 style={{
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#f8fafc',
-                  padding: '4px 8px',
-                  borderRadius: '5px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  outline: 'none'
+                  width: '150px',
+                  height: '32px',
+                  fontSize: '12px'
                 }}
               >
                 <option value="ALL TYPES">ALL TYPES</option>
@@ -2685,28 +2666,26 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 <option value="ESTIMATE">ESTIMATE</option>
                 <option value="ORDER">ORDER</option>
                 <option value="RETURN">RETURN</option>
-              </select>
+              </ShadcnSelect>
 
-              <button
+              <ShadcnButton
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   macAudio.playClick();
                   setOutwardSearch('');
                   setOutwardTypeFilter('ALL TYPES');
                 }}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#94a3b8',
-                  padding: '4px 10px',
-                  borderRadius: '5px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
+                  height: '32px',
+                  fontSize: '12px',
+                  borderColor: '#27272a',
+                  color: '#a1a1aa'
                 }}
               >
-                ✕ Clear
-              </button>
+                Clear
+              </ShadcnButton>
             </div>
 
             {/* Outward Table */}
@@ -2715,105 +2694,80 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
-                background: 'rgba(15, 23, 42, 0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: '#09090b',
+                border: '1px solid #27272a',
                 borderRadius: '8px'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <th style={{ width: '90px', padding: '7px 8px', textAlign: 'left', color: '#f43f5e' }}>BILL NO</th>
-                    <th style={{ width: '110px', padding: '7px 8px', textAlign: 'left', color: '#a78bfa' }}>DOC TYPE</th>
-                    <th style={{ width: '95px', padding: '7px 8px', textAlign: 'left', color: '#94a3b8' }}>DATE</th>
-                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#e2e8f0' }}>PARTY NAME</th>
-                    <th style={{ padding: '7px 8px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME (WITH SIZE)</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#f43f5e' }}>QTY</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#818cf8' }}>U CAP</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#fb923c' }}>L CAP</th>
-                    <th style={{ width: '60px', padding: '7px 8px', textAlign: 'center', color: '#64748b' }}>VIEW</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                  <tr style={{ borderBottom: '1px solid #27272a' }}>
+                    <th style={{ width: '90px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>BILL NO</th>
+                    <th style={{ width: '120px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DOC TYPE</th>
+                    <th style={{ width: '95px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DATE</th>
+                    <th style={{ minWidth: '160px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>PARTY NAME</th>
+                    <th style={{ minWidth: '240px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME (WITH SIZE)</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U CAP</th>
+                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L CAP</th>
+                    <th style={{ width: '50px', padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>VIEW</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {outwardItems
-                    .filter((item) => {
-                      const matchType =
-                        outwardTypeFilter === 'ALL TYPES' ||
-                        item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
+                  {(() => {
+                    const filtered = outwardItems.filter((item) => {
+                      const matchType = outwardTypeFilter === 'ALL TYPES' || item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
                       const q = outwardSearch.toLowerCase();
-                      const matchSearch =
-                        !q ||
-                        item.token.toLowerCase().includes(q) ||
-                        item.party.toLowerCase().includes(q) ||
-                        item.name.toLowerCase().includes(q) ||
-                        item.date.includes(q);
+                      const matchSearch = !q || item.token.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q);
                       return matchType && matchSearch;
-                    })
-                    .map((item, idx) => (
+                    });
+                    const pageStart = (outwardPage - 1) * outwardPageSize;
+                    const pageSlice = filtered.slice(pageStart, pageStart + outwardPageSize);
+                    return pageSlice.map((item, idx) => (
                       <tr
                         key={item.id}
-                        onDoubleClick={() => {
-                          if (onOpenBillDetails) {
-                            onOpenBillDetails(item.billId);
-                          }
-                        }}
-                        style={{
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent',
-                          cursor: 'pointer'
-                        }}
+                        onDoubleClick={() => { if (onOpenBillDetails) { onOpenBillDetails(item.billId); } }}
+                        style={{ borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent', cursor: 'pointer', transition: 'background-color 0.15s ease' }}
                         title="Double-click to open bill details"
                       >
-                        <td style={{ padding: '6px 8px', color: '#f43f5e', fontWeight: 700 }}>#{item.token}</td>
-                        <td style={{ padding: '6px 8px' }}>
-                          <span
-                            style={{
-                              fontSize: '9.5px',
-                              fontWeight: 700,
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              background: 'rgba(244, 63, 94, 0.15)',
-                              color: '#fb7185'
-                            }}
-                          >
+                        <td style={{ padding: '8px 10px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>#{item.token}</td>
+                        <td style={{ padding: '8px 10px' }}>
+                          <ShadcnBadge variant="secondary" style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#27272a', color: '#f4f4f5', border: '1px solid #3f3f46' }}>
                             {item.docType}
-                          </span>
+                          </ShadcnBadge>
                         </td>
-                        <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{item.date}</td>
-                        <td style={{ padding: '6px 8px', color: '#e2e8f0', fontWeight: 500 }}>{item.party}</td>
-                        <td style={{ padding: '6px 8px', color: '#f8fafc', fontWeight: 600 }}>{item.name}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#f43f5e', fontWeight: 700 }}>{item.qty}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#818cf8', fontWeight: 600 }}>{item.uCap}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#fb923c', fontWeight: 600 }}>{item.lCap}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (onOpenBillDetails) {
-                                onOpenBillDetails(item.billId);
-                              }
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#38bdf8',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '2px'
-                            }}
-                            title="View Bill"
-                          >
+                        <td style={{ padding: '8px 10px', color: '#a1a1aa', fontSize: '12px' }}>{item.date}</td>
+                        <td style={{ padding: '8px 10px', color: '#e4e4e7', fontWeight: 500, fontSize: '12px' }}>{item.party}</td>
+                        <td style={{ padding: '8px 10px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.name}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.qty}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.uCap}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.lCap}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                          <ShadcnButton type="button" variant="ghost" size="sm" onClick={() => { if (onOpenBillDetails) { onOpenBillDetails(item.billId); } }} style={{ height: '26px', width: '26px', padding: 0, color: '#a1a1aa' }} title="View Bill">
                             <ExternalLink size={13} />
-                          </button>
+                          </ShadcnButton>
                         </td>
                       </tr>
-                    ))}
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
+            {/* Outward Pagination */}
+            <ShadcnPagination
+              totalCount={outwardItems.filter((item) => {
+                const matchType = outwardTypeFilter === 'ALL TYPES' || item.docType.toUpperCase().includes(outwardTypeFilter.toUpperCase());
+                const q = outwardSearch.toLowerCase();
+                return matchType && (!q || item.token.toLowerCase().includes(q) || item.party.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.date.includes(q));
+              }).length}
+              pageSize={outwardPageSize}
+              currentPage={outwardPage}
+              onPageChange={setOutwardPage}
+              onPageSizeChange={(s) => { setOutwardPageSize(s); setOutwardPage(1); }}
+            />
           </div>
         )}
+
 
         {/* =========================================================== */}
         {/* TAB 4: STOCK BALANCE (GROUPED MULTI-COLUMN TABLE + CARDS) */}
@@ -2821,77 +2775,67 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         {activeTab === 'balance' && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
             
-            {/* 4 Apple Glass Metric Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', flexShrink: 0 }}>
-              {/* Total Items */}
-              <div 
-                style={{
-                  background: 'rgba(26, 31, 44, 0.75)',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px'
-                }}
-              >
-                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL UNIQUE ITEMS</span>
-                <span style={{ fontSize: '20px', fontWeight: 900, color: '#38bdf8' }}>{totalStats.totalItems}</span>
-              </div>
+            {/* 4 shadcn/ui KPI Metric Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', flexShrink: 0 }}>
+              <ShadcnCard>
+                <ShadcnCardHeader style={{ padding: '14px 18px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Total Unique Items</span>
+                    <Package size={15} color="#a1a1aa" />
+                  </div>
+                  <ShadcnCardTitle style={{ fontSize: '22px', fontWeight: 700, marginTop: '4px' }}>
+                    {totalStats.totalItems} Profiles
+                  </ShadcnCardTitle>
+                  <ShadcnCardDescription style={{ fontSize: '11px', marginTop: '2px' }}>
+                    Active catalogued materials
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+              </ShadcnCard>
 
-              {/* Total Qty Balance */}
-              <div 
-                style={{
-                  background: 'rgba(26, 31, 44, 0.75)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px'
-                }}
-              >
-                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL QTY BALANCE</span>
-                <span style={{ fontSize: '20px', fontWeight: 900, color: totalStats.totalQty >= 0 ? '#34d399' : '#f87171' }}>
-                  <AnimatedCounter value={totalStats.totalQty} suffix={<span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '4px' }}>PCS</span>} />
-                </span>
-              </div>
+              <ShadcnCard>
+                <ShadcnCardHeader style={{ padding: '14px 18px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Total Qty Balance</span>
+                    <Scale size={15} color="#a1a1aa" />
+                  </div>
+                  <ShadcnCardTitle style={{ fontSize: '22px', fontWeight: 700, marginTop: '4px', color: totalStats.totalQty < 0 ? '#ef4444' : '#f4f4f5' }}>
+                    <AnimatedCounter value={totalStats.totalQty} suffix={<span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', marginLeft: '4px' }}>PCS</span>} />
+                  </ShadcnCardTitle>
+                  <ShadcnCardDescription style={{ fontSize: '11px', marginTop: '2px' }}>
+                    {totalStats.totalQty >= 0 ? 'Optimal warehouse stock' : 'Negative stock alert'}
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+              </ShadcnCard>
 
-              {/* Total U-Cap Balance */}
-              <div 
-                style={{
-                  background: 'rgba(26, 31, 44, 0.75)',
-                  border: '1px solid rgba(129, 140, 248, 0.25)',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px'
-                }}
-              >
-                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL U-CAP BALANCE</span>
-                <span style={{ fontSize: '20px', fontWeight: 900, color: '#818cf8' }}>
-                  <AnimatedCounter value={totalStats.totalUCap} suffix={<span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '4px' }}>PCS</span>} />
-                </span>
-              </div>
+              <ShadcnCard>
+                <ShadcnCardHeader style={{ padding: '14px 18px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Total U-Cap Balance</span>
+                    <ArrowDownLeft size={15} color="#a1a1aa" />
+                  </div>
+                  <ShadcnCardTitle style={{ fontSize: '22px', fontWeight: 700, marginTop: '4px', color: totalStats.totalUCap < 0 ? '#ef4444' : '#f4f4f5' }}>
+                    <AnimatedCounter value={totalStats.totalUCap} suffix={<span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', marginLeft: '4px' }}>PCS</span>} />
+                  </ShadcnCardTitle>
+                  <ShadcnCardDescription style={{ fontSize: '11px', marginTop: '2px' }}>
+                    Upper cap inventory reserve
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+              </ShadcnCard>
 
-              {/* Total L-Cap Balance */}
-              <div 
-                style={{
-                  background: 'rgba(26, 31, 44, 0.75)',
-                  border: '1px solid rgba(251, 146, 60, 0.25)',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px'
-                }}
-              >
-                <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.06em' }}>TOTAL L-CAP BALANCE</span>
-                <span style={{ fontSize: '20px', fontWeight: 900, color: '#fb923c' }}>
-                  <AnimatedCounter value={totalStats.totalLCap} suffix={<span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '4px' }}>PCS</span>} />
-                </span>
-              </div>
+              <ShadcnCard>
+                <ShadcnCardHeader style={{ padding: '14px 18px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Total L-Cap Balance</span>
+                    <ArrowUpRight size={15} color="#a1a1aa" />
+                  </div>
+                  <ShadcnCardTitle style={{ fontSize: '22px', fontWeight: 700, marginTop: '4px', color: totalStats.totalLCap < 0 ? '#ef4444' : '#f4f4f5' }}>
+                    <AnimatedCounter value={totalStats.totalLCap} suffix={<span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', marginLeft: '4px' }}>PCS</span>} />
+                  </ShadcnCardTitle>
+                  <ShadcnCardDescription style={{ fontSize: '11px', marginTop: '2px' }}>
+                    Lower cap inventory reserve
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+              </ShadcnCard>
             </div>
 
             {/* Filter & Export Toolbar */}
@@ -2900,116 +2844,102 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '6px 10px',
-                background: 'rgba(26, 31, 44, 0.7)',
+                padding: '10px 14px',
+                background: '#18181b',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                gap: '8px',
+                border: '1px solid #27272a',
+                gap: '10px',
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                <Search size={14} style={{ color: '#94a3b8' }} />
-                <input
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
+                <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
+                <ShadcnInput
                   type="text"
-                  placeholder="Search item name with size..."
+                  placeholder=""
                   value={balanceSearch}
                   onChange={(e) => setBalanceSearch(e.target.value)}
                   style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#f8fafc',
+                    height: '32px',
+                    paddingLeft: '32px',
                     fontSize: '12px',
-                    width: '200px',
-                    outline: 'none'
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '6px',
+                    maxWidth: '260px'
                   }}
                 />
 
                 {/* Stock Status Filter */}
-                <select
+                <ShadcnSelect
                   value={balanceFilter}
                   onChange={(e) => setBalanceFilter(e.target.value)}
                   style={{
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#f8fafc',
-                    padding: '4px 8px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    outline: 'none'
+                    width: '160px',
+                    height: '32px',
+                    fontSize: '12px'
                   }}
                 >
                   <option value="All Items">All Items</option>
                   <option value="Positive Balance">Positive Balance (&gt;0)</option>
                   <option value="Negative Balance">Negative Balance (&lt;0)</option>
                   <option value="Zero Balance">Zero Balance (=0)</option>
-                </select>
+                </ShadcnSelect>
 
                 {/* Category Prefix Filter */}
-                <select
+                <ShadcnSelect
                   value={balanceCategory}
                   onChange={(e) => setBalanceCategory(e.target.value)}
                   style={{
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#f8fafc',
-                    padding: '4px 8px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    outline: 'none'
+                    width: '150px',
+                    height: '32px',
+                    fontSize: '12px'
                   }}
                 >
                   {uniqueCategories.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
-                </select>
+                </ShadcnSelect>
               </div>
 
               {/* Action Buttons: Export CSV & Print */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShadcnButton
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleExportStockCsv}
                   style={{
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    color: '#34d399',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 600,
+                    height: '32px',
+                    fontSize: '12px',
+                    borderColor: '#27272a',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    cursor: 'pointer'
+                    gap: '6px'
                   }}
                 >
                   <FileSpreadsheet size={13} />
                   <span>Export CSV</span>
-                </button>
+                </ShadcnButton>
 
-                <button
+                <ShadcnButton
                   type="button"
+                  variant="default"
+                  size="sm"
                   onClick={handlePrintStockReport}
                   style={{
-                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(2, 132, 199, 0.35) 100%)',
-                    border: '1px solid rgba(56, 189, 248, 0.4)',
-                    color: '#38bdf8',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
+                    height: '32px',
+                    fontSize: '12px',
                     fontWeight: 600,
+                    padding: '0 14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    cursor: 'pointer'
+                    gap: '6px'
                   }}
                 >
                   <Printer size={13} />
                   <span>Print Report</span>
-                </button>
+                </ShadcnButton>
               </div>
             </div>
 
@@ -3019,155 +2949,133 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
-                background: 'rgba(15, 23, 42, 0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: '#09090b',
+                border: '1px solid #27272a',
                 borderRadius: '8px'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   {/* Top Level Grouping Row */}
-                  <tr style={{ background: '#131926', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <th rowSpan={2} style={{ padding: '6px 10px', textAlign: 'left', color: '#f8fafc', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <tr style={{ background: '#18181b', borderBottom: '1px solid #27272a' }}>
+                    <th rowSpan={2} style={{ minWidth: '280px', padding: '8px 12px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', borderRight: '1px solid #27272a' }}>
                       ITEM NAME (WITH SIZE)
                     </th>
-                    <th colSpan={3} style={{ padding: '4px 8px', textAlign: 'center', color: '#34d399', borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(16, 185, 129, 0.08)' }}>
+                    <th colSpan={3} style={{ padding: '6px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderRight: '1px solid #27272a', background: '#18181b' }}>
                       ITEM QTY
                     </th>
-                    <th colSpan={3} style={{ padding: '4px 8px', textAlign: 'center', color: '#818cf8', borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(129, 140, 248, 0.08)' }}>
+                    <th colSpan={3} style={{ padding: '6px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderRight: '1px solid #27272a', background: '#18181b' }}>
                       U CAP
                     </th>
-                    <th colSpan={3} style={{ padding: '4px 8px', textAlign: 'center', color: '#fb923c', borderRight: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(251, 146, 60, 0.08)' }}>
+                    <th colSpan={3} style={{ padding: '6px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderRight: '1px solid #27272a', background: '#18181b' }}>
                       L CAP
                     </th>
-                    <th rowSpan={2} style={{ width: '80px', padding: '6px 8px', textAlign: 'center', color: '#94a3b8' }}>
+                    <th rowSpan={2} style={{ width: '90px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
                       STATUS
                     </th>
                   </tr>
 
                   {/* Sub-Header Row */}
-                  <tr style={{ background: '#161d2d', borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <th style={{ width: '65px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>In</th>
-                    <th style={{ width: '65px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>Out</th>
-                    <th style={{ width: '75px', padding: '4px 6px', textAlign: 'right', color: '#34d399', fontSize: '10.5px', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>Balance</th>
+                  <tr style={{ background: '#18181b', borderBottom: '1px solid #27272a' }}>
+                    <th style={{ width: '65px', padding: '6px 8px', textAlign: 'right', color: '#71717a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>In</th>
+                    <th style={{ width: '65px', padding: '6px 8px', textAlign: 'right', color: '#71717a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>Out</th>
+                    <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderRight: '1px solid #27272a' }}>Balance</th>
 
-                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>In</th>
-                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>Out</th>
-                    <th style={{ width: '70px', padding: '4px 6px', textAlign: 'right', color: '#818cf8', fontSize: '10.5px', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>Balance</th>
+                    <th style={{ width: '65px', padding: '6px 8px', textAlign: 'right', color: '#71717a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>In</th>
+                    <th style={{ width: '65px', padding: '6px 8px', textAlign: 'right', color: '#71717a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>Out</th>
+                    <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderRight: '1px solid #27272a' }}>Balance</th>
 
-                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>In</th>
-                    <th style={{ width: '60px', padding: '4px 6px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px' }}>Out</th>
-                    <th style={{ width: '70px', padding: '4px 6px', textAlign: 'right', color: '#fb923c', fontSize: '10.5px', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>Balance</th>
+                    <th style={{ width: '65px', padding: '6px 8px', textAlign: 'right', color: '#71717a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>In</th>
+                    <th style={{ width: '65px', padding: '6px 8px', textAlign: 'right', color: '#71717a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>Out</th>
+                    <th style={{ width: '75px', padding: '6px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderRight: '1px solid #27272a' }}>Balance</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {stockBalanceList
-                    .filter((row) => {
+                  {(() => {
+                    const filtered = stockBalanceList.filter((row) => {
                       const q = balanceSearch.toLowerCase();
                       const matchSearch = !q || row.itemName.toLowerCase().includes(q);
                       const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
-
                       let matchBal = true;
                       if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
                       if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
                       if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
-
                       return matchSearch && matchCat && matchBal;
-                    })
-                    .map((row, idx) => (
+                    });
+                    const pageStart = (balancePage - 1) * balancePageSize;
+                    const pageSlice = filtered.slice(pageStart, pageStart + balancePageSize);
+                    return pageSlice.map((row, idx) => (
                       <tr 
                         key={row.itemName}
-                        style={{
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
-                        }}
+                        style={{ borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent', transition: 'background-color 0.15s ease' }}
                       >
                         {/* Item Name */}
-                        <td style={{ padding: '6px 10px', color: '#f8fafc', fontWeight: 600, borderRight: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                        <td style={{ padding: '8px 12px', color: '#f4f4f5', fontWeight: 500, borderRight: '1px solid #27272a', fontSize: '12px' }}>
                           {row.itemName}
                         </td>
 
                         {/* Qty In, Out, Balance */}
-                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.inwardQty}</td>
-                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.outwardQty}</td>
-                        <td 
-                          style={{
-                            padding: '6px 6px',
-                            textAlign: 'right',
-                            fontWeight: 700,
-                            color: row.balanceQty > 0 ? '#34d399' : row.balanceQty < 0 ? '#f87171' : '#94a3b8',
-                            borderRight: '1px solid rgba(255, 255, 255, 0.06)'
-                          }}
-                        >
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '12px' }}>{row.inwardQty}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '12px' }}>{row.outwardQty}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 500, fontSize: '12px', color: row.balanceQty < 0 ? '#ef4444' : '#f4f4f5', borderRight: '1px solid #27272a' }}>
                           {row.balanceQty}
                         </td>
 
                         {/* U Cap In, Out, Balance */}
-                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.inwardUCap}</td>
-                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.outwardUCap}</td>
-                        <td 
-                          style={{
-                            padding: '6px 6px',
-                            textAlign: 'right',
-                            fontWeight: 700,
-                            color: row.balanceUCap > 0 ? '#818cf8' : row.balanceUCap < 0 ? '#f87171' : '#94a3b8',
-                            borderRight: '1px solid rgba(255, 255, 255, 0.06)'
-                          }}
-                        >
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '12px' }}>{row.inwardUCap}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '12px' }}>{row.outwardUCap}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 500, fontSize: '12px', color: row.balanceUCap < 0 ? '#ef4444' : '#f4f4f5', borderRight: '1px solid #27272a' }}>
                           {row.balanceUCap}
                         </td>
 
                         {/* L Cap In, Out, Balance */}
-                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.inwardLCap}</td>
-                        <td style={{ padding: '6px 6px', textAlign: 'right', color: '#94a3b8' }}>{row.outwardLCap}</td>
-                        <td 
-                          style={{
-                            padding: '6px 6px',
-                            textAlign: 'right',
-                            fontWeight: 700,
-                            color: row.balanceLCap > 0 ? '#fb923c' : row.balanceLCap < 0 ? '#f87171' : '#94a3b8',
-                            borderRight: '1px solid rgba(255, 255, 255, 0.06)'
-                          }}
-                        >
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '12px' }}>{row.inwardLCap}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '12px' }}>{row.outwardLCap}</td>
+                        <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 500, fontSize: '12px', color: row.balanceLCap < 0 ? '#ef4444' : '#f4f4f5', borderRight: '1px solid #27272a' }}>
                           {row.balanceLCap}
                         </td>
 
                         {/* Status Badge */}
-                        <td style={{ textAlign: 'center' }}>
-                          <span
+                        <td style={{ textAlign: 'center', padding: '6px 8px' }}>
+                          <ShadcnBadge
+                            variant={row.status === 'NEGATIVE' ? 'destructive' : row.status === 'IN STOCK' ? 'secondary' : 'outline'}
                             style={{
-                              fontSize: '9.5px',
-                              fontWeight: 700,
-                              padding: '2px 6px',
-                              borderRadius: '9999px',
-                              background:
-                                row.status === 'IN STOCK'
-                                  ? 'rgba(52, 211, 153, 0.15)'
-                                  : row.status === 'LOW STOCK'
-                                  ? 'rgba(251, 191, 36, 0.15)'
-                                  : row.status === 'NEGATIVE'
-                                  ? 'rgba(248, 113, 113, 0.15)'
-                                  : 'rgba(148, 163, 184, 0.1)',
-                              color:
-                                row.status === 'IN STOCK'
-                                  ? '#34d399'
-                                  : row.status === 'LOW STOCK'
-                                  ? '#fbbf24'
-                                  : row.status === 'NEGATIVE'
-                                  ? '#f87171'
-                                  : '#94a3b8'
+                              fontSize: '11px', padding: '2px 7px', borderRadius: '4px',
+                              ...(row.status === 'IN STOCK' ? { background: '#27272a', color: '#f4f4f5', border: '1px solid #3f3f46' }
+                                : row.status === 'LOW STOCK' ? { background: '#27272a', color: '#fbbf24', border: '1px solid #3f3f46' }
+                                : row.status === 'ZERO' ? { borderColor: '#27272a', color: '#71717a' }
+                                : {})
                             }}
                           >
                             {row.status}
-                          </span>
+                          </ShadcnBadge>
                         </td>
                       </tr>
-                    ))}
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
+            {/* Balance Pagination */}
+            <ShadcnPagination
+              totalCount={stockBalanceList.filter((row) => {
+                const q = balanceSearch.toLowerCase();
+                const matchSearch = !q || row.itemName.toLowerCase().includes(q);
+                const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
+                let matchBal = true;
+                if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
+                if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
+                if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
+                return matchSearch && matchCat && matchBal;
+              }).length}
+              pageSize={balancePageSize}
+              currentPage={balancePage}
+              onPageChange={setBalancePage}
+              onPageSizeChange={(s) => { setBalancePageSize(s); setBalancePage(1); }}
+            />
           </div>
         )}
+
 
         {/* =========================================================== */}
         {/* TAB 5: PRINT BARCODE */}
@@ -3181,75 +3089,71 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '6px 10px',
-                background: 'rgba(26, 31, 44, 0.7)',
+                padding: '10px 14px',
+                background: '#18181b',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                gap: '8px',
+                border: '1px solid #27272a',
+                gap: '10px',
                 flexShrink: 0
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                <Search size={14} style={{ color: '#94a3b8' }} />
-                <input
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
+                <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
+                <ShadcnInput
                   type="text"
-                  placeholder="Search barcode items..."
+                  placeholder=""
                   value={barcodeSearch}
                   onChange={(e) => setBarcodeSearch(e.target.value)}
                   style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#f8fafc',
+                    height: '32px',
+                    paddingLeft: '32px',
                     fontSize: '12px',
-                    width: '180px',
-                    outline: 'none'
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '6px',
+                    maxWidth: '220px'
                   }}
                 />
 
-                <select
+                <ShadcnSelect
                   value={barcodeCategory}
                   onChange={(e) => setBarcodeCategory(e.target.value)}
                   style={{
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#f8fafc',
-                    padding: '4px 8px',
-                    borderRadius: '5px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    outline: 'none'
+                    width: '150px',
+                    height: '32px',
+                    fontSize: '12px'
                   }}
                 >
                   {uniqueCategories.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
-                </select>
+                </ShadcnSelect>
 
                 {/* Bulk Select Toggles */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#a1a1aa', cursor: 'pointer', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       onChange={(e) => handleToggleAllBarcode('qtyChecked', e.target.checked)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: 'pointer', accentColor: '#10b981' }}
                     />
                     <span>All Qty</span>
                   </label>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#a1a1aa', cursor: 'pointer', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       onChange={(e) => handleToggleAllBarcode('uCapChecked', e.target.checked)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: 'pointer', accentColor: '#818cf8' }}
                     />
                     <span>All U-Cap</span>
                   </label>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#a1a1aa', cursor: 'pointer', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       onChange={(e) => handleToggleAllBarcode('lCapChecked', e.target.checked)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: 'pointer', accentColor: '#fb923c' }}
                     />
                     <span>All L-Cap</span>
                   </label>
@@ -3257,30 +3161,28 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShadcnButton
                   type="button"
+                  variant="default"
+                  size="sm"
                   onClick={() => {
                     macAudio.playPop();
                     setIsBarcodePreviewOpen(true);
                   }}
                   style={{
-                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(126, 34, 206, 0.35) 100%)',
-                    border: '1px solid rgba(168, 85, 247, 0.4)',
-                    color: '#c084fc',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 700,
+                    height: '32px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    padding: '0 14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    cursor: 'pointer'
+                    gap: '6px'
                   }}
                 >
                   <Eye size={13} />
                   <span>PRINT PREVIEW ({barcodePrintJobs.length})</span>
-                </button>
+                </ShadcnButton>
               </div>
             </div>
 
@@ -3290,27 +3192,29 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'auto',
-                background: 'rgba(15, 23, 42, 0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: '#09090b',
+                border: '1px solid #27272a',
                 borderRadius: '8px'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#161d2d' }}>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    <th style={{ padding: '7px 10px', textAlign: 'left', color: '#38bdf8' }}>ITEM NAME</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'center', color: '#34d399' }}>QTY</th>
-                    <th style={{ width: '50px', padding: '7px 8px', textAlign: 'center', color: '#34d399' }}>☑</th>
-                    <th style={{ width: '130px', padding: '7px 8px', textAlign: 'left', color: '#818cf8' }}>U CAP</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'center', color: '#818cf8' }}>U QTY</th>
-                    <th style={{ width: '50px', padding: '7px 8px', textAlign: 'center', color: '#818cf8' }}>☑ U</th>
-                    <th style={{ width: '130px', padding: '7px 8px', textAlign: 'left', color: '#fb923c' }}>L CAP</th>
-                    <th style={{ width: '80px', padding: '7px 8px', textAlign: 'center', color: '#fb923c' }}>L QTY</th>
-                    <th style={{ width: '50px', padding: '7px 8px', textAlign: 'center', color: '#fb923c' }}>☑ L</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                  <tr style={{ borderBottom: '1px solid #27272a' }}>
+                    <th style={{ minWidth: '240px', padding: '8px 12px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>ITEM NAME</th>
+                    <th style={{ width: '80px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</th>
+                    <th style={{ width: '50px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>☑</th>
+                    <th style={{ width: '120px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderLeft: '1px solid #27272a' }}>U CAP</th>
+                    <th style={{ width: '80px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U QTY</th>
+                    <th style={{ width: '50px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>☑ U</th>
+                    <th style={{ width: '120px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', borderLeft: '1px solid #27272a' }}>L CAP</th>
+                    <th style={{ width: '80px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L QTY</th>
+                    <th style={{ width: '50px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>☑ L</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBarcodeItems.map((item, idx) => {
+                  {filteredBarcodeItems
+                    .slice((barcodePage - 1) * barcodePageSize, barcodePage * barcodePageSize)
+                    .map((item, idx) => {
                     const st = barcodeStates[item.itemName] || {
                       itemName: item.itemName,
                       category: item.category,
@@ -3327,37 +3231,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     return (
                       <tr 
                         key={item.itemName}
-                        style={{
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                          background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
-                        }}
+                        style={{ borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent', transition: 'background-color 0.15s ease' }}
                       >
-                        <td style={{ padding: '6px 10px', color: '#f8fafc', fontWeight: 600 }}>{item.itemName}</td>
+                        <td style={{ padding: '8px 12px', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.itemName}</td>
 
                         {/* Main Item Qty & Checkbox */}
-                        <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                           <input
                             type="number"
                             min="1"
                             value={st.qty}
                             onChange={(e) => {
                               const val = Math.max(1, parseInt(e.target.value, 10) || 1);
-                              setBarcodeStates((prev) => ({
-                                ...prev,
-                                [item.itemName]: { ...st, qty: val }
-                              }));
+                              setBarcodeStates((prev) => ({ ...prev, [item.itemName]: { ...st, qty: val } }));
                             }}
-                            style={{
-                              width: '60px',
-                              textAlign: 'center',
-                              background: 'rgba(15, 23, 42, 0.8)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: '#34d399',
-                              borderRadius: '4px',
-                              padding: '2px',
-                              fontSize: '11px',
-                              fontWeight: 700
-                            }}
+                            style={{ width: '64px', height: '26px', textAlign: 'center', background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5', borderRadius: '4px', fontSize: '12px', fontWeight: 500, outline: 'none' }}
                           />
                         </td>
                         <td style={{ textAlign: 'center' }}>
@@ -3366,40 +3254,24 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             checked={st.qtyChecked}
                             onChange={(e) => {
                               macAudio.playHover();
-                              setBarcodeStates((prev) => ({
-                                ...prev,
-                                [item.itemName]: { ...st, qtyChecked: e.target.checked }
-                              }));
+                              setBarcodeStates((prev) => ({ ...prev, [item.itemName]: { ...st, qtyChecked: e.target.checked } }));
                             }}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', accentColor: '#10b981' }}
                           />
                         </td>
 
                         {/* U Cap Name, Qty & Checkbox */}
-                        <td style={{ padding: '6px 8px', color: '#818cf8', fontSize: '11px' }}>U Cap</td>
-                        <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                        <td style={{ padding: '8px 10px', color: '#a1a1aa', fontSize: '12px', borderLeft: '1px solid #27272a' }}>U Cap</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                           <input
                             type="number"
                             min="1"
                             value={st.uCapQty}
                             onChange={(e) => {
                               const val = Math.max(1, parseInt(e.target.value, 10) || 1);
-                              setBarcodeStates((prev) => ({
-                                ...prev,
-                                [item.itemName]: { ...st, uCapQty: val }
-                              }));
+                              setBarcodeStates((prev) => ({ ...prev, [item.itemName]: { ...st, uCapQty: val } }));
                             }}
-                            style={{
-                              width: '60px',
-                              textAlign: 'center',
-                              background: 'rgba(15, 23, 42, 0.8)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: '#818cf8',
-                              borderRadius: '4px',
-                              padding: '2px',
-                              fontSize: '11px',
-                              fontWeight: 700
-                            }}
+                            style={{ width: '64px', height: '26px', textAlign: 'center', background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5', borderRadius: '4px', fontSize: '12px', fontWeight: 500, outline: 'none' }}
                           />
                         </td>
                         <td style={{ textAlign: 'center' }}>
@@ -3408,40 +3280,24 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             checked={st.uCapChecked}
                             onChange={(e) => {
                               macAudio.playHover();
-                              setBarcodeStates((prev) => ({
-                                ...prev,
-                                [item.itemName]: { ...st, uCapChecked: e.target.checked }
-                              }));
+                              setBarcodeStates((prev) => ({ ...prev, [item.itemName]: { ...st, uCapChecked: e.target.checked } }));
                             }}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', accentColor: '#818cf8' }}
                           />
                         </td>
 
                         {/* L Cap Name, Qty & Checkbox */}
-                        <td style={{ padding: '6px 8px', color: '#fb923c', fontSize: '11px' }}>L Cap</td>
-                        <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                        <td style={{ padding: '8px 10px', color: '#a1a1aa', fontSize: '12px', borderLeft: '1px solid #27272a' }}>L Cap</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                           <input
                             type="number"
                             min="1"
                             value={st.lCapQty}
                             onChange={(e) => {
                               const val = Math.max(1, parseInt(e.target.value, 10) || 1);
-                              setBarcodeStates((prev) => ({
-                                ...prev,
-                                [item.itemName]: { ...st, lCapQty: val }
-                              }));
+                              setBarcodeStates((prev) => ({ ...prev, [item.itemName]: { ...st, lCapQty: val } }));
                             }}
-                            style={{
-                              width: '60px',
-                              textAlign: 'center',
-                              background: 'rgba(15, 23, 42, 0.8)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: '#fb923c',
-                              borderRadius: '4px',
-                              padding: '2px',
-                              fontSize: '11px',
-                              fontWeight: 700
-                            }}
+                            style={{ width: '64px', height: '26px', textAlign: 'center', background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5', borderRadius: '4px', fontSize: '12px', fontWeight: 500, outline: 'none' }}
                           />
                         </td>
                         <td style={{ textAlign: 'center' }}>
@@ -3450,12 +3306,9 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             checked={st.lCapChecked}
                             onChange={(e) => {
                               macAudio.playHover();
-                              setBarcodeStates((prev) => ({
-                                ...prev,
-                                [item.itemName]: { ...st, lCapChecked: e.target.checked }
-                              }));
+                              setBarcodeStates((prev) => ({ ...prev, [item.itemName]: { ...st, lCapChecked: e.target.checked } }));
                             }}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', accentColor: '#fb923c' }}
                           />
                         </td>
                       </tr>
@@ -3464,9 +3317,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 </tbody>
               </table>
             </div>
+            {/* Barcode Pagination */}
+            <ShadcnPagination
+              totalCount={filteredBarcodeItems.length}
+              pageSize={barcodePageSize}
+              currentPage={barcodePage}
+              onPageChange={setBarcodePage}
+              onPageSizeChange={(s) => { setBarcodePageSize(s); setBarcodePage(1); }}
+            />
           </div>
         )}
       </div>
+
 
       {/* =========================================================== */}
       {/* MODAL: ADD CUSTOM MULTI-COLUMN SIZE */}
@@ -3477,7 +3339,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            background: 'rgba(0, 0, 0, 0.7)',
+            background: 'rgba(0, 0, 0, 0.75)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
@@ -3487,37 +3349,39 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         >
           <div 
             style={{
-              width: '340px',
-              background: '#0f172a',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              borderRadius: '12px',
-              padding: '16px',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
+              width: '360px',
+              background: '#18181b',
+              border: '1px solid #27272a',
+              borderRadius: '10px',
+              padding: '18px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px'
+              gap: '14px'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Columns size={16} style={{ color: '#38bdf8' }} />
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>Add Size Column</span>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#f4f4f5' }}>Add Size Column</span>
               </div>
-              <button
+              <ShadcnButton
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsAddColModalOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ height: '24px', width: '24px', padding: 0, color: '#a1a1aa' }}
               >
                 <X size={15} />
-              </button>
+              </ShadcnButton>
             </div>
 
-            <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: '12px', color: '#a1a1aa', lineHeight: 1.4 }}>
               Enter the length/feet size to add as a new column in Stock Entry:
             </p>
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input
+              <ShadcnInput
                 type="number"
                 step="0.5"
                 placeholder="e.g. 12, 9.5, 11, 14..."
@@ -3531,56 +3395,52 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 }}
                 style={{
                   flex: 1,
-                  background: 'rgba(15, 23, 42, 0.9)',
-                  border: '1px solid rgba(56, 189, 248, 0.4)',
-                  color: '#f8fafc',
-                  padding: '7px 10px',
-                  borderRadius: '6px',
+                  height: '34px',
+                  background: '#09090b',
+                  border: '1px solid #27272a',
+                  color: '#f4f4f5',
                   fontSize: '13px',
-                  fontWeight: 700,
-                  outline: 'none'
+                  fontWeight: 600,
+                  fontFamily: 'monospace'
                 }}
               />
-              <button
+              <ShadcnButton
                 type="button"
+                variant="default"
+                size="sm"
                 onClick={() => {
                   if (newColSizeInput) handleAddDynamicCol(newColSizeInput);
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                  border: '1px solid rgba(56, 189, 248, 0.5)',
-                  color: '#ffffff',
-                  padding: '7px 14px',
-                  borderRadius: '6px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  cursor: 'pointer'
+                  height: '34px',
+                  padding: '0 16px',
+                  fontSize: '12px',
+                  fontWeight: 600
                 }}
               >
                 Add
-              </button>
+              </ShadcnButton>
             </div>
 
             {/* Quick Suggestions */}
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', paddingTop: '4px' }}>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', paddingTop: '2px' }}>
               {[12, 9.5, 11, 13, 14, 8, 7].map((s) => (
-                <button
+                <ShadcnButton
                   key={s}
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleAddDynamicCol(s)}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#e2e8f0',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    height: '24px',
+                    padding: '0 8px',
+                    fontSize: '11px',
+                    borderColor: '#27272a',
+                    fontFamily: 'monospace'
                   }}
                 >
                   +{s} FT
-                </button>
+                </ShadcnButton>
               ))}
             </div>
           </div>
@@ -3606,13 +3466,13 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         >
           <div 
             style={{
-              width: '800px',
+              width: '820px',
               maxWidth: '95vw',
               maxHeight: '90vh',
-              background: '#0f172a',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: '#18181b',
+              border: '1px solid #27272a',
               borderRadius: '12px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden'
@@ -3624,30 +3484,26 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '12px 18px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                background: 'rgba(255, 255, 255, 0.03)'
+                padding: '14px 18px',
+                borderBottom: '1px solid #27272a',
+                background: '#18181b'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Barcode size={18} style={{ color: '#a855f7' }} />
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#f4f4f5' }}>
                   BARCODE PRINT PREVIEW ({barcodePrintJobs.length} Labels)
                 </span>
               </div>
-              <button
+              <ShadcnButton
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsBarcodePreviewOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  padding: 4
-                }}
+                style={{ height: '28px', width: '28px', padding: 0, color: '#a1a1aa' }}
               >
                 <X size={16} />
-              </button>
+              </ShadcnButton>
             </div>
 
             {/* Modal Content: Grid of Barcode Cards */}
@@ -3659,11 +3515,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
                 gap: '12px',
-                background: '#090d16'
+                background: '#09090b'
               }}
             >
               {barcodePrintJobs.length === 0 ? (
-                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#71717a', fontSize: '13px' }}>
                   Please check at least one item or component in the list to generate barcodes!
                 </div>
               ) : (
@@ -3764,38 +3620,38 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '10px 18px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                background: 'rgba(255, 255, 255, 0.02)'
+                padding: '12px 18px',
+                borderTop: '1px solid #27272a',
+                background: '#18181b'
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                  Configured: <strong>{loadBarcodeConfig().widthMm}mm × {loadBarcodeConfig().heightMm}mm</strong> • {loadBarcodeConfig().dpi} DPI
+                <span style={{ fontSize: '12px', color: '#f4f4f5' }}>
+                  Configured: <strong style={{ fontFamily: 'monospace' }}>{loadBarcodeConfig().widthMm}mm × {loadBarcodeConfig().heightMm}mm</strong> • {loadBarcodeConfig().dpi} DPI
                 </span>
-                <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>
                   {barcodePrintJobs.length} Labels queued for output
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
+                <ShadcnButton
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setIsBarcodePreviewOpen(false)}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#e2e8f0',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    height: '32px',
+                    borderColor: '#27272a',
+                    fontSize: '12px',
+                    color: '#a1a1aa'
                   }}
                 >
                   Close
-                </button>
-                <button
+                </ShadcnButton>
+                <ShadcnButton
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     const bConf = loadBarcodeConfig();
                     const allTspl = barcodePrintJobs.map(job => 
@@ -3806,20 +3662,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     showToast?.(`Downloaded TSPL script for ${barcodePrintJobs.length} labels!`, 'success');
                   }}
                   style={{
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    color: '#38bdf8',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: 'pointer'
+                    height: '32px',
+                    borderColor: '#27272a',
+                    fontSize: '12px',
+                    color: '#38bdf8'
                   }}
                 >
                   Export TSPL (.PRN)
-                </button>
-                <button
+                </ShadcnButton>
+                <ShadcnButton
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     const bConf = loadBarcodeConfig();
                     const allZpl = barcodePrintJobs.map(job => 
@@ -3830,42 +3684,35 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     showToast?.(`Downloaded ZPL script for ${barcodePrintJobs.length} labels!`, 'success');
                   }}
                   style={{
-                    background: 'rgba(168, 85, 247, 0.15)',
-                    border: '1px solid rgba(168, 85, 247, 0.35)',
-                    color: '#c084fc',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: 'pointer'
+                    height: '32px',
+                    borderColor: '#27272a',
+                    fontSize: '12px',
+                    color: '#c084fc'
                   }}
                 >
                   Export ZPL (.PRN)
-                </button>
-                <button
+                </ShadcnButton>
+                <ShadcnButton
                   type="button"
+                  variant="default"
+                  size="sm"
                   onClick={() => {
                     macAudio.playSuccess();
                     window.print();
                   }}
                   style={{
-                    background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
-                    border: '1px solid rgba(168, 85, 247, 0.4)',
-                    color: '#ffffff',
-                    padding: '6px 16px',
-                    borderRadius: '6px',
+                    height: '32px',
                     fontSize: '12px',
-                    fontWeight: 700,
+                    fontWeight: 600,
+                    padding: '0 16px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(168, 85, 247, 0.3)'
+                    gap: '6px'
                   }}
                 >
                   <Printer size={13} />
                   <span>Print Labels</span>
-                </button>
+                </ShadcnButton>
               </div>
             </div>
 

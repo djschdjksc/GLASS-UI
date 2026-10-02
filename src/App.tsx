@@ -823,6 +823,14 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
+      // F4: Switch to Executive Dashboard (shadcn/ui style)
+      if (e.key === 'F4') {
+        e.preventDefault();
+        setActiveTab('F4');
+        playTapSound();
+        return;
+      }
+
       // F9 or Ctrl+Alt+C: Toggle Digital Retro Numpad Calculator
       if (e.key === 'F9' || (isCtrlOrCmd && e.altKey && (e.key === 'c' || e.key === 'C'))) {
         e.preventDefault();
@@ -2680,6 +2688,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
             <div style={{ flex: 1, height: '100%', minHeight: 0 }}>
               <OtherTabsView
                 activeTab={activeTab}
+                onSelectTab={setActiveTab}
                 onBackToBill={() => setActiveTab('F1')}
                 onOpenUserProfile={() => setIsUserIdentityOpen(true)}
                 themeMode={themeMode}

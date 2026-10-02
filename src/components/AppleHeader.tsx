@@ -7,6 +7,7 @@ import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
 import { DOC_TYPES } from '../utils/billDocTypes';
 import { getUserProfile } from '../services/supabaseClient';
+import { Select as ShadcnSelect } from './ui/shadcn';
 
 interface Props {
   header: BillHeader;
@@ -98,11 +99,10 @@ export const AppleHeader: React.FC<Props> = ({
 
         {/* Document Type Dropdown */}
         <div style={{ position: 'relative', width: '130px' }}>
-          <select
+          <ShadcnSelect
             id="header-doc-type"
             data-np-target="1-1"
-            className="apple-select"
-            style={{ width: '100%', paddingRight: '22px', fontWeight: 600, color: '#38bdf8' }}
+            style={{ width: '100%', height: '32px', fontWeight: 600, color: '#f4f4f5' }}
             value={header.docType}
             onChange={(e) => onChange({ docType: e.target.value })}
             onKeyDown={(e) => {
@@ -117,12 +117,11 @@ export const AppleHeader: React.FC<Props> = ({
             }}
           >
             {DOC_TYPES.map(t => (
-              <option key={t} value={t} style={{ background: '#161b22', color: '#ffffff' }}>
+              <option key={t} value={t}>
                 {t}
               </option>
             ))}
-          </select>
-          <ChevronDown size={11} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#a1a1aa' }} />
+          </ShadcnSelect>
         </div>
 
         {/* Party Name Search Box with Quick Add (+) Button */}
@@ -259,11 +258,10 @@ export const AppleHeader: React.FC<Props> = ({
 
         {/* Type Selection Dropdown */}
         <div style={{ position: 'relative', width: '110px' }}>
-          <select
+          <ShadcnSelect
             id="header-type-selection"
             data-np-target="1-3"
-            className="apple-select"
-            style={{ width: '100%', paddingRight: '20px' }}
+            style={{ width: '100%', height: '32px' }}
             value={header.typeSelection}
             onChange={(e) => onChange({ typeSelection: e.target.value })}
             onKeyDown={(e) => {
@@ -282,8 +280,7 @@ export const AppleHeader: React.FC<Props> = ({
                 {ts}
               </option>
             ))}
-          </select>
-          <ChevronDown size={11} style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#a1a1aa' }} />
+          </ShadcnSelect>
         </div>
 
         {/* Vehicle No Input */}

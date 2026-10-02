@@ -11,7 +11,8 @@ import {
   Package, 
   BookOpen, 
   Settings,
-  MessageCircle
+  MessageCircle,
+  LayoutDashboard
 } from 'lucide-react';
 
 interface Props {
@@ -35,6 +36,7 @@ export const RightNavRail: React.FC<Props> = ({
     { key: 'F1', name: 'Bill UI', icon: <Receipt size={17} />, color: '#38bdf8' },
     { key: 'F2', name: 'Bill History', icon: <History size={17} />, color: '#818cf8' },
     { key: 'F3', name: 'Equation', icon: <Calculator size={17} />, color: '#fbbf24' },
+    { key: 'F4', name: 'Dashboard', icon: <LayoutDashboard size={17} />, color: '#10b981' },
     { key: 'F5', name: 'Party Panel', icon: <Users size={17} />, color: '#f472b6' },
     { key: 'F6', name: 'Control Panel', icon: <Sliders size={17} />, color: '#a78bfa' },
     { key: 'F8', name: 'Stock Inventory', icon: <Package size={17} />, color: '#fb923c' },

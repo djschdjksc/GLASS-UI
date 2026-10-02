@@ -11,8 +11,19 @@ from PyQt6.QtPrintSupport import QPrinter, QPrintDialog, QPrinterInfo
 # Ensure server directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bill_painter_engine import BillPainter, format_indian_currency, format_display_date
+from ledger_painter_engine import LedgerPainter
 
 app = QApplication.instance() or QApplication(sys.argv if sys.argv else [''])
+
+def render_ledger_qimage(ledger_data, page_num=0):
+    lp = LedgerPainter(ledger_data)
+    img = QImage(lp.W, lp.H, QImage.Format.Format_ARGB32)
+    img.fill(QColor('#FFFFFF'))
+    p = QPainter(img)
+    lp.paint(p, img.rect(), page_num=page_num)
+    p.end()
+    return img, lp
+
 
 def map_payload_to_bill_data(payload):
     mode = payload.get('mode', 'estimate')
@@ -301,9 +312,108 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
+
+        elif self.path == '/api/print/ledger-render':
+            try:
+                ledger_page = int(payload.get('pageNum', 0))
+                img, lp = render_ledger_qimage(payload, page_num=ledger_page)
+                buf = QBuffer()
+                buf.open(QIODevice.OpenModeFlag.WriteOnly)
+                img.save(buf, 'PNG')
+                b64 = base64.b64encode(buf.data().data()).decode('utf-8')
+                data_url = f'data:image/png;base64,{b64}'
+
+                res = {
+                    'success': True,
+                    'dataUrl': data_url,
+                    'width': img.width(),
+                    'height': img.height(),
+                    'totalPages': lp.total_pages,
+                    'currentPage': ledger_page
+                }
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode('utf-8'))
+            except Exception as ex:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
+
+        elif self.path == '/api/print/ledger-direct':
+            try:
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                target_printer = payload.get('printerName')
+                if target_printer:
+                    printer.setPrinterName(target_printer)
+                printer.setPageOrientation(QPageLayout.Orientation.Portrait)
+                printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+
+                printer_name = printer.printerName() or 'Default Printer'
+                is_pdf_virtual = 'PDF' in printer_name.upper() or 'XPS' in printer_name.upper() or 'ONENOTE' in printer_name.upper() or 'PORTPROMPT' in printer_name.upper()
+
+                show_dialog = bool(payload.get('showDialog', False))
+                if show_dialog:
+                    from PyQt6.QtPrintSupport import QPrintDialog
+                    dialog = QPrintDialog(printer)
+                    dialog.setWindowTitle(f"Print Ledger - {payload.get('party', 'Khata')}")
+                    if dialog.exec() != QPrintDialog.DialogCode.Accepted:
+                        self.send_response(200)
+                        self._send_cors_headers()
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({'success': False, 'message': 'Print cancelled by user'}).encode('utf-8'))
+                        return
+                    printer_name = printer.printerName() or 'Selected Printer'
+                    is_pdf_virtual = 'PDF' in printer_name.upper() or 'XPS' in printer_name.upper()
+
+                output_pdf_path = None
+                if is_pdf_virtual and not show_dialog:
+                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    party_clean = "".join(c for c in str(payload.get('party', 'Party')) if c.isalnum() or c in (' ', '_', '-')).strip() or 'LEDGER'
+                    output_pdf_path = os.path.join(desktop_dir, f"LEDGER_{party_clean}.pdf")
+                    printer.setOutputFileName(output_pdf_path)
+
+                p = QPainter(printer)
+                lp = LedgerPainter(payload)
+                rect = printer.pageRect(QPrinter.Unit.DevicePixel).toRect()
+                lp.paint(p, rect, page_num=0)
+                total_p = lp.total_pages
+                for pg in range(1, total_p):
+                    printer.newPage()
+                    lp.paint(p, rect, page_num=pg)
+                p.end()
+
+                if output_pdf_path and os.path.exists(output_pdf_path):
+                    try:
+                        os.startfile(output_pdf_path)
+                    except Exception:
+                        pass
+
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'success': True,
+                    'message': f"Ledger sent to {printer_name} ({total_p} page{'s' if total_p > 1 else ''}) in High-Resolution Vector mode!",
+                    'printer': printer_name,
+                    'totalPages': total_p,
+                    'filePath': output_pdf_path
+                }).encode('utf-8'))
+            except Exception as ex:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
+
 
 
 def run_server(port=5005):

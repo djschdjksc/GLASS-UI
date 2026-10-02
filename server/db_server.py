@@ -93,6 +93,14 @@ def init_db():
                 status TEXT DEFAULT 'IN STOCK',
                 updated_at INTEGER NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS party_receipts (
+                id TEXT PRIMARY KEY,
+                party TEXT NOT NULL,
+                amount REAL NOT NULL,
+                receipt_date TEXT NOT NULL,
+                remarks TEXT DEFAULT 'Payment Received',
+                created_at INTEGER NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS ledger (
                 id TEXT PRIMARY KEY,
                 party_id TEXT NOT NULL,
@@ -114,6 +122,8 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_bills_date ON bills(date);
             CREATE INDEX IF NOT EXISTS idx_skip_items_prefix ON skip_items(item_prefix);
             CREATE INDEX IF NOT EXISTS idx_ledger_party ON ledger(party_id);
+            CREATE INDEX IF NOT EXISTS idx_party_receipts_party ON party_receipts(party);
+
         """)
     print(f"[DB] SQLite initialized at: {DB_PATH}")
 
@@ -153,11 +163,13 @@ class DBHandler(BaseHTTPRequestHandler):
         path = self.path.split('?')[0]
         params = {}
         if '?' in self.path:
+            import urllib.parse
             qs = self.path.split('?')[1]
             for kv in qs.split('&'):
                 if '=' in kv:
                     k, v = kv.split('=', 1)
-                    params[k] = v
+                    params[urllib.parse.unquote_plus(k)] = urllib.parse.unquote_plus(v)
+
 
         try:
             with db_lock, get_conn() as conn:
@@ -302,21 +314,123 @@ class DBHandler(BaseHTTPRequestHandler):
                         result.append(d)
                     self.send_json(result)
 
-                # ── Ledger ──
+                # ── Ledger (Live Statement from Bills + Receipts) ──
                 elif path == '/api/db/ledger':
-                    party_id = params.get('partyId')
-                    if party_id:
-                        rows = conn.execute("SELECT * FROM ledger WHERE party_id=? ORDER BY date", (party_id,)).fetchall()
+                    party_name = params.get('party', '').strip()
+                    date_from = params.get('dateFrom', '').strip()
+                    date_to = params.get('dateTo', '').strip()
+
+                    entries = []
+                    if party_name:
+                        # 1. Bills
+                        sql_bills = "SELECT id, token, date, doc_type, total FROM bills WHERE LOWER(party) = LOWER(?)"
+                        params_bills = [party_name]
+                        if date_from:
+                            sql_bills += " AND date >= ?"
+                            params_bills.append(date_from)
+                        if date_to:
+                            sql_bills += " AND date <= ?"
+                            params_bills.append(date_to)
+                        
+                        b_rows = conn.execute(sql_bills, params_bills).fetchall()
+                        for b in b_rows:
+                            b_type = (b['doc_type'] or '').upper()
+                            is_return = 'RETURN' in b_type
+                            is_order = 'ORDER' in b_type
+                            tot = float(b['total'] or 0)
+
+                            if is_return:
+                                entries.append({
+                                    'id': 'b_' + str(b['id']),
+                                    'rawId': b['id'],
+                                    'date': b['date'],
+                                    'type': 'SALE RETURN',
+                                    'voucher': f"R-{b['token']}",
+                                    'particulars': 'Sale Return',
+                                    'debit': 0,
+                                    'credit': tot,
+                                    'canDelete': False
+                                })
+                            elif is_order:
+                                entries.append({
+                                    'id': 'b_' + str(b['id']),
+                                    'rawId': b['id'],
+                                    'date': b['date'],
+                                    'type': 'ORDER',
+                                    'voucher': f"O-{b['token']}",
+                                    'particulars': 'Order Estimate',
+                                    'debit': tot,
+                                    'credit': 0,
+                                    'canDelete': False
+                                })
+                            else:
+                                entries.append({
+                                    'id': 'b_' + str(b['id']),
+                                    'rawId': b['id'],
+                                    'date': b['date'],
+                                    'type': 'SALE BILL',
+                                    'voucher': f"B-{b['token']}",
+                                    'particulars': 'Sale Bill',
+                                    'debit': tot,
+                                    'credit': 0,
+                                    'canDelete': False
+                                })
+
+                        # 2. Receipts
+                        sql_rcpt = "SELECT id, amount, receipt_date, remarks FROM party_receipts WHERE LOWER(party) = LOWER(?)"
+                        params_rcpt = [party_name]
+                        if date_from:
+                            sql_rcpt += " AND receipt_date >= ?"
+                            params_rcpt.append(date_from)
+                        if date_to:
+                            sql_rcpt += " AND receipt_date <= ?"
+                            params_rcpt.append(date_to)
+
+                        r_rows = conn.execute(sql_rcpt, params_rcpt).fetchall()
+                        for r in r_rows:
+                            entries.append({
+                                'id': 'rcpt_' + str(r['id']),
+                                'rawId': r['id'],
+                                'date': r['receipt_date'],
+                                'type': 'RECEIPT',
+                                'voucher': f"RCP-{r['id']}",
+                                'particulars': r['remarks'] or 'Payment Received',
+                                'debit': 0,
+                                'credit': float(r['amount'] or 0),
+                                'canDelete': True
+                            })
+
+                        # Sort chronologically by date
+                        entries.sort(key=lambda x: (x['date'] or '', x['id']))
+
+                        # Compute running balance
+                        running_bal = 0.0
+                        for e in entries:
+                            running_bal += e['debit'] - e['credit']
+                            e['balance'] = running_bal
+
+                    total_dr = sum(e['debit'] for e in entries)
+                    total_cr = sum(e['credit'] for e in entries)
+                    self.send_json({
+                        'party': party_name,
+                        'entries': entries,
+                        'totalDebit': total_dr,
+                        'totalCredit': total_cr,
+                        'netBalance': running_bal,
+                        'dateFrom': date_from,
+                        'dateTo': date_to
+                    })
+
+
+                # ── Receipts List ──
+                elif path == '/api/db/receipts':
+                    party_name = params.get('party', '').strip()
+                    if party_name:
+                        rows = conn.execute("SELECT * FROM party_receipts WHERE LOWER(party) = LOWER(?) ORDER BY receipt_date DESC", (party_name,)).fetchall()
                     else:
-                        rows = conn.execute("SELECT * FROM ledger ORDER BY date").fetchall()
-                    result = []
-                    for r in rows:
-                        d = dict(r)
-                        d['partyId'] = d.pop('party_id')
-                        d['type'] = d.pop('entry_type')
-                        d['updatedAt'] = d.pop('updated_at')
-                        result.append(d)
-                    self.send_json(result)
+                        rows = conn.execute("SELECT * FROM party_receipts ORDER BY receipt_date DESC").fetchall()
+                    self.send_json([dict(r) for r in rows])
+
 
                 # ── Settings ──
                 elif path.startswith('/api/db/settings/'):
@@ -414,6 +528,28 @@ class DBHandler(BaseHTTPRequestHandler):
                          s.get('qty',0), s.get('minQty',0), s.get('uom','PCS'), s.get('rack',''), s.get('status','IN STOCK'), now))
                     self.send_json({'success': True})
 
+                # ── Save Receipt ──
+                elif path == '/api/db/receipts':
+                    rcpt = body
+                    rcpt_id = rcpt.get('id') or f"RCP_{now}"
+                    party = rcpt.get('party', '').strip()
+                    amount = float(rcpt.get('amount', 0))
+                    r_date = rcpt.get('date') or time.strftime('%Y-%m-%d')
+                    remarks = rcpt.get('remarks', 'Payment Received').strip()
+
+                    conn.execute("""
+                        INSERT OR REPLACE INTO party_receipts (id, party, amount, receipt_date, remarks, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (rcpt_id, party, amount, r_date, remarks, now))
+
+                    # Update party balance: receipt reduces party's debt (credit)
+                    p_row = conn.execute("SELECT balance FROM parties WHERE LOWER(name) = LOWER(?)", (party,)).fetchone()
+                    if p_row:
+                        new_bal = float(p_row['balance'] or 0) - amount
+                        conn.execute("UPDATE parties SET balance = ?, updated_at = ? WHERE LOWER(name) = LOWER(?)", (new_bal, now, party))
+
+                    self.send_json({'success': True, 'id': rcpt_id})
+
                 # ── Save Ledger Entry ──
                 elif path == '/api/db/ledger':
                     l = body
@@ -421,6 +557,7 @@ class DBHandler(BaseHTTPRequestHandler):
                         (l['id'], l.get('partyId',''), l.get('date',''), l.get('type',''), l.get('voucher',''),
                          l.get('particulars',''), l.get('debit',0), l.get('credit',0), l.get('balance',0), now))
                     self.send_json({'success': True})
+
 
                 # ── Save Setting ──
                 elif path == '/api/db/settings':
@@ -493,6 +630,19 @@ class DBHandler(BaseHTTPRequestHandler):
                     sid = path.split('/')[-1]
                     conn.execute("DELETE FROM stock_items WHERE id=?", (sid,))
                     self.send_json({'success': True})
+
+                elif '/api/db/receipts/' in path:
+                    rid = path.split('/')[-1]
+                    # Also restore party balance if needed
+                    rcpt = conn.execute("SELECT party, amount FROM party_receipts WHERE id=?", (rid,)).fetchone()
+                    if rcpt:
+                        p_row = conn.execute("SELECT balance FROM parties WHERE LOWER(name)=LOWER(?)", (rcpt['party'],)).fetchone()
+                        if p_row:
+                            new_bal = float(p_row['balance'] or 0) + float(rcpt['amount'] or 0)
+                            conn.execute("UPDATE parties SET balance=? WHERE LOWER(name)=LOWER(?)", (new_bal, rcpt['party']))
+                    conn.execute("DELETE FROM party_receipts WHERE id=?", (rid,))
+                    self.send_json({'success': True})
+
 
                 else:
                     self.send_json({'error': 'Not found'}, 404)

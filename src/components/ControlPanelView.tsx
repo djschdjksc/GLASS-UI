@@ -4,10 +4,12 @@ import { SkipItemNameTab } from './SkipItemNameTab';
 import { BillItemNameTab } from './BillItemNameTab';
 import { macAudio } from '../utils/macAudio';
 import { useSettings } from '../context/SettingsContext';
-import { GlassInput, GlassSelect } from './common/GlassInput';
-import { IosSegmentedTabs } from './common/IosSegmentedTabs';
-import { CosmicSearchInput } from './common/CosmicSearchInput';
 import UnsavedChangesModal from './UnsavedChangesModal';
+import {
+  Button as ShadcnButton,
+  Input as ShadcnInput,
+} from './ui/shadcn';
+
 import {
   Plus,
   Trash2,
@@ -27,6 +29,7 @@ import {
   GitBranch,
   FileSpreadsheet
 } from 'lucide-react';
+
 import { downloadCSV } from '../utils/exportCsv';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
@@ -623,144 +626,167 @@ export const ControlPanelView: React.FC = () => {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}>
-      {/* ========================================================================= */}
-      {/* TOP CONTROL BAR: CLEAN CUBE TAB BUTTONS & QUICK ACTIONS (NO CLUTTER)     */}
-      {/* ========================================================================= */}
-      <div 
-        className="glass-panel" 
-        style={{ 
-          padding: '6px 12px', 
-          display: 'flex', 
-          alignItems: 'center', 
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden', background: '#09090b', padding: '8px' }}>
+
+      {/* ======================================================== */}
+      {/* TOOLBAR: Shadcn-style tab row + search + action buttons  */}
+      {/* ======================================================== */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '12px',
-          borderRadius: '8px'
+          gap: '10px',
+          padding: '8px 12px',
+          background: '#18181b',
+          border: '1px solid #27272a',
+          borderRadius: '8px',
+          flexShrink: 0
         }}
       >
-        {/* Animated iOS Tab Buttons */}
-        <IosSegmentedTabs<ControlTab>
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          width={540}
-          tabs={[
-            { key: 'MANAGE_GROUPS', label: 'MANAGE GROUPS', icon: Layers },
-            { key: 'SKIP_ITEM_NAME', label: 'SKIP ITEM', icon: Shuffle },
-            { key: 'BILL_ITEM_NAME', label: 'BILL ITEM', icon: Tag },
-            { key: 'MANAGE_CONVERSIONS', label: 'CONVERSIONS', icon: SlidersHorizontal }
-          ]}
-        />
+        {/* Shadcn TabsList — left side */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            background: '#09090b',
+            border: '1px solid #27272a',
+            borderRadius: '8px',
+            padding: '3px',
+            gap: '2px'
+          }}
+        >
+          {(
+            [
+              { key: 'MANAGE_GROUPS' as ControlTab, label: 'Manage Groups', icon: Layers },
+              { key: 'SKIP_ITEM_NAME' as ControlTab, label: 'Skip Item', icon: Shuffle },
+              { key: 'BILL_ITEM_NAME' as ControlTab, label: 'Bill Item', icon: Tag },
+              { key: 'MANAGE_CONVERSIONS' as ControlTab, label: 'Conversions', icon: SlidersHorizontal }
+            ] as { key: ControlTab; label: string; icon: React.ElementType }[]
+          ).map(({ key, label, icon: Icon }) => {
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => { macAudio.playClick(); setActiveTab(key); }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 13px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? '#f4f4f5' : '#71717a',
+                  background: isActive ? '#18181b' : 'transparent',
+                  border: isActive ? '1px solid #27272a' : '1px solid transparent',
+                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
-        {/* Right Actions: Unified Search Input, Add Button & Export CSV */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
-          {/* Cosmic Galaxy Animated Search Input (No placeholder, with right filter icon) */}
-          <CosmicSearchInput
-            value={currentSearch}
-            onChange={handleSearchChange}
-            width={260}
-          />
+        {/* Right actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Search */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Search size={13} style={{ position: 'absolute', left: '10px', color: '#71717a', pointerEvents: 'none' }} />
+            <ShadcnInput
+              type="text"
+              value={currentSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              style={{ width: '220px', height: '32px', paddingLeft: '30px', fontSize: '12px' }}
+            />
+          </div>
 
-          {/* Dynamic Add Button */}
-          <button
+          {/* Add Button */}
+          <ShadcnButton
             type="button"
+            variant="default"
+            size="sm"
             onClick={handleAddForActiveTab}
-            onMouseEnter={() => macAudio.playHover()}
-            className="mac-btn primary"
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              padding: '0 12px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              whiteSpace: 'nowrap',
-              flexShrink: 0
-            }}
+            style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', whiteSpace: 'nowrap' }}
           >
-            <Plus size={14} />
-            <span>{getTabConfig(activeTab).addButtonText}</span>
-          </button>
+            <Plus size={13} />
+            {getTabConfig(activeTab).addButtonText}
+          </ShadcnButton>
 
-          {/* Export CSV Button for Active Tab */}
-          <button
+          {/* Export CSV */}
+          <ShadcnButton
             type="button"
+            variant="outline"
+            size="sm"
             onClick={handleExportActiveTabCsv}
-            onMouseEnter={() => macAudio.playHover()}
-            style={{
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#34d399',
-              padding: '0 10px',
-              height: '28px',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              flexShrink: 0
-            }}
-            title="Download active tab data as CSV / Excel"
+            title="Download active tab data as CSV"
+            style={{ height: '32px', fontSize: '12px', gap: '5px', whiteSpace: 'nowrap' }}
           >
             <FileSpreadsheet size={13} />
-            <span>Export CSV</span>
-          </button>
+            Export CSV
+          </ShadcnButton>
         </div>
       </div>
+
 
       {/* ========================================================================= */}
       {/* TAB 1: MANAGE GROUPS                                                      */}
       {/* ========================================================================= */}
       {activeTab === 'MANAGE_GROUPS' && (
         <div 
-          className="tab-content-anim" 
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, gap: '8px' }}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
           onPaste={handleGroupPaste}
         >
           {/* GROUPS DATA TABLE */}
-          <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '6px' }}>
-            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: `${colWidths.srNo}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', border: '1px solid #27272a', background: '#09090b' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                <tr style={{ borderBottom: '1px solid #27272a' }}>
+                  <th style={{ width: `${colWidths.srNo}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                     #
                     <div className="th-resizer" onMouseDown={(e) => startColResize('srNo', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.groupName}px`, position: 'relative', userSelect: 'none' }}>
+                  <th style={{ width: `${colWidths.groupName}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                     GROUP NAME
                     <div className="th-resizer" onMouseDown={(e) => startColResize('groupName', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.groupIndex}px`, position: 'relative', userSelect: 'none' }}>
+                  <th style={{ width: `${colWidths.groupIndex}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                     GROUP INDEX
                     <div className="th-resizer" onMouseDown={(e) => startColResize('groupIndex', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.weightPerPc}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    WEIGHT/PC (KGS)
+                  <th style={{ width: `${colWidths.weightPerPc}px`, padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                    WEIGHT/PC
                     <div className="th-resizer" onMouseDown={(e) => startColResize('weightPerPc', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.pcsPerBox}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    PCS PER BOX
+                  <th style={{ width: `${colWidths.pcsPerBox}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                    PCS/BOX
                     <div className="th-resizer" onMouseDown={(e) => startColResize('pcsPerBox', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.multiplication}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    MULTIPLICATION
+                  <th style={{ width: `${colWidths.multiplication}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                    MULT.
                     <div className="th-resizer" onMouseDown={(e) => startColResize('multiplication', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.realItemName}px`, position: 'relative', userSelect: 'none' }}>
+                  <th style={{ width: `${colWidths.realItemName}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                     REAL ITEM NAME
                     <div className="th-resizer" onMouseDown={(e) => startColResize('realItemName', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.skipEq}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    SKIP EQ
+                  <th style={{ width: `${colWidths.skipEq}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                    SKIP
                     <div className="th-resizer" onMouseDown={(e) => startColResize('skipEq', e)} title="Drag to resize column" />
                   </th>
-                  <th style={{ width: `${colWidths.chainParent}px`, position: 'relative', userSelect: 'none' }}>
+                  <th style={{ width: `${colWidths.chainParent}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                     CHAIN PARENT
                     <div className="th-resizer" onMouseDown={(e) => startColResize('chainParent', e)} title="Drag to resize column" />
                   </th>
+
                   <th style={{ width: '65px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
                     ACTION
                   </th>
@@ -770,108 +796,88 @@ export const ControlPanelView: React.FC = () => {
                 {filteredGroups.map((grp, idx) => {
                   const isSelected = selectedGroupId === grp.id;
                   const isEditing = editingGroupId === grp.id;
-                  const cellInputStyle: React.CSSProperties = {
+                  const cellInput: React.CSSProperties = {
                     width: '100%',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    background: '#27272a',
+                    border: '1px solid #3f3f46',
                     outline: 'none',
-                    color: '#ffffff',
-                    fontSize: '11.5px',
-                    padding: '3px 6px',
+                    color: '#f4f4f5',
+                    fontSize: '12px',
+                    padding: '3px 7px',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    borderRadius: '4px'
+                    borderRadius: '4px',
+                    fontWeight: 500
                   };
-                  const cellTextStyle: React.CSSProperties = {
-                    padding: '3px 6px',
+                  const cellText: React.CSSProperties = {
+                    padding: '4px 10px',
                     display: 'block',
                     userSelect: 'text',
-                    color: '#ffffff',
+                    color: '#f4f4f5',
+                    fontSize: '12px',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                    textOverflow: 'ellipsis',
+                    fontWeight: 500
                   };
                   return (
                     <tr
                       key={grp.id}
-                      className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                      style={{ height: `${activeRowHeight}px` }}
+                      style={{
+                        height: `${activeRowHeight}px`,
+                        borderBottom: '1px solid #27272a',
+                        background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
+                        outline: isSelected ? '1px solid #3f3f46' : 'none',
+                        outlineOffset: '-1px',
+                        cursor: 'pointer',
+                        transition: 'background 0.1s ease'
+                      }}
                       onClick={() => setSelectedGroupId(grp.id)}
                       onDoubleClick={() => setEditingGroupId(grp.id)}
                     >
-                      <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                      <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
                         {idx + 1}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
-                            value={grp.groupName}
-                            onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)}
-                            autoFocus
-                          />
+                          <input style={{ ...cellInput, fontWeight: 600 }} value={grp.groupName} onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)} autoFocus />
                         ) : (
-                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>{grp.groupName}</span>
+                          <span style={{ ...cellText, fontWeight: 600 }}>{grp.groupName}</span>
                         )}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
-                            value={grp.groupIndex}
-                            onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)}
-                          />
+                          <input style={{ ...cellInput, fontWeight: 600 }} value={grp.groupIndex} onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)} />
                         ) : (
-                          <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>{grp.groupIndex}</span>
+                          <span style={{ ...cellText, fontWeight: 600, color: '#a1a1aa' }}>{grp.groupIndex}</span>
                         )}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            type="number"
-                            step="any"
-                            style={{ ...cellInputStyle, textAlign: 'right', fontWeight: 600, color: '#ffffff' }}
-                            value={grp.weightPerPc}
-                            onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)}
-                          />
+                          <input type="number" step="any" style={{ ...cellInput, textAlign: 'right' }} value={grp.weightPerPc} onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)} />
                         ) : (
-                          <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: '#ffffff' }}>{grp.weightPerPc}</span>
+                          <span style={{ ...cellText, textAlign: 'right' }}>{grp.weightPerPc}</span>
                         )}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            type="number"
-                            style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}
-                            value={grp.pcsPerBox}
-                            onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)}
-                          />
+                          <input type="number" style={{ ...cellInput, textAlign: 'center' }} value={grp.pcsPerBox} onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)} />
                         ) : (
-                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}>{grp.pcsPerBox}</span>
+                          <span style={{ ...cellText, textAlign: 'center' }}>{grp.pcsPerBox}</span>
                         )}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            type="number"
-                            step="any"
-                            style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}
-                            value={grp.multiplication}
-                            onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)}
-                          />
+                          <input type="number" step="any" style={{ ...cellInput, textAlign: 'center' }} value={grp.multiplication} onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)} />
                         ) : (
-                          <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff', fontWeight: 600 }}>{grp.multiplication}</span>
+                          <span style={{ ...cellText, textAlign: 'center' }}>{grp.multiplication}</span>
                         )}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            style={{ ...cellInputStyle, color: '#ffffff', fontWeight: 500 }}
-                            value={grp.realItemName}
-                            onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)}
-                          />
+                          <input style={cellInput} value={grp.realItemName} onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)} />
                         ) : (
-                          <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 500 }}>{grp.realItemName || '-'}</span>
+                          <span style={{ ...cellText, color: grp.realItemName ? '#f4f4f5' : '#52525b' }}>{grp.realItemName || '—'}</span>
                         )}
                       </td>
                       <td style={{ textAlign: 'center', padding: '2px' }}>
@@ -880,46 +886,60 @@ export const ControlPanelView: React.FC = () => {
                           checked={grp.skipEq}
                           disabled={!isEditing}
                           onChange={e => handleCellChange(grp.id, 'skipEq', e.target.checked)}
-                          style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#ffffff' }}
+                          style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#f4f4f5', width: '14px', height: '14px' }}
                         />
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEditing ? (
-                          <input
-                            style={{ ...cellInputStyle, color: '#ffffff' }}
-                            value={grp.chainParent}
-                            onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)}
-                          />
+                          <input style={cellInput} value={grp.chainParent} onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)} />
                         ) : (
-                          <span style={{ ...cellTextStyle, color: grp.chainParent === 'NONE' ? '#94a3b8' : '#ffffff' }}>{grp.chainParent}</span>
+                          <span style={{ ...cellText, color: grp.chainParent === 'NONE' ? '#52525b' : '#f4f4f5' }}>{grp.chainParent}</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center', padding: '1px' }}>
+                      <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                         {isEditing ? (
                           <button
                             type="button"
-                            className="mac-btn primary"
-                            style={{ padding: '2px 8px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px', margin: '0 auto' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              macAudio.playSuccess();
-                              setEditingGroupId(null);
+                            onClick={(e) => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
+                            title="Save"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '4px',
+                              padding: '2px 10px', height: '24px', borderRadius: '4px',
+                              background: '#f4f4f5', color: '#09090b',
+                              border: 'none', fontSize: '11px', fontWeight: 600,
+                              cursor: 'pointer', margin: '0 auto'
                             }}
-                            title="Add / Save Group"
                           >
-                            <Plus size={12} /> Add
+                            <Check size={11} /> Save
                           </button>
-                        ) : null}
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteGroup(grp.id); }}
+                            title="Delete"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              width: '24px', height: '24px', borderRadius: '4px',
+                              background: 'transparent', color: '#52525b',
+                              border: '1px solid transparent', cursor: 'pointer',
+                              transition: 'all 0.12s ease'
+                            }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-            <div style={{ height: '36px' }} />
           </div>
         </div>
       )}
+
 
       {/* ========================================================================= */}
       {/* TAB 2: SKIP ITEM NAME */}

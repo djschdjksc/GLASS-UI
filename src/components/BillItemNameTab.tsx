@@ -161,26 +161,29 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    background: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
+    background: '#27272a',
+    border: '1px solid #3f3f46',
     outline: 'none',
-    color: '#ffffff',
-    fontSize: '11.5px',
-    padding: '3px 6px',
+    color: '#f4f4f5',
+    fontSize: '12px',
+    padding: '3px 8px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    borderRadius: '4px'
+    borderRadius: '4px',
+    fontWeight: 500
   };
 
   const cellTextStyle: React.CSSProperties = {
-    padding: '3px 6px',
-    fontSize: '11.5px',
-    color: '#ffffff',
+    padding: '4px 10px',
+    fontSize: '12px',
+    color: '#f4f4f5',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    display: 'block'
+    display: 'block',
+    fontWeight: 500
   };
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -338,29 +341,29 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
       )}
 
       {/* Main Full-Width In-Table Editor */}
-      <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '4px' }}>
-        <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ width: colWidths.srNo, textAlign: 'center', position: 'relative' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', border: '1px solid #27272a', background: '#09090b' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+            <tr style={{ borderBottom: '1px solid #27272a' }}>
+              <th style={{ width: colWidths.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 #<div className="th-resizer" onMouseDown={e => startResizeBill('srNo', e)} />
               </th>
-              <th style={{ width: colWidths.on, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.on, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 ON<div className="th-resizer" onMouseDown={e => startResizeBill('on', e)} />
               </th>
-              <th style={{ width: colWidths.shortCode, position: 'relative' }}>
+              <th style={{ width: colWidths.shortCode, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 SHORT CODE<div className="th-resizer" onMouseDown={e => startResizeBill('shortCode', e)} />
               </th>
-              <th style={{ width: colWidths.printName, position: 'relative' }}>
+              <th style={{ width: colWidths.printName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 PRINT / INVOICE NAME<div className="th-resizer" onMouseDown={e => startResizeBill('printName', e)} />
               </th>
-              <th style={{ width: colWidths.rate, textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: colWidths.rate, padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 RATE<div className="th-resizer" onMouseDown={e => startResizeBill('rate', e)} />
               </th>
-              <th style={{ width: colWidths.category, position: 'relative' }}>
+              <th style={{ width: colWidths.category, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 CATEGORY<div className="th-resizer" onMouseDown={e => startResizeBill('category', e)} />
               </th>
-              <th style={{ width: '65px', textAlign: 'center', position: 'relative' }}>
+              <th style={{ width: '65px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
                 ACTION
               </th>
             </tr>
@@ -373,13 +376,20 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
               return (
                 <tr 
                   key={m.id || originalIndex} 
-                  className={`mac-table-row ${isSelected ? 'selected' : ''}`}
+                  style={{
+                    height: '28px',
+                    borderBottom: '1px solid #27272a',
+                    background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
+                    outline: isSelected ? '1px solid #3f3f46' : 'none',
+                    outlineOffset: '-1px',
+                    cursor: 'pointer',
+                    transition: 'background 0.1s ease'
+                  }}
                   onClick={() => setSelectedIdx(originalIndex)}
                   onDoubleClick={() => setEditingIdx(originalIndex)}
-                  style={{ cursor: 'pointer' }}
                 >
                   {/* # */}
-                  <td style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', userSelect: 'none' }}>
+                  <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
                     {idx + 1}
                   </td>
 
@@ -389,81 +399,86 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
                       type="checkbox" 
                       checked={m.isActive} 
                       onChange={e => handleCellChange(originalIndex, 'isActive', e.target.checked)}
-                      style={{ cursor: 'pointer', accentColor: '#38bdf8' }}
+                      style={{ cursor: 'pointer', accentColor: '#f4f4f5', width: '14px', height: '14px' }}
                     />
                   </td>
 
                   {/* SHORT CODE */}
-                  <td style={{ padding: '1px' }}>
+                  <td style={{ padding: '2px 4px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
+                        style={{ ...cellInputStyle, fontWeight: 600 }}
                         value={m.shortCode}
                         onChange={e => handleCellChange(originalIndex, 'shortCode', e.target.value)}
                         autoFocus
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>
+                      <span style={{ ...cellTextStyle, fontWeight: 600, color: '#f4f4f5' }}>
                         {m.shortCode || '—'}
                       </span>
                     )}
                   </td>
 
                   {/* PRINT NAME */}
-                  <td style={{ padding: '1px' }}>
+                  <td style={{ padding: '2px 4px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, fontWeight: 500, color: '#ffffff' }}
+                        style={cellInputStyle}
                         value={m.printName}
                         onChange={e => handleCellChange(originalIndex, 'printName', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 500, color: '#ffffff' }}>
+                      <span style={cellTextStyle}>
                         {m.printName || '—'}
                       </span>
                     )}
                   </td>
 
                   {/* RATE */}
-                  <td style={{ padding: '1px' }}>
+                  <td style={{ padding: '2px 4px' }}>
                     {isEditing ? (
                       <input
                         type="number"
                         step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff', fontWeight: 500 }}
+                        style={{ ...cellInputStyle, textAlign: 'center' }}
                         value={m.rate ?? 0}
                         onChange={e => handleCellChange(originalIndex, 'rate', parseFloat(e.target.value) || 0)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff', fontWeight: 500 }}>
+                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#f4f4f5' }}>
                         ₹{(m.rate ?? 0).toLocaleString('en-IN')}
                       </span>
                     )}
                   </td>
 
                   {/* CATEGORY */}
-                  <td style={{ padding: '1px' }}>
+                  <td style={{ padding: '2px 4px' }}>
                     {isEditing ? (
                       <input
-                        style={{ ...cellInputStyle, color: '#ffffff' }}
+                        style={cellInputStyle}
                         value={m.category}
                         onChange={e => handleCellChange(originalIndex, 'category', e.target.value)}
                       />
                     ) : (
-                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
+                      <span style={{ ...cellTextStyle, color: m.category ? '#a1a1aa' : '#52525b' }}>
                         {m.category || '—'}
                       </span>
                     )}
                   </td>
 
                   {/* ACTIONS: SAVE OR DELETE BUTTON */}
-                  <td style={{ textAlign: 'center', padding: '1px' }}>
+                  <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                       {isEditing ? (
                         <button
                           type="button"
-                          className="mac-btn primary"
-                          style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            padding: '2px 10px', height: '24px', borderRadius: '4px',
+                            background: '#f4f4f5', color: '#09090b',
+                            border: 'none', fontSize: '11px', fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             macAudio.playSuccess();
@@ -471,20 +486,27 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
                           }}
                           title="Save Row"
                         >
-                          <Check size={12} /> Save
+                          <Check size={11} /> Save
                         </button>
                       ) : (
                         <button
                           type="button"
-                          className="mac-btn danger"
-                          style={{ padding: '2px 6px', height: '22px' }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: '24px', height: '24px', borderRadius: '4px',
+                            background: 'transparent', color: '#52525b',
+                            border: '1px solid transparent', cursor: 'pointer',
+                            transition: 'all 0.12s ease'
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
                           onClick={(e) => {
                             e.stopPropagation();
                             promptDeleteRow(m, originalIndex);
                           }}
                           title="Delete mapping"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={12} />
                         </button>
                       )}
                     </div>
@@ -494,7 +516,6 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
             })}
           </tbody>
         </table>
-        <div style={{ height: '36px' }} />
       </div>
 
       {rowToDelete && (

@@ -1,8 +1,13 @@
 import { ControlPanelView } from './ControlPanelView';
 import { SettingsTabView } from './SettingsTabView';
 import { StockInventoryView } from './StockInventoryView';
+import { ShadcnDashboardView } from './ShadcnDashboardView';
+import { LedgerTabView } from './LedgerTabView';
+
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { AnimatedCounter } from './common/AnimatedCounter';
+import { Select as ShadcnSelect, Button as ShadcnButton, Input as ShadcnInput, Pagination as ShadcnPagination } from './ui/shadcn';
+
 import { Tooltip } from 'antd';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { NavKey } from '../types';
@@ -82,6 +87,7 @@ interface Props {
   tableFontSize?: number;
   onSetTableFontSize?: (s: number) => void;
   onOpenUserProfile?: () => void;
+  onSelectTab?: (tab: NavKey) => void;
 }
 
 interface AllTableCols {
@@ -143,7 +149,8 @@ export const OtherTabsView: React.FC<Props> = ({
   onSetRowHeight,
   tableFontSize: _propTableFontSize,
   onSetTableFontSize: _onSetTableFontSize,
-  onOpenUserProfile
+  onOpenUserProfile,
+  onSelectTab
 }) => {
   // Live reactive Database Context
   const { bills, parties, stockItems, ledgerEntries, saveParty, deleteParty, deleteBill } = useDatabase();
@@ -1917,234 +1924,16 @@ export const OtherTabsView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB F4: DATA PANEL & MASTER REGISTRY */}
+      {/* TAB F4: EXECUTIVE BUSINESS INTELLIGENCE DASHBOARD (SHADCN/UI FLAGSHIP) */}
       {/* ========================================================================= */}
       {activeTab === 'F4' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
-          {/* Sub-tabs switch */}
-          <div className="glass-panel" style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', borderRadius: '8px' }}>
-            <IosSegmentedTabs<'SALES' | 'RAW' | 'MOULDS'>
-              activeKey={dataTab}
-              onChange={setDataTab}
-              width={450}
-              tabs={[
-                { key: 'SALES', label: 'Sales Log', icon: FileText },
-                { key: 'RAW', label: 'Raw Materials', icon: Package },
-                { key: 'MOULDS', label: 'Moulds Specs', icon: Layers }
-              ]}
-            />
-          </div>
-
-          {/* Sub-panel content */}
-          <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '6px' }}>
-            {dataTab === 'RAW' && (
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: `${tableCols.f4Raw.code}px`, position: 'relative', userSelect: 'none' }}>
-                      CODE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'code', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Raw.name}px`, position: 'relative', userSelect: 'none' }}>
-                      RAW MATERIAL NAME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'name', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Raw.unit}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      UNIT
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'unit', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Raw.stock}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      STOCK
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'stock', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Raw.reorder}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      REORDER
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'reorder', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Raw.rate}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      RATE (₹)
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'rate', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Raw.supplier}px`, position: 'relative', userSelect: 'none' }}>
-                      SUPPLIER
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Raw', 'supplier', e)} title="Drag to resize column" />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rawMaterials.map((rm) => {
-                    const isSelected = selectedDataId === rm.id;
-                    return (
-                      <tr 
-                        key={rm.id} 
-                        className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                        style={{ height: `${activeRowHeight}px` }}
-                        onMouseEnter={() => macAudio.playHover()}
-                        onClick={() => {
-                          macAudio.playClick();
-                          setSelectedDataId(rm.id);
-                        }}
-                      >
-                        <td style={{ color: '#38bdf8', fontWeight: 700, position: 'relative' }}>
-                          {rm.code}
-                          <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                        </td>
-                        <td style={{ fontWeight: 600, color: '#f8fafc' }}>{rm.name}</td>
-                        <td style={{ textAlign: 'center', color: '#e2e8f0' }}>{rm.unit}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#34d399' }}>{rm.stock.toLocaleString('en-IN')}</td>
-                        <td style={{ textAlign: 'right', color: '#fbbf24' }}>{rm.reorder}</td>
-                        <td style={{ textAlign: 'right', color: '#e2e8f0' }}>₹{rm.rate}</td>
-                        <td style={{ color: '#f8fafc' }}>{rm.supplier}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-
-            {dataTab === 'MOULDS' && (
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: `${tableCols.f4Moulds.code}px`, position: 'relative', userSelect: 'none' }}>
-                      CODE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Moulds', 'code', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Moulds.name}px`, position: 'relative', userSelect: 'none' }}>
-                      MOULD NAME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Moulds', 'name', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Moulds.cavities}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      CAVITIES
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Moulds', 'cavities', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Moulds.cycleSec}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      CYCLE TIME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Moulds', 'cycleSec', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Moulds.maxTemp}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      MAX TEMP
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Moulds', 'maxTemp', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Moulds.status}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      STATUS
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Moulds', 'status', e)} title="Drag to resize column" />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mouldSpecs.map((m) => {
-                    const isSelected = selectedDataId === m.id;
-                    return (
-                      <tr 
-                        key={m.id} 
-                        className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                        style={{ height: `${activeRowHeight}px` }}
-                        onMouseEnter={() => macAudio.playHover()}
-                        onClick={() => {
-                          macAudio.playClick();
-                          setSelectedDataId(m.id);
-                        }}
-                      >
-                        <td style={{ color: '#fbbf24', fontWeight: 700, position: 'relative' }}>
-                          {m.code}
-                          <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                        </td>
-                        <td style={{ fontWeight: 600, color: '#f8fafc' }}>{m.name}</td>
-                        <td style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{m.cavities}</td>
-                        <td style={{ textAlign: 'center', color: '#f8fafc' }}>{m.cycleSec}s</td>
-                        <td style={{ textAlign: 'center', color: '#f472b6' }}>{m.maxTemp}°C</td>
-                        <td style={{ textAlign: 'center' }}>
-                          <span style={{
-                            fontSize: '9.5px',
-                            fontWeight: 700,
-                            padding: '1px 6px',
-                            borderRadius: '9999px',
-                            background: m.status === 'ACTIVE' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(251, 191, 36, 0.2)',
-                            color: m.status === 'ACTIVE' ? '#34d399' : '#fbbf24'
-                          }}>
-                            {m.status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-
-            {dataTab === 'SALES' && (
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: `${tableCols.f4Sales.bill}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      BILL #
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'bill', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Sales.date}px`, position: 'relative', userSelect: 'none' }}>
-                      DATE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'date', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Sales.item}px`, position: 'relative', userSelect: 'none' }}>
-                      ITEM NAME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'item', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Sales.qty}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      QTY
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'qty', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Sales.price}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      PRICE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'price', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Sales.total}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      TOTAL
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'total', e)} title="Drag to resize column" />
-                    </th>
-                    <th style={{ width: `${tableCols.f4Sales.party}px`, position: 'relative', userSelect: 'none' }}>
-                      CUSTOMER
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f4Sales', 'party', e)} title="Drag to resize column" />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { id: 'S-1', bill: '625', date: '2026-09-17', item: 'Mould 14x20 Standard Housing', qty: 15, price: 650, total: 9750, party: 'S.K. Die Castings' },
-                    { id: 'S-2', bill: '625', date: '2026-09-17', item: 'Mould 18x24 Reinforced Casing', qty: 12, price: 920, total: 11040, party: 'S.K. Die Castings' },
-                    { id: 'S-3', bill: '624', date: '2026-09-17', item: 'Die Core Cap 50mm Precision', qty: 8, price: 1250, total: 10000, party: 'Apex Industrial Moldings' },
-                    { id: 'S-4', bill: '623', date: '2026-09-16', item: 'Heat Sink Fin Mount Extrusion', qty: 24, price: 750, total: 18000, party: 'Mahalaxmi Engineering' },
-                    { id: 'S-5', bill: '622', date: '2026-09-16', item: 'Flange Coupling 120mm Alloy', qty: 10, price: 1505, total: 15050, party: 'Vikas Metal & Hardware' }
-                  ].map((s) => {
-                    const isSelected = selectedDataId === s.id;
-                    return (
-                      <tr 
-                        key={s.id} 
-                        className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                        style={{ height: `${activeRowHeight}px` }}
-                        onMouseEnter={() => macAudio.playHover()}
-                        onClick={() => {
-                          macAudio.playClick();
-                          setSelectedDataId(s.id);
-                        }}
-                      >
-                        <td style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700, position: 'relative' }}>
-                          #{s.bill}
-                          <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                        </td>
-                        <td style={{ color: '#f8fafc' }}>{s.date}</td>
-                        <td style={{ fontWeight: 600, color: '#f8fafc' }}>{s.item}</td>
-                        <td style={{ textAlign: 'center', color: '#a78bfa', fontWeight: 700 }}>{s.qty}</td>
-                        <td style={{ textAlign: 'right', color: '#f8fafc' }}>₹{s.price}</td>
-                        <td style={{ textAlign: 'right', color: '#34d399', fontWeight: 700 }}>₹{s.total.toLocaleString('en-IN')}</td>
-                        <td style={{ color: '#e2e8f0' }}>{s.party}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
+        <ShadcnDashboardView
+          themeMode={themeMode}
+          onNavigateToBill={onBackToBill}
+          onNavigateToHistory={() => onSelectTab ? onSelectTab('F2') : undefined}
+          onNavigateToStock={() => onSelectTab ? onSelectTab('F8') : undefined}
+          onLoadBillToEditor={onLoadBillToEditor}
+        />
       )}
 
       {/* ========================================================================= */}
@@ -2152,150 +1941,144 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* ========================================================================= */}
       {activeTab === 'F5' && (
         <div
-          className="glass-panel"
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, borderRadius: '8px', padding: '6px', overflow: 'hidden' }}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            borderRadius: '8px',
+            border: '1px solid #27272a',
+            background: '#09090b',
+            overflow: 'hidden'
+          }}
           onPaste={handleBulkPartyPaste}
         >
-          {/* Search & Action Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', padding: '2px 4px' }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-              <CosmicSearchInput
+          {/* Search & Action Bar — clean shadcn zinc */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '8px 12px',
+              background: '#18181b',
+              borderBottom: '1px solid #27272a',
+              flexShrink: 0
+            }}
+          >
+            {/* Search Input */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, maxWidth: '300px' }}>
+              <Search size={13} style={{ position: 'absolute', left: '10px', color: '#71717a', pointerEvents: 'none' }} />
+              <ShadcnInput
+                type="text"
+                placeholder="Search party, phone, city..."
                 value={partySearchQuery}
-                onChange={(val) => {
-                  setPartySearchQuery(val);
+                onChange={(e) => {
+                  setPartySearchQuery(e.target.value);
                   setPartyCurrentPage(1);
                 }}
-                width="100%"
+                style={{ width: '100%', height: '32px', paddingLeft: '30px', fontSize: '12px' }}
               />
             </div>
 
-            {/* Total counter badge */}
-            <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#38bdf8', background: 'rgba(56,189,248,0.12)', padding: '4px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
-              {filteredParties.length === parties.length
-                ? `${parties.length.toLocaleString('en-IN')} Parties`
-                : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
-            </div>
+            {/* Right Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Total counter badge */}
+              <span style={{ fontSize: '12px', color: '#71717a', padding: '0 4px', whiteSpace: 'nowrap' }}>
+                {filteredParties.length === parties.length
+                  ? `${parties.length.toLocaleString('en-IN')} Parties`
+                  : `${filteredParties.length.toLocaleString('en-IN')} / ${parties.length.toLocaleString('en-IN')}`}
+              </span>
 
-            {/* iOS Style View Mode Switcher: Cards vs Table */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.06)',
-              borderRadius: '6px',
-              padding: '2px',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <button
-                type="button"
-                onClick={() => handleTogglePartyViewMode('cards')}
+              {/* View Mode Switcher: Cards vs Table */}
+              <div
                 style={{
-                  height: '22px',
-                  padding: '0 8px',
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  borderRadius: '4px',
-                  border: 'none',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  background: partyViewMode === 'cards' ? '#0071e3' : 'transparent',
-                  color: partyViewMode === 'cards' ? '#ffffff' : '#94a3b8',
-                  transition: 'all 0.15s ease'
+                  background: '#09090b',
+                  border: '1px solid #27272a',
+                  borderRadius: '6px',
+                  padding: '2px',
+                  gap: '2px'
                 }}
-                title="iPhone Cards View (Inspired by Apple LockScreen)"
               >
-                <Grid size={12} />
-                <span>Cards</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTogglePartyViewMode('table')}
-                style={{
-                  height: '22px',
-                  padding: '0 8px',
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  borderRadius: '4px',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  background: partyViewMode === 'table' ? '#0071e3' : 'transparent',
-                  color: partyViewMode === 'table' ? '#ffffff' : '#94a3b8',
-                  transition: 'all 0.15s ease'
-                }}
-                title="Standard Table Grid View"
-              >
-                <List size={12} />
-                <span>Table</span>
-              </button>
-            </div>
-
-            {/* Export Parties CSV / Excel */}
-            <button
-              type="button"
-              onClick={handleExportPartiesCsv}
-              className="mac-btn secondary"
-              style={{
-                height: '26px',
-                padding: '0 10px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#10b981',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
-              title="Download Party List in CSV (Excel format)"
-            >
-              <FileSpreadsheet size={13} color="#10b981" />
-              <span>Export CSV</span>
-            </button>
-
-            {/* Pagination controls */}
-            {totalPartyPages > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <button
                   type="button"
-                  disabled={partyCurrentPage <= 1}
-                  onClick={() => setPartyCurrentPage(p => Math.max(1, p - 1))}
-                  className="mac-btn secondary"
-                  style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage <= 1 ? 0.4 : 1 }}
-                  title="Previous Page"
+                  onClick={() => handleTogglePartyViewMode('table')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    height: '24px',
+                    padding: '0 8px',
+                    fontSize: '11px',
+                    fontWeight: partyViewMode === 'table' ? 600 : 500,
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: partyViewMode === 'table' ? '#18181b' : 'transparent',
+                    color: partyViewMode === 'table' ? '#f4f4f5' : '#71717a',
+                    transition: 'all 0.12s ease'
+                  }}
+                  title="Standard Table View"
                 >
-                  <ChevronLeft size={13} />
+                  <List size={12} />
+                  <span>Table</span>
                 </button>
-                <span style={{ fontSize: '10px', color: '#cbd5e1', padding: '0 4px', whiteSpace: 'nowrap' }}>
-                  {partyCurrentPage}/{totalPartyPages}
-                </span>
                 <button
                   type="button"
-                  disabled={partyCurrentPage >= totalPartyPages}
-                  onClick={() => setPartyCurrentPage(p => Math.min(totalPartyPages, p + 1))}
-                  className="mac-btn secondary"
-                  style={{ height: '26px', padding: '0 6px', fontSize: '10px', opacity: partyCurrentPage >= totalPartyPages ? 0.4 : 1 }}
-                  title="Next Page"
+                  onClick={() => handleTogglePartyViewMode('cards')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    height: '24px',
+                    padding: '0 8px',
+                    fontSize: '11px',
+                    fontWeight: partyViewMode === 'cards' ? 600 : 500,
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: partyViewMode === 'cards' ? '#18181b' : 'transparent',
+                    color: partyViewMode === 'cards' ? '#f4f4f5' : '#71717a',
+                    transition: 'all 0.12s ease'
+                  }}
+                  title="Cards View"
                 >
-                  <ChevronRight size={13} />
+                  <Grid size={12} />
+                  <span>Cards</span>
                 </button>
               </div>
-            )}
 
-            {/* New Party Button */}
-            <button
-              type="button"
-              className="mac-btn primary"
-              style={{ height: '26px', padding: '0 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
-              onClick={() => {
-                macAudio.playClick();
-                handleStartNewParty();
-              }}
-            >
-              <Plus size={13} /> Add Party Row
-            </button>
+              {/* Export Parties CSV / Excel */}
+              <ShadcnButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleExportPartiesCsv}
+                style={{ height: '32px', fontSize: '12px', gap: '5px', whiteSpace: 'nowrap' }}
+                title="Download Party List in CSV"
+              >
+                <FileSpreadsheet size={13} />
+                <span>Export CSV</span>
+              </ShadcnButton>
+
+              {/* New Party Button */}
+              <ShadcnButton
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  macAudio.playClick();
+                  handleStartNewParty();
+                }}
+                style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', whiteSpace: 'nowrap' }}
+              >
+                <Plus size={13} /> Add Party Row
+              </ShadcnButton>
+            </div>
           </div>
+
 
           {/* Table / iPhone Cards View Area */}
           <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '4px' }}>
@@ -2405,30 +2188,8 @@ export const OtherTabsView: React.FC<Props> = ({
                               {p.station || p.city || 'No Station'} {p.district ? `• ${p.district}` : ''}
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            className="mac-btn secondary"
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              padding: 0,
-                              borderRadius: '50%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#38bdf8',
-                              borderColor: 'rgba(56, 189, 248, 0.35)',
-                              background: 'rgba(56, 189, 248, 0.12)'
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenPartyStack(p);
-                            }}
-                            title="Open iOS 3D Card Stack (Wheel / Arrow Flip)"
-                          >
-                            <Layers size={13} />
-                          </button>
                         </div>
+
 
                         {/* Mid Info Row: Phone & GSTIN/Bills */}
                         <div style={{
@@ -2541,264 +2302,279 @@ export const OtherTabsView: React.FC<Props> = ({
                 )}
               </div>
             ) : (
-              /* ===== CLASSIC TABLE VIEW ===== */
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
-                  <tr>
-                    <th style={{ width: `${tableCols.f5Parties.index}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      #
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.name}px`, position: 'relative', userSelect: 'none' }}>
-                      PARTY NAME
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.phone}px`, position: 'relative', userSelect: 'none' }}>
-                      PHONE NUMBER
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.station}px`, position: 'relative', userSelect: 'none' }}>
-                      STATION
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.district}px`, position: 'relative', userSelect: 'none' }}>
-                      DISTRICT
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.state}px`, position: 'relative', userSelect: 'none' }}>
-                      STATE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.pincode}px`, position: 'relative', userSelect: 'none' }}>
-                      PINCODE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.bills}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      BILLS
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: `${tableCols.f5Parties.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                      BALANCE
-                      <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
-                    </th>
-                    <th style={{ width: '85px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                      ACTION
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedParties.length === 0 ? (
-                    <tr>
-                      <td colSpan={10} style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8', fontSize: '12px' }}>
-                        No parties match "{partySearchQuery}". Click "Add Party Row" or paste Excel rows (Ctrl+V).
-                      </td>
+              /* ===== CLASSIC TABLE VIEW — PURE SHADCN DARK ZINC ===== */
+              <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                    <tr style={{ borderBottom: '1px solid #27272a' }}>
+                      <th style={{ width: `${tableCols.f5Parties.index}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        #
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.name}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        PARTY NAME
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.phone}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        PHONE NUMBER
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.station}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        STATION
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.district}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        DISTRICT
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.state}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        STATE
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.pincode}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        PINCODE
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.bills}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        BILLS
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: `${tableCols.f5Parties.balance}px`, padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        BALANCE
+                        <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
+                      </th>
+                      <th style={{ width: '85px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                        ACTION
+                      </th>
                     </tr>
-                  ) : (
-                    paginatedParties.map((p, idx) => {
-                      const globalIdx = (partyCurrentPage - 1) * PARTIES_PER_PAGE + idx + 1;
-                      const pNameKey = (p.name || '').trim().toLowerCase();
-                      const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
-                      const isSelected = selectedPartyId === p.id;
-                      const isEditing = editingPartyId === p.id;
+                  </thead>
+                  <tbody>
+                    {paginatedParties.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: 'center', padding: '30px 10px', color: '#71717a', fontSize: '12px' }}>
+                          No parties match "{partySearchQuery}". Click "Add Party Row" or paste Excel rows (Ctrl+V).
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedParties.map((p, idx) => {
+                        const globalIdx = (partyCurrentPage - 1) * PARTIES_PER_PAGE + idx + 1;
+                        const pNameKey = (p.name || '').trim().toLowerCase();
+                        const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
+                        const isSelected = selectedPartyId === p.id;
+                        const isEditing = editingPartyId === p.id;
 
-                      const cellInputStyle: React.CSSProperties = {
-                        width: '100%',
-                        background: 'rgba(255, 255, 255, 0.06)',
-                        border: '1px solid rgba(255, 255, 255, 0.25)',
-                        outline: 'none',
-                        color: '#ffffff',
-                        fontSize: '11px',
-                        padding: '3px 6px',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        borderRadius: '4px'
-                      };
+                        const cellInputStyle: React.CSSProperties = {
+                          width: '100%',
+                          background: '#27272a',
+                          border: '1px solid #3f3f46',
+                          outline: 'none',
+                          color: '#f4f4f5',
+                          fontSize: '12px',
+                          padding: '3px 8px',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                          borderRadius: '4px',
+                          fontWeight: 500
+                        };
 
-                      const cellTextStyle: React.CSSProperties = {
-                        padding: '3px 6px',
-                        display: 'block',
-                        userSelect: 'text',
-                        color: '#ffffff',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      };
+                        const cellTextStyle: React.CSSProperties = {
+                          padding: '4px 10px',
+                          display: 'block',
+                          userSelect: 'text',
+                          color: '#f4f4f5',
+                          fontSize: '12px',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontWeight: 500
+                        };
 
-                      return (
-                        <tr
-                          key={p.id || idx}
-                          className={`mac-table-row anim-row ${isSelected ? 'selected' : ''}`}
-                          style={{
-                            height: `${activeRowHeight}px`,
-                            animationDelay: `${Math.min(idx, 15) * 0.035}s`
-                          }}
-                          onClick={() => setSelectedPartyId(p.id)}
-                          onDoubleClick={() => setEditingPartyId(p.id)}
-                        >
-                          <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px', position: 'relative' }}>
-                            {globalIdx}
-                            <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize row height" />
-                          </td>
-                          <td style={{ padding: '1px' }}>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={p.name || ''}
-                                onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
-                                style={{ ...cellInputStyle, fontWeight: 600, color: '#ffffff' }}
-                                autoFocus
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, fontWeight: 600, color: '#ffffff' }}>{p.name}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1px' }}>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={p.phone || ''}
-                                onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#ffffff' }}
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.phone || '-'}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1px' }}>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={p.station || p.city || ''}
-                                onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#ffffff' }}
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.station || p.city || '-'}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1px' }}>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={p.district || ''}
-                                onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#ffffff' }}
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.district || '-'}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1px' }}>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={p.state || ''}
-                                onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#ffffff' }}
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.state || '-'}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1px' }}>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={p.pincode || ''}
-                                onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
-                                style={{ ...cellInputStyle, color: '#ffffff' }}
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, color: '#ffffff' }}>{p.pincode || '-'}</span>
-                            )}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            {stat.count > 0 ? (
-                              <span style={{ background: 'rgba(255,255,255,0.12)', color: '#ffffff', padding: '1px 6px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 600 }}>
-                                {stat.count} bills
-                              </span>
-                            ) : (
-                              <span style={{ color: '#94a3b8', fontSize: '9.5px' }}>0</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1px', textAlign: 'right' }}>
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                value={p.balance !== undefined ? p.balance : 0}
-                                onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
-                                style={{
-                                  ...cellInputStyle,
-                                  color: '#ffffff',
-                                  fontWeight: 600,
-                                  textAlign: 'right'
-                                }}
-                              />
-                            ) : (
-                              <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: '#ffffff' }}>
-                                {p.balance !== undefined ? p.balance : 0}
-                              </span>
-                            )}
-                          </td>
-                          <td style={{ textAlign: 'center', padding: '1px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                        return (
+                          <tr
+                            key={p.id || idx}
+                            style={{
+                              height: `${activeRowHeight}px`,
+                              borderBottom: '1px solid #27272a',
+                              background: isSelected ? '#1c1c1f' : 'transparent',
+                              outline: isSelected ? '1px solid #3f3f46' : 'none',
+                              outlineOffset: '-1px',
+                              cursor: 'pointer',
+                              transition: 'background 0.1s ease'
+                            }}
+                            onClick={() => setSelectedPartyId(p.id)}
+                            onDoubleClick={() => setEditingPartyId(p.id)}
+                          >
+                            <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px', position: 'relative' }}>
+                              {globalIdx}
+                              <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize row height" />
+                            </td>
+                            <td style={{ padding: '2px 4px' }}>
                               {isEditing ? (
-                                <button
-                                  type="button"
-                                  className="mac-btn primary"
-                                  style={{ padding: '2px 8px', height: '22px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px' }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    macAudio.playSuccess();
-                                    setEditingPartyId(null);
-                                  }}
-                                  title="Add / Save Party"
-                                >
-                                  <Plus size={12} /> Add
-                                </button>
+                                <input
+                                  type="text"
+                                  value={p.name || ''}
+                                  onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
+                                  style={{ ...cellInputStyle, fontWeight: 600 }}
+                                  autoFocus
+                                />
                               ) : (
-                                <button
-                                  type="button"
-                                  className="mac-btn secondary"
-                                  style={{
-                                    padding: '2px 7px',
-                                    height: '21px',
-                                    fontSize: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '3px',
-                                    color: '#38bdf8',
-                                    borderColor: 'rgba(56, 189, 248, 0.35)',
-                                    background: 'rgba(56, 189, 248, 0.1)'
-                                  }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenPartyStack(p);
-                                  }}
-                                  title="View Party Details in iOS Stack (Inspired by Apple LockScreen)"
-                                >
-                                  <Layers size={11} color="#38bdf8" />
-                                  <span>Stack</span>
-                                </button>
+                                <span style={{ ...cellTextStyle, fontWeight: 600 }}>{p.name}</span>
                               )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                            </td>
+                            <td style={{ padding: '2px 4px' }}>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={p.phone || ''}
+                                  onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
+                                  style={cellInputStyle}
+                                />
+                              ) : (
+                                <span style={cellTextStyle}>{p.phone || '—'}</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '2px 4px' }}>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={p.station || p.city || ''}
+                                  onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
+                                  style={cellInputStyle}
+                                />
+                              ) : (
+                                <span style={cellTextStyle}>{p.station || p.city || '—'}</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '2px 4px' }}>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={p.district || ''}
+                                  onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
+                                  style={cellInputStyle}
+                                />
+                              ) : (
+                                <span style={cellTextStyle}>{p.district || '—'}</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '2px 4px' }}>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={p.state || ''}
+                                  onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
+                                  style={cellInputStyle}
+                                />
+                              ) : (
+                                <span style={cellTextStyle}>{p.state || '—'}</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '2px 4px' }}>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={p.pincode || ''}
+                                  onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
+                                  style={cellInputStyle}
+                                />
+                              ) : (
+                                <span style={cellTextStyle}>{p.pincode || '—'}</span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'center', padding: '4px 6px' }}>
+                              {stat.count > 0 ? (
+                                <span style={{ background: '#27272a', border: '1px solid #3f3f46', color: '#f4f4f5', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>
+                                  {stat.count}
+                                </span>
+                              ) : (
+                                <span style={{ color: '#52525b', fontSize: '11px' }}>0</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '2px 4px', textAlign: 'right' }}>
+                              {isEditing ? (
+                                <input
+                                  type="number"
+                                  value={p.balance !== undefined ? p.balance : 0}
+                                  onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
+                                  style={{
+                                    ...cellInputStyle,
+                                    fontWeight: 600,
+                                    textAlign: 'right'
+                                  }}
+                                />
+                              ) : (
+                                <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: (p.balance || 0) < 0 ? '#ef4444' : '#f4f4f5' }}>
+                                  {(p.balance !== undefined ? p.balance : 0).toLocaleString('en-IN')}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'center', padding: '2px 6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                {isEditing ? (
+                                  <button
+                                    type="button"
+                                    style={{
+                                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                      padding: '2px 10px', height: '24px', borderRadius: '4px',
+                                      background: '#f4f4f5', color: '#09090b',
+                                      border: 'none', fontSize: '11px', fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      macAudio.playSuccess();
+                                      setEditingPartyId(null);
+                                    }}
+                                    title="Save Party"
+                                  >
+                                    <Check size={11} /> Save
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    style={{
+                                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                      width: '24px', height: '24px', borderRadius: '4px',
+                                      background: 'transparent', color: '#a1a1aa',
+                                      border: '1px solid transparent', cursor: 'pointer',
+                                      transition: 'all 0.12s ease'
+                                    }}
+                                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#f4f4f5'; }}
+                                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      macAudio.playClick();
+                                      setEditingPartyId(p.id);
+                                    }}
+                                    title="Edit Party"
+                                  >
+                                    <Edit3 size={12} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
-            {/* Bottom Status strip */}
-          <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#64748b', padding: '2px 4px' }}>
-            <span>Showing {paginatedParties.length} of {filteredParties.length} filtered ({parties.length.toLocaleString('en-IN')} total in Database) • All cell changes auto-save immediately</span>
-            <span style={{ color: '#38bdf8' }}>💡 Tip: Copy columns from Excel and press Ctrl+V anywhere to bulk import!</span>
-          </div>
+          {/* Shadcn Pagination Footer */}
+          <ShadcnPagination
+            totalCount={filteredParties.length}
+            pageSize={PARTIES_PER_PAGE}
+            currentPage={partyCurrentPage}
+            onPageChange={setPartyCurrentPage}
+            style={{ borderRadius: '0' }}
+          />
         </div>
       )}
+
 
       {/* ========================================================================= */}
       {/* TAB F6: SYSTEM CONTROL & DIAGNOSTICS */}
@@ -2831,138 +2607,15 @@ export const OtherTabsView: React.FC<Props> = ({
       {/* TAB F9: LEDGER / KHATA BAHI */}
       {/* ========================================================================= */}
       {activeTab === 'F9' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
-          {/* Party Selector & Balance Ribbon */}
-          <div className="glass-panel" style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <select
-                value={selectedLedgerParty}
-                onChange={(e) => {
-                  macAudio.playClick();
-                  setSelectedLedgerParty(e.target.value);
-                }}
-                className="mac-input"
-                style={{ height: '26px', fontSize: '11px', fontWeight: 600, minWidth: '220px' }}
-              >
-                {parties.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.city})</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px' }}>
-              <div><span style={{ color: '#e2e8f0' }}>Dr:</span> <strong style={{ color: '#38bdf8' }}>₹2,95,200</strong></div>
-              <div><span style={{ color: '#e2e8f0' }}>Cr:</span> <strong style={{ color: '#34d399' }}>₹1,50,000</strong></div>
-              <div><span style={{ color: '#e2e8f0' }}>Net:</span> <strong style={{ color: '#34d399' }}>₹1,45,200 Dr</strong></div>
-              <button
-                type="button"
-                onClick={handleExportLedgerCsv}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
-                  border: '1px solid rgba(16, 185, 129, 0.4)',
-                  color: '#34d399',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  marginLeft: '6px'
-                }}
-                title="Download Ledger as CSV / Excel"
-              >
-                <FileSpreadsheet size={13} />
-                <span>Export CSV</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Statement of Account Table */}
-          <div className="glass-panel" style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', padding: '6px' }}>
-            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: `${tableCols.f9Ledger.date}px`, position: 'relative', userSelect: 'none' }}>
-                    DATE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'date', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f9Ledger.type}px`, position: 'relative', userSelect: 'none' }}>
-                    TYPE
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'type', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f9Ledger.voucher}px`, position: 'relative', userSelect: 'none' }}>
-                    VOUCHER #
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'voucher', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f9Ledger.particulars}px`, position: 'relative', userSelect: 'none' }}>
-                    PARTICULARS
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'particulars', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f9Ledger.debit}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    DEBIT (₹)
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'debit', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f9Ledger.credit}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    CREDIT (₹)
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'credit', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${tableCols.f9Ledger.balance}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
-                    BALANCE (₹)
-                    <div className="th-resizer" onMouseDown={(e) => startResizeCol('f9Ledger', 'balance', e)} title="Drag to resize column" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {ledgerEntries.map((l) => {
-                  const isSelected = selectedLedgerRowId === l.id;
-                  return (
-                    <tr 
-                      key={l.id} 
-                      className={`mac-table-row ${isSelected ? 'selected' : ''}`}
-                      style={{ height: `${activeRowHeight}px` }}
-                      onMouseEnter={() => macAudio.playHover()}
-                      onClick={() => {
-                        macAudio.playClick();
-                        setSelectedLedgerRowId(l.id);
-                      }}
-                    >
-                      <td style={{ color: '#f8fafc', position: 'relative' }}>
-                        {l.date}
-                        <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize ALL row heights" />
-                      </td>
-                      <td>
-                        <span style={{
-                          fontSize: '9.5px',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: l.type === 'SALE BILL' ? 'rgba(56, 189, 248, 0.15)' : l.type === 'PAYMENT' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(161, 161, 170, 0.15)',
-                          color: l.type === 'SALE BILL' ? '#38bdf8' : l.type === 'PAYMENT' ? '#34d399' : '#a1a1aa'
-                        }}>
-                          {l.type}
-                        </span>
-                      </td>
-                      <td style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>{l.voucher}</td>
-                      <td style={{ fontWeight: 500, color: '#f8fafc' }}>{l.particulars}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: l.debit > 0 ? '#38bdf8' : '#64748b' }}>
-                        {l.debit > 0 ? `₹${l.debit.toLocaleString('en-IN')}` : '-'}
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: l.credit > 0 ? '#34d399' : '#64748b' }}>
-                        {l.credit > 0 ? `₹${l.credit.toLocaleString('en-IN')}` : '-'}
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#f8fafc' }}>
-                        ₹{l.balance.toLocaleString('en-IN')} Dr
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <LedgerTabView
+          onBackToBill={onBackToBill}
+          onLoadBillToEditor={onLoadBillToEditor ? (id) => {
+            const bill = bills.find(b => String(b.id) === String(id) || String(b.token) === String(id));
+            if (bill) onLoadBillToEditor(bill);
+          } : undefined}
+        />
       )}
+
 
       {/* ========================================================================= */}
       {/* TAB F10: SYSTEM SETTINGS & WALLPAPER (BILLAPP MAIN.PY TAB-WISE SETTINGS)  */}

@@ -4,6 +4,7 @@ import { Plus, Check, RotateCcw, Layers, Tag, FolderPlus, Folder, Trash2, Edit2,
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
 import UnsavedChangesModal from './UnsavedChangesModal';
+import { Select as ShadcnSelect } from './ui/shadcn';
 
 const DEFAULT_MAIN_COLS = { srNo: 35, mainGroup: 140, groupName: 200, sumCol: 85, items: 50 };
 const DEFAULT_SUB_COLS  = { srNo: 40, itemName: 320 };
@@ -604,27 +605,42 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     filteredItems, filteredSubGroups, activePanel
   ]);
 
-  /* ─── shared styles — exactly like Manage Groups / F5 ─── */
+  /* ─── shared styles — clean shadcn zinc ─── */
   const cellInput: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
-    outline: 'none', color: '#ffffff',
-    fontSize: '11.5px', padding: '3px 6px',
+    background: '#27272a',
+    border: '1px solid #3f3f46',
+    outline: 'none',
+    color: '#f4f4f5',
+    fontSize: '12px',
+    padding: '3px 8px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    borderRadius: '4px'
+    borderRadius: '4px',
+    fontWeight: 500
   };
   const cellText: React.CSSProperties = {
-    padding: '3px 6px', fontSize: '11.5px', color: '#ffffff',
+    padding: '4px 10px',
+    fontSize: '12px',
+    color: '#f4f4f5',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block'
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: 'block',
+    fontWeight: 500
   };
   const selectSt: React.CSSProperties = {
-    width: '100%', background: 'rgba(15,23,42,0.95)',
-    border: '1px solid rgba(255,255,255,0.25)', color: '#ffffff',
-    fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-    padding: '2px 4px', outline: 'none'
+    width: '100%',
+    background: '#27272a',
+    border: '1px solid #3f3f46',
+    color: '#f4f4f5',
+    fontSize: '11px',
+    fontWeight: 500,
+    borderRadius: '4px',
+    padding: '2px 4px',
+    outline: 'none'
   };
+
 
   /* ════════════════════════════════════════════════════════ */
   return (
@@ -637,49 +653,71 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           LEFT — Sub Groups Configuration Table
       ══════════════════════════════════════════ */}
       <div
-        className="glass-panel"
-        style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '8px', border: '1px solid #27272a', background: '#09090b', overflow: 'hidden' }}
       >
-        {/* Header — same pattern as every other tab */}
-        <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
-            Sub Groups Configuration ({subGroups.length} Groups)
+        {/* Header — clean shadcn zinc */}
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid #27272a', background: '#18181b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5' }}>
+            Sub Groups Configuration ({subGroups.length})
           </span>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button
-              className="mac-btn"
+              type="button"
               onClick={() => setIsMainGroupModalOpen(true)}
               title="Add or Manage Main Groups"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                height: '28px', padding: '0 9px', borderRadius: '5px',
+                background: 'transparent', border: '1px solid #27272a',
+                color: '#f4f4f5', fontSize: '11.5px', fontWeight: 500,
+                cursor: 'pointer'
+              }}
             >
-              <FolderPlus size={13} color="#38bdf8" />
+              <FolderPlus size={13} color="#a1a1aa" />
               <span>Main Groups ({mainGroups.length})</span>
             </button>
             <button
-              className="mac-btn"
-              style={{ background: 'rgba(239,68,68,0.18)', borderColor: 'rgba(239,68,68,0.35)', color: '#fca5a5' }}
+              type="button"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                height: '28px', padding: '0 8px', borderRadius: '5px',
+                background: 'transparent', border: '1px solid #27272a',
+                color: '#ef4444', fontSize: '11px', fontWeight: 500,
+                cursor: 'pointer'
+              }}
               onClick={purgeAndLoadPristineBackup}
               title="Reset to backup"
             >
-              <RotateCcw size={13} /> Reset to Backup
+              <RotateCcw size={12} /> Reset
             </button>
-            <button className="mac-btn primary" onClick={handleAddSubGroup} title="Add Group (or press Insert)">
-              <Plus size={14} /> Add Group
+            <button
+              type="button"
+              onClick={handleAddSubGroup}
+              title="Add Group (or press Insert)"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                height: '28px', padding: '0 10px', borderRadius: '5px',
+                background: '#f4f4f5', border: 'none',
+                color: '#09090b', fontSize: '11.5px', fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Plus size={13} /> Add Group
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
-              <tr>
-                <th style={{ width: DEFAULT_MAIN_COLS.srNo,    textAlign: 'center' }}>#</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.mainGroup }}>MAIN GROUP</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.groupName }}>GROUP NAME</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.sumCol,  textAlign: 'center' }}>SUM COL</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.items,   textAlign: 'center' }}>ITEMS</th>
-                <th style={{ width: 65,                        textAlign: 'center' }}>ACTION</th>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+              <tr style={{ borderBottom: '1px solid #27272a' }}>
+                <th style={{ width: DEFAULT_MAIN_COLS.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>#</th>
+                <th style={{ width: DEFAULT_MAIN_COLS.mainGroup, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>MAIN GROUP</th>
+                <th style={{ width: DEFAULT_MAIN_COLS.groupName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>GROUP NAME</th>
+                <th style={{ width: DEFAULT_MAIN_COLS.sumCol, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>SUM COL</th>
+                <th style={{ width: DEFAULT_MAIN_COLS.items, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEMS</th>
+                <th style={{ width: 65, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
@@ -697,25 +735,33 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                     ref={el => {
                       if (isSelected && el) el.scrollIntoView({ block: 'nearest' });
                     }}
-                    className={`mac-table-row ${isSelected ? 'selected' : ''}`}
+                    style={{
+                      height: '28px',
+                      borderBottom: '1px solid #27272a',
+                      background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
+                      outline: isSelected ? '1px solid #3f3f46' : 'none',
+                      outlineOffset: '-1px',
+                      cursor: 'pointer',
+                      transition: 'background 0.1s ease'
+                    }}
                     onClick={() => {
-                      macAudio.playClick();
                       setActivePanel('subgroups');
                       setSelectedMainGroupId(sg.id);
                       setSelectedItemId(null);
                     }}
                     onDoubleClick={() => setEditingGroupId(sg.id)}
-                    style={{ cursor: 'pointer' }}
                   >
-                    <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px', userSelect: 'none' }}>
+                    <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
                       {idx + 1}
                     </td>
 
+
                     {/* MAIN GROUP — select (navigable with Enter/Arrow) */}
-                    <td style={{ padding: '1px' }}>
+                    <td style={{ padding: '2px 4px' }}>
                       {isEditing ? (
-                        <select
-                          style={selectSt}
+                        <ShadcnSelect
+
+                          style={{ ...selectSt, height: '24px', fontSize: '11px' }}
                           value={sg.mainGroup}
                           onChange={e => {
                             if (e.target.value === '__ADD_NEW__') {
@@ -730,16 +776,14 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                               handleSubGroupChange(sg.id, 'mainGroup', e.target.value);
                             }
                           }}
-                          onClick={e => e.stopPropagation()}
-                          autoFocus
                         >
                           {mainGroups.map(m => (
-                            <option key={m.id} value={m.name} style={{ background: '#0f172a' }}>{m.name}</option>
+                            <option key={m.id} value={m.name}>{m.name}</option>
                           ))}
-                          <option value="__ADD_NEW__" style={{ background: '#1e293b', color: '#38bdf8', fontWeight: 700 }}>
+                          <option value="__ADD_NEW__">
                             + Add New Main Group...
                           </option>
-                        </select>
+                        </ShadcnSelect>
                       ) : (
                         <span style={{ ...cellText, fontWeight: 600 }}>{sg.mainGroup}</span>
                       )}
@@ -762,16 +806,15 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                     {/* SUM COL — select */}
                     <td style={{ padding: '2px', textAlign: 'center' }}>
                       {isEditing ? (
-                        <select
-                          style={{ ...selectSt, textAlign: 'center' }}
+                        <ShadcnSelect
+                          style={{ ...selectSt, height: '24px', fontSize: '11px', textAlign: 'center' }}
                           value={sg.sumColumn}
                           onChange={e => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
-                          onClick={e => e.stopPropagation()}
                         >
-                          <option value="QTY"   style={{ background: '#0f172a' }}>QTY</option>
-                          <option value="U CAP" style={{ background: '#0f172a' }}>U CAP</option>
-                          <option value="L CAP" style={{ background: '#0f172a' }}>L CAP</option>
-                        </select>
+                          <option value="QTY">QTY</option>
+                          <option value="U CAP">U CAP</option>
+                          <option value="L CAP">L CAP</option>
+                        </ShadcnSelect>
                       ) : (
                         <span style={{ ...cellText, textAlign: 'center' }}>{sg.sumColumn}</span>
                       )}
@@ -792,31 +835,50 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                         {isEditing ? (
                           <button
                             type="button"
-                            className="mac-btn primary"
-                            style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '4px',
+                              padding: '2px 10px', height: '24px', borderRadius: '4px',
+                              background: '#f4f4f5', color: '#09090b',
+                              border: 'none', fontSize: '11px', fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
                             onClick={e => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
                           >
-                            <Check size={12} /> Save
+                            <Check size={11} /> Save
                           </button>
                         ) : (
                           <>
                             <button
                               type="button"
-                              className="mac-btn"
-                              style={{ padding: '2px 6px', height: '22px' }}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '24px', height: '24px', borderRadius: '4px',
+                                background: 'transparent', color: '#a1a1aa',
+                                border: '1px solid transparent', cursor: 'pointer',
+                                transition: 'all 0.12s ease'
+                              }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#f4f4f5'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
                               onClick={e => { e.stopPropagation(); setEditingGroupId(sg.id); }}
                               title="Edit Sub Group"
                             >
-                              <Edit2 size={11} color="#94a3b8" />
+                              <Edit2 size={12} />
                             </button>
                             <button
                               type="button"
-                              className="mac-btn danger"
-                              style={{ padding: '2px 6px', height: '22px' }}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '24px', height: '24px', borderRadius: '4px',
+                                background: 'transparent', color: '#52525b',
+                                border: '1px solid transparent', cursor: 'pointer',
+                                transition: 'all 0.12s ease'
+                              }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; }}
                               onClick={e => { e.stopPropagation(); promptDeleteSubGroup(sg); }}
                               title="Delete Sub Group"
                             >
-                              <Trash2 size={11} />
+                              <Trash2 size={12} />
                             </button>
                           </>
                         )}
@@ -827,55 +889,60 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
               })}
             </tbody>
           </table>
-          <div style={{ height: '36px' }} />
-        </div>
-
-        {/* Footer hint */}
-        <div style={{ padding: '4px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '9.5px', color: '#334155', flexShrink: 0 }}>
-          Double-click to edit · Enter moves to next cell · Enter on last cell saves · Insert adds new row · Del deletes selected
         </div>
       </div>
+
 
       {/* ══════════════════════════════════════════
           RIGHT — Skip Items Table
       ══════════════════════════════════════════ */}
       <div
-        className="glass-panel"
-        style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '12px', overflow: 'hidden' }}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, borderRadius: '8px', border: '1px solid #27272a', background: '#09090b', overflow: 'hidden' }}
         onPaste={handleItemPaste}
       >
         {/* Header */}
-        <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid #27272a', background: '#18181b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
-              {curSub ? `${curSub.groupName} (${itemsForSelectedGroup.length} Items)` : 'Select a Group'}
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5' }}>
+              {curSub ? `${curSub.groupName} (${itemsForSelectedGroup.length})` : 'Select a Group'}
             </span>
             {externalSearch === undefined && curSub && (
               <input
                 type="text"
-                placeholder="Filter prefix..."
+                placeholder="Search item..."
                 value={internalSearch}
                 onChange={e => setInternalSearch(e.target.value)}
-                style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', color: '#f8fafc', outline: 'none', width: '120px' }}
+                style={{ background: '#27272a', border: '1px solid #3f3f46', borderRadius: '4px', padding: '3px 8px', fontSize: '12px', color: '#f4f4f5', outline: 'none', width: '130px' }}
               />
             )}
           </div>
           {curSub && (
-            <button className="mac-btn primary" onClick={handleAddItem} title="Add Item (or press Insert)">
-              <Plus size={14} /> Add Item
+            <button
+              type="button"
+              onClick={handleAddItem}
+              title="Add Item (or press Insert)"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                height: '28px', padding: '0 10px', borderRadius: '5px',
+                background: '#f4f4f5', border: 'none',
+                color: '#09090b', fontSize: '11.5px', fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Plus size={13} /> Add Item
             </button>
           )}
         </div>
 
         {/* Table */}
-        <div className="mac-table-container" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {curSub ? (
-            <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
-                <tr>
-                  <th style={{ width: DEFAULT_SUB_COLS.srNo, textAlign: 'center' }}>#</th>
-                  <th>ITEM NAME / PREFIX</th>
-                  <th style={{ width: 65, textAlign: 'center' }}>ACTION</th>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                <tr style={{ borderBottom: '1px solid #27272a' }}>
+                  <th style={{ width: DEFAULT_SUB_COLS.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>#</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME / PREFIX</th>
+                  <th style={{ width: 65, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -888,18 +955,25 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                       ref={el => {
                         if (isSel && el) el.scrollIntoView({ block: 'nearest' });
                       }}
-                      className={`mac-table-row ${isSel ? 'selected' : ''}`}
+                      style={{
+                        height: '28px',
+                        borderBottom: '1px solid #27272a',
+                        background: isSel ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
+                        outline: isSel ? '1px solid #3f3f46' : 'none',
+                        outlineOffset: '-1px',
+                        cursor: 'pointer',
+                        transition: 'background 0.1s ease'
+                      }}
                       onClick={() => {
                         setActivePanel('items');
                         setSelectedItemId(si.id);
                       }}
                       onDoubleClick={() => setEditingItemId(si.id)}
-                      style={{ cursor: 'pointer' }}
                     >
-                      <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '10px', userSelect: 'none' }}>
+                      <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
                         {idx + 1}
                       </td>
-                      <td style={{ padding: '1px' }}>
+                      <td style={{ padding: '2px 4px' }}>
                         {isEdit ? (
                           <input
                             style={{ ...cellInput, fontWeight: 600 }}
@@ -913,36 +987,55 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                           </span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center', padding: '1px' }}>
+                      <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                           {isEdit ? (
                             <button
                               type="button"
-                              className="mac-btn primary"
-                              style={{ padding: '2px 8px', height: '22px', fontSize: '10.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '2px 10px', height: '24px', borderRadius: '4px',
+                                background: '#f4f4f5', color: '#09090b',
+                                border: 'none', fontSize: '11px', fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
                               onClick={e => { e.stopPropagation(); macAudio.playSuccess(); setEditingItemId(null); }}
                             >
-                              <Check size={12} /> Save
+                              <Check size={11} /> Save
                             </button>
                           ) : (
                             <>
                               <button
                                 type="button"
-                                className="mac-btn"
-                                style={{ padding: '2px 6px', height: '22px' }}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                  width: '24px', height: '24px', borderRadius: '4px',
+                                  background: 'transparent', color: '#a1a1aa',
+                                  border: '1px solid transparent', cursor: 'pointer',
+                                  transition: 'all 0.12s ease'
+                                }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#f4f4f5'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
                                 onClick={e => { e.stopPropagation(); setEditingItemId(si.id); }}
                                 title="Edit item"
                               >
-                                <Edit2 size={11} color="#94a3b8" />
+                                <Edit2 size={12} />
                               </button>
                               <button
                                 type="button"
-                                className="mac-btn danger"
-                                style={{ padding: '2px 6px', height: '22px' }}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                  width: '24px', height: '24px', borderRadius: '4px',
+                                  background: 'transparent', color: '#52525b',
+                                  border: '1px solid transparent', cursor: 'pointer',
+                                  transition: 'all 0.12s ease'
+                                }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; }}
                                 onClick={e => { e.stopPropagation(); promptDeleteItem(si); }}
                                 title="Delete item"
                               >
-                                <Trash2 size={11} />
+                                <Trash2 size={12} />
                               </button>
                             </>
                           )}
@@ -954,19 +1047,14 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
               </tbody>
             </table>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#334155', fontSize: '13px', flexDirection: 'column', gap: '8px' }}>
-              <Tag size={28} strokeWidth={1} color="#334155" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#52525b', fontSize: '13px', flexDirection: 'column', gap: '8px' }}>
+              <Tag size={28} strokeWidth={1} color="#52525b" />
               <span>Select a group from the left panel</span>
             </div>
           )}
-          <div style={{ height: '36px' }} />
-        </div>
-
-        {/* Footer hint */}
-        <div style={{ padding: '4px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '9.5px', color: '#334155', flexShrink: 0 }}>
-          Double-click to edit · Insert adds new item · Del deletes · Ctrl+V to paste from Excel
         </div>
       </div>
+
 
       {/* ══════════════════════════════════════════
           MODAL: MANAGE / ADD MAIN GROUPS

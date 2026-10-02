@@ -33,6 +33,25 @@
 }
 
 /* ========================================================================= */
+/* SHADCN ANIMATIONS                                                          */
+/* ========================================================================= */
+@keyframes shadcnSelectFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0px)  scale(1); }
+}
+
+/* Block arrow-key spinning on ALL number inputs sitewide */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ========================================================================= */
 /* 1. DARK MODE (shadcn obsidian / zinc canvas)                              */
 /* ========================================================================= */
 [data-theme="dark"],
