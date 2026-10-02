@@ -196,9 +196,9 @@ export const RightNavRail: React.FC<Props> = ({
               ? 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s' 
               : 'transform 0.08s ease-out, background 0.2s, box-shadow 0.2s'
           }}
-          title="WhatsApp Team Chat & AI Assistant (Ctrl+J)"
+          title="WhatsApp Team Chat & AI Assistant"
         >
-          <span className="box-tooltip-left">WhatsApp Chat & AI (Ctrl+J)</span>
+          <span className="box-tooltip-left">WhatsApp Chat & AI</span>
           <MessageCircle size={18} color="#25D366" />
           {unreadChatCount > 0 && !isChatOpen && (
             <span

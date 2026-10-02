@@ -5,7 +5,7 @@ import './theme/antdGlassOverrides.css';
 import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
 import { SQLITE_CONTROL_CONVERSIONS, SQLITE_CONTROL_GROUPS } from './data/sqliteControlPanel';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
-import type { BillHeader, RawItem, FinishedItem, EnterDirection } from './types';
+import type { BillHeader, RawItem, FinishedItem, EnterDirection, NavKey } from './types';
 import { AppleHeader } from './components/AppleHeader';
 import { LeftActionRail } from './components/LeftActionRail';
 import { RightNavRail } from './components/RightNavRail';
@@ -799,6 +799,87 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
+      // Ctrl + 1..9: Unified Switch to Right Nav Rail Main Tabs
+      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && ['1','2','3','4','5','6','7','8','9'].includes(e.key)) {
+        e.preventDefault();
+        const tabMap: Record<string, NavKey> = {
+          '1': 'F1',  // Bill UI
+          '2': 'F2',  // Bill History
+          '3': 'F3',  // Equation
+          '4': 'F4',  // Dashboard
+          '5': 'F5',  // Party Panel
+          '6': 'F6',  // Control Panel
+          '7': 'F8',  // Stock Inventory
+          '8': 'F9',  // Ledger
+          '9': 'F10'  // Settings
+        };
+        const targetTab = tabMap[e.key];
+        if (targetTab) {
+          setActiveTab(targetTab);
+          playTapSound();
+        }
+        return;
+      }
+
+      // Alt + 1..5: Unified Switch to Subtabs inside Current Active Tab
+      if (e.altKey && !isCtrlOrCmd && !e.shiftKey && ['1','2','3','4','5'].includes(e.key)) {
+        e.preventDefault();
+        const subIndex = parseInt(e.key, 10);
+        window.dispatchEvent(new CustomEvent('app-subtab-switch', { detail: { index: subIndex } }));
+        playTapSound();
+        return;
+      }
+
+      // '/' (Slash): Instant focus Search or First Textbox of current active view
+      if (e.key === '/' && !isCtrlOrCmd && !e.altKey) {
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isInput = activeEl && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName);
+        if (!isInput) {
+          e.preventDefault();
+          const target = document.querySelector<HTMLInputElement>(
+            'input[data-search-box="true"], input[type="search"], input[placeholder*="Search" i], [data-active-input="true"], input:not([disabled]):not([type="checkbox"]):not([type="radio"])'
+          );
+          if (target) {
+            target.focus();
+            target.select();
+          }
+          return;
+        }
+      }
+
+      // Insert Key: Universal Add Row / Record
+      if (e.key === 'Insert' && !isCtrlOrCmd && !e.altKey) {
+        e.preventDefault();
+        if (activeTab === 'F1') {
+          handleAddRawItem();
+        } else {
+          window.dispatchEvent(new CustomEvent('app-insert-row'));
+        }
+        return;
+      }
+
+      // Delete Key: Universal Delete Row when not actively editing text
+      if (e.key === 'Delete' && !isCtrlOrCmd && !e.altKey) {
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+        if (!isTextInput) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('app-delete-row'));
+          return;
+        }
+      }
+
+      // PageUp / PageDown / Ctrl+PageUp / Ctrl+PageDown navigation
+      if ((e.key === 'PageUp' || e.key === 'PageDown') && !e.altKey) {
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+        if (!isTextInput) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('app-page-nav', { detail: { key: e.key, ctrl: isCtrlOrCmd } }));
+          return;
+        }
+      }
+
       // F8: Instant Switch to Stock Inventory module (as requested: "ISKA F8 SHORTCUT HAI USME")
       if (e.key === 'F8') {
         e.preventDefault();
@@ -860,7 +941,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
-      // Home Key: Instantly activate Bill Type dropdown in Header! (as requested: "HOME BUTTON DABATE HI BILL TYPE DROP DOWN ME ACTIVE HO JAYE")
+      // Home Key: Instantly jump to First Interactive Element of Active View
       if (e.key === 'Home' && !e.shiftKey && !isCtrlOrCmd) {
         const activeEl = document.activeElement as HTMLInputElement | null;
         const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
@@ -869,10 +950,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           return;
         }
         e.preventDefault();
-        setActiveTab('F1');
-        const docTypeSelect = document.getElementById('header-doc-type') as HTMLSelectElement | null;
-        if (docTypeSelect) {
-          docTypeSelect.focus();
+        if (activeTab === 'F1') {
+          const docTypeSelect = document.getElementById('header-doc-type') as HTMLElement | null;
+          if (docTypeSelect) docTypeSelect.focus();
+        } else {
+          window.dispatchEvent(new CustomEvent('app-home-focus'));
         }
         return;
       }
@@ -898,10 +980,14 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
-      // Ctrl+S: Instant Local DB Save
+      // Ctrl+S: Universal Save across all modules
       if (isCtrlOrCmd && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
-        saveBillRef.current();
+        if (activeTab === 'F1') {
+          saveBillRef.current();
+        } else {
+          window.dispatchEvent(new CustomEvent('app-save'));
+        }
         return;
       }
 
@@ -919,10 +1005,14 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         return;
       }
 
-      // Ctrl+P: Print Center (Estimate by default)
+      // Ctrl+P: Universal Print across all modules
       if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
-        openPrintRef.current?.('estimate');
+        if (activeTab === 'F1') {
+          openPrintRef.current?.('estimate');
+        } else {
+          window.dispatchEvent(new CustomEvent('app-print'));
+        }
         return;
       }
 

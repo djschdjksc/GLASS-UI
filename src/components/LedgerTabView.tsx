@@ -463,6 +463,29 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     return partiesList.filter(p => p.toLowerCase().includes(q)).slice(0, 50);
   }, [partiesList, partySearchQuery]);
 
+  // Global app event listeners for Ledger
+  useEffect(() => {
+    const handlePrint = () => {
+      handleOpenPrintModal();
+    };
+    const handleInsert = () => {
+      setIsAddReceiptOpen(true);
+    };
+    const handleHomeFocus = () => {
+      document.getElementById('ledger-party-search')?.focus();
+    };
+
+    window.addEventListener('app-print', handlePrint);
+    window.addEventListener('app-insert-row', handleInsert);
+    window.addEventListener('app-home-focus', handleHomeFocus);
+
+    return () => {
+      window.removeEventListener('app-print', handlePrint);
+      window.removeEventListener('app-insert-row', handleInsert);
+      window.removeEventListener('app-home-focus', handleHomeFocus);
+    };
+  }, [handleOpenPrintModal]);
+
   const selectedRow = entries.find(e => e.id === selectedRowId);
 
   return (
@@ -506,6 +529,8 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
             <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
               <Building size={14} style={{ position: 'absolute', left: '10px', color: '#71717a' }} />
               <input
+                id="ledger-party-search"
+                data-search-box="true"
                 type="text"
                 placeholder="Search party name..."
                 value={partySearchQuery}

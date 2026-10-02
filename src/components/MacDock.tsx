@@ -29,23 +29,23 @@ export const MacDock: React.FC<Props> = ({
   onReset
 }) => {
   const EVENT_BUTTONS = [
-    { id: 'save', label: 'Save Bill (Ctrl+S)', icon: <Save size={20} color="#34c759" />, action: onSave },
-    { id: 'print', label: 'Print Slip (Ctrl+L)', icon: <Printer size={20} color="#38bdf8" />, action: onPrintSlip },
+    { id: 'save', label: 'Save Bill', icon: <Save size={20} color="#34c759" />, action: onSave },
+    { id: 'print', label: 'Print Slip', icon: <Printer size={20} color="#38bdf8" />, action: onPrintSlip },
     { id: 'add', label: 'Add Raw Item', icon: <PlusCircle size={20} color="#0071e3" />, action: onAddItem },
     { id: 'ocr', label: 'Scan / Paste Slip OCR', icon: <Camera size={20} color="#ec4899" />, action: onOpenOcr },
-    { id: 'recheck', label: 'Recheck Totals (Alt+K)', icon: <CheckCircle2 size={20} color="#a3e635" />, action: onRecheck },
-    { id: 'speak', label: 'Speak Selection (Ctrl+K)', icon: <Volume2 size={20} color="#c084fc" />, action: onSpeakSelection },
+    { id: 'recheck', label: 'Recheck Totals', icon: <CheckCircle2 size={20} color="#a3e635" />, action: onRecheck },
+    { id: 'speak', label: 'Speak Summary', icon: <Volume2 size={20} color="#c084fc" />, action: onSpeakSelection },
     { id: 'reset', label: 'Reset Values', icon: <RotateCcw size={20} color="#f87171" />, action: onReset }
   ];
 
   const NAV_TABS: { key: NavKey; label: string; icon: React.ReactNode; color: string }[] = [
-    { key: 'F1', label: 'F1: Bill UI', icon: <Receipt size={20} />, color: '#38bdf8' },
-    { key: 'F2', label: 'F2: Bill History', icon: <History size={20} />, color: '#818cf8' },
-    { key: 'F3', label: 'F3: Equation', icon: <Calculator size={20} />, color: '#fbbf24' },
-    { key: 'F5', label: 'F5: Party Panel', icon: <Users size={20} />, color: '#f472b6' },
-    { key: 'F8', label: 'F8: Stock', icon: <Package size={20} />, color: '#fb923c' },
-    { key: 'F9', label: 'F9: Ledger', icon: <BookOpen size={20} />, color: '#2dd4bf' },
-    { key: 'F10', label: 'F10: Settings', icon: <Settings size={20} />, color: '#a1a1aa' }
+    { key: 'F1', label: 'Bill UI', icon: <Receipt size={20} />, color: '#38bdf8' },
+    { key: 'F2', label: 'Bill History', icon: <History size={20} />, color: '#818cf8' },
+    { key: 'F3', label: 'Equation', icon: <Calculator size={20} />, color: '#fbbf24' },
+    { key: 'F5', label: 'Party Panel', icon: <Users size={20} />, color: '#f472b6' },
+    { key: 'F8', label: 'Stock', icon: <Package size={20} />, color: '#fb923c' },
+    { key: 'F9', label: 'Ledger', icon: <BookOpen size={20} />, color: '#2dd4bf' },
+    { key: 'F10', label: 'Settings', icon: <Settings size={20} />, color: '#a1a1aa' }
   ];
 
   return (

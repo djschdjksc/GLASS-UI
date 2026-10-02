@@ -1337,6 +1337,77 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     return jobs;
   }, [barcodeStates]);
 
+  // Unified Global Event Listeners for Stock Inventory Module
+  useEffect(() => {
+    const handleSubtabSwitch = (e: Event) => {
+      const custom = e as CustomEvent<{ index: number }>;
+      const idx = custom.detail?.index;
+      if (idx === 1) setActiveTab('entry');
+      else if (idx === 2) setActiveTab('inward');
+      else if (idx === 3) setActiveTab('outward');
+      else if (idx === 4) setActiveTab('balance');
+      else if (idx === 5) setActiveTab('barcode');
+    };
+
+    const handleSave = () => {
+      if (activeTab === 'entry') {
+        handleSaveVoucher();
+      }
+    };
+
+    const handlePrint = () => {
+      if (activeTab === 'balance') {
+        handlePrintStockReport();
+      } else if (activeTab === 'barcode') {
+        setIsBarcodePreviewOpen(true);
+      }
+    };
+
+    const handleInsertRow = () => {
+      if (activeTab === 'entry') {
+        handleAddStockRow();
+      }
+    };
+
+    const handleDeleteRow = () => {
+      if (activeTab === 'entry') {
+        if (stockRows.length > 1) {
+          handleDeleteStockRow(stockRows.length - 1);
+        }
+      }
+    };
+
+    const handleHomeFocus = () => {
+      if (activeTab === 'entry') {
+        document.getElementById('stock-item-0')?.focus();
+      } else if (activeTab === 'inward') {
+        document.getElementById('inward-search-input')?.focus();
+      } else if (activeTab === 'outward') {
+        document.getElementById('outward-search-input')?.focus();
+      } else if (activeTab === 'balance') {
+        document.getElementById('balance-search-input')?.focus();
+      } else if (activeTab === 'barcode') {
+        document.getElementById('barcode-search-input')?.focus();
+      }
+    };
+
+    window.addEventListener('app-subtab-switch', handleSubtabSwitch);
+    window.addEventListener('app-save', handleSave);
+    window.addEventListener('app-print', handlePrint);
+    window.addEventListener('app-insert-row', handleInsertRow);
+    window.addEventListener('app-delete-row', handleDeleteRow);
+    window.addEventListener('app-home-focus', handleHomeFocus);
+
+    return () => {
+      window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
+      window.removeEventListener('app-save', handleSave);
+      window.removeEventListener('app-print', handlePrint);
+      window.removeEventListener('app-insert-row', handleInsertRow);
+      window.removeEventListener('app-delete-row', handleDeleteRow);
+      window.removeEventListener('app-home-focus', handleHomeFocus);
+    };
+  }, [activeTab, stockRows, handleSaveVoucher, handlePrintStockReport, handleAddStockRow, handleDeleteStockRow]);
+
   // =========================================================================
   // RENDER INTERFACE
   // =========================================================================
@@ -1891,6 +1962,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         {/* Item Name Input with Autocomplete */}
                         <td style={{ padding: '4px 6px', position: 'relative' }}>
                           <input
+                            id={`stock-item-${idx}`}
                             type="text"
                             placeholder=""
                             value={row.name}
@@ -1932,8 +2004,28 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                     }
                                   }
                                   setActiveSuggestRow(null);
+                                  document.getElementById(`stock-qty-10-${idx}`)?.focus();
                                   return;
                                 }
+                              }
+
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                const nextRow = document.getElementById(`stock-item-${idx + 1}`);
+                                if (nextRow) nextRow.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                const prevRow = document.getElementById(`stock-item-${idx - 1}`);
+                                if (prevRow) prevRow.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowRight' && (e.currentTarget.selectionEnd === e.currentTarget.value.length || !e.currentTarget.value)) {
+                                e.preventDefault();
+                                const nextCol = document.getElementById(`stock-qty-10-${idx}`);
+                                if (nextCol) nextCol.focus();
+                                return;
                               }
 
                               if (e.key === 'Enter') {
@@ -2017,6 +2109,30 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             value={row.qty || ''}
                             onChange={(e) => handleStockRowChange(idx, 'qty', parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => {
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                document.getElementById(`stock-qty-10-${idx + 1}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                document.getElementById(`stock-qty-10-${idx - 1}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
+                                e.preventDefault();
+                                document.getElementById(`stock-item-${idx}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowRight' && (e.currentTarget.selectionEnd === e.currentTarget.value.length || !e.currentTarget.value)) {
+                                e.preventDefault();
+                                if (dynamicCols.length > 0) {
+                                  document.getElementById(`stock-${dynamicCols[0].field}-${idx}`)?.focus();
+                                } else if (!simpleMode) {
+                                  document.getElementById(`stock-ucap-${idx}`)?.focus();
+                                }
+                                return;
+                              }
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 if (dynamicCols.length > 0) {
@@ -2027,6 +2143,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                   if (next) next.focus();
                                 } else {
                                   if (idx === stockRows.length - 1) handleAddStockRow();
+                                  else document.getElementById(`stock-item-${idx + 1}`)?.focus();
                                 }
                               }
                             }}
@@ -2056,6 +2173,34 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               value={row[dc.field] || ''}
                               onChange={(e) => handleStockRowChange(idx, dc.field, parseFloat(e.target.value) || 0)}
                               onKeyDown={(e) => {
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-${dc.field}-${idx + 1}`)?.focus();
+                                  return;
+                                }
+                                if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-${dc.field}-${idx - 1}`)?.focus();
+                                  return;
+                                }
+                                if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
+                                  e.preventDefault();
+                                  if (dcIdx === 0) {
+                                    document.getElementById(`stock-qty-10-${idx}`)?.focus();
+                                  } else {
+                                    document.getElementById(`stock-${dynamicCols[dcIdx - 1].field}-${idx}`)?.focus();
+                                  }
+                                  return;
+                                }
+                                if (e.key === 'ArrowRight' && (e.currentTarget.selectionEnd === e.currentTarget.value.length || !e.currentTarget.value)) {
+                                  e.preventDefault();
+                                  if (dcIdx < dynamicCols.length - 1) {
+                                    document.getElementById(`stock-${dynamicCols[dcIdx + 1].field}-${idx}`)?.focus();
+                                  } else if (!simpleMode) {
+                                    document.getElementById(`stock-ucap-${idx}`)?.focus();
+                                  }
+                                  return;
+                                }
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
                                   if (dcIdx < dynamicCols.length - 1) {
@@ -2066,6 +2211,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                     if (next) next.focus();
                                   } else {
                                     if (idx === stockRows.length - 1) handleAddStockRow();
+                                    else document.getElementById(`stock-item-${idx + 1}`)?.focus();
                                   }
                                 }
                               }}
@@ -2096,6 +2242,30 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               value={row.uCap || ''}
                               onChange={(e) => handleStockRowChange(idx, 'uCap', parseFloat(e.target.value) || 0)}
                               onKeyDown={(e) => {
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-ucap-${idx + 1}`)?.focus();
+                                  return;
+                                }
+                                if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-ucap-${idx - 1}`)?.focus();
+                                  return;
+                                }
+                                if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
+                                  e.preventDefault();
+                                  if (dynamicCols.length > 0) {
+                                    document.getElementById(`stock-${dynamicCols[dynamicCols.length - 1].field}-${idx}`)?.focus();
+                                  } else {
+                                    document.getElementById(`stock-qty-10-${idx}`)?.focus();
+                                  }
+                                  return;
+                                }
+                                if (e.key === 'ArrowRight' && (e.currentTarget.selectionEnd === e.currentTarget.value.length || !e.currentTarget.value)) {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-lcap-${idx}`)?.focus();
+                                  return;
+                                }
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
                                   const next = document.getElementById(`stock-lcap-${idx}`);
@@ -2129,10 +2299,30 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                               value={row.lCap || ''}
                               onChange={(e) => handleStockRowChange(idx, 'lCap', parseFloat(e.target.value) || 0)}
                               onKeyDown={(e) => {
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-lcap-${idx + 1}`)?.focus();
+                                  return;
+                                }
+                                if (e.key === 'ArrowUp') {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-lcap-${idx - 1}`)?.focus();
+                                  return;
+                                }
+                                if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
+                                  e.preventDefault();
+                                  document.getElementById(`stock-ucap-${idx}`)?.focus();
+                                  return;
+                                }
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
                                   if (idx === stockRows.length - 1) {
                                     handleAddStockRow();
+                                    setTimeout(() => {
+                                      document.getElementById(`stock-item-${idx + 1}`)?.focus();
+                                    }, 50);
+                                  } else {
+                                    document.getElementById(`stock-item-${idx + 1}`)?.focus();
                                   }
                                 }
                               }}
@@ -2429,7 +2619,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   }}
                 >
                   <Save size={13} />
-                  <span>{editingVoucherId !== null ? 'UPDATE VOUCHER' : 'SAVE STOCK ENTRY'}</span>
+                  <span>{editingVoucherId !== null ? 'Update Voucher' : 'Save Voucher'}</span>
                 </ShadcnButton>
               </div>
             </div>
@@ -2458,8 +2648,10 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
                 <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
                 <ShadcnInput
+                  id="inward-search-input"
+                  data-search-box="true"
                   type="text"
-                  placeholder=""
+                  placeholder="Search inward vouchers..."
                   value={inwardSearch}
                   onChange={(e) => setInwardSearch(e.target.value)}
                   style={{
@@ -2637,8 +2829,10 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
                 <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
                 <ShadcnInput
+                  id="outward-search-input"
+                  data-search-box="true"
                   type="text"
-                  placeholder=""
+                  placeholder="Search outward sales..."
                   value={outwardSearch}
                   onChange={(e) => setOutwardSearch(e.target.value)}
                   style={{
@@ -2855,8 +3049,10 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
                 <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
                 <ShadcnInput
+                  id="balance-search-input"
+                  data-search-box="true"
                   type="text"
-                  placeholder=""
+                  placeholder="Search stock balance..."
                   value={balanceSearch}
                   onChange={(e) => setBalanceSearch(e.target.value)}
                   style={{
@@ -3100,8 +3296,10 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, position: 'relative' }}>
                 <Search size={14} style={{ color: '#71717a', position: 'absolute', left: '10px' }} />
                 <ShadcnInput
+                  id="barcode-search-input"
+                  data-search-box="true"
                   type="text"
-                  placeholder=""
+                  placeholder="Search items for barcode..."
                   value={barcodeSearch}
                   onChange={(e) => setBarcodeSearch(e.target.value)}
                   style={{
