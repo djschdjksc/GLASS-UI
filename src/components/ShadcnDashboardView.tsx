@@ -239,7 +239,16 @@ export const ShadcnDashboardView: React.FC<Props> = ({
   const handleExportCSV = () => {
     macAudio.playClick();
     if (bills && bills.length > 0) {
-      downloadCSV(bills as any);
+      const headers = ['Token / Bill #', 'Date', 'Party', 'Doc Type', 'Total (₹)', 'Status'];
+      const rows = bills.map((b) => [
+        b.token || b.id,
+        b.date || '',
+        b.party || '',
+        b.docType || 'SALE BILL',
+        b.total || 0,
+        b.status || 'PAID'
+      ]);
+      downloadCSV(`shadcn-dashboard-bills-${Date.now()}.csv`, headers, rows);
     } else {
       const demoCsv = [
         ['Month', 'Revenue (₹)', 'Benchmark'],

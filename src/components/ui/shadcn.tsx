@@ -533,12 +533,13 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       const list: SelectOption[] = [];
       React.Children.forEach(children, (child) => {
         if (React.isValidElement(child)) {
+          const childProps = (child as React.ReactElement<any>).props;
           if (child.type === 'option') {
-            const optVal = child.props.value !== undefined ? String(child.props.value) : String(child.props.children || '');
+            const optVal = childProps.value !== undefined ? String(childProps.value) : String(childProps.children || '');
             list.push({
               value: optVal,
-              label: child.props.children ?? optVal,
-              disabled: Boolean(child.props.disabled)
+              label: childProps.children ?? optVal,
+              disabled: Boolean(childProps.disabled)
             });
           }
         }
@@ -897,7 +898,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             <span style={{ fontSize: '12px', color: '#71717a' }}>Rows per page</span>
             <Select
               value={String(pageSize)}
-              onValueChange={(v) => {
+              onValueChange={(v: string) => {
                 onPageSizeChange(Number(v));
                 onPageChange(1);
               }}

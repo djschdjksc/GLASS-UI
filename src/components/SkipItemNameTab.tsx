@@ -763,7 +763,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
 
                           style={{ ...selectSt, height: '24px', fontSize: '11px' }}
                           value={sg.mainGroup}
-                          onChange={e => {
+                          onChange={(e: any) => {
                             if (e.target.value === '__ADD_NEW__') {
                               const name = prompt('Enter new Main Group name:');
                               if (name && name.trim()) {
@@ -809,7 +809,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                         <ShadcnSelect
                           style={{ ...selectSt, height: '24px', fontSize: '11px', textAlign: 'center' }}
                           value={sg.sumColumn}
-                          onChange={e => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
+                          onChange={(e: any) => handleSubGroupChange(sg.id, 'sumColumn', e.target.value)}
                         >
                           <option value="QTY">QTY</option>
                           <option value="U CAP">U CAP</option>

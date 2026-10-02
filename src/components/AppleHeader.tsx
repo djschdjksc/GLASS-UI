@@ -104,8 +104,8 @@ export const AppleHeader: React.FC<Props> = ({
             data-np-target="1-1"
             style={{ width: '100%', height: '32px', fontWeight: 600, color: '#f4f4f5' }}
             value={header.docType}
-            onChange={(e) => onChange({ docType: e.target.value })}
-            onKeyDown={(e) => {
+            onChange={(e: any) => onChange({ docType: e.target.value })}
+            onKeyDown={(e: any) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
                 const partyInput = document.getElementById('header-party-name') as HTMLInputElement | null;
@@ -263,8 +263,8 @@ export const AppleHeader: React.FC<Props> = ({
             data-np-target="1-3"
             style={{ width: '100%', height: '32px' }}
             value={header.typeSelection}
-            onChange={(e) => onChange({ typeSelection: e.target.value })}
-            onKeyDown={(e) => {
+            onChange={(e: any) => onChange({ typeSelection: e.target.value })}
+            onKeyDown={(e: any) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
                 const vehicleInput = document.getElementById('header-vehicle-no') as HTMLInputElement | null;

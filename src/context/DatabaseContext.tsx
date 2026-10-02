@@ -18,6 +18,7 @@ interface DatabaseContextType {
   saveStockItem: (item: StockItemRecord) => Promise<StockItemRecord>;
   saveLedgerEntry: (entry: LedgerEntryRecord) => Promise<LedgerEntryRecord>;
   triggerSync: () => Promise<void>;
+  refreshAll: () => Promise<void>;
 }
 
 const DatabaseContext = createContext<DatabaseContextType | null>(null);
@@ -86,6 +87,14 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     await syncEngine.syncAll();
   }, []);
 
+  const handleRefreshAll = useCallback(async () => {
+    setBills([...localDb.getBills()]);
+    setParties([...localDb.getParties()]);
+    setStockItems([...localDb.getStockItems()]);
+    setLedgerEntries([...localDb.getLedgerEntries()]);
+    await syncEngine.syncAll();
+  }, []);
+
   return (
     <DatabaseContext.Provider
       value={{
@@ -101,7 +110,8 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deleteParty: handleDeleteParty,
         saveStockItem: handleSaveStockItem,
         saveLedgerEntry: handleSaveLedgerEntry,
-        triggerSync: handleTriggerSync
+        triggerSync: handleTriggerSync,
+        refreshAll: handleRefreshAll
       }}
     >
       {children}

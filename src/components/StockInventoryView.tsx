@@ -2475,7 +2475,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
               <ShadcnSelect
                 value={inwardTypeFilter}
-                onChange={(e) => setInwardTypeFilter(e.target.value)}
+                onChange={(e: any) => setInwardTypeFilter(e.target.value)}
                 style={{
                   width: '160px',
                   height: '32px',
@@ -2654,7 +2654,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
               <ShadcnSelect
                 value={outwardTypeFilter}
-                onChange={(e) => setOutwardTypeFilter(e.target.value)}
+                onChange={(e: any) => setOutwardTypeFilter(e.target.value)}
                 style={{
                   width: '150px',
                   height: '32px',
@@ -2873,7 +2873,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 {/* Stock Status Filter */}
                 <ShadcnSelect
                   value={balanceFilter}
-                  onChange={(e) => setBalanceFilter(e.target.value)}
+                  onChange={(e: any) => setBalanceFilter(e.target.value)}
                   style={{
                     width: '160px',
                     height: '32px',
@@ -2889,7 +2889,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 {/* Category Prefix Filter */}
                 <ShadcnSelect
                   value={balanceCategory}
-                  onChange={(e) => setBalanceCategory(e.target.value)}
+                  onChange={(e: any) => setBalanceCategory(e.target.value)}
                   style={{
                     width: '150px',
                     height: '32px',
@@ -3117,7 +3117,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                 <ShadcnSelect
                   value={barcodeCategory}
-                  onChange={(e) => setBarcodeCategory(e.target.value)}
+                  onChange={(e: any) => setBarcodeCategory(e.target.value)}
                   style={{
                     width: '150px',
                     height: '32px',
