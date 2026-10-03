@@ -80,20 +80,69 @@ export function resolveItemNameWithMode({
     }
   }
 
-  // 1. Auto-Convert Mode: match shortcut prefix/exact
-  if (!isFullConversion && autoConvert && finalName) {
+  // 1. Auto-Item Mode: Sticky previous item prefix when typing numbers or size indicators
+  // STRICTLY when autoItem is true (Auto Item Mode is ON). When autoItem is OFF, this NEVER runs!
+  let stickyApplied = false;
+  if (!isFullConversion && autoItem && rowIndex > 0 && prevItemName && prevItemName.trim()) {
+    const trimmedVal = rawVal.trim();
+
+    // Check if trimmedVal is an exact shortcut code from activeShortcuts (e.g. "g1", "b1", "cm")
+    // If it's an exact shortcut, we let shortcut expand instead of sticky-prefixing
+    const isExactShortcut = activeShortcuts.some(
+      sc => (sc.shortcut || '').toLowerCase().trim() === trimmedVal.toLowerCase()
+    );
+
+    if (!isExactShortcut) {
+      // Is it a candidate for sticky prefixing?
+      // Matches pure numbers (e.g. "774", "195", "12"), sizes (e.g. "12FT", "12 FT", "10FT"),
+      // or alphanumeric item numbers (e.g. "195-B", "154A", "770")
+      const isStickyCandidate =
+        /^\d+[\d.]*$/.test(trimmedVal) ||
+        /^\d+[\d.]*\s*(?:FT|FEET|INCH)?$/i.test(trimmedVal) ||
+        /^\d+[\d.]*-[A-Za-z0-9]+$/i.test(trimmedVal) ||
+        /^\d+[A-Za-z]$/.test(trimmedVal);
+
+      if (isStickyCandidate) {
+        // Strip any existing size in parentheses from previous item, e.g. "B.F.P 154 (10FT)" -> "B.F.P 154"
+        const cleanPrev = prevItemName.replace(/\s*\(+[\d.]+\s*(?:FT|FEET)?\s*\)*(?:FT)?\s*\)*/gi, '').trim();
+        const parts = cleanPrev.split(' ');
+        let prefix = '';
+        if (parts.length > 1) {
+          // Everything before the last token, e.g. "Coner.Bit 764" -> prefix "Coner.Bit", "B.F.P 154" -> prefix "B.F.P"
+          prefix = parts.slice(0, -1).join(' ').trim();
+        } else {
+          // Single word previous item, e.g. "DOOR" -> prefix "DOOR"
+          prefix = cleanPrev;
+        }
+
+        if (prefix) {
+          finalName = `${prefix} ${trimmedVal}`;
+          stickyApplied = true;
+        }
+      }
+    }
+  }
+
+  // 2. Auto-Convert Mode OR fallback expansion in Auto-Item Mode (if sticky didn't apply)
+  if (!isFullConversion && !stickyApplied && (autoConvert || autoItem) && finalName) {
     const sortedShortcuts = [...activeShortcuts].sort(
       (a, b) => ((b.shortcut || '').length - (a.shortcut || '').length)
     );
     for (const sc of sortedShortcuts) {
       const scCode = (sc.shortcut || '').toLowerCase().trim();
-      if (
-        scCode &&
-        (valLower === scCode ||
-          valLower.startsWith(scCode + ' ') ||
-          (valLower.startsWith(scCode) && rawVal.length > scCode.length))
-      ) {
-        const remaining = rawVal.trim().slice(scCode.length).trim();
+      if (!scCode) continue;
+
+      // Exact match e.g. "g1", "c", "cm", "bfp"
+      const isExact = valLower === scCode;
+      // Match with space delimiter e.g. "c 10", "cm 12", "1 154", "g1 154"
+      const isSpaceDelimited = valLower.startsWith(scCode + ' ');
+      // Compound shortcut match e.g. "bfp154", "cm12", "sl14", "c10" (shortcut followed by numbers)
+      const isCompoundMatch = valLower.startsWith(scCode) && /^\d+/.test(valLower.slice(scCode.length)) && rawVal.length > scCode.length;
+
+      if (isExact || isSpaceDelimited || isCompoundMatch) {
+        const remaining = isSpaceDelimited
+          ? rawVal.trim().slice(scCode.length).trim()
+          : (isCompoundMatch ? rawVal.trim().slice(scCode.length).trim() : '');
         finalName = remaining ? `${sc.conversion} ${remaining}` : (sc.conversion || finalName);
         const uVal = sc.uCap ?? sc.u_cap;
         const lVal = sc.lCap ?? sc.l_cap;
@@ -105,30 +154,28 @@ export function resolveItemNameWithMode({
     }
   }
 
-  // 2. Auto-Item Mode: Sticky previous item prefix when typing numbers or <= 3 char size
-  if (!isFullConversion && autoItem && rowIndex > 0 && (/^\d+$/.test(rawVal.trim()) || rawVal.trim().length <= 3)) {
-    if (prevItemName && prevItemName.trim()) {
-      const parts = prevItemName.trim().split(' ');
-      if (parts.length > 1) {
-        const prefix = parts.slice(0, -1).join(' ');
-        finalName = `${prefix} ${rawVal.trim()}`;
-      } else {
-        finalName = `${prevItemName.trim()} ${rawVal.trim()}`;
-      }
-    }
-  }
-
-  // If still not matchedRule, look up by finalName
+  // 3. If still not matchedRule, look up by finalName (to populate caps and dynamic size column)
   if (!matchedRule) {
     const finalLower = finalName.toLowerCase().trim();
+    // Also try stripping size tag from finalName for lookup
+    const cleanFinalLower = finalName.replace(/\s*\(+[\d.]+\s*(?:FT|FEET)?\s*\)*(?:FT)?\s*\)*/gi, '').toLowerCase().trim();
+
     for (const sc of activeShortcuts) {
       const conv = (sc.conversion || '').toLowerCase().trim();
       const code = (sc.shortcut || '').toLowerCase().trim();
-      if (conv && (finalLower === conv || finalLower.startsWith(conv + ' ') || finalLower.startsWith(conv + '-'))) {
+      if (
+        conv &&
+        (finalLower === conv ||
+          finalLower.startsWith(conv + ' ') ||
+          finalLower.startsWith(conv + '-') ||
+          cleanFinalLower === conv ||
+          cleanFinalLower.startsWith(conv + ' ') ||
+          cleanFinalLower.startsWith(conv + '-'))
+      ) {
         matchedRule = sc;
         break;
       }
-      if (code && (finalLower === code || finalLower.startsWith(code + ' '))) {
+      if (code && (finalLower === code || finalLower.startsWith(code + ' ') || cleanFinalLower === code)) {
         matchedRule = sc;
         break;
       }

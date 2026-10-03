@@ -31,6 +31,7 @@ import { localDb } from './services/db/localDb';
 import type { BillRecord } from './services/db/schema';
 import { loadMediaFromDB } from './services/mediaStorage';
 import { LoginPanel } from './components/LoginPanel';
+import { isPasswordProtectionActive } from './utils/authSecurity';
 import { SpaceLoader } from './components/common/SpaceLoader';
 import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
 import { ChattingPanel } from './components/ChattingPanel';
@@ -3113,11 +3114,29 @@ export default function App() {
     localStorage.setItem('modern_app_theme_mode', themeMode);
   }, [themeMode]);
 
-  // Set to true temporarily to bypass login panel during development
-  const [isAuthenticated, setIsAuthenticated] = React.useState(true);
+  // Password Protection:
+  // If NO password is set, login panel does NOT open (directly true)!
+  // If password IS set, check if already unlocked in this browser session.
+  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(() => {
+    if (!isPasswordProtectionActive()) {
+      return true;
+    }
+    return sessionStorage.getItem('modern_session_unlocked') === '1';
+  });
   const [isAppLoading, setIsAppLoading] = React.useState(false);
 
+  React.useEffect(() => {
+    const handleAuthChange = () => {
+      if (!isPasswordProtectionActive()) {
+        setIsAuthenticated(true);
+      }
+    };
+    window.addEventListener('auth_config_changed', handleAuthChange);
+    return () => window.removeEventListener('auth_config_changed', handleAuthChange);
+  }, []);
+
   const handleLogin = () => {
+    sessionStorage.setItem('modern_session_unlocked', '1');
     setIsAuthenticated(true);
   };
 

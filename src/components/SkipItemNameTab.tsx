@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { macAudio } from '../utils/macAudio';
-import { Plus, Check, RotateCcw, Layers, Tag, FolderPlus, Folder, Trash2, Edit2, X } from 'lucide-react';
+import { Plus, Check, RotateCcw, Layers, Tag, FolderPlus, Folder, Trash2, Edit2, X, ArrowRightLeft, PackagePlus, SlidersHorizontal } from 'lucide-react';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { Select as ShadcnSelect } from './ui/shadcn';
+import { useItemMode } from '../context/ItemModeContext';
+import { resolveItemNameWithMode } from '../utils/itemExpansion';
 
 const DEFAULT_MAIN_COLS = { srNo: 35, mainGroup: 140, groupName: 200, sumCol: 85, items: 50 };
 const DEFAULT_SUB_COLS  = { srNo: 40, itemName: 320 };
@@ -18,6 +20,8 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
   search: externalSearch,
   onAddRef
 }) => {
+  const { autoConvert, autoItem, simpleMode, handleToggle } = useItemMode();
+
   const [mainGroups, setMainGroups] = useState<SkipMainGroupSeed[]>([]);
   const [subGroups,  setSubGroups]  = useState<SkipSubGroupSeed[]>([]);
   const [skipItems,  setSkipItems]  = useState<SkipItemSeed[]>([]);
@@ -204,9 +208,12 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     setSubGroups(d);
     try { localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(d)); } catch {}
   };
-  const saveSkipItems = (d: SkipItemSeed[]) => {
-    setSkipItems(d);
-    try { localStorage.setItem('billapp_skip_items', JSON.stringify(d)); } catch {}
+  const saveSkipItems = (updaterOrList: SkipItemSeed[] | ((prev: SkipItemSeed[]) => SkipItemSeed[])) => {
+    setSkipItems(prev => {
+      const next = typeof updaterOrList === 'function' ? updaterOrList(prev) : updaterOrList;
+      try { localStorage.setItem('billapp_skip_items', JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
   /* ─── group handlers ─── */
@@ -274,9 +281,31 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
 
   /* ─── item handlers ─── */
   const handleItemChange = (id: string, v: string) =>
-    saveSkipItems(skipItems.map(si => si.id === id ? { ...si, itemPrefix: v } : si));
+    saveSkipItems(prev => prev.map(si => si.id === id ? { ...si, itemPrefix: v } : si));
+
+  const lastAddRef = useRef(0);
+
+  const commitItemPrefix = (id: string, rawVal: string, idx: number) => {
+    if (!rawVal || !rawVal.trim()) return rawVal;
+    const prevItemPrefix = idx > 0 ? filteredItems[idx - 1]?.itemPrefix : undefined;
+    const { finalName } = resolveItemNameWithMode({
+      rawVal,
+      rowIndex: idx,
+      prevItemName: prevItemPrefix,
+      autoConvert,
+      autoItem,
+      simpleMode
+    });
+    const toSave = finalName || rawVal;
+    handleItemChange(id, toSave);
+    return toSave;
+  };
 
   const handleAddItem = () => {
+    const now = Date.now();
+    if (now - lastAddRef.current < 400) return; // Prevent double insertion on single Insert press
+    lastAddRef.current = now;
+
     if (!selectedMainGroupId) return;
     macAudio.playClick();
     const curSub = subGroups.find(s => s.id === selectedMainGroupId);
@@ -285,7 +314,15 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
       id: newId, subGroupId: selectedMainGroupId,
       mainGroup: curSub?.mainGroup || '', groupName: curSub?.groupName || '', itemPrefix: ''
     };
-    saveSkipItems([newItem, ...skipItems]);
+    saveSkipItems(prev => {
+      if (selectedItemId) {
+        const selIdx = prev.findIndex(si => si.id === selectedItemId);
+        if (selIdx !== -1) {
+          return [...prev.slice(0, selIdx + 1), newItem, ...prev.slice(selIdx + 1)];
+        }
+      }
+      return [...prev, newItem];
+    });
     setSelectedItemId(newId);
     setEditingItemId(newId);
   };
@@ -430,6 +467,13 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           if (e.key === 'Enter') {
             e.preventDefault();
             macAudio.playSuccess();
+            if (editingItemId) {
+              const itemIdx = filteredItems.findIndex(it => it.id === editingItemId);
+              if (itemIdx !== -1) {
+                const currentVal = (target as HTMLInputElement).value ?? filteredItems[itemIdx].itemPrefix;
+                commitItemPrefix(editingItemId, currentVal, itemIdx);
+              }
+            }
             setEditingItemId(null);
             setEditingGroupId(null);
             return;
@@ -575,6 +619,8 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
       // INSERT → add new row
       if (e.key === 'Insert') {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         if (activePanel === 'items' && selectedMainGroupId) handleAddItem();
         else handleAddSubGroup();
         return;
@@ -917,20 +963,100 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
             )}
           </div>
           {curSub && (
-            <button
-              type="button"
-              onClick={handleAddItem}
-              title="Add Item (or press Insert)"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                height: '28px', padding: '0 10px', borderRadius: '5px',
-                background: '#f4f4f5', border: 'none',
-                color: '#09090b', fontSize: '11.5px', fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              <Plus size={13} /> Add Item
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Button 1: AUTO CONVERT */}
+              <button
+                type="button"
+                onMouseEnter={() => macAudio.playHover()}
+                onClick={() => {
+                  macAudio.playClick();
+                  handleToggle('autoConvert');
+                }}
+                className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '5px',
+                  background: autoConvert ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
+                  border: autoConvert ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                  color: autoConvert ? '#38bdf8' : '#a1a1aa',
+                  cursor: 'pointer'
+                }}
+                title="AUTO CONVERT [Alt+A / Numpad *]"
+              >
+                <ArrowRightLeft size={13} />
+              </button>
+
+              {/* Button 2: AUTO ITEM */}
+              <button
+                type="button"
+                onMouseEnter={() => macAudio.playHover()}
+                onClick={() => {
+                  macAudio.playClick();
+                  handleToggle('autoItem');
+                }}
+                className={`apple-box-btn ${autoItem ? 'active' : ''}`}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '5px',
+                  background: autoItem ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
+                  border: autoItem ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                  color: autoItem ? '#38bdf8' : '#a1a1aa',
+                  cursor: 'pointer'
+                }}
+                title="AUTO ITEM [Alt+Z / Numpad *]"
+              >
+                <PackagePlus size={13} />
+              </button>
+
+              {/* Button 3: SIMPLE MODE */}
+              <button
+                type="button"
+                onMouseEnter={() => macAudio.playHover()}
+                onClick={() => {
+                  macAudio.playClick();
+                  handleToggle('simpleMode');
+                }}
+                className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '5px',
+                  background: simpleMode ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
+                  border: simpleMode ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                  color: simpleMode ? '#38bdf8' : '#a1a1aa',
+                  cursor: 'pointer'
+                }}
+                title="SIMPLE MODE [Alt+X / Numpad *]"
+              >
+                <SlidersHorizontal size={13} />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAddItem}
+                title="Add Item (or press Insert)"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  height: '28px', padding: '0 10px', borderRadius: '5px',
+                  background: '#f4f4f5', border: 'none',
+                  color: '#09090b', fontSize: '11.5px', fontWeight: 600,
+                  cursor: 'pointer', marginLeft: '4px'
+                }}
+              >
+                <Plus size={13} /> Add Item
+              </button>
+            </div>
           )}
         </div>
 
@@ -979,6 +1105,19 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                             style={{ ...cellInput, fontWeight: 600 }}
                             value={si.itemPrefix}
                             onChange={e => handleItemChange(si.id, e.target.value)}
+                            onBlur={e => {
+                              commitItemPrefix(si.id, e.target.value, idx);
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const val = (e.target as HTMLInputElement).value || si.itemPrefix;
+                                commitItemPrefix(si.id, val, idx);
+                                macAudio.playSuccess();
+                                setEditingItemId(null);
+                              }
+                            }}
                             autoFocus
                           />
                         ) : (
@@ -999,7 +1138,12 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                                 border: 'none', fontSize: '11px', fontWeight: 600,
                                 cursor: 'pointer'
                               }}
-                              onClick={e => { e.stopPropagation(); macAudio.playSuccess(); setEditingItemId(null); }}
+                              onClick={e => {
+                                e.stopPropagation();
+                                commitItemPrefix(si.id, si.itemPrefix, idx);
+                                macAudio.playSuccess();
+                                setEditingItemId(null);
+                              }}
                             >
                               <Check size={11} /> Save
                             </button>

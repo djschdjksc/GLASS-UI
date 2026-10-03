@@ -887,6 +887,42 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     return { main10Qty, dynamicQtyTotals, totalPcs, uCap, lCap, validItems };
   }, [stockRows, dynamicCols]);
 
+  // Real-time Balance Totals for Enter Stock footer
+  const balanceTotals = useMemo(() => {
+    let bal10 = 0;
+    const dynamicBalTotals: Record<string, number> = {};
+    dynamicCols.forEach((dc) => {
+      dynamicBalTotals[dc.field] = 0;
+    });
+    let uCapBal = 0;
+    let lCapBal = 0;
+
+    // Deduplicate by base item name so multi-row vouchers don't multiply the same inventory
+    const seenBases = new Set<string>();
+
+    stockRows.forEach((r) => {
+      const trimmed = (r.name || '').trim();
+      if (!trimmed) return;
+      const baseName = extractBaseItemName(trimmed).toLowerCase();
+      if (seenBases.has(baseName)) return;
+      seenBases.add(baseName);
+
+      const b = getLiveBalancesForRow(trimmed);
+      bal10 += (b.sizeBals['10FT'] || 0);
+
+      dynamicCols.forEach((dc) => {
+        const szKey = dc.label.replace(/[()\s]/g, '').toUpperCase();
+        const normKey = szKey.endsWith('FT') ? szKey : `${szKey}FT`;
+        dynamicBalTotals[dc.field] = (dynamicBalTotals[dc.field] || 0) + (b.sizeBals[normKey] || 0);
+      });
+
+      uCapBal += (b.uCapBal || 0);
+      lCapBal += (b.lCapBal || 0);
+    });
+
+    return { bal10, dynamicBalTotals, uCapBal, lCapBal, count: seenBases.size };
+  }, [stockRows, dynamicCols, stockBalanceList]);
+
   // Autocomplete suggestions generator
   const currentSuggestions = useMemo(() => {
     if (!suggestQuery.trim()) return [];
@@ -2768,19 +2804,90 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       <AnimatedCounter value={entryTotals.lCap || 0} />
                     </td>
 
-                    {/* BAL (10 FT) */}
-                    <td style={{ borderLeft: '2px solid rgba(56, 189, 248, 0.4)', background: 'rgba(56, 189, 248, 0.02)' }}></td>
+                    {/* BAL (10 FT) Total */}
+                    <td 
+                      style={{ 
+                        padding: '4px 8px', 
+                        textAlign: 'right', 
+                        color: balanceTotals.count === 0 ? '#71717a' : balanceTotals.bal10 > 0 ? '#22c55e' : balanceTotals.bal10 < 0 ? '#ef4444' : '#71717a',
+                        borderLeft: '2px solid rgba(56, 189, 248, 0.4)', 
+                        background: 'rgba(56, 189, 248, 0.02)',
+                        fontSize: '13px', 
+                        fontWeight: 800, 
+                        fontFamily: "'JetBrains Mono', monospace" 
+                      }}
+                    >
+                      <AnimatedCounter 
+                        value={balanceTotals.bal10} 
+                        prefix={balanceTotals.bal10 > 0 ? '+' : undefined} 
+                        style={{ color: balanceTotals.count === 0 ? '#71717a' : balanceTotals.bal10 > 0 ? '#22c55e' : balanceTotals.bal10 < 0 ? '#ef4444' : '#71717a' }}
+                      />
+                    </td>
 
-                    {/* Dynamic BAL Columns */}
-                    {dynamicCols.map((dc) => (
-                      <td key={`foot-bal-${dc.field}`} style={{ borderLeft: '1px solid #27272a', background: 'rgba(56, 189, 248, 0.02)' }}></td>
-                    ))}
+                    {/* Dynamic BAL Columns Totals */}
+                    {dynamicCols.map((dc) => {
+                      const val = balanceTotals.dynamicBalTotals[dc.field] || 0;
+                      const colColor = balanceTotals.count === 0 ? '#71717a' : val > 0 ? '#22c55e' : val < 0 ? '#ef4444' : '#71717a';
+                      return (
+                        <td 
+                          key={`foot-bal-${dc.field}`} 
+                          style={{ 
+                            padding: '4px 8px', 
+                            textAlign: 'right', 
+                            color: colColor,
+                            borderLeft: '1px solid #27272a', 
+                            background: 'rgba(56, 189, 248, 0.02)',
+                            fontSize: '13px', 
+                            fontWeight: 800, 
+                            fontFamily: "'JetBrains Mono', monospace" 
+                          }}
+                        >
+                          <AnimatedCounter 
+                            value={val} 
+                            prefix={val > 0 ? '+' : undefined} 
+                            style={{ color: colColor }}
+                          />
+                        </td>
+                      );
+                    })}
 
-                    {/* U-CAP BAL */}
-                    <td style={{ borderLeft: '1px solid #27272a' }}></td>
+                    {/* U-CAP BAL Total */}
+                    <td 
+                      style={{ 
+                        padding: '4px 8px', 
+                        textAlign: 'right', 
+                        color: balanceTotals.count === 0 ? '#71717a' : balanceTotals.uCapBal > 0 ? '#22c55e' : balanceTotals.uCapBal < 0 ? '#ef4444' : '#71717a',
+                        borderLeft: '1px solid #27272a',
+                        fontSize: '13px', 
+                        fontWeight: 800, 
+                        fontFamily: "'JetBrains Mono', monospace" 
+                      }}
+                    >
+                      <AnimatedCounter 
+                        value={balanceTotals.uCapBal} 
+                        prefix={balanceTotals.uCapBal > 0 ? '+' : undefined} 
+                        style={{ color: balanceTotals.count === 0 ? '#71717a' : balanceTotals.uCapBal > 0 ? '#22c55e' : balanceTotals.uCapBal < 0 ? '#ef4444' : '#71717a' }}
+                      />
+                    </td>
 
-                    {/* L-CAP BAL */}
-                    <td style={{ borderLeft: '1px solid #27272a' }}></td>
+                    {/* L-CAP BAL Total */}
+                    <td 
+                      style={{ 
+                        padding: '4px 8px', 
+                        textAlign: 'right', 
+                        color: balanceTotals.count === 0 ? '#71717a' : balanceTotals.lCapBal > 0 ? '#22c55e' : balanceTotals.lCapBal < 0 ? '#ef4444' : '#71717a',
+                        borderLeft: '1px solid #27272a',
+                        fontSize: '13px', 
+                        fontWeight: 800, 
+                        fontFamily: "'JetBrains Mono', monospace" 
+                      }}
+                    >
+                      <AnimatedCounter 
+                        value={balanceTotals.lCapBal} 
+                        prefix={balanceTotals.lCapBal > 0 ? '+' : undefined} 
+                        style={{ color: balanceTotals.count === 0 ? '#71717a' : balanceTotals.lCapBal > 0 ? '#22c55e' : balanceTotals.lCapBal < 0 ? '#ef4444' : '#71717a' }}
+                      />
+                    </td>
 
                     {/* DEL */}
                     <td style={{ borderLeft: '1px solid #27272a' }}></td>
@@ -2817,7 +2924,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
                   style={{ width: '36px', height: '36px' }}
                 >
-                  <span className="box-tooltip-top">AUTO CONVERT [Numpad *]</span>
+                  <span className="box-tooltip-top">AUTO CONVERT [Alt+A / Numpad *]</span>
                   <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
                 </button>
 
@@ -2833,7 +2940,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   className={`apple-box-btn ${autoItem ? 'active' : ''}`}
                   style={{ width: '36px', height: '36px' }}
                 >
-                  <span className="box-tooltip-top">AUTO ITEM [Numpad *]</span>
+                  <span className="box-tooltip-top">AUTO ITEM [Alt+Z / Numpad *]</span>
                   <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
                 </button>
 
@@ -2849,7 +2956,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
                   style={{ width: '36px', height: '36px' }}
                 >
-                  <span className="box-tooltip-top">SIMPLE MODE [Numpad *]</span>
+                  <span className="box-tooltip-top">SIMPLE MODE [Alt+X / Numpad *]</span>
                   <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
                 </button>
 

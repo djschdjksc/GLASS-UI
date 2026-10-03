@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { IosSegmentedTabs } from './common/IosSegmentedTabs';
 import { downloadCSV } from '../utils/exportCsv';
+import { formatBillNumber } from '../utils/billDocTypes';
 import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 import { BillPrintModal } from './BillPrintModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
@@ -298,12 +299,20 @@ export const OtherTabsView: React.FC<Props> = ({
     if (!rawQ) return categoryBills;
     const cleanNum = rawQ.replace(/^(bill|slip|#)\s*/i, '').trim();
     const qLower = cleanNum.toLowerCase();
-    return categoryBills.filter(b => 
-      b.token === cleanNum ||
-      b.token.toLowerCase().includes(qLower) ||
-      b.party.toLowerCase().includes(rawQ.toLowerCase()) ||
-      b.date.includes(rawQ)
-    );
+    const onlyDigits = cleanNum.replace(/\D/g, '');
+    return categoryBills.filter(b => {
+      const formatted = formatBillNumber(b.token).toLowerCase();
+      const rawToken = String(b.token || '').toLowerCase();
+      const tokenDigits = rawToken.replace(/\D/g, '');
+      return (
+        b.token === cleanNum ||
+        rawToken.includes(qLower) ||
+        formatted.includes(qLower) ||
+        (onlyDigits && tokenDigits === onlyDigits) ||
+        b.party.toLowerCase().includes(rawQ.toLowerCase()) ||
+        b.date.includes(rawQ)
+      );
+    });
   }, [categoryBills, billSearchQuery]);
 
   // Selected Bill Id tracking
@@ -824,7 +833,7 @@ export const OtherTabsView: React.FC<Props> = ({
   const handleExportAllBillsCsv = () => {
     const headers = ['TOKEN', 'DATE', 'PARTY', 'DOC TYPE', 'VEHICLE', 'TOTAL AMOUNT', 'STATUS'];
     const rows = bills.map(b => [
-      b.token,
+      formatBillNumber(b.token),
       b.date,
       b.party,
       b.docType,
@@ -853,10 +862,11 @@ export const OtherTabsView: React.FC<Props> = ({
         rows.push(['MOULD', idx + 1, f.mould || '', f.qty || 0, f.price || 0, f.total || 0]);
       });
     }
-    const ok = downloadCSV(`Bill_${selectedBill.token}_${(selectedBill.party || 'Customer').replace(/[^a-zA-Z0-9]/g, '_')}`, headers, rows);
+    const formattedToken = formatBillNumber(selectedBill.token);
+    const ok = downloadCSV(`Bill_${formattedToken}_${(selectedBill.party || 'Customer').replace(/[^a-zA-Z0-9]/g, '_')}`, headers, rows);
     if (ok) {
       macAudio.playSuccess();
-      showPartyToast(`Exported Bill #${selectedBill.token} in CSV (Excel format)!`);
+      showPartyToast(`Exported Bill #${formattedToken} in CSV (Excel format)!`);
     }
   };
 
@@ -1541,7 +1551,7 @@ export const OtherTabsView: React.FC<Props> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <span style={{ color: '#f8fafc' }}>Token:</span>
-                  <strong style={{ color: '#38bdf8' }}>#{selectedBill.token}</strong>
+                  <strong style={{ color: '#38bdf8' }}>#{formatBillNumber(selectedBill.token)}</strong>
                 </div>
                 <div style={{ height: '12px', width: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -2684,7 +2694,7 @@ export const OtherTabsView: React.FC<Props> = ({
             typeSelection: 'Regular',
             vehicleNo: selectedBill.vehicle,
             date: selectedBill.date,
-            tokenNo: selectedBill.token || selectedBill.id
+            tokenNo: formatBillNumber(selectedBill.token || selectedBill.id)
           }}
           rawItems={displayRawItems.map((r, i) => ({
             ...r,
@@ -2703,7 +2713,7 @@ export const OtherTabsView: React.FC<Props> = ({
             total: f.total
           }))}
           initialMode="estimate"
-          billNo={selectedBill.token || selectedBill.id}
+          billNo={formatBillNumber(selectedBill.token || selectedBill.id)}
           dynamicCols={f2AllSizeCols.filter(c => !c.isBase).map(c => ({ field: c.field, label: c.label }))}
           hasPartyCodeCol={
             selectedBill.hasPartyCodeCol !== undefined
@@ -2718,10 +2728,11 @@ export const OtherTabsView: React.FC<Props> = ({
       {deleteConfirmBillId && (() => {
         const billToDelete = filteredBills.find(b => b.id === deleteConfirmBillId);
         if (!billToDelete) return null;
+        const formattedDelToken = formatBillNumber(billToDelete.token);
         return (
           <UnsavedChangesModal
-            billNumber={billToDelete.token}
-            titleText={`Delete Bill #${billToDelete.token}?`}
+            billNumber={formattedDelToken}
+            titleText={`Delete Bill #${formattedDelToken}?`}
             descText={`"${billToDelete.party}" ka yeh bill permanently delete ho jaayega. Kya aap sure hain?`}
             discardLabel="Haan, Delete Karo"
             onSave={undefined}

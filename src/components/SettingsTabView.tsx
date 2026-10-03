@@ -3,6 +3,9 @@ import { Segmented, Slider, Switch, Tag, Button, Input, InputNumber, Tooltip } f
 import { macAudio } from '../utils/macAudio';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
+import { localDb } from '../services/db/localDb';
+import { getStoredBillPrefix, formatBillNumber } from '../utils/billDocTypes';
+import { getAuthConfig, setAuthConfig, type AuthConfig } from '../utils/authSecurity';
 import {
   Palette,
   Keyboard,
@@ -13,6 +16,10 @@ import {
   Download,
   Upload,
   RefreshCw,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
   Zap,
   Grid,
   FileSpreadsheet,
@@ -352,6 +359,8 @@ export const SettingsTabView: React.FC<Props> = ({
   };
 
   // General Settings State
+  const [billPrefix, setBillPrefix] = useState<string>(getStoredBillPrefix);
+  const [isUpdatingBills, setIsUpdatingBills] = useState<boolean>(false);
   const [tallyNavigation, setTallyNavigation] = useState<boolean>(() => localStorage.getItem('modern_setting_tally_nav') !== '0');
   const [autoConvertMode, setAutoConvertMode] = useState<boolean>(() => localStorage.getItem('modern_setting_autoconv') !== '0');
   const [stickyShortcuts, setStickyShortcuts] = useState<boolean>(() => localStorage.getItem('modern_setting_sticky') !== '0');
@@ -359,6 +368,70 @@ export const SettingsTabView: React.FC<Props> = ({
   const [audioFeedback, setAudioFeedback] = useState<boolean>(true);
   const [slipPrefix, setSlipPrefix] = useState<string>(() => localStorage.getItem('modern_setting_slip_prefix') || 'S-');
   const [slipHeaderTitle, setSlipHeaderTitle] = useState<string>(() => localStorage.getItem('modern_setting_slip_title') || 'ESTIMATE / LOADING MEMORANDUM');
+
+  const handleApplyBillPrefix = async (prefixToApply?: string) => {
+    const val = (prefixToApply !== undefined ? prefixToApply : billPrefix).trim();
+    if (!val) return;
+    setIsUpdatingBills(true);
+    macAudio.playClick();
+    try {
+      localStorage.setItem('modern_setting_bill_prefix', val);
+      const cleanUpper = val.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (cleanUpper) {
+        localStorage.setItem('modern_app_user_prefix', cleanUpper);
+      }
+
+      const count = await localDb.updateAllBillPrefix(val);
+      window.dispatchEvent(new Event('storage'));
+      macAudio.playSuccess();
+      onShowToast?.(`Applied bill prefix "${val}" to ${count} bill(s) in Bill History!`, 'success');
+    } catch (e: any) {
+      onShowToast?.(`Error updating bill prefix: ${e.message}`, 'error');
+    } finally {
+      setIsUpdatingBills(false);
+    }
+  };
+
+  // Security & Authentication State (ID & Password)
+  const [authConfig, setAuthConfigState] = useState<AuthConfig>(getAuthConfig);
+  const [authLoginIdInput, setAuthLoginIdInput] = useState<string>(() => getAuthConfig().loginId);
+  const [authPasswordInput, setAuthPasswordInput] = useState<string>(() => getAuthConfig().password);
+  const [showAuthPassword, setShowAuthPassword] = useState<boolean>(false);
+
+  const handleSaveSecurityCredentials = () => {
+    macAudio.playClick();
+    const cleanId = authLoginIdInput.trim() || 'BillTrack.org';
+    const cleanPass = authPasswordInput.trim();
+    const isEn = Boolean(cleanPass !== '');
+
+    const updated = setAuthConfig({
+      loginId: cleanId,
+      password: cleanPass,
+      enabled: isEn
+    });
+    setAuthConfigState(updated);
+    setAuthLoginIdInput(updated.loginId);
+    setAuthPasswordInput(updated.password);
+    macAudio.playSuccess();
+
+    if (updated.enabled) {
+      onShowToast?.(`ID & Password saved! App open hone par login panel aayega.`, 'success');
+    } else {
+      onShowToast?.(`Password removed! App bina kisi password ke seedha open hoga.`, 'info');
+    }
+  };
+
+  const handleRemovePassword = () => {
+    macAudio.playPop();
+    const updated = setAuthConfig({
+      password: '',
+      enabled: false
+    });
+    setAuthConfigState(updated);
+    setAuthPasswordInput('');
+    macAudio.playSuccess();
+    onShowToast?.(`Password hat gaya! App ab seedha bina password panel ke open hoga.`, 'info');
+  };
 
   // Server state
   const [serverMode, setServerMode] = useState<'server' | 'client' | 'standalone'>('server');
@@ -1060,10 +1133,87 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Slip Prefix & Numbering */}
-            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Bill & Slip Prefix & Numbering */}
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5' }}>
-                Document Numbering & Titles
+                Document Numbering & Bill Formats
+              </div>
+
+              {/* Bill Number Prefix & Format */}
+              <div style={{ borderBottom: '1px solid #27272a', paddingBottom: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#e4e4e7' }}>
+                    Bill Number Format / Prefix (Bill History)
+                  </label>
+                  <span style={{ 
+                    fontSize: '10px', 
+                    fontFamily: "'JetBrains Mono', monospace", 
+                    background: 'rgba(56, 189, 248, 0.1)', 
+                    color: '#38bdf8', 
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    padding: '2px 8px', 
+                    borderRadius: '4px' 
+                  }}>
+                    Preview: #{formatBillNumber('2', billPrefix)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={billPrefix}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setBillPrefix(v);
+                      localStorage.setItem('modern_setting_bill_prefix', v);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleApplyBillPrefix();
+                      }
+                    }}
+                    placeholder="e.g. REAL-, INV-, BILL-"
+                    style={{
+                      flex: 1,
+                      height: '32px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      borderRadius: '5px',
+                      padding: '0 8px',
+                      color: '#f4f4f5',
+                      fontSize: '11.5px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={isUpdatingBills}
+                    onClick={() => handleApplyBillPrefix()}
+                    style={{
+                      background: isUpdatingBills ? '#27272a' : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      border: '1px solid #38bdf8',
+                      color: '#ffffff',
+                      borderRadius: '5px',
+                      padding: '0 12px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: isUpdatingBills ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Update all existing bills in history to this prefix"
+                  >
+                    <RefreshCw size={12} className={isUpdatingBills ? 'animate-spin' : ''} />
+                    <span>Apply to All Bills</span>
+                  </button>
+                </div>
+                <div style={{ fontSize: '10px', color: '#71717a' }}>
+                  Yahan set karne par Bill History ke sabhi bills (jaise #{formatBillNumber('1', billPrefix)}, #{formatBillNumber('2', billPrefix)}) aur naye bills isi format me generate aur display honge.
+                </div>
               </div>
               <div>
                 <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Slip Number Prefix</label>
@@ -1111,6 +1261,184 @@ export const SettingsTabView: React.FC<Props> = ({
                     boxSizing: 'border-box'
                   }}
                 />
+              </div>
+            </div>
+
+            {/* App Security & Login Password (ID & Password Protection) */}
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '6px',
+                    background: authConfig.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                    border: authConfig.enabled ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(234, 179, 8, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: authConfig.enabled ? '#4ade80' : '#facc15'
+                  }}>
+                    {authConfig.enabled ? <Lock size={15} /> : <Unlock size={15} />}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5' }}>
+                      Security & Login Password
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#71717a' }}>
+                      Apne hisab se User ID & Password set karein ya remove karein
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Badge */}
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  padding: '3px 8px',
+                  borderRadius: '12px',
+                  background: authConfig.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.12)',
+                  color: authConfig.enabled ? '#4ade80' : '#facc15',
+                  border: authConfig.enabled ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(234, 179, 8, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: authConfig.enabled ? '#22c55e' : '#eab308' }} />
+                  {authConfig.enabled ? 'PASSWORD ACTIVE (LOCKED)' : 'NO PASSWORD (AUTO-OPEN)'}
+                </span>
+              </div>
+
+              {/* ID Input */}
+              <div>
+                <label style={{ fontSize: '10.5px', color: '#a1a1aa', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
+                  User ID / Login ID
+                </label>
+                <input
+                  type="text"
+                  value={authLoginIdInput}
+                  onChange={(e) => setAuthLoginIdInput(e.target.value)}
+                  placeholder="e.g. BillTrack.org or rohit"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '5px',
+                    padding: '0 8px',
+                    color: '#f4f4f5',
+                    fontSize: '11.5px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Password Input */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '10.5px', color: '#a1a1aa', fontWeight: 600 }}>
+                    Password
+                  </label>
+                  <span style={{ fontSize: '10px', color: '#71717a' }}>
+                    (Khali chhodne par login panel nahi aayega)
+                  </span>
+                </div>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showAuthPassword ? 'text' : 'password'}
+                    value={authPasswordInput}
+                    onChange={(e) => setAuthPasswordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveSecurityCredentials();
+                      }
+                    }}
+                    placeholder="Naya password likhein ya khali chhod kar remove karein"
+                    style={{
+                      width: '100%',
+                      height: '32px',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      borderRadius: '5px',
+                      padding: '0 34px 0 8px',
+                      color: '#f4f4f5',
+                      fontSize: '11.5px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthPassword(!showAuthPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: '#71717a',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title={showAuthPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showAuthPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Security Actions Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={handleSaveSecurityCredentials}
+                  style={{
+                    flex: 1,
+                    height: '32px',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    border: '1px solid #34d399',
+                    borderRadius: '5px',
+                    color: '#ffffff',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Check size={13} />
+                  <span>Save ID & Password</span>
+                </button>
+
+                {authConfig.password && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePassword}
+                    style={{
+                      height: '32px',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      borderRadius: '5px',
+                      color: '#ef4444',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '0 12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title="Remove password so the app opens directly without login panel"
+                  >
+                    <Unlock size={12} />
+                    <span>Remove Password</span>
+                  </button>
+                )}
               </div>
             </div>
 

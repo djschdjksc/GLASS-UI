@@ -114,6 +114,29 @@ export const ItemModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
+      // Check for Alt shortcuts matching Python reference app:
+      // Alt+A: Auto Convert
+      if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleToggle('autoConvert');
+        return;
+      }
+      // Alt+Z: Auto Item
+      if (e.altKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleToggle('autoItem');
+        return;
+      }
+      // Alt+X: Simple Mode
+      if (e.altKey && (e.key === 'x' || e.key === 'X')) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleToggle('simpleMode');
+        return;
+      }
+
       // Check for Numpad Multiply (*) - Right hand natural rest position key
       const isNumpadMultiply = e.code === 'NumpadMultiply' || (e.key === '*' && (e.location === 3 || !e.shiftKey));
       const isF8 = e.key === 'F8';
@@ -130,9 +153,9 @@ export const ItemModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       window.removeEventListener('keydown', handleGlobalKeyDown, true);
     };
-  }, [cycleMode, setMode]);
+  }, [cycleMode, setMode, handleToggle]);
 
-  const autoConvert = mode === 'CONVERSION' || mode === 'AUTO_ITEM';
+  const autoConvert = mode === 'CONVERSION';
   const autoItem = mode === 'AUTO_ITEM';
   const simpleMode = mode === 'SIMPLE';
 

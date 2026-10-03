@@ -4,7 +4,7 @@ USB-portable: billapp.db stored alongside this file
 Speed: WAL mode, in-memory cache for reads
 Port: 5006
 """
-import sys, os, json, sqlite3, time
+import sys, os, json, sqlite3, time, re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Lock
 
@@ -617,6 +617,21 @@ class DBHandler(BaseHTTPRequestHandler):
                         json.dumps(b.get('finishedItems', []), ensure_ascii=False),
                         b.get('createdAt', now), now
                     ))
+                    self.send_json({'success': True})
+
+                # ── Bulk Update Bill Prefix ──
+                elif path == '/api/db/bills/bulk-prefix':
+                    prefix = body.get('prefix', '').strip()
+                    if prefix:
+                        rows = conn.execute("SELECT id, token FROM bills").fetchall()
+                        for r in rows:
+                            bid = r['id']
+                            tok = str(r['token'] or '')
+                            m = re.search(r'\d+$', tok)
+                            num = m.group(0) if m else '1'
+                            new_tok = f"{prefix}{num}"
+                            conn.execute("UPDATE bills SET token=? WHERE id=?", (new_tok, bid))
+                        conn.commit()
                     self.send_json({'success': True})
 
                 # ── Save Party ──

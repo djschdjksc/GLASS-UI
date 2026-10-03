@@ -284,6 +284,44 @@ export const LeftGrid: React.FC<Props> = ({
   const [resizingCol, setResizingCol] = useState<string | null>(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll highlighted cells into screen view when active on Right Grid / Summary
+  useEffect(() => {
+    if (!highlightedCells || highlightedCells.size === 0) return;
+
+    const timer = setTimeout(() => {
+      const container = tableContainerRef.current;
+      if (!container) return;
+
+      const highlightedEl = container.querySelector('.summary-source-highlight') as HTMLElement | null;
+      if (!highlightedEl) return;
+
+      const elRect = highlightedEl.getBoundingClientRect();
+      const contRect = container.getBoundingClientRect();
+      const theadHeight = container.querySelector('thead')?.offsetHeight || 36;
+
+      // Vertical visibility check: if hidden above the header or below bottom
+      if (elRect.top < contRect.top + theadHeight) {
+        const diff = (contRect.top + theadHeight) - elRect.top;
+        container.scrollBy({ top: -diff - 14, behavior: 'smooth' });
+      } else if (elRect.bottom > contRect.bottom) {
+        const diff = elRect.bottom - contRect.bottom;
+        container.scrollBy({ top: diff + 14, behavior: 'smooth' });
+      }
+
+      // Horizontal visibility check: if hidden on left or right
+      if (elRect.left < contRect.left + 50) {
+        const diff = (contRect.left + 50) - elRect.left;
+        container.scrollBy({ left: -diff - 14, behavior: 'smooth' });
+      } else if (elRect.right > contRect.right) {
+        const diff = elRect.right - contRect.right;
+        container.scrollBy({ left: diff + 14, behavior: 'smooth' });
+      }
+    }, 40);
+
+    return () => clearTimeout(timer);
+  }, [highlightedCells]);
 
   const startResizeCol = (colKey: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -1179,6 +1217,7 @@ export const LeftGrid: React.FC<Props> = ({
 
       {/* Excel Data Table */}
       <div 
+        ref={tableContainerRef}
         onWheel={handleTableWheel}
         onPaste={(e) => {
           const text = e.clipboardData.getData('text');

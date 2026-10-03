@@ -547,6 +547,63 @@ class LocalDatabase {
     }
   }
 
+  public async updateAllBillPrefix(newPrefix: string): Promise<number> {
+    const cleanPrefix = (newPrefix || '').trim();
+    if (!cleanPrefix) return 0;
+
+    const formattedPrefix = (cleanPrefix.endsWith('-') || cleanPrefix.endsWith('/') || cleanPrefix.endsWith('_'))
+      ? cleanPrefix
+      : `${cleanPrefix}-`;
+
+    let updatedCount = 0;
+    const bills = this.getBills();
+
+    for (const b of bills) {
+      const oldToken = String(b.token || '').trim();
+      const match = oldToken.match(/\d+$/);
+      const num = match ? match[0] : (oldToken || '1');
+      const newToken = `${formattedPrefix}${num}`;
+
+      if (b.token !== newToken) {
+        b.token = newToken;
+        this.billsCache.set(b.id, b);
+        await this.putToStore('bills', b);
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount > 0) {
+      try {
+        const currentSaved: BillRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_bills') || '[]');
+        currentSaved.forEach(sb => {
+          const match = String(sb.token || '').match(/\d+$/);
+          const num = match ? match[0] : '1';
+          sb.token = `${formattedPrefix}${num}`;
+        });
+        localStorage.setItem('modern_saved_custom_bills', JSON.stringify(currentSaved));
+      } catch {}
+
+      // Bulk POST to SQLite server
+      fetch('http://127.0.0.1:5006/api/db/bills/bulk-prefix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix: formattedPrefix })
+      }).catch(() => {
+        bills.forEach(b => {
+          fetch('http://127.0.0.1:5006/api/db/bills', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(b)
+          }).catch(() => {});
+        });
+      });
+
+      this.notify('bills', this.getBills());
+    }
+
+    return updatedCount;
+  }
+
   public async saveParty(party: PartyRecord, enqueueSync = true): Promise<PartyRecord> {
     party.updatedAt = Date.now();
     this.partiesCache.set(party.id, party);

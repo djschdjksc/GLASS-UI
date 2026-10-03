@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { FinishedItem, EnterDirection } from '../types';
+import { resolveItemNameWithMode } from '../utils/itemExpansion';
 import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
@@ -303,7 +304,15 @@ export const RightGrid: React.FC<Props> = ({
       return;
     }
 
-    const finalName = rawVal.trim();
+    const prevMouldName = rowIndex > 0 ? filteredItems[rowIndex - 1]?.mould : undefined;
+    const { finalName } = resolveItemNameWithMode({
+      rawVal,
+      rowIndex,
+      prevItemName: prevMouldName,
+      autoConvert: !!autoConvert,
+      autoItem: !!autoItem,
+      simpleMode: false
+    });
 
     if (finalName !== item.mould) onUpdateItem(item.id, 'mould', finalName);
     setCellDrafts(prev => {

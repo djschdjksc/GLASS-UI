@@ -16,8 +16,16 @@ import {
   Share2,
   Plus,
   Smile,
-  CheckCheck
+  CheckCheck,
+  Search,
+  Users,
+  TrendingUp,
+  Package,
+  History,
+  IndianRupee
 } from 'lucide-react';
+import { localDb } from '../services/db/localDb';
+import type { BillRecord, PartyRecord } from '../services/db/schema';
 import { macAudio } from '../utils/macAudio';
 import type { BillHeader, RawItem, FinishedItem } from '../types';
 import { supabase, getUserProfile } from '../services/supabaseClient';
@@ -72,6 +80,16 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  
+  const [selectedPartyForQuery, setSelectedPartyForQuery] = useState<string>(header.partyName || '');
+  const [showPartySearch, setShowPartySearch] = useState(false);
+  const [partySearchText, setPartySearchText] = useState('');
+
+  useEffect(() => {
+    if (header.partyName && header.partyName.trim()) {
+      setSelectedPartyForQuery(header.partyName);
+    }
+  }, [header.partyName]);
 
   // User Profile loaded live from Settings (localStorage)
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
@@ -354,8 +372,84 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
   // Assistant Response Generator
   const generateAssistantResponse = (query: string): string => {
     const q = query.toLowerCase().trim();
+    
+    // a) Party total
+    if (q.includes('party total') || q.includes('kitna mal') || q.includes('kitni bill') || (q.includes('total') && !q.includes('summary') && !q.includes('discount'))) {
+      if (!selectedPartyForQuery) return '❌ Please select a party first to check their total.';
+      const bills = localDb.getBills().filter(b => b.party === selectedPartyForQuery);
+      const totalAmount = bills.reduce((acc, b) => acc + (b.total || 0), 0);
+      const paidCount = bills.filter(b => b.status === 'PAID').length;
+      const pendingCount = bills.filter(b => b.status === 'PENDING').length;
+      
+      return `📊 **${selectedPartyForQuery} Ka Total**\n\n` +
+        `• **Total Bills:** ${bills.length}\n` +
+        `• **Grand Total:** ₹${totalAmount.toLocaleString('en-IN')}\n` +
+        `• **Status:** ${paidCount} Paid, ${pendingCount} Pending`;
+    }
 
-    if (q.includes('summary') || q.includes('total') || q.includes('hisab')) {
+    // b) Old rate
+    if (q.includes('old rate') || q.includes('purana rate') || q.includes('last rate') || q === 'rate') {
+      if (!selectedPartyForQuery) return '❌ Please select a party first to check old rates.';
+      const bills = localDb.getBills().filter(b => b.party === selectedPartyForQuery).sort((a, b) => b.createdAt - a.createdAt);
+      if (bills.length === 0) return `⚠️ No previous bills found for **${selectedPartyForQuery}**`;
+      
+      const lastBill = bills[0];
+      const rates = lastBill.finishedItems
+        .filter(f => f.mould && f.mould !== 'Mould Name')
+        .map(f => `  • ${f.mould}: ₹${f.price}`)
+        .join('\n');
+        
+      return `💰 **Purana Rate (${selectedPartyForQuery})**\n` +
+        `_From Bill #${lastBill.token} (${lastBill.date})_\n\n` +
+        (rates || '  • No standard items found in last bill');
+    }
+
+    // c) Last bill
+    if (q.includes('last bill') || q.includes('pichli bill') || q.includes('pichla bill')) {
+      if (!selectedPartyForQuery) return '❌ Please select a party first to check last bill.';
+      const bills = localDb.getBills().filter(b => b.party === selectedPartyForQuery).sort((a, b) => b.createdAt - a.createdAt);
+      if (bills.length === 0) return `⚠️ No previous bills found for **${selectedPartyForQuery}**`;
+      
+      const lastBill = bills[0];
+      return `📋 **Pichli Bill Details**\n\n` +
+        `• **Party:** ${lastBill.party}\n` +
+        `• **Token:** #${lastBill.token} | **Date:** ${lastBill.date}\n` +
+        `• **Items:** ${lastBill.finishedItems.length} finished moulds\n` +
+        `• **Total:** ₹${(lastBill.total || 0).toLocaleString('en-IN')}\n` +
+        `• **Status:** ${lastBill.status}`;
+    }
+
+    // d) Stock check
+    if (q.includes('stock') || q.includes('mal') || q.includes('inventory')) {
+      const stockItems = localDb.getStockItems();
+      const lowStock = stockItems.filter(s => s.qty <= (s.minQty || 0) && s.qty > 0).length;
+      const critical = stockItems.filter(s => s.qty <= 0).length;
+      
+      return `📦 **Current Stock Status**\n\n` +
+        `• **Total Items:** ${stockItems.length}\n` +
+        `• **Low Stock:** ${lowStock} items\n` +
+        `• **Critical/Empty:** ${critical} items\n\n` +
+        `_Press F8 to open full inventory tab_`;
+    }
+
+    // e) Party list
+    if (q.includes('party list') || q.includes('parties') || (q.includes('party') && !q.includes('total'))) {
+      const parties = localDb.getParties();
+      const topParties = parties.slice(0, 5).map(p => `  • ${p.name} (${p.city || 'Local'}) - Bal: ₹${(p.balance || 0).toLocaleString('en-IN')}`).join('\n');
+      
+      return `👥 **Registered Parties (${parties.length})**\n\n` +
+        `Top 5 list:\n` +
+        (topParties || '  • No parties found') + 
+        `\n\n_Use the + button to select a party_`;
+    }
+
+    // f) Item rate history
+    if (q.includes('item rate') || q.includes('mould rate') || q.includes('item history')) {
+      return `📈 **Item Rate Check**\n\n` +
+        `Please open the 'Old Rates' tab to search price history across all bills and parties. You can press Alt+P for quick access.`;
+    }
+
+    if (q.includes('summary') || q.includes('hisab')) {
       const finishedTotal = finishedItems.reduce((acc, f) => acc + (Number(f.total) || 0), 0);
       const totalPcs = finishedItems.reduce((acc, f) => acc + (Number(f.qty) || 0), 0);
       const rawCount = rawItems.filter(r => r.name && r.name.trim()).length;
@@ -413,15 +507,16 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
         `• **Esc**: Clear / Back`;
     }
 
-    return `💡 **Bill Assistant Insight:**\n\n` +
-      `Active on **Token #${header.tokenNo} (${header.partyName || 'Cash Sale'})** with ` +
-      `**${rawItems.filter(r => r.name && r.name.trim()).length} raw items** and ` +
-      `**${finishedItems.filter(f => f.mould && f.mould !== 'Mould Name').length} finished moulds**.\n\n` +
-      `Try asking:\n` +
-      `• *"Bill summary"*\n` +
-      `• *"WhatsApp memo"*\n` +
-      `• *"Calculate 5% discount"*\n` +
-      `• *"Show shortcuts"*`;
+    return `💡 **Copilot AI Assistant:**\n\n` +
+      `Active Party Context: **${selectedPartyForQuery || 'None selected'}**\n\n` +
+      `Try asking in English or Hindi:\n` +
+      `• *"Party ka total"* (Total bills for selected party)\n` +
+      `• *"Purana rate"* (Last bill's prices)\n` +
+      `• *"Pichli bill"* (Details of last bill)\n` +
+      `• *"Stock check"* (Current inventory)\n` +
+      `• *"Party list"* (All registered parties)\n` +
+      `• *"Bill summary"* (Current bill hisab)\n` +
+      `• *"WhatsApp memo"* (Share format)`;
   };
 
   const handleSendMessage = (overrideText?: string) => {
@@ -856,13 +951,51 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                 })}
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <span style={{ color: '#00F0FF', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Bot size={13} color="#00F0FF" />
-                  <span>Workspace: Token #{header.tokenNo || '1'} • {header.partyName || 'Cash Sale'}</span>
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#00F0FF', display: 'flex', alignItems: 'center' }}>
+                    <Bot size={13} />
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,240,255,0.1)', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(0,240,255,0.2)' }}>
+                    <Users size={10} color="#00F0FF" />
+                    <span style={{ color: '#00F0FF', fontWeight: 600, fontSize: '10px' }}>
+                      {selectedPartyForQuery || 'Select Party'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setShowPartySearch(!showPartySearch)}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px', color: '#fff', fontSize: '10px', cursor: 'pointer' }}
+                  >
+                    Change
+                  </button>
+                  {showPartySearch && (
+                    <div style={{ position: 'absolute', top: '100%', left: '20px', marginTop: '4px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '200px', zIndex: 10, boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                      <div style={{ padding: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                        <input
+                          autoFocus
+                          type="text"
+                          placeholder="Search party..."
+                          value={partySearchText}
+                          onChange={(e) => setPartySearchText(e.target.value)}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', outline: 'none' }}
+                        />
+                      </div>
+                      <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                        {localDb.getParties().filter(p => p.name.toLowerCase().includes(partySearchText.toLowerCase())).map(p => (
+                          <div
+                            key={p.id}
+                            onClick={() => { setSelectedPartyForQuery(p.name); setShowPartySearch(false); setPartySearchText(''); }}
+                            style={{ padding: '6px 8px', fontSize: '11px', color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                          >
+                            {p.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '10px' }}>
-                  Live Math & Memos
+                  AI Assistant
                 </span>
               </div>
             )}
@@ -1226,13 +1359,16 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
               style={{
                 padding: '6px 14px',
                 display: 'flex',
+                flexWrap: 'wrap',
                 gap: '6px',
-                overflowX: 'auto',
-                scrollbarWidth: 'none',
                 flexShrink: 0
               }}
             >
               {[
+                { label: 'Party Total', query: 'Party total', icon: IndianRupee, color: '#00F0FF' },
+                { label: 'Old Rate', query: 'Old rate', icon: History, color: '#ff9f0a' },
+                { label: 'Last Bill', query: 'Last bill', icon: FileText, color: '#bf5af2' },
+                { label: 'Stock Status', query: 'Stock check', icon: Package, color: '#ff453a' },
                 { label: 'Bill Summary', query: `Bill summary for token ${header.tokenNo}`, icon: FileText, color: '#38bdf8' },
                 { label: 'WhatsApp Memo', query: 'Generate WhatsApp memo', icon: MessageCircle, color: '#34c759' },
                 { label: '5% Discount', query: 'Calculate 5% discount', icon: Calculator, color: '#ff9f0a' },
@@ -1290,7 +1426,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                   backdropFilter: 'blur(25px)',
                   WebkitBackdropFilter: 'blur(25px)',
                   zIndex: 50,
-                  minWidth: '180px',
+                  minWidth: '200px',
                   animation: 'shadcnSlideIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
               >
@@ -1341,6 +1477,35 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                   <FileText size={13} color="#34c759" />
                   <span>Insert Bill Memo</span>
                 </button>
+                
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+                
+                <div style={{ padding: '0 4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', padding: '4px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <Search size={11} color="rgba(255,255,255,0.5)" />
+                    <input
+                      type="text"
+                      placeholder="Select Party Context..."
+                      value={partySearchText}
+                      onChange={(e) => setPartySearchText(e.target.value)}
+                      style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '11px', outline: 'none', width: '100%' }}
+                    />
+                  </div>
+                  <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
+                    {localDb.getParties().filter(p => p.name.toLowerCase().includes(partySearchText.toLowerCase())).map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => { setSelectedPartyForQuery(p.name); setShowAttachMenu(false); }}
+                        style={{ padding: '6px 8px', fontSize: '10.5px', color: '#fff', cursor: 'pointer', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <Users size={11} color="#ff9f0a" />
+                        {p.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 

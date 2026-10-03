@@ -1,18 +1,35 @@
-import React, { useState } from 'react';
-import { User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import './LoginPanel.css';
+import { getAuthConfig, isPasswordProtectionActive } from '../utils/authSecurity';
+import { macAudio } from '../utils/macAudio';
 
 export const LoginPanel = ({ onLogin }: { onLogin: () => void }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // If password protection is disabled or has no password, bypass login immediately!
+  useEffect(() => {
+    if (!isPasswordProtectionActive()) {
+      onLogin();
+    }
+  }, [onLogin]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'BillTrack.org' && password === 'Verma@99') {
+    const conf = getAuthConfig();
+    const expectedId = (conf.loginId || 'BillTrack.org').trim().toLowerCase();
+    const expectedPass = conf.password;
+
+    if (email.trim().toLowerCase() === expectedId && password === expectedPass) {
+      sessionStorage.setItem('modern_session_unlocked', '1');
+      macAudio.playSuccess();
       onLogin();
     } else {
-      alert('Invalid ID or Password! Please try again.');
+      macAudio.playClick();
+      setErrorMsg('Invalid ID or Password! Please try again.');
     }
   };
 
@@ -96,6 +113,26 @@ export const LoginPanel = ({ onLogin }: { onLogin: () => void }) => {
               Enter your credentials to access your workspace.
             </p>
           </div>
+
+          {errorMsg && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'rgba(239, 68, 68, 0.18)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#fca5a5',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              fontSize: '12px',
+              fontWeight: 600,
+              marginTop: '1rem',
+              marginBottom: '0.5rem'
+            }}>
+              <AlertCircle size={16} color="#ef4444" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="login-form">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

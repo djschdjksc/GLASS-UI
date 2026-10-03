@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import type { BillRecord } from "../services/db/schema";
 import { macAudio } from "../utils/macAudio";
+import { formatBillNumber } from "../utils/billDocTypes";
 
 interface NotificationCardProps {
   bill: BillRecord;
@@ -45,7 +46,7 @@ const NotificationCard = memo(function NotificationCard({
           <span className="time">{timeText || bill.date}</span>
         </div>
         <div className="title">
-          #{bill.token} — {bill.party}
+          #{formatBillNumber(bill.token)} — {bill.party}
         </div>
         <div className="message">
           <span>Veh: {bill.vehicle || '-'}</span>

@@ -265,7 +265,7 @@ export const BottomModeBar: React.FC<Props> = ({
           className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
           style={{ width: '36px', height: '36px' }}
         >
-          <span className="box-tooltip-top">AUTO CONVERT [Numpad *]</span>
+          <span className="box-tooltip-top">AUTO CONVERT [Alt+A / Numpad *]</span>
           <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
         </button>
 
@@ -282,7 +282,7 @@ export const BottomModeBar: React.FC<Props> = ({
           className={`apple-box-btn ${autoItem ? 'active' : ''}`}
           style={{ width: '36px', height: '36px' }}
         >
-          <span className="box-tooltip-top">AUTO ITEM [Numpad *]</span>
+          <span className="box-tooltip-top">AUTO ITEM [Alt+Z / Numpad *]</span>
           <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
         </button>
 
@@ -299,7 +299,7 @@ export const BottomModeBar: React.FC<Props> = ({
           className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
           style={{ width: '36px', height: '36px' }}
         >
-          <span className="box-tooltip-top">SIMPLE MODE [Numpad *]</span>
+          <span className="box-tooltip-top">SIMPLE MODE [Alt+X / Numpad *]</span>
           <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
         </button>
       </div>
