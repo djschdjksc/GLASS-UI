@@ -26,6 +26,7 @@ import { macAudio } from './utils/macAudio';
 import UnsavedChangesModal from './components/UnsavedChangesModal';
 import { DatabaseProvider } from './context/DatabaseContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { ItemModeProvider, useItemMode } from './context/ItemModeContext';
 import { localDb } from './services/db/localDb';
 import type { BillRecord } from './services/db/schema';
 import { loadMediaFromDB } from './services/mediaStorage';
@@ -59,46 +60,40 @@ const playTapSound = () => {
   } catch {}
 };
 
-const LATEST_SQLITE_BILL = (SQLITE_BILLS && SQLITE_BILLS.length > 0) ? SQLITE_BILLS[0] : null;
-
-const INITIAL_HEADER: BillHeader = LATEST_SQLITE_BILL ? {
-  docType: normalizeDocType(LATEST_SQLITE_BILL.docType),
-  partyName: LATEST_SQLITE_BILL.party || 'GOURAV - Kapurthala',
-  typeSelection: LATEST_SQLITE_BILL.typeSelection || 'WHOLESALE',
-  vehicleNo: LATEST_SQLITE_BILL.vehicle || '',
-  date: LATEST_SQLITE_BILL.date || '2026-07-23',
-  tokenNo: LATEST_SQLITE_BILL.token || '528'
-} : {
-  docType: 'SALE',
-  partyName: 'GOURAV - Kapurthala',
-  typeSelection: 'WHOLESALE',
-  vehicleNo: '',
-  date: '2026-07-23',
-  tokenNo: '528'
+export const getTodayLocalDateStr = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
-const INITIAL_RAW_ITEMS: RawItem[] = (LATEST_SQLITE_BILL && LATEST_SQLITE_BILL.rawItems && LATEST_SQLITE_BILL.rawItems.length > 0)
-  ? LATEST_SQLITE_BILL.rawItems.map((r: any) => ({
-      id: String(r.id),
-      name: r.name,
-      qty: Number(r.qty) || 0, // 10 FT
-      uCap: Number(r.uCap) || 0,
-      lCap: Number(r.lCap) || 0
-    }))
-  : [
-      { id: '13217', name: 'B.F.P 185', qty: 10, uCap: 2, lCap: 0 },
-      { id: '13218', name: 'S.L 716', qty: 34, uCap: 13, lCap: 4 }
-    ];
+export const createBlankHeader = (docType: string = 'SALE'): BillHeader => {
+  let nextToken = '1';
+  try {
+    const allBills = localDb.getBills();
+    const profile = getUserProfile();
+    nextToken = getNextUserToken(allBills, profile.prefix);
+  } catch {}
+  return {
+    docType: normalizeDocType(docType),
+    partyName: '',
+    typeSelection: 'WHOLESALE',
+    vehicleNo: '',
+    date: getTodayLocalDateStr(),
+    tokenNo: nextToken
+  };
+};
 
-const INITIAL_FINISHED_ITEMS: FinishedItem[] = (LATEST_SQLITE_BILL && LATEST_SQLITE_BILL.finishedItems && LATEST_SQLITE_BILL.finishedItems.length > 0)
-  ? LATEST_SQLITE_BILL.finishedItems.map((f: any) => ({
-      id: String(f.id),
-      mould: f.mould,
-      qty: Number(f.qty) || 0,
-      price: Number(f.price) || 0,
-      total: Number(f.total) || 0
-    }))
-  : [];
+export const createBlankRawItems = (): RawItem[] => {
+  return Array.from({ length: 10 }, (_, i) => ({
+    id: String(Date.now() + i),
+    name: '',
+    qty: 0,
+    uCap: 0,
+    lCap: 0
+  }));
+};
 
 function loadStored<T>(key: string, defaultValue: T): T {
   try {
@@ -196,30 +191,23 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   }, []);
 
 
-  // 1. Persisted Header (fallback to real SQLite bill if empty or dummy)
+  // 1. Clean Blank Header (No bill loaded on open; Today's local date by default)
   const [header, setHeader] = useState<BillHeader>(() => {
-    const saved = loadStored('modern_app_header', INITIAL_HEADER);
-    const isValid = saved && saved.tokenNo && saved.partyName && saved.partyName !== 'Apex Industrial Moldings Pvt Ltd';
-    return isValid ? saved : INITIAL_HEADER;
+    return createBlankHeader();
   });
   useEffect(() => {
     localStorage.setItem('modern_app_header', JSON.stringify(header));
   }, [header]);
 
-  // 2. Persisted Items (fallback to real SQLite bill if empty or all blank)
+  // 2. Clean Blank Items (Ready for entry)
   const [rawItems, setRawItems] = useState<RawItem[]>(() => {
-    const saved = loadStored('modern_app_raw_items', INITIAL_RAW_ITEMS);
-    const hasRealItems = Array.isArray(saved) && saved.length > 0 && saved.some(it => it.name && it.name.trim() !== '');
-    return hasRealItems ? saved : INITIAL_RAW_ITEMS;
+    return createBlankRawItems();
   });
   useEffect(() => {
     localStorage.setItem('modern_app_raw_items', JSON.stringify(rawItems));
   }, [rawItems]);
 
-  const [finishedItems, setFinishedItems] = useState<FinishedItem[]>(() => {
-    const saved = loadStored('modern_app_finished_items', INITIAL_FINISHED_ITEMS);
-    return (Array.isArray(saved) && saved.length > 0) ? saved : INITIAL_FINISHED_ITEMS;
-  });
+  const [finishedItems, setFinishedItems] = useState<FinishedItem[]>([]);
   useEffect(() => {
     localStorage.setItem('modern_app_finished_items', JSON.stringify(finishedItems));
   }, [finishedItems]);
@@ -484,7 +472,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const billToSave: BillRecord = {
       id: existingId || (tokenStr.startsWith('B-') ? tokenStr : `B-${tokenStr}`),
       token: tokenStr,
-      date: header.date || new Date().toISOString().split('T')[0],
+      date: header.date || getTodayLocalDateStr(),
       party: cleanPartyName,
       docType: normalizeDocType(header.docType),
       vehicle: header.vehicleNo || '',
@@ -516,7 +504,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const allBills = localDb.getBills();
     const profile = getUserProfile();
     const nextToken = getNextUserToken(allBills, profile.prefix);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayLocalDateStr();
 
     const currentDoc = normalizeDocType(header.docType);
     const blankHeader: BillHeader = {
@@ -569,7 +557,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     const profile = getUserProfile();
     const nextToken = getNextUserToken(allBills, profile.prefix);
     const currentDoc = normalizeDocType(header.docType);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayLocalDateStr();
 
     const blankHeader: BillHeader = {
       docType: currentDoc,
@@ -1270,10 +1258,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     document.documentElement.style.setProperty('--glass-opacity', String(glassOpacity));
   }, [blurAmount, glassOpacity]);
 
-  // Quick Action Toggles
-  const [autoConvert, setAutoConvert] = useState<boolean>(true);
-  const [autoItem, setAutoItem] = useState<boolean>(false);
-  const [simpleMode, setSimpleMode] = useState<boolean>(false);
+  // Quick Action Toggles (Global Item Entry Mode synced across app)
+  const { autoConvert, autoItem, simpleMode, handleToggle: handleItemModeToggle } = useItemMode();
   const [rowMode, setRowMode] = useState<boolean>(false);
 
   // Modals
@@ -2588,11 +2574,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Quick Action Toggles
   const handleToggle = (key: 'autoConvert' | 'autoItem' | 'simpleMode' | 'rowMode') => {
-    if (key === 'autoConvert') setAutoConvert(v => !v);
-    if (key === 'autoItem') setAutoItem(v => !v);
-    if (key === 'simpleMode') setSimpleMode(v => !v);
-    if (key === 'rowMode') setRowMode(v => !v);
-    showToast('Toggle Updated', 'info');
+    if (key === 'rowMode') {
+      setRowMode(v => !v);
+      showToast('Row Mode Updated', 'info');
+    } else {
+      handleItemModeToggle(key);
+    }
   };
 
   return (
@@ -2642,57 +2629,57 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       >
         {/* Workspace Container: Bill UI (F1) vs Dedicated Module (F2-F10) */}
         {(activeTab === 'HOME' || activeTab === 'F1') ? (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '10px' }}>
-            {/* Top Bill Header */}
-            <AppleHeader
-              header={header}
-              onChange={(up) => setHeader(h => ({ ...h, ...up }))}
-              onCloseApp={() => showToast('Apple App Session Active', 'info')}
-              onAddNewParty={(name) => showToast(`Added "${name}" to Party Registry`, 'success')}
-              onSkipBill={handleTriggerEscapeClear}
-              onSaveBill={handleSaveCurrentBill}
-              themeMode={themeMode}
-              onChangeThemeMode={onChangeThemeMode}
-              onToggleChat={() => setIsChatOpen(prev => !prev)}
-              isChatOpen={isChatOpen}
-              onToggleCalculator={() => setIsCalculatorOpen(prev => !prev)}
-              isCalculatorOpen={isCalculatorOpen}
-              onNavigateToLeftGrid={handleNavigateToLeftGrid}
+          <div style={{ display: 'flex', flex: 1, height: '100%', minHeight: 0, gap: '10px', overflow: 'visible' }}>
+            {/* Left Action Rail with Cube-Type Magnified Dock Buttons (Full Height from Top) */}
+            <LeftActionRail
+              onSummary={calculateRightGridFromLeft}
+              onLoadOldPrice={handleLoadOldPriceFromHistory}
+              onOpenCalculator={() => setIsCalculatorOpen(true)}
+              onOpenAuditHistory={() => {
+                const currentBill = loadedBillSnapshotRef.current || localDb.getBills().find(b => String(b.token) === String(header.tokenNo));
+                setAuditTarget({
+                  id: currentBill?.id || `B-${header.tokenNo}`,
+                  token: String(header.tokenNo),
+                  party: header.partyName
+                });
+                setIsAuditModalOpen(true);
+              }}
+              onOpenUserProfile={() => {
+                setIsInitialIdentitySetup(false);
+                setIsUserIdentityOpen(true);
+              }}
+              onSave={handleSaveCurrentBill}
+              onPrintSlip={() => handleOpenPrintModal('estimate')}
+              onAddRawRow={handleAddRawItem}
+              onOpenNote={() => setIsNoteOpen(true)}
+              noteText={noteText}
+              onOpenPendingSlip={() => setIsPendingSlipOpen(true)}
+              onPartyCode={() => showToast('Party Code Dialog', 'info')}
+              onCombine={handleCombineDuplicateItems}
+              onSpeakSelection={handleVoiceSummary}
+              onExportJson={() => setIsJsonOpen(true)}
+              onReset={handleTriggerEscapeClear}
+              onPrevRecord={handlePrevBill}
+              onNextRecord={handleNextBill}
             />
 
-            {/* Center Workspace */}
-            <div style={{ display: 'flex', flex: 1, gap: '12px', minHeight: 0, overflow: 'visible' }}>
-              {/* Left Action Rail with Cube-Type Magnified Dock Buttons */}
-              <LeftActionRail
-                onSummary={calculateRightGridFromLeft}
-                onLoadOldPrice={handleLoadOldPriceFromHistory}
-                onOpenCalculator={() => setIsCalculatorOpen(true)}
-                onOpenAuditHistory={() => {
-                  const currentBill = loadedBillSnapshotRef.current || localDb.getBills().find(b => String(b.token) === String(header.tokenNo));
-                  setAuditTarget({
-                    id: currentBill?.id || `B-${header.tokenNo}`,
-                    token: String(header.tokenNo),
-                    party: header.partyName
-                  });
-                  setIsAuditModalOpen(true);
-                }}
-                onOpenUserProfile={() => {
-                  setIsInitialIdentitySetup(false);
-                  setIsUserIdentityOpen(true);
-                }}
-                onSave={handleSaveCurrentBill}
-                onPrintSlip={() => handleOpenPrintModal('estimate')}
-                onAddRawRow={handleAddRawItem}
-                onOpenNote={() => setIsNoteOpen(true)}
-                noteText={noteText}
-                onOpenPendingSlip={() => setIsPendingSlipOpen(true)}
-                onPartyCode={() => showToast('Party Code Dialog', 'info')}
-                onCombine={handleCombineDuplicateItems}
-                onSpeakSelection={handleVoiceSummary}
-                onExportJson={() => setIsJsonOpen(true)}
-                onReset={handleTriggerEscapeClear}
-                onPrevRecord={handlePrevBill}
-                onNextRecord={handleNextBill}
+            {/* Center Workspace: Top Bill Header + Grids Area */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, minWidth: 0, gap: '8px' }}>
+              {/* Top Bill Header (Bounded between Left & Right rails) */}
+              <AppleHeader
+                header={header}
+                onChange={(up) => setHeader(h => ({ ...h, ...up }))}
+                onCloseApp={() => showToast('Apple App Session Active', 'info')}
+                onAddNewParty={(name) => showToast(`Added "${name}" to Party Registry`, 'success')}
+                onSkipBill={handleTriggerEscapeClear}
+                onSaveBill={handleSaveCurrentBill}
+                themeMode={themeMode}
+                onChangeThemeMode={onChangeThemeMode}
+                onToggleChat={() => setIsChatOpen(prev => !prev)}
+                isChatOpen={isChatOpen}
+                onToggleCalculator={() => setIsCalculatorOpen(prev => !prev)}
+                isCalculatorOpen={isCalculatorOpen}
+                onNavigateToLeftGrid={handleNavigateToLeftGrid}
               />
 
               {/* Grids Area with Draggable Splitter & Bottom Mode Bar */}
@@ -2713,6 +2700,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     <LeftGrid
                       autoConvert={autoConvert}
                       autoItem={autoItem}
+                      simpleMode={simpleMode}
                       rowHeight={rowHeight}
                       onSetRowHeight={setRowHeight}
                       tableFontSize={tableFontSize}
@@ -2819,19 +2807,19 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   activeDocType={header.docType}
                 />
               </div>
-
-              {/* Right Navigation Rail */}
-              <RightNavRail
-                activeTab={activeTab}
-                onCloseApp={() => showToast('App Closed', 'info')}
-                onSelectTab={(t) => {
-                  setActiveTab(t);
-                }}
-                onToggleChat={() => setIsChatOpen(prev => !prev)}
-                isChatOpen={isChatOpen}
-                unreadChatCount={unreadChatCount}
-              />
             </div>
+
+            {/* Right Navigation Rail */}
+            <RightNavRail
+              activeTab={activeTab}
+              onCloseApp={() => showToast('App Closed', 'info')}
+              onSelectTab={(t) => {
+                setActiveTab(t);
+              }}
+              onToggleChat={() => setIsChatOpen(prev => !prev)}
+              isChatOpen={isChatOpen}
+              unreadChatCount={unreadChatCount}
+            />
           </div>
         ) : (
           <div style={{ display: 'flex', flex: 1, gap: '12px', height: '100%', minHeight: 0 }}>
@@ -3073,7 +3061,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               partyName: billData.party,
               typeSelection: billData.typeSelection || 'WHOLESALE',
               vehicleNo: billData.vehicle || '',
-              date: billData.date || new Date().toISOString().slice(0, 10),
+              date: billData.date || getTodayLocalDateStr(),
               rawItems: billData.rawItems || [],
               finishedItems: billData.finishedItems || [],
               dynamicCols: billData.dynamicCols || []
@@ -3145,7 +3133,9 @@ export default function App() {
     <ConfigProvider theme={getAntdTheme(themeMode)}>
       <DatabaseProvider>
         <SettingsProvider>
-          <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
+          <ItemModeProvider>
+            <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
+          </ItemModeProvider>
         </SettingsProvider>
       </DatabaseProvider>
     </ConfigProvider>

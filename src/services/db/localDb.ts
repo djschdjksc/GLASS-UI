@@ -64,8 +64,9 @@ class LocalDatabase {
             price: Number(f.price || 0),
             total: Number(f.total || 0)
           })),
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          createdAt: 1000000000000 + (parseInt(rawToken, 10) || 0) * 1000,
+          updatedAt: 1000000000000 + (parseInt(rawToken, 10) || 0) * 1000,
+          saveIndex: 0,
           synced: true,
           version: 1
         };
@@ -94,7 +95,12 @@ class LocalDatabase {
             const hasPrice = (Number(f.price) || 0) > 0;
             return hasMould && (hasQty || hasTotal || hasPrice);
           });
-          const cleanedBill: BillRecord = { ...b, rawItems: cleanRaw, finishedItems: cleanFinished };
+          const cleanedBill: BillRecord = { 
+            ...b, 
+            rawItems: cleanRaw, 
+            finishedItems: cleanFinished,
+            saveIndex: b.saveIndex || (b.updatedAt && b.updatedAt > 1600000000000 ? b.updatedAt : undefined)
+          };
           this.billsCache.set(cleanedBill.id, cleanedBill);
         });
       }
@@ -225,12 +231,13 @@ class LocalDatabase {
   private async ensureSeedData() {
     const existingStoreBills = await this.getAllFromStore<BillRecord>('bills');
     if (existingStoreBills.length < SQLITE_BILLS.length && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
-      const now = Date.now();
+      const seedTime = 1000000000000;
       for (const raw of SQLITE_BILLS) {
+        const rawTokenNum = parseInt(raw.token, 10) || 0;
         const bill: BillRecord = {
           id: raw.id || `B-${raw.token || Math.random().toString(36).substring(2, 7)}`,
           token: String(raw.token || '0'),
-          date: raw.date || new Date().toISOString().split('T')[0],
+          date: raw.date || '2026-07-23',
           party: raw.party || 'Standard Account',
           docType: raw.docType || 'SALE BILL',
           vehicle: raw.vehicle || 'DL-01-AB-1000',
@@ -251,12 +258,14 @@ class LocalDatabase {
             price: Number(f.price || 0),
             total: Number(f.total || 0)
           })),
-          createdAt: now,
-          updatedAt: now,
+          createdAt: seedTime + rawTokenNum * 1000,
+          updatedAt: seedTime + rawTokenNum * 1000,
+          saveIndex: 0,
           synced: true,
           version: 1
         };
-        await this.saveBill(bill, false);
+        this.billsCache.set(bill.id, bill);
+        await this.putToStore('bills', bill);
       }
     }
 
@@ -385,15 +394,44 @@ class LocalDatabase {
     }
   }
 
+  // Monotonically increasing save sequence counter for index-wise ordering
+  private getNextSaveIndex(): number {
+    try {
+      const cur = parseInt(localStorage.getItem('modern_bill_save_seq') || '10000', 10);
+      const next = (isNaN(cur) ? 10000 : cur) + 1;
+      localStorage.setItem('modern_bill_save_seq', String(next));
+      return next;
+    } catch {
+      return Date.now();
+    }
+  }
+
   // --- Synchronous Instant Getters (0ms UI latency) ---
   public getBills(): BillRecord[] {
     return Array.from(this.billsCache.values()).sort((a, b) => {
+      // 1. Explicit saveIndex takes highest priority (Newest bill saved = highest saveIndex = TOP)
+      const saveIdxA = a.saveIndex || 0;
+      const saveIdxB = b.saveIndex || 0;
+      if (saveIdxA > 0 || saveIdxB > 0) {
+        if (saveIdxB !== saveIdxA) {
+          return saveIdxB - saveIdxA;
+        }
+      }
+
+      // 2. Sort by latest updated/created timestamp (Newest saved bills ALWAYS at the top)
+      const timeA = a.updatedAt || a.createdAt || 0;
+      const timeB = b.updatedAt || b.createdAt || 0;
+      if (timeB !== timeA) {
+        return timeB - timeA;
+      }
+
+      // 3. Secondary fallback for historical seed records
       const numA = parseInt(a.token, 10);
       const numB = parseInt(b.token, 10);
       if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
         return numB - numA;
       }
-      return b.updatedAt - a.updatedAt;
+      return String(b.token || '').localeCompare(String(a.token || ''));
     });
   }
 
@@ -420,7 +458,12 @@ class LocalDatabase {
 
   // --- CRUD Operations (Optimistic UI + Persistent DB + Sync Enqueue) ---
   public async saveBill(bill: BillRecord, enqueueSync = true): Promise<BillRecord> {
-    bill.updatedAt = Date.now();
+    const nowTime = Date.now();
+    bill.updatedAt = nowTime;
+    if (!bill.createdAt || bill.createdAt < 1600000000000) {
+      bill.createdAt = nowTime;
+    }
+    bill.saveIndex = this.getNextSaveIndex();
 
     // Ensure clean raw and finished items without blank/dummy rows
     bill.rawItems = (bill.rawItems || []).filter(r => {

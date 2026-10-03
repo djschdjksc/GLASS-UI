@@ -100,7 +100,7 @@ export const supabaseToBillRecord = (row: any): BillRecord => {
   return {
     id: row.id,
     token: String(row.token || ''),
-    date: row.date || '2026-07-23',
+    date: row.date || new Date().toISOString().slice(0, 10),
     party: row.party || 'Standard Account',
     docType: row.doc_type || 'SALE BILL',
     vehicle: row.vehicle || '',

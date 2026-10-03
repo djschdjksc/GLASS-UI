@@ -16,6 +16,7 @@ export interface BillRecord {
   hasPartyCodeCol?: boolean;
   createdAt: number;
   updatedAt: number;
+  saveIndex?: number;
   synced: boolean;
   version: number;
   lastModifiedBy?: string;

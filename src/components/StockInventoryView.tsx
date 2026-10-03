@@ -28,11 +28,16 @@ import {
   PlusCircle,
   Columns,
   FileText,
-  ShoppingCart
+  ShoppingCart,
+  ArrowRightLeft,
+  PackagePlus,
+  SlidersHorizontal
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
+import { useItemMode } from '../context/ItemModeContext';
+import { resolveItemNameWithMode } from '../utils/itemExpansion';
 import { macAudio } from '../utils/macAudio';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import {
@@ -150,24 +155,49 @@ const STOCK_VOUCHERS_KEY = 'modern_stock_vouchers';
 const STOCK_COUNTER_KEY = 'modern_stock_voucher_counter';
 const STOCK_DYNCOLS_KEY = 'modern_stock_dyncols';
 
-// Helper: Normalize item name with size e.g. "C M 161 (10FT)"
+// Helper: Extract clean base name without size e.g. "B.F.P 154 ((12FT)FT)" or "C M 161 (10FT)" -> "B.F.P 154"
+export function extractBaseItemName(name: string): string {
+  if (!name) return '';
+  return name.replace(/\s*\(+[\d.]+\s*(?:FT|FEET)?\s*\)*(?:FT)?\s*\)*/gi, '').trim();
+}
+
+// Helper: Normalize item name with size e.g. "B.F.P 154", "(12 FT)" -> "B.F.P 154 (12FT)"
 export function formatItemWithSize(rawName: string, sizeLabel?: string): string {
   const trimmed = (rawName || '').trim();
   if (!trimmed) return '';
-  
-  // If already contains (XXFT) or (XX FT) or (XX)
-  if (/\(\s*\d+(\.\d+)?\s*(ft|feet)?\s*\)/i.test(trimmed)) {
-    return trimmed;
+
+  const baseName = extractBaseItemName(trimmed);
+
+  // Extract clean numeric size e.g. "(12 FT)" -> "12", "12FT" -> "12", "10" -> "10"
+  let sizeNum = '';
+  if (sizeLabel) {
+    sizeNum = sizeLabel.replace(/[^\d.]/g, '').trim();
   }
-  
-  const size = (sizeLabel || '10FT').trim().toUpperCase().replace(/\s+/g, '');
-  const cleanSize = size.endsWith('FT') ? size : `${size}FT`;
-  return `${trimmed} (${cleanSize})`;
+
+  if (!sizeNum) {
+    // Check if rawName had a size inside parentheses e.g. "B.F.P 154 ((12FT)FT)" or "(12FT)"
+    const match = trimmed.match(/\(+([\d.]+)/);
+    if (match && match[1]) {
+      sizeNum = match[1];
+    }
+  }
+
+  // Fallback to 10 if no size found
+  if (!sizeNum) {
+    sizeNum = '10';
+  }
+
+  return `${baseName} (${sizeNum}FT)`;
 }
 
-// Helper: Extract clean base name without size e.g. "C M 161 (10FT)" -> "C M 161"
-export function extractBaseItemName(name: string): string {
-  return (name || '').replace(/\(\s*\d+(\.\d+)?\s*(ft|feet)?\s*\)/i, '').trim();
+// Helper: Extract size e.g. "C M 161 (10FT)" -> "10 FT", "Item (12 FT)" -> "12 FT"
+export function extractSizeFromItem(name: string): string {
+  if (!name) return '10 FT';
+  const match = name.match(/\(+([\d.]+)/);
+  if (match && match[1]) {
+    return `${match[1]} FT`;
+  }
+  return '10 FT';
 }
 
 // Helper: Extract category prefix (first word)
@@ -227,10 +257,8 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const [isAddColModalOpen, setIsAddColModalOpen] = useState<boolean>(false);
   const [newColSizeInput, setNewColSizeInput] = useState<string>('');
 
-  // Smart Toggles (Auto-Convert, Auto-Item, Simple Mode)
-  const [autoConvert, setAutoConvert] = useState<boolean>(true);
-  const [autoItem, setAutoItem] = useState<boolean>(true);
-  const [simpleMode, setSimpleMode] = useState<boolean>(false);
+  // Smart Toggles (Auto-Convert, Auto-Item, Simple Mode) synced globally
+  const { autoConvert, autoItem, simpleMode, handleToggle } = useItemMode();
 
   // Dynamic Item Rows for Voucher
   const [stockRows, setStockRows] = useState<StockVoucherItem[]>([
@@ -254,6 +282,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const [balanceSearch, setBalanceSearch] = useState<string>('');
   const [balanceFilter, setBalanceFilter] = useState<string>('All Items');
   const [balanceCategory, setBalanceCategory] = useState<string>('All Categories');
+  const [balanceSize, setBalanceSize] = useState<string>('All Sizes');
 
   // --- TAB 5: PRINT BARCODE STATE ---
   const [barcodeSearch, setBarcodeSearch] = useState<string>('');
@@ -274,7 +303,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   // Reset pages when filters change
   useEffect(() => { setInwardPage(1); }, [inwardSearch, inwardTypeFilter]);
   useEffect(() => { setOutwardPage(1); }, [outwardSearch, outwardTypeFilter]);
-  useEffect(() => { setBalancePage(1); }, [balanceSearch, balanceFilter, balanceCategory]);
+  useEffect(() => { setBalancePage(1); }, [balanceSearch, balanceFilter, balanceCategory, balanceSize]);
   useEffect(() => { setBarcodePage(1); }, [barcodeSearch, barcodeCategory]);
 
   // Selected row index state for Tally Keyboard Navigation
@@ -321,7 +350,18 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const [vouchers, setVouchers] = useState<StockVoucher[]>(() => {
     try {
       const saved = localStorage.getItem(STOCK_VOUCHERS_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: StockVoucher[] = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((v) => ({
+            ...v,
+            items: (v.items || []).map((it) => ({
+              ...it,
+              name: formatItemWithSize(it.name)
+            }))
+          }));
+        }
+      }
     } catch {}
     // Seed initial voucher if completely empty
     return [
@@ -614,13 +654,14 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   // LIVE BALANCE TRACKER FOR ENTER STOCK ROWS (QTY, U-CAP, L-CAP)
   // =========================================================================
   // Computes the live balance for any row item:
-  // - Qty Balance: total live balance across sizes or exact item
-  // - U Cap Balance: total live balance of U Cap for this item
-  // - L Cap Balance: total live balance of L Cap for this item
+  // =========================================================================
+  // LIVE BALANCE TRACKER FOR ENTER STOCK ROWS (QTY, U-CAP, L-CAP)
+  // Real-time calculation: Previous DB Balance + Current Voucher's Inward Entry
+  // =========================================================================
   const getLiveBalancesForRow = (rawName: string) => {
     const trimmed = (rawName || '').trim();
     if (!trimmed) {
-      return { qtyBal: null, uCapBal: null, lCapBal: null, hasItem: false };
+      return { qtyBal: null, uCapBal: null, lCapBal: null, sizeBals: {} as Record<string, number>, hasItem: false };
     }
 
     const baseName = extractBaseItemName(trimmed).toLowerCase();
@@ -628,7 +669,9 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     let totalU = 0;
     let totalL = 0;
     let matchFound = false;
+    const sizeBals: Record<string, number> = {};
 
+    // 1. Existing DB Balance from stockBalanceList
     stockBalanceList.forEach((b) => {
       const bBase = extractBaseItemName(b.itemName).toLowerCase();
       if (bBase === baseName || b.itemName.toLowerCase() === trimmed.toLowerCase()) {
@@ -636,15 +679,78 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
         totalQty += b.balanceQty;
         totalU += b.balanceUCap;
         totalL += b.balanceLCap;
+
+        // Parse size suffix e.g. "C M 161 (10FT)" or "(12 FT)"
+        const sizeMatch = b.itemName.match(/\(\s*([\d.]+\s*(?:FT|FEET)?)\s*\)/i);
+        if (sizeMatch && sizeMatch[1]) {
+          const sz = sizeMatch[1].toUpperCase().replace(/\s+/g, '');
+          const norm = sz.endsWith('FT') ? sz : `${sz}FT`;
+          sizeBals[norm] = (sizeBals[norm] || 0) + b.balanceQty;
+        } else {
+          sizeBals['10FT'] = (sizeBals['10FT'] || 0) + b.balanceQty;
+        }
       }
     });
 
+    // 2. Real-time Inward Additions from currently entered voucher rows (stockRows)
+    let currentInward10 = 0;
+    const currentInwardSizes: Record<string, number> = {};
+    let currentInwardU = 0;
+    let currentInwardL = 0;
+
+    stockRows.forEach((sr) => {
+      if (!sr.name || !sr.name.trim()) return;
+      const srBase = extractBaseItemName(sr.name).toLowerCase();
+      if (srBase === baseName || sr.name.toLowerCase().trim() === trimmed.toLowerCase()) {
+        currentInward10 += Number(sr.qty) || 0;
+        currentInwardU += Number(sr.uCap) || 0;
+        currentInwardL += Number(sr.lCap) || 0;
+
+        dynamicCols.forEach((dc) => {
+          const szKey = dc.label.replace(/[()\s]/g, '').toUpperCase();
+          const norm = szKey.endsWith('FT') ? szKey : `${szKey}FT`;
+          currentInwardSizes[norm] = (currentInwardSizes[norm] || 0) + (Number(sr[dc.field]) || 0);
+        });
+      }
+    });
+
+    // Add current voucher's inward additions to live balance
+    sizeBals['10FT'] = (sizeBals['10FT'] || 0) + currentInward10;
+    dynamicCols.forEach((dc) => {
+      const szKey = dc.label.replace(/[()\s]/g, '').toUpperCase();
+      const norm = szKey.endsWith('FT') ? szKey : `${szKey}FT`;
+      sizeBals[norm] = (sizeBals[norm] || 0) + (currentInwardSizes[norm] || 0);
+    });
+
     return {
-      qtyBal: matchFound ? totalQty : 0,
-      uCapBal: matchFound ? totalU : 0,
-      lCapBal: matchFound ? totalL : 0,
+      qtyBal: (matchFound ? totalQty : 0) + currentInward10 + Object.values(currentInwardSizes).reduce((a, b) => a + b, 0),
+      uCapBal: (matchFound ? totalU : 0) + currentInwardU,
+      lCapBal: (matchFound ? totalL : 0) + currentInwardL,
+      sizeBals,
       hasItem: true
     };
+  };
+
+  // Helper to render negative (RED), positive (GREEN), and zero (GRAY) balance badges without 'pcs' suffix
+  const renderBalanceBadge = (val: number | null | undefined, hasItem: boolean) => {
+    if (!hasItem || val === null || val === undefined) {
+      return <span style={{ color: '#71717a' }}>-</span>;
+    }
+    if (val > 0) {
+      return (
+        <span style={{ color: '#22c55e', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", fontSize: '13px' }}>
+          +{val}
+        </span>
+      );
+    }
+    if (val < 0) {
+      return (
+        <span style={{ color: '#ef4444', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", fontSize: '13px' }}>
+          {val}
+        </span>
+      );
+    }
+    return <span style={{ color: '#71717a', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", fontSize: '13px' }}>0</span>;
   };
 
   // Distinct Categories for filters
@@ -652,6 +758,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
     const set = new Set<string>();
     stockBalanceList.forEach((b) => set.add(b.category));
     return ['All Categories', ...Array.from(set).sort()];
+  }, [stockBalanceList]);
+
+  // Distinct Sizes for filters in Stock Balance tab
+  const uniqueSizes = useMemo(() => {
+    const set = new Set<string>();
+    stockBalanceList.forEach((b) => {
+      const sz = extractSizeFromItem(b.itemName);
+      if (sz) set.add(sz);
+    });
+    const sorted = Array.from(set).sort((a, b) => {
+      const numA = parseFloat(a) || 0;
+      const numB = parseFloat(b) || 0;
+      return numA - numB;
+    });
+    return ['All Sizes', ...sorted];
   }, [stockBalanceList]);
 
   // Overall KPI Balances
@@ -799,25 +920,52 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
   const handleStockRowChange = (index: number, field: string, value: any) => {
     setStockRows((prev) => {
       const updated = [...prev];
-      const row = { ...updated[index], [field]: value };
+      if (!updated[index]) return prev;
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
 
-      // Auto-item & Auto-convert expansion logic
-      if (field === 'name' && typeof value === 'string') {
-        const trimmed = value.trim();
-        const lower = trimmed.toLowerCase();
+  // Commit item name resolution on Enter or Blur (matches Bill UI behavior)
+  const commitStockItemName = (index: number, explicitVal?: string) => {
+    const row = stockRows[index];
+    if (!row) return;
+    const rawVal = explicitVal !== undefined ? explicitVal : (row.name || '');
+    if (!rawVal.trim()) return;
 
-        // Check if exact match to a shortcut and autoConvert is ON
-        if (autoConvert && conversionMap.has(lower)) {
-          const match = conversionMap.get(lower);
-          row.name = match.conversion || match.shortcut;
-          if (autoItem) {
-            row.uCap = Number(match.u_cap) || 0;
-            row.lCap = Number(match.l_cap) || 0;
-          }
-        }
+    const prevItemName = index > 0 ? stockRows[index - 1]?.name : undefined;
+    const { finalName, autoUCap, autoLCap, insertedSize } = resolveItemNameWithMode({
+      rawVal,
+      rowIndex: index,
+      prevItemName,
+      autoConvert,
+      autoItem,
+      simpleMode
+    });
+
+    // Auto-Insert Size Column if matched rule specifies a size (e.g. 12, 9.5) and not default 10
+    if (insertedSize && !dynamicCols.some(c => c.field === `qty_${String(insertedSize).replace('.', '_')}`)) {
+      const field = `qty_${String(insertedSize).replace('.', '_')}`;
+      const label = `(${insertedSize} FT)`;
+      setDynamicCols(prev => {
+        if (prev.some(c => c.field === field)) return prev;
+        return [...prev, { field, label }];
+      });
+      showToast?.(`Auto-inserted (${insertedSize} FT) size column for ${finalName}`, 'info');
+    }
+
+    setStockRows((prev) => {
+      const updated = [...prev];
+      if (!updated[index]) return prev;
+      const target = { ...updated[index] };
+      target.name = finalName;
+      if (autoUCap !== undefined && autoUCap !== null && !isNaN(Number(autoUCap))) {
+        target.uCap = Number(autoUCap);
       }
-
-      updated[index] = row;
+      if (autoLCap !== undefined && autoLCap !== null && !isNaN(Number(autoLCap))) {
+        target.lCap = Number(autoLCap);
+      }
+      updated[index] = target;
       return updated;
     });
   };
@@ -1106,7 +1254,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
       const row = groupedRows.get(base)!;
       // Check size from name e.g. (10FT), (12FT), (9.5FT)
-      const sizeMatch = item.name.match(/\(\s*(\d+(\.\d+)?)\s*(ft|feet)?\s*\)/i);
+      const sizeMatch = item.name.match(/\(+([\d.]+)/);
       const sizeNum = sizeMatch ? parseFloat(sizeMatch[1]) : 10;
 
       if (sizeNum === 10 || isNaN(sizeNum)) {
@@ -1229,13 +1377,15 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       const q = balanceSearch.toLowerCase();
       const matchSearch = !q || row.itemName.toLowerCase().includes(q);
       const matchCat = balanceCategory === 'All Categories' || row.category === balanceCategory;
+      const rowSize = extractSizeFromItem(row.itemName);
+      const matchSize = balanceSize === 'All Sizes' || rowSize === balanceSize;
       let matchBal = true;
       if (balanceFilter === 'Positive Balance') matchBal = row.balanceQty > 0;
       if (balanceFilter === 'Negative Balance') matchBal = row.balanceQty < 0;
       if (balanceFilter === 'Zero Balance') matchBal = row.balanceQty === 0;
-      return matchSearch && matchCat && matchBal;
+      return matchSearch && matchCat && matchSize && matchBal;
     });
-  }, [stockBalanceList, balanceSearch, balanceCategory, balanceFilter]);
+  }, [stockBalanceList, balanceSearch, balanceCategory, balanceSize, balanceFilter]);
 
   const balancePageSlice = useMemo(() => {
     const start = (balancePage - 1) * balancePageSize;
@@ -1376,7 +1526,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       return;
     }
 
-    const rowsHtml = stockBalanceList
+    const rowsHtml = filteredBalanceList
       .map(
         (r, idx) => `
         <tr style="background: ${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
@@ -1873,136 +2023,6 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   </ShadcnButton>
                 </div>
               </div>
-
-              {/* Row 2: Multi-Column Size Manager Bar (Disciplined Shadcn Toolbar) */}
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingTop: '8px',
-                  borderTop: '1px solid #27272a',
-                  gap: '8px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#a1a1aa', fontSize: '12px', fontWeight: 500 }}>
-                    <Columns size={14} />
-                    <span>Columns:</span>
-                  </div>
-
-                  {/* Base Primary Size Pill */}
-                  <ShadcnBadge 
-                    variant="secondary" 
-                    style={{ 
-                      background: '#27272a', 
-                      color: '#f4f4f5', 
-                      border: '1px solid #3f3f46', 
-                      fontSize: '12px', 
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      fontWeight: 500
-                    }}
-                  >
-                    10 FT (Default)
-                  </ShadcnBadge>
-
-                  {/* Active Dynamic Columns with Delete Button */}
-                  {dynamicCols.map((dc) => (
-                    <ShadcnBadge
-                      key={dc.field}
-                      variant="outline"
-                      style={{
-                        background: '#18181b',
-                        border: '1px solid #3f3f46',
-                        color: '#f4f4f5',
-                        padding: '3px 8px',
-                        fontSize: '12px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        borderRadius: '4px',
-                        fontWeight: 500
-                      }}
-                    >
-                      <span>{dc.label}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDynamicCol(dc.field, dc.label)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#a1a1aa',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          padding: 0,
-                          alignItems: 'center'
-                        }}
-                        title={`Remove ${dc.label} column`}
-                      >
-                        <X size={12} />
-                      </button>
-                    </ShadcnBadge>
-                  ))}
-
-                  {/* Quick Add Size Presets */}
-                  <span style={{ fontSize: '12px', color: '#71717a', marginLeft: '4px' }}>Quick Add:</span>
-                  {[
-                    { label: '+ 12 FT', val: 12 },
-                    { label: '+ 9.5 FT', val: 9.5 },
-                    { label: '+ 11 FT', val: 11 },
-                    { label: '+ 14 FT', val: 14 },
-                    { label: '+ 8 FT', val: 8 }
-                  ].map((preset) => {
-                    const alreadyHas = dynamicCols.some((dc) => dc.sizeNum === preset.val);
-                    return (
-                      <ShadcnButton
-                        key={preset.label}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={alreadyHas}
-                        onClick={() => handleAddDynamicCol(preset.val)}
-                        style={{
-                          height: '28px',
-                          padding: '0 9px',
-                          fontSize: '12px',
-                          borderColor: '#27272a',
-                          color: alreadyHas ? '#52525b' : '#f4f4f5',
-                          borderRadius: '6px'
-                        }}
-                      >
-                        {preset.label}
-                      </ShadcnButton>
-                    );
-                  })}
-
-                  {/* Add Custom Size Button */}
-                  <ShadcnButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      macAudio.playPop();
-                      setIsAddColModalOpen(true);
-                    }}
-                    style={{
-                      height: '28px',
-                      padding: '0 10px',
-                      fontSize: '12px',
-                      borderColor: '#27272a',
-                      color: '#f4f4f5',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      borderRadius: '6px'
-                    }}
-                  >
-                    <Plus size={12} />
-                    <span>Custom Size</span>
-                  </ShadcnButton>
-                </div>
-              </div>
             </div>
 
             {/* Inward Items Entry Table with MULTI-COLUMNS and 3 LIVE BALANCE COLUMNS */}
@@ -2019,31 +2039,32 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
                   <tr style={{ borderBottom: '1px solid #27272a' }}>
-                    <th style={{ width: '40px', padding: '8px 4px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' }}>#</th>
+                    <th style={{ width: '45px', padding: '8px 4px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' }}>#</th>
                     <th style={{ minWidth: '280px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       ITEM NAME
                     </th>
 
                     {/* Primary Base Column (10 FT) */}
-                    <th style={{ width: '75px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600 }}>
+                    <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                         <span>(10 FT)</span>
                         <button
                           type="button"
                           onClick={() => setIsAddColModalOpen(true)}
                           style={{
-                            background: '#27272a',
-                            border: '1px solid #3f3f46',
-                            color: '#f4f4f5',
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            color: '#ffffff',
                             borderRadius: '4px',
-                            width: '16px',
-                            height: '16px',
+                            width: '18px',
+                            height: '18px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            fontSize: '11px',
-                            fontWeight: 600
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            lineHeight: 1
                           }}
                           title="Add new size column"
                         >
@@ -2057,7 +2078,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       <th 
                         key={dc.field} 
                         style={{
-                          width: '75px',
+                          width: '95px',
                           padding: '8px 8px',
                           textAlign: 'right',
                           color: '#a1a1aa',
@@ -2074,7 +2095,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             style={{
                               background: 'transparent',
                               border: 'none',
-                              color: '#71717a',
+                              color: '#ef4444',
                               cursor: 'pointer',
                               padding: 0,
                               display: 'flex',
@@ -2088,23 +2109,59 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                       </th>
                     ))}
 
-                    {/* U CAP & L CAP (Hidden in Simple Mode) */}
-                    {!simpleMode && (
-                      <>
-                        <th style={{ width: '70px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
-                          U CAP
-                        </th>
-                        <th style={{ width: '70px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
-                          L CAP
-                        </th>
-                      </>
-                    )}
+                    {/* U CAP & L CAP Input Columns (Always visible) */}
+                    <th style={{ width: '85px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
+                      U CAP
+                    </th>
+                    <th style={{ width: '85px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
+                      L CAP
+                    </th>
 
-                    {/* 3 DEDICATED LIVE BALANCE TRACKING COLUMNS */}
+                    {/* REAL-TIME LIVE BALANCE TRACKING COLUMNS */}
+                    {/* 1. Base (10 FT) Balance */}
                     <th 
                       style={{ 
-                        width: '85px', 
-                        padding: '8px 10px', 
+                        width: '100px', 
+                        padding: '8px 8px', 
+                        textAlign: 'right', 
+                        color: '#38bdf8', 
+                        borderLeft: '2px solid rgba(56, 189, 248, 0.4)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        background: 'rgba(56, 189, 248, 0.05)'
+                      }}
+                      title="Current live net balance of (10 FT)"
+                    >
+                      BAL (10 FT)
+                    </th>
+
+                    {/* 2. Dynamic Size Balances: BAL (12 FT), BAL (9.5 FT) etc. */}
+                    {dynamicCols.map((dc) => (
+                      <th 
+                        key={`bal-${dc.field}`}
+                        style={{ 
+                          width: '100px', 
+                          padding: '8px 8px', 
+                          textAlign: 'right', 
+                          color: '#38bdf8', 
+                          borderLeft: '1px solid #27272a',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          background: 'rgba(56, 189, 248, 0.05)'
+                        }}
+                        title={`Current live net balance of ${dc.label}`}
+                      >
+                        BAL {dc.label}
+                      </th>
+                    ))}
+
+                    {/* 3. U-Cap Balance */}
+                    <th 
+                      style={{ 
+                        width: '95px', 
+                        padding: '8px 8px', 
                         textAlign: 'right', 
                         color: '#a1a1aa', 
                         borderLeft: '1px solid #27272a',
@@ -2112,48 +2169,29 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         fontWeight: 600,
                         textTransform: 'uppercase'
                       }}
-                      title="Current live net balance of this item's Qty"
+                      title="Current live net balance of this item's U-Cap"
                     >
-                      QTY BAL
+                      U-CAP BAL
                     </th>
 
-                    {!simpleMode && (
-                      <>
-                        <th 
-                          style={{ 
-                            width: '85px', 
-                            padding: '8px 10px', 
-                            textAlign: 'right', 
-                            color: '#a1a1aa', 
-                            borderLeft: '1px solid #27272a',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            textTransform: 'uppercase'
-                          }}
-                          title="Current live net balance of this item's U-Cap"
-                        >
-                          U-CAP BAL
-                        </th>
+                    {/* 4. L-Cap Balance */}
+                    <th 
+                      style={{ 
+                        width: '95px', 
+                        padding: '8px 8px', 
+                        textAlign: 'right', 
+                        color: '#a1a1aa', 
+                        borderLeft: '1px solid #27272a',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase'
+                      }}
+                      title="Current live net balance of this item's L-Cap"
+                    >
+                      L-CAP BAL
+                    </th>
 
-                        <th 
-                          style={{ 
-                            width: '85px', 
-                            padding: '8px 10px', 
-                            textAlign: 'right', 
-                            color: '#a1a1aa', 
-                            borderLeft: '1px solid #27272a',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            textTransform: 'uppercase'
-                          }}
-                          title="Current live net balance of this item's L-Cap"
-                        >
-                          L-CAP BAL
-                        </th>
-                      </>
-                    )}
-
-                    <th style={{ width: '40px', padding: '8px 4px', textAlign: 'center', color: '#71717a', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600 }}>DEL</th>
+                    <th style={{ width: '45px', padding: '8px 4px', textAlign: 'center', color: '#71717a', borderLeft: '1px solid #27272a', fontSize: '11px', fontWeight: 600 }}>DEL</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2192,8 +2230,9 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                 setActiveSuggestRow(idx);
                               }
                             }}
-                            onBlur={() => {
+                            onBlur={(e) => {
                               setTimeout(() => setActiveSuggestRow(null), 200);
+                              commitStockItemName(idx, e.target.value);
                             }}
                             onKeyDown={(e) => {
                               if (activeSuggestRow === idx && currentSuggestions.length > 0) {
@@ -2244,18 +2283,20 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
 
                               if (e.key === 'Enter') {
                                 e.preventDefault();
+                                setActiveSuggestRow(null);
+                                commitStockItemName(idx, e.currentTarget.value);
                                 const nextInput = document.getElementById(`stock-qty-10-${idx}`);
                                 if (nextInput) nextInput.focus();
                               }
                             }}
                             style={{
                               width: '100%',
-                              height: '28px',
+                              height: '30px',
                               background: '#18181b',
                               border: '1px solid #27272a',
                               borderRadius: '4px',
                               color: '#f4f4f5',
-                              fontSize: '12px',
+                              fontSize: '13px',
                               fontWeight: 500,
                               outline: 'none',
                               padding: '0 8px',
@@ -2342,7 +2383,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                 e.preventDefault();
                                 if (dynamicCols.length > 0) {
                                   document.getElementById(`stock-${dynamicCols[0].field}-${idx}`)?.focus();
-                                } else if (!simpleMode) {
+                                } else {
                                   document.getElementById(`stock-ucap-${idx}`)?.focus();
                                 }
                                 return;
@@ -2352,24 +2393,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                 if (dynamicCols.length > 0) {
                                   const nextDyn = document.getElementById(`stock-${dynamicCols[0].field}-${idx}`);
                                   if (nextDyn) nextDyn.focus();
-                                } else if (!simpleMode) {
+                                } else {
                                   const next = document.getElementById(`stock-ucap-${idx}`);
                                   if (next) next.focus();
-                                } else {
-                                  if (idx === stockRows.length - 1) handleAddStockRow();
-                                  else document.getElementById(`stock-item-${idx + 1}`)?.focus();
                                 }
                               }
                             }}
                             style={{
                               width: '100%',
-                              height: '28px',
+                              height: '30px',
                               textAlign: 'right',
                               background: '#18181b',
                               border: '1px solid #27272a',
                               borderRadius: '4px',
                               color: '#f4f4f5',
-                              fontSize: '12px',
+                              fontSize: '13px',
                               fontWeight: 500,
                               outline: 'none',
                               padding: '0 6px',
@@ -2410,7 +2448,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                   e.preventDefault();
                                   if (dcIdx < dynamicCols.length - 1) {
                                     document.getElementById(`stock-${dynamicCols[dcIdx + 1].field}-${idx}`)?.focus();
-                                  } else if (!simpleMode) {
+                                  } else {
                                     document.getElementById(`stock-ucap-${idx}`)?.focus();
                                   }
                                   return;
@@ -2420,24 +2458,21 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                   if (dcIdx < dynamicCols.length - 1) {
                                     const next = document.getElementById(`stock-${dynamicCols[dcIdx + 1].field}-${idx}`);
                                     if (next) next.focus();
-                                  } else if (!simpleMode) {
+                                  } else {
                                     const next = document.getElementById(`stock-ucap-${idx}`);
                                     if (next) next.focus();
-                                  } else {
-                                    if (idx === stockRows.length - 1) handleAddStockRow();
-                                    else document.getElementById(`stock-item-${idx + 1}`)?.focus();
                                   }
                                 }
                               }}
                               style={{
                                 width: '100%',
-                                height: '28px',
+                                height: '30px',
                                 textAlign: 'right',
                                 background: '#18181b',
                                 border: '1px solid #27272a',
                                 borderRadius: '4px',
                                 color: '#f4f4f5',
-                                fontSize: '12px',
+                                fontSize: '13px',
                                 fontWeight: 500,
                                 outline: 'none',
                                 padding: '0 6px',
@@ -2447,172 +2482,174 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                           </td>
                         ))}
 
-                        {/* U Cap Input */}
-                        {!simpleMode && (
-                          <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
-                            <input
-                              id={`stock-ucap-${idx}`}
-                              type="number"
-                              value={row.uCap || ''}
-                              onChange={(e) => handleStockRowChange(idx, 'uCap', parseFloat(e.target.value) || 0)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'ArrowDown') {
-                                  e.preventDefault();
-                                  document.getElementById(`stock-ucap-${idx + 1}`)?.focus();
-                                  return;
+                        {/* U Cap Input (Always Visible) */}
+                        <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
+                          <input
+                            id={`stock-ucap-${idx}`}
+                            type="number"
+                            value={row.uCap || ''}
+                            onChange={(e) => handleStockRowChange(idx, 'uCap', parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                document.getElementById(`stock-ucap-${idx + 1}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                document.getElementById(`stock-ucap-${idx - 1}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
+                                e.preventDefault();
+                                if (dynamicCols.length > 0) {
+                                  document.getElementById(`stock-${dynamicCols[dynamicCols.length - 1].field}-${idx}`)?.focus();
+                                } else {
+                                  document.getElementById(`stock-qty-10-${idx}`)?.focus();
                                 }
-                                if (e.key === 'ArrowUp') {
-                                  e.preventDefault();
-                                  document.getElementById(`stock-ucap-${idx - 1}`)?.focus();
-                                  return;
-                                }
-                                if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
-                                  e.preventDefault();
-                                  if (dynamicCols.length > 0) {
-                                    document.getElementById(`stock-${dynamicCols[dynamicCols.length - 1].field}-${idx}`)?.focus();
-                                  } else {
-                                    document.getElementById(`stock-qty-10-${idx}`)?.focus();
-                                  }
-                                  return;
-                                }
-                                if (e.key === 'ArrowRight' && (e.currentTarget.selectionEnd === e.currentTarget.value.length || !e.currentTarget.value)) {
-                                  e.preventDefault();
-                                  document.getElementById(`stock-lcap-${idx}`)?.focus();
-                                  return;
-                                }
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  const next = document.getElementById(`stock-lcap-${idx}`);
-                                  if (next) next.focus();
-                                }
-                              }}
-                              style={{
-                                width: '100%',
-                                height: '28px',
-                                textAlign: 'right',
-                                background: '#18181b',
-                                border: '1px solid #27272a',
-                                borderRadius: '4px',
-                                color: '#f4f4f5',
-                                fontSize: '12px',
-                                fontWeight: 500,
-                                outline: 'none',
-                                padding: '0 6px',
-                                boxSizing: 'border-box'
-                              }}
-                            />
-                          </td>
-                        )}
-
-                        {/* L Cap Input */}
-                        {!simpleMode && (
-                          <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
-                            <input
-                              id={`stock-lcap-${idx}`}
-                              type="number"
-                              value={row.lCap || ''}
-                              onChange={(e) => handleStockRowChange(idx, 'lCap', parseFloat(e.target.value) || 0)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'ArrowDown') {
-                                  e.preventDefault();
-                                  document.getElementById(`stock-lcap-${idx + 1}`)?.focus();
-                                  return;
-                                }
-                                if (e.key === 'ArrowUp') {
-                                  e.preventDefault();
-                                  document.getElementById(`stock-lcap-${idx - 1}`)?.focus();
-                                  return;
-                                }
-                                if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
-                                  e.preventDefault();
-                                  document.getElementById(`stock-ucap-${idx}`)?.focus();
-                                  return;
-                                }
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  if (idx === stockRows.length - 1) {
-                                    handleAddStockRow();
-                                    setTimeout(() => {
-                                      document.getElementById(`stock-item-${idx + 1}`)?.focus();
-                                    }, 50);
-                                  } else {
-                                    document.getElementById(`stock-item-${idx + 1}`)?.focus();
-                                  }
-                                }
-                              }}
-                              style={{
-                                width: '100%',
-                                height: '28px',
-                                textAlign: 'right',
-                                background: '#18181b',
-                                border: '1px solid #27272a',
-                                borderRadius: '4px',
-                                color: '#f4f4f5',
-                                fontSize: '12px',
-                                fontWeight: 500,
-                                outline: 'none',
-                                padding: '0 6px',
-                                boxSizing: 'border-box'
-                              }}
-                            />
-                          </td>
-                        )}
-
-                        {/* =================================================== */}
-                        {/* 3 LIVE BALANCE TRACKING CELLS (UNEDITABLE DISPLAY) */}
-                        {/* =================================================== */}
-
-                        {/* QTY BALANCE CELL */}
-                        <td 
-                          style={{
-                            padding: '6px 10px',
-                            textAlign: 'right',
-                            fontWeight: 500,
-                            fontSize: '12px',
-                            borderLeft: '1px solid #27272a',
-                            color: balances.hasItem
-                              ? (balances.qtyBal! < 0 ? '#ef4444' : '#f4f4f5')
-                              : '#71717a'
-                          }}
-                        >
-                          {balances.hasItem ? `${balances.qtyBal! > 0 ? '+' : ''}${balances.qtyBal} pcs` : '-'}
+                                return;
+                              }
+                              if (e.key === 'ArrowRight' && (e.currentTarget.selectionEnd === e.currentTarget.value.length || !e.currentTarget.value)) {
+                                e.preventDefault();
+                                document.getElementById(`stock-lcap-${idx}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const next = document.getElementById(`stock-lcap-${idx}`);
+                                if (next) next.focus();
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              height: '30px',
+                              textAlign: 'right',
+                              background: '#18181b',
+                              border: '1px solid #27272a',
+                              borderRadius: '4px',
+                              color: '#f4f4f5',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              outline: 'none',
+                              padding: '0 6px',
+                              boxSizing: 'border-box'
+                            }}
+                          />
                         </td>
 
-                        {/* U CAP BALANCE CELL */}
-                        {!simpleMode && (
-                          <td 
-                            style={{
-                              padding: '6px 10px',
-                              textAlign: 'right',
-                              fontWeight: 500,
-                              fontSize: '12px',
-                              borderLeft: '1px solid #27272a',
-                              color: balances.hasItem
-                                ? (balances.uCapBal! < 0 ? '#ef4444' : '#f4f4f5')
-                                : '#71717a'
+                        {/* L Cap Input (Always Visible) */}
+                        <td style={{ padding: '4px 6px', borderLeft: '1px solid #27272a' }}>
+                          <input
+                            id={`stock-lcap-${idx}`}
+                            type="number"
+                            value={row.lCap || ''}
+                            onChange={(e) => handleStockRowChange(idx, 'lCap', parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                document.getElementById(`stock-lcap-${idx + 1}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                document.getElementById(`stock-lcap-${idx - 1}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'ArrowLeft' && (e.currentTarget.selectionStart === 0 || !e.currentTarget.value)) {
+                                e.preventDefault();
+                                document.getElementById(`stock-ucap-${idx}`)?.focus();
+                                return;
+                              }
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (idx === stockRows.length - 1) {
+                                  handleAddStockRow();
+                                  setTimeout(() => {
+                                    document.getElementById(`stock-item-${idx + 1}`)?.focus();
+                                  }, 50);
+                                } else {
+                                  document.getElementById(`stock-item-${idx + 1}`)?.focus();
+                                }
+                              }
                             }}
-                          >
-                            {balances.hasItem ? `${balances.uCapBal! > 0 ? '+' : ''}${balances.uCapBal}` : '-'}
-                          </td>
-                        )}
+                            style={{
+                              width: '100%',
+                              height: '30px',
+                              textAlign: 'right',
+                              background: '#18181b',
+                              border: '1px solid #27272a',
+                              borderRadius: '4px',
+                              color: '#f4f4f5',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              outline: 'none',
+                              padding: '0 6px',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </td>
 
-                        {/* L CAP BALANCE CELL */}
-                        {!simpleMode && (
-                          <td 
-                            style={{
-                              padding: '6px 10px',
-                              textAlign: 'right',
-                              fontWeight: 500,
-                              fontSize: '12px',
-                              borderLeft: '1px solid #27272a',
-                              color: balances.hasItem
-                                ? (balances.lCapBal! < 0 ? '#ef4444' : '#f4f4f5')
-                                : '#71717a'
-                            }}
-                          >
-                            {balances.hasItem ? `${balances.lCapBal! > 0 ? '+' : ''}${balances.lCapBal}` : '-'}
-                          </td>
-                        )}
+                        {/* ========================================================= */}
+                        {/* REAL-TIME LIVE BALANCE TRACKING CELLS (RED/GREEN/GRAY)     */}
+                        {/* ========================================================= */}
+
+                        {/* 1. Base (10 FT) Balance Cell */}
+                        <td 
+                          style={{
+                            padding: '6px 8px',
+                            textAlign: 'right',
+                            fontSize: '12px',
+                            borderLeft: '2px solid rgba(56, 189, 248, 0.4)',
+                            background: 'rgba(56, 189, 248, 0.03)'
+                          }}
+                        >
+                          {renderBalanceBadge(balances.sizeBals['10FT'] ?? (balances.hasItem ? 0 : null), balances.hasItem)}
+                        </td>
+
+                        {/* 2. Dynamic Size Balances: BAL (12 FT), BAL (9.5 FT) etc. */}
+                        {dynamicCols.map((dc) => {
+                          const szKey = dc.label.replace(/[()\s]/g, '').toUpperCase();
+                          const normKey = szKey.endsWith('FT') ? szKey : `${szKey}FT`;
+                          const szBal = balances.sizeBals[normKey] ?? (balances.hasItem ? 0 : null);
+                          return (
+                            <td 
+                              key={`bal-cell-${dc.field}`}
+                              style={{
+                                padding: '6px 8px',
+                                textAlign: 'right',
+                                fontSize: '12px',
+                                borderLeft: '1px solid #27272a',
+                                background: 'rgba(56, 189, 248, 0.03)'
+                              }}
+                            >
+                              {renderBalanceBadge(szBal, balances.hasItem)}
+                            </td>
+                          );
+                        })}
+
+                        {/* 3. U-Cap Balance Cell (Always Visible) */}
+                        <td 
+                          style={{
+                            padding: '6px 8px',
+                            textAlign: 'right',
+                            fontSize: '12px',
+                            borderLeft: '1px solid #27272a'
+                          }}
+                        >
+                          {renderBalanceBadge(balances.uCapBal, balances.hasItem)}
+                        </td>
+
+                        {/* 4. L-Cap Balance Cell (Always Visible) */}
+                        <td 
+                          style={{
+                            padding: '6px 8px',
+                            textAlign: 'right',
+                            fontSize: '12px',
+                            borderLeft: '1px solid #27272a'
+                          }}
+                        >
+                          {renderBalanceBadge(balances.lCapBal, balances.hasItem)}
+                        </td>
 
                         {/* Delete Row Button */}
                         <td style={{ textAlign: 'center', borderLeft: '1px solid #27272a' }}>
@@ -2636,140 +2673,203 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     );
                   })}
                 </tbody>
+                <tfoot
+                  style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    zIndex: 10,
+                    background: '#121214',
+                    borderTop: '2px solid #3f3f46',
+                    boxShadow: '0 -4px 12px rgba(0,0,0,0.6)'
+                  }}
+                >
+                  <tr style={{ height: '34px', background: '#121214' }}>
+                    {/* # Index / Count */}
+                    <td style={{ textAlign: 'center', color: '#71717a', fontSize: '11px', fontWeight: 600 }}>
+                      #
+                    </td>
+
+                    {/* Item Name Column -> Shows "TOTAL" and Duplicates Badge if any */}
+                    <td style={{ padding: '4px 10px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 800, letterSpacing: '0.05em' }}>
+                          TOTAL {entryTotals.validItems > 0 ? `(${entryTotals.validItems})` : ''}
+                        </span>
+                        {duplicateItemSummary.count > 0 && (
+                          <span style={{ 
+                            background: 'rgba(239, 68, 68, 0.2)', 
+                            color: '#ef4444', 
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            padding: '1px 6px', 
+                            borderRadius: '4px', 
+                            fontSize: '10px', 
+                            fontWeight: 700 
+                          }}>
+                            DUP: {duplicateItemSummary.count}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* (10 FT) Column Total */}
+                    <td style={{ 
+                      padding: '4px 8px', 
+                      textAlign: 'right', 
+                      color: '#38bdf8', 
+                      borderLeft: '1px solid #27272a',
+                      fontSize: '13px', 
+                      fontWeight: 800, 
+                      fontFamily: "'JetBrains Mono', monospace" 
+                    }}>
+                      <AnimatedCounter value={entryTotals.main10Qty || 0} />
+                    </td>
+
+                    {/* Dynamic Size Columns Totals (e.g. 12 FT, 9.5 FT) */}
+                    {dynamicCols.map((dc) => (
+                      <td 
+                        key={`foot-${dc.field}`} 
+                        style={{ 
+                          padding: '4px 8px', 
+                          textAlign: 'right', 
+                          color: '#38bdf8', 
+                          borderLeft: '1px solid #27272a',
+                          fontSize: '13px', 
+                          fontWeight: 800, 
+                          fontFamily: "'JetBrains Mono', monospace" 
+                        }}
+                      >
+                        <AnimatedCounter value={entryTotals.dynamicQtyTotals[dc.field] || 0} />
+                      </td>
+                    ))}
+
+                    {/* U CAP Total */}
+                    <td style={{ 
+                      padding: '4px 8px', 
+                      textAlign: 'right', 
+                      color: '#f4f4f5', 
+                      borderLeft: '1px solid #27272a',
+                      fontSize: '13px', 
+                      fontWeight: 800, 
+                      fontFamily: "'JetBrains Mono', monospace" 
+                    }}>
+                      <AnimatedCounter value={entryTotals.uCap || 0} />
+                    </td>
+
+                    {/* L CAP Total */}
+                    <td style={{ 
+                      padding: '4px 8px', 
+                      textAlign: 'right', 
+                      color: '#f4f4f5', 
+                      borderLeft: '1px solid #27272a',
+                      fontSize: '13px', 
+                      fontWeight: 800, 
+                      fontFamily: "'JetBrains Mono', monospace" 
+                    }}>
+                      <AnimatedCounter value={entryTotals.lCap || 0} />
+                    </td>
+
+                    {/* BAL (10 FT) */}
+                    <td style={{ borderLeft: '2px solid rgba(56, 189, 248, 0.4)', background: 'rgba(56, 189, 248, 0.02)' }}></td>
+
+                    {/* Dynamic BAL Columns */}
+                    {dynamicCols.map((dc) => (
+                      <td key={`foot-bal-${dc.field}`} style={{ borderLeft: '1px solid #27272a', background: 'rgba(56, 189, 248, 0.02)' }}></td>
+                    ))}
+
+                    {/* U-CAP BAL */}
+                    <td style={{ borderLeft: '1px solid #27272a' }}></td>
+
+                    {/* L-CAP BAL */}
+                    <td style={{ borderLeft: '1px solid #27272a' }}></td>
+
+                    {/* DEL */}
+                    <td style={{ borderLeft: '1px solid #27272a' }}></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
 
-            {/* Entry Summary Bar: Multi-Column Totals + Duplicate Count */}
+            {/* Footer Toolbar: 3 Apple-Box Mode Buttons (Matching Bill UI), Add Row, Barcode, Save Button */}
             <div 
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '8px 14px',
-                background: '#18181b',
+                padding: '4px 6px',
+                gap: '10px',
+                flexShrink: 0,
+                background: 'rgba(24, 24, 27, 0.6)',
                 border: '1px solid #27272a',
-                borderRadius: '8px',
-                flexShrink: 0
+                borderRadius: '8px'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', fontWeight: 500, flexWrap: 'wrap' }}>
-                <span style={{ color: '#a1a1aa' }}>Items: <strong style={{ color: '#f4f4f5' }}>{entryTotals.validItems}</strong></span>
-                <span style={{ color: '#a1a1aa' }}>10 FT: <strong style={{ color: '#f4f4f5' }}>{entryTotals.main10Qty}</strong></span>
-
-                {/* Show totals for each dynamic size column */}
-                {dynamicCols.map((dc) => (
-                  <span key={dc.field} style={{ color: '#a1a1aa' }}>
-                    {dc.label.replace(/[()]/g, '')}: <strong style={{ color: '#f4f4f5' }}>{entryTotals.dynamicQtyTotals[dc.field] || 0}</strong>
-                  </span>
-                ))}
-
-                <span style={{ color: '#a1a1aa', borderLeft: '1px solid #27272a', paddingLeft: '12px' }}>
-                  Total Pcs: <strong style={{ color: '#f4f4f5', fontSize: '12px' }}>{entryTotals.totalPcs}</strong>
-                </span>
-
-                {!simpleMode && (
-                  <>
-                    <span style={{ color: '#a1a1aa' }}>Total U Cap: <strong style={{ color: '#f4f4f5' }}>{entryTotals.uCap}</strong></span>
-                    <span style={{ color: '#a1a1aa' }}>Total L Cap: <strong style={{ color: '#f4f4f5' }}>{entryTotals.lCap}</strong></span>
-                  </>
-                )}
-              </div>
-
-              {/* Duplicate Badge */}
-              <div>
-                <ShadcnBadge
-                  variant={duplicateItemSummary.count > 0 ? "destructive" : "secondary"}
-                  style={{
-                    fontSize: '12px',
-                    padding: '2px 8px'
-                  }}
-                >
-                  DUPLICATES: {duplicateItemSummary.count}
-                </ShadcnBadge>
-              </div>
-            </div>
-
-            {/* Footer Toolbar: Smart Toggles, Barcode Input, Add Row, Save Button */}
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: '2px',
-                gap: '8px',
-                flexShrink: 0
-              }}
-            >
-              {/* Left: Smart Toggles */}
+              {/* Left: 3 Apple-Box Mode Buttons (Matching Bill UI BottomModeBar) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShadcnButton
+                {/* Button 1: AUTO CONVERT */}
+                <button
                   type="button"
-                  variant={autoConvert ? "secondary" : "outline"}
-                  size="sm"
+                  onMouseEnter={() => macAudio.playHover()}
                   onClick={() => {
                     macAudio.playClick();
-                    setAutoConvert((prev) => !prev);
+                    handleToggle('autoConvert');
+                    showToast?.(`AUTO CONVERT: ${!autoConvert ? 'ON' : 'OFF'}`, !autoConvert ? 'success' : 'info');
                   }}
-                  style={{
-                    height: '32px',
-                    fontSize: '12px',
-                    color: '#f4f4f5',
-                    borderColor: '#27272a'
-                  }}
+                  className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
+                  style={{ width: '36px', height: '36px' }}
                 >
-                  Auto-Convert: {autoConvert ? 'ON' : 'OFF'}
-                </ShadcnButton>
+                  <span className="box-tooltip-top">AUTO CONVERT [Numpad *]</span>
+                  <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
+                </button>
 
-                <ShadcnButton
+                {/* Button 2: AUTO ITEM */}
+                <button
                   type="button"
-                  variant={autoItem ? "secondary" : "outline"}
-                  size="sm"
+                  onMouseEnter={() => macAudio.playHover()}
                   onClick={() => {
                     macAudio.playClick();
-                    setAutoItem((prev) => !prev);
+                    handleToggle('autoItem');
+                    showToast?.(`AUTO ITEM: ${!autoItem ? 'ON' : 'OFF'}`, !autoItem ? 'success' : 'info');
                   }}
-                  style={{
-                    height: '32px',
-                    fontSize: '12px',
-                    color: '#f4f4f5',
-                    borderColor: '#27272a'
-                  }}
+                  className={`apple-box-btn ${autoItem ? 'active' : ''}`}
+                  style={{ width: '36px', height: '36px' }}
                 >
-                  Auto Item: {autoItem ? 'ON' : 'OFF'}
-                </ShadcnButton>
+                  <span className="box-tooltip-top">AUTO ITEM [Numpad *]</span>
+                  <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
+                </button>
 
-                <ShadcnButton
+                {/* Button 3: SIMPLE MODE */}
+                <button
                   type="button"
-                  variant={simpleMode ? "secondary" : "outline"}
-                  size="sm"
+                  onMouseEnter={() => macAudio.playHover()}
                   onClick={() => {
                     macAudio.playClick();
-                    setSimpleMode((prev) => !prev);
+                    handleToggle('simpleMode');
+                    showToast?.(`SIMPLE MODE: ${!simpleMode ? 'ON' : 'OFF'}`, !simpleMode ? 'success' : 'info');
                   }}
-                  style={{
-                    height: '32px',
-                    fontSize: '12px',
-                    color: '#f4f4f5',
-                    borderColor: '#27272a'
-                  }}
+                  className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
+                  style={{ width: '36px', height: '36px' }}
                 >
-                  Simple Mode: {simpleMode ? 'ON' : 'OFF'}
-                </ShadcnButton>
+                  <span className="box-tooltip-top">SIMPLE MODE [Numpad *]</span>
+                  <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
+                </button>
 
-                {/* Quick Barcode Scanner Input without verbose placeholder */}
+                <div style={{ width: '1px', height: '22px', background: '#27272a', margin: '0 2px' }} />
+
+                {/* Quick Barcode Scanner Input */}
                 <ShadcnInput
                   type="text"
-                  placeholder=""
+                  placeholder="Scan barcode..."
                   value={barcodeScanInput}
                   onChange={(e) => setBarcodeScanInput(e.target.value)}
                   onKeyDown={handleBarcodeScan}
                   style={{
-                    height: '32px',
+                    height: '34px',
                     width: '160px',
                     fontSize: '12px',
                     background: '#09090b',
                     border: '1px solid #27272a',
-                    borderRadius: '6px'
+                    borderRadius: '6px',
+                    color: '#f4f4f5'
                   }}
                 />
               </div>
@@ -2784,47 +2884,6 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                   columns={voucherItemCsvColumns}
                   onImport={handleImportVoucherItems}
                 />
-
-                <ShadcnButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddStockRow}
-                  style={{
-                    height: '32px',
-                    fontSize: '12px',
-                    borderColor: '#27272a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Plus size={13} />
-                  <span>Add Row</span>
-                </ShadcnButton>
-
-                <ShadcnButton
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    macAudio.playPop();
-                    const freshRow: StockVoucherItem = { id: 'row-1', name: '', qty: 0, uCap: 0, lCap: 0 };
-                    dynamicCols.forEach((dc) => {
-                      freshRow[dc.field] = 0;
-                    });
-                    setStockRows([freshRow]);
-                    setVoucherRemarks('');
-                    setEditingVoucherId(null);
-                  }}
-                  style={{
-                    height: '32px',
-                    fontSize: '12px',
-                    color: '#a1a1aa'
-                  }}
-                >
-                  Clear
-                </ShadcnButton>
 
                 <ShadcnButton
                   type="button"
@@ -3332,9 +3391,26 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                     height: '32px',
                     fontSize: '12px'
                   }}
+                  title="Filter by item category"
                 >
                   {uniqueCategories.map((c) => (
                     <option key={c} value={c}>{c}</option>
+                  ))}
+                </ShadcnSelect>
+
+                {/* Size Filter Dropdown */}
+                <ShadcnSelect
+                  value={balanceSize}
+                  onChange={(e: any) => setBalanceSize(e.target.value)}
+                  style={{
+                    width: '130px',
+                    height: '32px',
+                    fontSize: '12px'
+                  }}
+                  title="Filter by item size"
+                >
+                  {uniqueSizes.map((s) => (
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </ShadcnSelect>
               </div>
@@ -3345,7 +3421,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 <ExcelCsvActions<StockBalanceRow>
                   title="Stock Balance"
                   filenamePrefix="Stock_Balance"
-                  data={stockBalanceList}
+                  data={filteredBalanceList}
                   columns={stockBalanceCsvColumns}
                 />
 

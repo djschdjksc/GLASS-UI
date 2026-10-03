@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { macAudio } from '../utils/macAudio';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
@@ -29,7 +30,6 @@ import {
   Download,
   RefreshCw,
   X,
-  Sparkles,
   Building,
   Layers,
   Scale,
@@ -43,7 +43,7 @@ import {
 export interface Contributor {
   id: string;
   name: string;
-  paidAmount: number;
+  paidAmount: number | '';
 }
 
 export interface BaseEquationItem {
@@ -123,15 +123,20 @@ export const EquationTabView: React.FC = () => {
 
   // Contributors State
   const [contributors, setContributors] = useState<Contributor[]>([
-    { id: 'c1', name: 'Primary Party', paidAmount: 100000 }
+    { id: 'c1', name: 'Primary Party', paidAmount: '' }
   ]);
 
-  // Active party suggestions
+  // Active party suggestions (Portal Floating Popover outside scrolling table)
   const [partyDropdownOpenFor, setPartyDropdownOpenFor] = useState<string | null>(null);
   const [partyFilterText, setPartyFilterText] = useState<string>('');
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState<number>(-1);
 
-  // Calculated Results Matrix
-  const [results, setResults] = useState<EquationResultRow[]>([]);
+  // Bill search suggestions (Left Panel)
+  const [billDropdownOpen, setBillDropdownOpen] = useState<boolean>(false);
+  const [billDropdownPos, setBillDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Result Prices override map
   const [resultPrices, setResultPrices] = useState<Record<string, number>>({});
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [tableSearchQuery, setTableSearchQuery] = useState<string>('');
@@ -169,14 +174,6 @@ export const EquationTabView: React.FC = () => {
     else macAudio.playHover();
     setTimeout(() => setStatusMsg(null), 4000);
   }, []);
-
-  // Auto load first bill if available on mount
-  useEffect(() => {
-    if (bills && bills.length > 0 && !selectedBillId) {
-      const first = bills[0];
-      loadBillData(first.id);
-    }
-  }, [bills]);
 
   // Load Bill Function
   const loadBillData = useCallback(
@@ -261,114 +258,140 @@ export const EquationTabView: React.FC = () => {
 
       setBaseItems(itemsList);
 
-      // Default single 100% contributor = The bill's party
-      const initialAmt = bTotal > 0 ? bTotal : 100000;
+      // Default single 100% contributor = The bill's party with auto amount
       setContributors([
         {
           id: 'c_' + Date.now(),
           name: matched.party || 'Primary Party',
-          paidAmount: initialAmt
+          paidAmount: '' as any
         }
       ]);
-
-      showNotification(`Loaded Bill #${matched.token || matched.id} for ${matched.party}`, 'success');
-
-      // Trigger automatic calculation after load
-      setTimeout(() => {
-        calculateDistribution(itemsList, [
-          {
-            id: 'c_' + Date.now(),
-            name: matched.party || 'Primary Party',
-            paidAmount: initialAmt
-          }
-        ]);
-      }, 50);
     },
-    [bills, billSearchInput, selectedBillId, multMap, boxMap, weightMap, showNotification]
+    [bills, billSearchInput, selectedBillId, multMap, boxMap, weightMap]
   );
+
+  // Real-time Contributor Shares & Auto-Equal Split Computation
+  const contribShares = useMemo(() => {
+    const validContribs = contributors.filter((c) => (c.name || '').trim().length > 0);
+    if (validContribs.length === 0) return [];
+
+    const totalBill = loadedBillTotal > 0 ? loadedBillTotal : 100000;
+    const explicitContribs = validContribs.filter((c) => Number(c.paidAmount) > 0);
+    const explicitSum = explicitContribs.reduce((sum, c) => sum + Number(c.paidAmount), 0);
+    const autoContribs = validContribs.filter((c) => !Number(c.paidAmount) || Number(c.paidAmount) <= 0);
+
+    if (autoContribs.length === 0) {
+      const totalPaid = explicitSum > 0 ? explicitSum : 1;
+      return validContribs.map((c) => {
+        const amt = Number(c.paidAmount) || 0;
+        return {
+          id: c.id,
+          name: c.name,
+          effectivePaid: amt,
+          sharePct: amt / totalPaid,
+          isAuto: false
+        };
+      });
+    }
+
+    if (explicitContribs.length === 0) {
+      const equalAmt = Math.round((totalBill / validContribs.length) * 100) / 100;
+      const equalPct = 1 / validContribs.length;
+      return validContribs.map((c) => ({
+        id: c.id,
+        name: c.name,
+        effectivePaid: equalAmt,
+        sharePct: equalPct,
+        isAuto: true
+      }));
+    }
+
+    // Mixed: some explicit, some auto-split remaining
+    const remaining = Math.max(0, totalBill - explicitSum);
+    const autoPortion = autoContribs.length > 0 ? Math.round((remaining / autoContribs.length) * 100) / 100 : 0;
+    const overallTotal = explicitSum + autoPortion * autoContribs.length || totalBill || 1;
+
+    return validContribs.map((c) => {
+      const isExplicit = Number(c.paidAmount) > 0;
+      const effectivePaid = isExplicit ? Number(c.paidAmount) : autoPortion;
+      const sharePct = effectivePaid / overallTotal;
+      return {
+        id: c.id,
+        name: c.name,
+        effectivePaid,
+        sharePct,
+        isAuto: !isExplicit
+      };
+    });
+  }, [contributors, loadedBillTotal]);
 
   // Total Paid Amount by all contributors
   const totalPaidSum = useMemo(() => {
-    return contributors.reduce((sum, c) => sum + (Number(c.paidAmount) || 0), 0);
-  }, [contributors]);
+    return contribShares.reduce((sum, c) => sum + (c.effectivePaid || 0), 0);
+  }, [contribShares]);
 
-  // Core Distribution & GST Calculation Engine
-  const calculateDistribution = useCallback(
-    (targetBaseItems = baseItems, targetContribs = contributors, customPrices = resultPrices) => {
-      if (targetBaseItems.length === 0) {
-        showNotification('No items found in selected bill to calculate', 'error');
-        return;
-      }
+  // Automatically computed Goods Distribution & 18% GST Results Matrix
+  const results = useMemo<EquationResultRow[]>(() => {
+    if (baseItems.length === 0 || contribShares.length === 0) {
+      return [];
+    }
 
-      const validContribs = targetContribs.filter((c) => (c.name || '').trim().length > 0 && Number(c.paidAmount) > 0);
-      if (validContribs.length === 0) {
-        showNotification('Add at least one valid contributor with paid amount > 0', 'error');
-        return;
-      }
+    const newRows: EquationResultRow[] = [];
 
-      const totalPaid = validContribs.reduce((sum, c) => sum + (Number(c.paidAmount) || 0), 0);
-      if (totalPaid <= 0) return;
+    contribShares.forEach((c) => {
+      baseItems.forEach((itm) => {
+        const rowKey = `${c.id}_${itm.id}`;
+        const currentPrice = resultPrices[rowKey] !== undefined ? resultPrices[rowKey] : itm.price || 0;
 
-      const newRows: EquationResultRow[] = [];
+        // Physical PCS share
+        const shareQty = Math.round((c.sharePct * itm.qty + Number.EPSILON) * 100) / 100;
+        // Boxes
+        const boxes = itm.boxSize > 0 ? Math.round((shareQty / itm.boxSize + Number.EPSILON) * 10) / 10 : 0;
+        // Full Bill Qty = Physical Qty * Multiplier
+        const fullBillQty = itm.qty * itm.mult;
+        const shareBillQty = Math.round(c.sharePct * fullBillQty);
+        // Total Weight = (Physical Qty * Weight/Pc) * Share %
+        const weightKg = Math.round(((itm.qty * itm.weightPc) * c.sharePct + Number.EPSILON) * 100) / 100;
+        // Total (+18% GST) = Bill Qty Share * Price * 1.18
+        const totalGst = Math.round((shareBillQty * currentPrice * 1.18 + Number.EPSILON) * 100) / 100;
 
-      validContribs.forEach((c) => {
-        const sharePct = (Number(c.paidAmount) || 0) / totalPaid;
-
-        targetBaseItems.forEach((itm) => {
-          const rowKey = `${c.id}_${itm.id}`;
-          const currentPrice = customPrices[rowKey] !== undefined ? customPrices[rowKey] : itm.price || 0;
-
-          // Physical PCS share
-          const shareQty = Math.round((sharePct * itm.qty + Number.EPSILON) * 100) / 100;
-          // Boxes
-          const boxes = itm.boxSize > 0 ? Math.round((shareQty / itm.boxSize + Number.EPSILON) * 10) / 10 : 0;
-          // Full Bill Qty = Physical Qty * Multiplier
-          const fullBillQty = itm.qty * itm.mult;
-          const shareBillQty = Math.round((sharePct * fullBillQty + Number.EPSILON) * 100) / 100;
-          // Total Weight = (Physical Qty * Weight/Pc) * Share %
-          const weightKg = Math.round(((itm.qty * itm.weightPc) * sharePct + Number.EPSILON) * 100) / 100;
-          // Total (+18% GST) = Bill Qty Share * Price * 1.18
-          const totalGst = Math.round((shareBillQty * currentPrice * 1.18 + Number.EPSILON) * 100) / 100;
-
-          newRows.push({
-            id: rowKey,
-            partyName: c.name,
-            sharePct,
-            itemName: itm.name,
-            pcsQty: shareQty,
-            boxes,
-            mult: itm.mult,
-            billQtyShare: shareBillQty,
-            weightKg,
-            price: currentPrice,
-            totalGst,
-            partyPaidAmt: c.paidAmount
-          });
+        newRows.push({
+          id: rowKey,
+          partyName: c.name,
+          sharePct: c.sharePct,
+          itemName: itm.name,
+          pcsQty: shareQty,
+          boxes,
+          mult: itm.mult,
+          billQtyShare: shareBillQty,
+          weightKg,
+          price: currentPrice,
+          totalGst,
+          partyPaidAmt: c.effectivePaid
         });
       });
+    });
 
-      setResults(newRows);
-      if (newRows.length > 0 && !selectedRowId) {
-        setSelectedRowId(newRows[0].id);
-      }
-      showNotification(`Calculated distribution for ${validContribs.length} parties across ${targetBaseItems.length} items`, 'success');
-    },
-    [baseItems, contributors, resultPrices, selectedRowId, showNotification]
-  );
+    return newRows;
+  }, [baseItems, contribShares, resultPrices]);
+
+  // Auto-select first row if needed
+  useEffect(() => {
+    if (results.length > 0 && (!selectedRowId || !results.some((r) => r.id === selectedRowId))) {
+      setSelectedRowId(results[0].id);
+    }
+  }, [results, selectedRowId]);
+
+  // Backward compatibility alias for calculateDistribution
+  const calculateDistribution = useCallback(() => {
+    macAudio.playSuccess();
+    showNotification('Live auto-calculation updated', 'success');
+  }, [showNotification]);
 
   // Update item price on specific row
   const handleUpdatePrice = useCallback(
     (rowId: string, newPrice: number) => {
       setResultPrices((prev) => ({ ...prev, [rowId]: newPrice }));
-      setResults((prev) =>
-        prev.map((r) => {
-          if (r.id === rowId) {
-            const totalGst = Math.round((r.billQtyShare * newPrice * 1.18 + Number.EPSILON) * 100) / 100;
-            return { ...r, price: newPrice, totalGst };
-          }
-          return r;
-        })
-      );
     },
     []
   );
@@ -386,13 +409,15 @@ export const EquationTabView: React.FC = () => {
   const handleAddContributor = () => {
     macAudio.playClick();
     const newId = 'c_' + Date.now();
-    const availableParties = parties.map((p) => p.name).filter((n) => !contributors.some((c) => c.name.toLowerCase() === n.toLowerCase()));
-    const defaultName = availableParties.length > 0 ? availableParties[0] : `Party ${contributors.length + 1}`;
-    const defaultAmount = 25000;
-
-    const next = [...contributors, { id: newId, name: defaultName, paidAmount: defaultAmount }];
+    // Do NOT auto-fill party name or auto-fill amount!
+    const next: Contributor[] = [...contributors, { id: newId, name: '', paidAmount: '' as any }];
     setContributors(next);
-    calculateDistribution(baseItems, next);
+    setTimeout(() => {
+      const inputEl = document.getElementById(`party-input-${newId}`) as HTMLInputElement | null;
+      if (inputEl) {
+        inputEl.focus();
+      }
+    }, 60);
   };
 
   const handleRemoveContributor = (id: string) => {
@@ -403,22 +428,11 @@ export const EquationTabView: React.FC = () => {
     }
     const next = contributors.filter((c) => c.id !== id);
     setContributors(next);
-    calculateDistribution(baseItems, next);
   };
 
   const handleUpdateContributor = (id: string, field: 'name' | 'paidAmount', val: any) => {
     const next = contributors.map((c) => (c.id === id ? { ...c, [field]: val } : c));
     setContributors(next);
-  };
-
-  const handleSplitEqually = () => {
-    macAudio.playClick();
-    if (contributors.length === 0) return;
-    const share = Math.round((loadedBillTotal / contributors.length) * 100) / 100;
-    const next = contributors.map((c) => ({ ...c, paidAmount: share }));
-    setContributors(next);
-    calculateDistribution(baseItems, next);
-    showNotification(`Equally divided bill total across ${contributors.length} parties`, 'info');
   };
 
   // Filtered results by search query
@@ -454,7 +468,7 @@ export const EquationTabView: React.FC = () => {
     return {
       totalPcs: Math.round(totalPcs * 100) / 100,
       totalBoxes: Math.round(totalBoxes * 10) / 10,
-      totalBillQty: Math.round(totalBillQty * 100) / 100,
+      totalBillQty: Math.round(totalBillQty),
       totalWeight: Math.round(totalWeight * 100) / 100,
       totalGstVal: Math.round(totalGstVal * 100) / 100
     };
@@ -682,12 +696,146 @@ export const EquationTabView: React.FC = () => {
     }
   };
 
+  // Comprehensive party suggestions (including parties from bills)
+  const allPartyNames = useMemo(() => {
+    const list: { id: string; name: string; station?: string; district?: string }[] = [];
+    const seen = new Set<string>();
+
+    parties.forEach((p) => {
+      const key = (p.name || '').trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        list.push({ id: p.id, name: p.name, station: p.station, district: p.district });
+      }
+    });
+
+    bills.forEach((b) => {
+      const key = (b.party || '').trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        list.push({ id: `b_${b.id}`, name: b.party });
+      }
+    });
+
+    return list;
+  }, [parties, bills]);
+
   // Filtered party list for suggestions
   const filteredPartySuggestions = useMemo(() => {
     const q = partyFilterText.toLowerCase().trim();
-    if (!q) return parties.slice(0, 30);
-    return parties.filter((p) => p.name.toLowerCase().includes(q) || (p.district || '').toLowerCase().includes(q)).slice(0, 30);
-  }, [parties, partyFilterText]);
+    if (!q) return allPartyNames.slice(0, 40);
+    return allPartyNames
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.station || '').toLowerCase().includes(q) ||
+          (p.district || '').toLowerCase().includes(q)
+      )
+      .slice(0, 40);
+  }, [allPartyNames, partyFilterText]);
+
+  // Helper to update party dropdown coordinates
+  const updateDropdownPos = useCallback((el: HTMLElement) => {
+    const rect = el.getBoundingClientRect();
+    setDropdownPos({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: Math.max(rect.width, 320)
+    });
+  }, []);
+
+  // Sync floating party dropdown position on window scroll or resize
+  useEffect(() => {
+    if (!partyDropdownOpenFor) return;
+    const handleReposition = () => {
+      const inputEl = document.getElementById(`party-input-${partyDropdownOpenFor}`);
+      if (inputEl) {
+        updateDropdownPos(inputEl);
+      } else {
+        setPartyDropdownOpenFor(null);
+      }
+    };
+    window.addEventListener('scroll', handleReposition, true);
+    window.addEventListener('resize', handleReposition);
+    return () => {
+      window.removeEventListener('scroll', handleReposition, true);
+      window.removeEventListener('resize', handleReposition);
+    };
+  }, [partyDropdownOpenFor, updateDropdownPos]);
+
+  // Click outside listener for party suggestions portal
+  useEffect(() => {
+    if (!partyDropdownOpenFor) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        !target.closest('#equation-party-dropdown') &&
+        !target.closest(`[data-party-input="${partyDropdownOpenFor}"]`)
+      ) {
+        setPartyDropdownOpenFor(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [partyDropdownOpenFor]);
+
+  // Bill search suggestions list for left panel
+  const filteredBillSuggestions = useMemo(() => {
+    const q = billSearchInput.toLowerCase().trim();
+    if (!q) return bills.slice(0, 15);
+    return bills
+      .filter((b) => {
+        const idMatch = String(b.id || '').toLowerCase().includes(q);
+        const tokenMatch = String(b.token || '').toLowerCase().includes(q);
+        const partyMatch = String(b.party || '').toLowerCase().includes(q);
+        return idMatch || tokenMatch || partyMatch;
+      })
+      .slice(0, 15);
+  }, [bills, billSearchInput]);
+
+  // Click outside listener for bill suggestions portal
+  useEffect(() => {
+    if (!billDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        !target.closest('#equation-bill-dropdown') &&
+        billInputRef.current &&
+        !billInputRef.current.contains(target)
+      ) {
+        setBillDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [billDropdownOpen]);
+
+  // Sync bill dropdown pos on scroll/resize
+  useEffect(() => {
+    if (!billDropdownOpen) return;
+    const handleReposition = () => {
+      if (billInputRef.current) {
+        const rect = billInputRef.current.getBoundingClientRect();
+        setBillDropdownPos({
+          top: rect.bottom + 4,
+          left: rect.left,
+          width: Math.max(rect.width, 300)
+        });
+      } else {
+        setBillDropdownOpen(false);
+      }
+    };
+    window.addEventListener('scroll', handleReposition, true);
+    window.addEventListener('resize', handleReposition);
+    return () => {
+      window.removeEventListener('scroll', handleReposition, true);
+      window.removeEventListener('resize', handleReposition);
+    };
+  }, [billDropdownOpen]);
 
   return (
     <div
@@ -744,9 +892,6 @@ export const EquationTabView: React.FC = () => {
               <Badge variant="outline" title="Tab Shortcut: F3" style={{ background: '#27272a', color: '#fbbf24', border: '1px solid #3f3f46', fontSize: '10px', padding: '1px 6px' }}>
                 F3
               </Badge>
-            </div>
-            <div style={{ fontSize: '11px', color: '#71717a' }}>
-              Split bill items across contributing parties, compute physical shares, boxes, weights & 18% GST.
             </div>
           </div>
         </div>
@@ -809,20 +954,42 @@ export const EquationTabView: React.FC = () => {
               <input
                 ref={billInputRef}
                 type="text"
-                placeholder="Bill ID / Token + Enter"
+                placeholder="Bill Token / ID / Party..."
                 value={billSearchInput}
-                onChange={(e) => setBillSearchInput(e.target.value)}
+                autoComplete="off"
+                onFocus={(e) => {
+                  setBillDropdownOpen(true);
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setBillDropdownPos({
+                    top: rect.bottom + 4,
+                    left: rect.left,
+                    width: Math.max(rect.width, 300)
+                  });
+                }}
+                onChange={(e) => {
+                  setBillSearchInput(e.target.value);
+                  setBillDropdownOpen(true);
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setBillDropdownPos({
+                    top: rect.bottom + 4,
+                    left: rect.left,
+                    width: Math.max(rect.width, 300)
+                  });
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
+                    setBillDropdownOpen(false);
                     loadBillData();
+                  } else if (e.key === 'Escape') {
+                    setBillDropdownOpen(false);
                   }
                 }}
                 style={{
                   width: '100%',
                   height: '32px',
                   background: '#09090b',
-                  border: '1px solid #27272a',
+                  border: billDropdownOpen ? '1px solid #3b82f6' : '1px solid #27272a',
                   borderRadius: '6px',
                   padding: '0 8px',
                   color: '#f4f4f5',
@@ -836,7 +1003,10 @@ export const EquationTabView: React.FC = () => {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => loadBillData()}
+              onClick={() => {
+                setBillDropdownOpen(false);
+                loadBillData();
+              }}
               title="Load Bill (Ctrl+L)"
               style={{
                 height: '32px',
@@ -962,38 +1132,27 @@ export const EquationTabView: React.FC = () => {
               </Badge>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSplitEqually}
-                title="Split bill gross total equally across all parties"
-                style={{ height: '26px', fontSize: '10.5px', background: '#27272a', color: '#f4f4f5', borderColor: '#3f3f46' }}
-              >
-                Equal Split
-              </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleAddContributor}
-                title="Add contributor party to distribution"
-                style={{ height: '26px', fontSize: '10.5px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                title="Add contributing party to distribution"
+                style={{
+                  height: '28px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#34d399',
+                  borderColor: 'rgba(16, 185, 129, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
               >
-                <Plus size={12} style={{ marginRight: '4px' }} />
-                Add More Party
-              </Button>
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={() => calculateDistribution()}
-                title="Calculate Goods Distribution & 18% GST (Ctrl+G)"
-                style={{ height: '26px', fontSize: '10.5px', background: '#7c3aed', color: '#ffffff', fontWeight: 700, border: 'none' }}
-              >
-                <Sparkles size={12} style={{ marginRight: '4px' }} />
-                📊 CALCULATE
+                <Plus size={13} />
+                Add Party
               </Button>
             </div>
           </div>
@@ -1021,111 +1180,102 @@ export const EquationTabView: React.FC = () => {
               </thead>
               <tbody>
                 {contributors.map((c, idx) => {
-                  const sharePct = totalPaidSum > 0 ? (c.paidAmount / totalPaidSum) * 100 : 0;
+                  const shareInfo = contribShares.find((cs) => cs.id === c.id);
+                  const sharePct = shareInfo ? shareInfo.sharePct * 100 : 0;
+                  const effectiveAmt = shareInfo ? shareInfo.effectivePaid : 0;
+                  const isAutoSplit = shareInfo ? shareInfo.isAuto : true;
                   const calculatedBillTotal = partyBillTotals[c.name] || 0;
 
                   return (
                     <tr key={c.id} style={{ borderBottom: '1px solid #18181b' }}>
                       <td style={{ padding: '4px 8px', color: '#52525b', textAlign: 'center' }}>{idx + 1}</td>
-                      <td style={{ padding: '4px 8px', position: 'relative' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input
-                            type="text"
-                            value={c.name}
-                            onChange={(e) => {
-                              handleUpdateContributor(c.id, 'name', e.target.value);
-                              setPartyFilterText(e.target.value);
-                            }}
-                            onFocus={() => {
-                              setPartyDropdownOpenFor(c.id);
-                              setPartyFilterText(c.name);
-                            }}
-                            style={{
-                              flex: 1,
-                              background: '#18181b',
-                              border: '1px solid #27272a',
-                              borderRadius: '4px',
-                              padding: '3px 8px',
-                              color: '#f4f4f5',
-                              fontSize: '12px',
-                              outline: 'none',
-                              fontWeight: 600
-                            }}
-                          />
-                        </div>
-
-                        {/* Search Autocomplete Popover */}
-                        {partyDropdownOpenFor === c.id && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: 8,
-                              width: '260px',
-                              maxHeight: '160px',
-                              overflowY: 'auto',
-                              background: '#18181b',
-                              border: '1px solid #3f3f46',
-                              borderRadius: '6px',
-                              zIndex: 9999,
-                              boxShadow: '0 8px 24px rgba(0,0,0,0.85)',
-                              padding: '4px'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 6px', borderBottom: '1px solid #27272a', color: '#71717a', fontSize: '10px' }}>
-                              <span>SUGGESTED PARTIES</span>
-                              <span style={{ cursor: 'pointer', color: '#ef4444' }} onClick={() => setPartyDropdownOpenFor(null)}>Close</span>
-                            </div>
-                            {filteredPartySuggestions.map((p) => (
-                              <div
-                                key={p.id}
-                                onClick={() => {
-                                  handleUpdateContributor(c.id, 'name', p.name);
-                                  setPartyDropdownOpenFor(null);
-                                  macAudio.playClick();
-                                }}
-                                style={{
-                                  padding: '4px 8px',
-                                  fontSize: '11.5px',
-                                  color: '#f4f4f5',
-                                  cursor: 'pointer',
-                                  borderRadius: '4px',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center'
-                                }}
-                                onMouseEnter={(e) => {
-                                  (e.currentTarget as HTMLDivElement).style.background = '#27272a';
-                                }}
-                                onMouseLeave={(e) => {
-                                  (e.currentTarget as HTMLDivElement).style.background = 'transparent';
-                                }}
-                              >
-                                <span style={{ fontWeight: 500 }}>{p.name}</span>
-                                <span style={{ fontSize: '10px', color: '#71717a' }}>{p.station || p.district || ''}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                      <td style={{ padding: '4px 8px' }}>
+                        <input
+                          id={`party-input-${c.id}`}
+                          data-party-input={c.id}
+                          type="text"
+                          placeholder="Search or enter party name..."
+                          value={c.name}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          onFocus={(e) => {
+                            setPartyDropdownOpenFor(c.id);
+                            setPartyFilterText(c.name);
+                            setFocusedSuggestionIndex(-1);
+                            updateDropdownPos(e.currentTarget);
+                          }}
+                          onChange={(e) => {
+                            handleUpdateContributor(c.id, 'name', e.target.value);
+                            setPartyFilterText(e.target.value);
+                            setFocusedSuggestionIndex(-1);
+                            if (!partyDropdownOpenFor) setPartyDropdownOpenFor(c.id);
+                            updateDropdownPos(e.currentTarget);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              if (!partyDropdownOpenFor) {
+                                setPartyDropdownOpenFor(c.id);
+                                setPartyFilterText(c.name);
+                                updateDropdownPos(e.currentTarget);
+                              }
+                              setFocusedSuggestionIndex((prev) => Math.min(prev + 1, filteredPartySuggestions.length - 1));
+                            } else if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              setFocusedSuggestionIndex((prev) => Math.max(prev - 1, 0));
+                            } else if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (partyDropdownOpenFor && filteredPartySuggestions.length > 0 && focusedSuggestionIndex >= 0) {
+                                const chosen = filteredPartySuggestions[focusedSuggestionIndex];
+                                handleUpdateContributor(c.id, 'name', chosen.name);
+                                setPartyDropdownOpenFor(null);
+                              } else if (partyFilterText.trim()) {
+                                handleUpdateContributor(c.id, 'name', partyFilterText.trim());
+                                setPartyDropdownOpenFor(null);
+                              }
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault();
+                              setPartyDropdownOpenFor(null);
+                            }
+                          }}
+                          style={{
+                            width: '100%',
+                            background: '#18181b',
+                            border: partyDropdownOpenFor === c.id ? '1px solid #3b82f6' : '1px solid #27272a',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            color: '#f4f4f5',
+                            fontSize: '12px',
+                            outline: 'none',
+                            fontWeight: 600,
+                            boxSizing: 'border-box'
+                          }}
+                        />
                       </td>
 
                       {/* Amt Paid */}
                       <td style={{ padding: '4px 8px', textAlign: 'right' }}>
                         <input
                           type="number"
-                          value={c.paidAmount || ''}
-                          onChange={(e) => handleUpdateContributor(c.id, 'paidAmount', parseFloat(e.target.value) || 0)}
+                          value={c.paidAmount !== undefined && c.paidAmount !== null && c.paidAmount !== 0 ? c.paidAmount : ''}
+                          placeholder={effectiveAmt > 0 ? `₹${Math.round(effectiveAmt).toLocaleString('en-IN')}` : 'Enter ₹'}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                            handleUpdateContributor(c.id, 'paidAmount', val);
+                          }}
                           style={{
-                            width: '110px',
+                            width: '130px',
                             background: '#18181b',
                             border: '1px solid #27272a',
                             borderRadius: '4px',
-                            padding: '3px 8px',
-                            color: '#34d399',
+                            padding: '4px 8px',
+                            color: isAutoSplit ? '#a1a1aa' : '#34d399',
                             fontSize: '12px',
                             textAlign: 'right',
                             outline: 'none',
-                            fontWeight: 700
+                            fontWeight: 700,
+                            boxSizing: 'border-box'
                           }}
                         />
                       </td>
@@ -1135,11 +1285,12 @@ export const EquationTabView: React.FC = () => {
                         <Badge
                           variant="outline"
                           style={{
-                            background: 'rgba(124, 58, 237, 0.15)',
-                            color: '#c084fc',
-                            border: '1px solid rgba(124, 58, 237, 0.3)',
-                            fontSize: '11px',
-                            fontWeight: 700
+                            background: isAutoSplit ? 'rgba(56, 189, 248, 0.12)' : 'rgba(124, 58, 237, 0.15)',
+                            color: isAutoSplit ? '#38bdf8' : '#c084fc',
+                            border: `1px solid ${isAutoSplit ? 'rgba(56, 189, 248, 0.3)' : 'rgba(124, 58, 237, 0.3)'}`,
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            padding: '2px 6px'
                           }}
                         >
                           {sharePct.toFixed(1)}%
@@ -1156,16 +1307,21 @@ export const EquationTabView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleRemoveContributor(c.id)}
+                          disabled={contributors.length <= 1}
                           style={{
                             background: 'transparent',
                             border: 'none',
-                            color: '#71717a',
-                            cursor: 'pointer',
+                            color: contributors.length <= 1 ? '#3f3f46' : '#71717a',
+                            cursor: contributors.length <= 1 ? 'not-allowed' : 'pointer',
                             padding: '3px'
                           }}
-                          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ef4444')}
-                          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#71717a')}
-                          title="Delete Contributor"
+                          onMouseEnter={(e) => {
+                            if (contributors.length > 1) (e.currentTarget as HTMLButtonElement).style.color = '#ef4444';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (contributors.length > 1) (e.currentTarget as HTMLButtonElement).style.color = '#71717a';
+                          }}
+                          title={contributors.length <= 1 ? 'At least 1 party required' : 'Delete Contributor'}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -1287,7 +1443,7 @@ export const EquationTabView: React.FC = () => {
                 <tr>
                   <td colSpan={11} style={{ textAlign: 'center', padding: '40px 10px', color: '#71717a', fontSize: '13px' }}>
                     {results.length === 0
-                      ? 'No equation calculation active. Click "LOAD BILL" or "📊 CALCULATE (Ctrl+G)" above.'
+                      ? 'No equation distribution to display. Load a bill and add parties above to auto-calculate.'
                       : `No rows match "${tableSearchQuery}".`}
                   </td>
                 </tr>
@@ -1350,7 +1506,7 @@ export const EquationTabView: React.FC = () => {
 
                       {/* Bill Qty Share */}
                       <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, color: '#34d399' }}>
-                        {r.billQtyShare.toLocaleString('en-IN')}
+                        {Math.round(r.billQtyShare).toLocaleString('en-IN')}
                       </td>
 
                       {/* Weight KG */}
@@ -1580,7 +1736,9 @@ export const EquationTabView: React.FC = () => {
                 const partyRows = results.filter((r) => r.partyName === contrib.name);
                 if (partyRows.length === 0) return null;
 
-                const partyPct = totalPaidSum > 0 ? (contrib.paidAmount / totalPaidSum) * 100 : 0;
+                const shareInfo = contribShares.find((cs) => cs.id === contrib.id || cs.name === contrib.name);
+                const partyPct = shareInfo ? shareInfo.sharePct * 100 : (totalPaidSum > 0 ? (Number(contrib.paidAmount || 0) / totalPaidSum) * 100 : 0);
+                const paidAmtDisplay = shareInfo ? shareInfo.effectivePaid : (Number(contrib.paidAmount) || 0);
                 const partySubtotal = partyRows.reduce((s, r) => s + r.totalGst, 0);
 
                 return (
@@ -1603,7 +1761,7 @@ export const EquationTabView: React.FC = () => {
                         PARTY: {contrib.name} ({partyPct.toFixed(1)}%)
                       </span>
                       <span>
-                        TOTAL PAID: {formatINR(contrib.paidAmount)}
+                        TOTAL PAID: {formatINR(paidAmtDisplay)}
                       </span>
                     </div>
 
@@ -1628,7 +1786,7 @@ export const EquationTabView: React.FC = () => {
                             <td style={{ padding: '5px 8px', textAlign: 'right' }}>{r.pcsQty}</td>
                             <td style={{ padding: '5px 8px', textAlign: 'right' }}>{r.boxes}</td>
                             <td style={{ padding: '5px 8px', textAlign: 'center' }}>{r.mult}</td>
-                            <td style={{ padding: '5px 8px', textAlign: 'right', fontWeight: 700 }}>{r.billQtyShare}</td>
+                            <td style={{ padding: '5px 8px', textAlign: 'right', fontWeight: 700 }}>{Math.round(r.billQtyShare)}</td>
                             <td style={{ padding: '5px 8px', textAlign: 'right' }}>₹{r.price.toFixed(2)}</td>
                             <td style={{ padding: '5px 8px', textAlign: 'right' }}>{r.weightKg.toFixed(2)}</td>
                             <td style={{ padding: '5px 8px', textAlign: 'right', fontWeight: 700 }}>{formatINR(r.totalGst)}</td>
@@ -1667,6 +1825,265 @@ export const EquationTabView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* FLOATING BILL UI STYLE PARTY SEARCH DROPDOWN (PORTAL TO BODY)       */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {partyDropdownOpenFor && dropdownPos && createPortal(
+        <div
+          id="equation-party-dropdown"
+          style={{
+            position: 'fixed',
+            top: `${dropdownPos.top}px`,
+            left: `${dropdownPos.left}px`,
+            width: `${dropdownPos.width}px`,
+            maxHeight: '250px',
+            overflowY: 'auto',
+            background: 'rgba(24, 24, 27, 0.98)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid #3f3f46',
+            borderRadius: '8px',
+            zIndex: 99999999,
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9)',
+            padding: '5px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}
+          onMouseDown={(e) => {
+            // Prevent input blur before click event fires
+            e.preventDefault();
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderBottom: '1px solid #27272a',
+              color: '#a1a1aa',
+              fontSize: '10.5px',
+              fontWeight: 700,
+              letterSpacing: '0.4px'
+            }}
+          >
+            <span>SUGGESTED PARTIES ({filteredPartySuggestions.length})</span>
+            <span
+              style={{ cursor: 'pointer', color: '#ef4444', fontSize: '11px', padding: '1px 5px', borderRadius: '4px' }}
+              onClick={() => setPartyDropdownOpenFor(null)}
+            >
+              ✕ Close
+            </span>
+          </div>
+
+          <div style={{ marginTop: '4px' }}>
+            {filteredPartySuggestions.length === 0 && !partyFilterText.trim() && (
+              <div style={{ padding: '10px 8px', fontSize: '11.5px', color: '#71717a', textAlign: 'center' }}>
+                No parties available in database
+              </div>
+            )}
+
+            {filteredPartySuggestions.map((p, idx) => {
+              const isFocused = focusedSuggestionIndex === idx;
+              const currentContributor = contributors.find((c) => c.id === partyDropdownOpenFor);
+              const isCurrent = currentContributor && currentContributor.name.toLowerCase() === p.name.toLowerCase();
+
+              return (
+                <div
+                  key={p.id || idx}
+                  onClick={() => {
+                    if (partyDropdownOpenFor) {
+                      macAudio.playClick();
+                      handleUpdateContributor(partyDropdownOpenFor, 'name', p.name);
+                      setPartyDropdownOpenFor(null);
+                    }
+                  }}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    color: '#f4f4f5',
+                    cursor: 'pointer',
+                    borderRadius: '5px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: isFocused ? 'rgba(59, 130, 246, 0.25)' : isCurrent ? 'rgba(39, 39, 42, 0.7)' : 'transparent',
+                    border: isFocused ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid transparent',
+                    marginBottom: '2px',
+                    transition: 'background 0.12s ease'
+                  }}
+                  onMouseEnter={() => setFocusedSuggestionIndex(idx)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                    <span style={{ fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {p.name}
+                    </span>
+                    {isCurrent && <Check size={12} color="#34d399" />}
+                  </div>
+                  {(p.station || p.district) && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        color: '#a1a1aa',
+                        background: '#27272a',
+                        padding: '1px 5px',
+                        borderRadius: '3px',
+                        whiteSpace: 'nowrap',
+                        marginLeft: '8px'
+                      }}
+                    >
+                      {p.station || p.district}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* If Typed Party is New (not matching any existing) */}
+            {partyFilterText.trim() &&
+              !allPartyNames.some((p) => p.name.toLowerCase() === partyFilterText.trim().toLowerCase()) && (
+                <div
+                  onClick={() => {
+                    if (partyDropdownOpenFor) {
+                      macAudio.playClick();
+                      handleUpdateContributor(partyDropdownOpenFor, 'name', partyFilterText.trim());
+                      setPartyDropdownOpenFor(null);
+                    }
+                  }}
+                  style={{
+                    padding: '7px 10px',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    borderRadius: '5px',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: '#38bdf8',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '4px',
+                    border: '1px dashed rgba(56, 189, 248, 0.4)'
+                  }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = 'rgba(59, 130, 246, 0.3)')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.background = 'rgba(59, 130, 246, 0.15)')}
+                >
+                  <Plus size={13} />
+                  <span>Use "{partyFilterText.trim()}" as Party Name</span>
+                </div>
+              )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* FLOATING BILL SEARCH DROPDOWN (PORTAL TO BODY)                      */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {billDropdownOpen && billDropdownPos && createPortal(
+        <div
+          id="equation-bill-dropdown"
+          style={{
+            position: 'fixed',
+            top: `${billDropdownPos.top}px`,
+            left: `${billDropdownPos.left}px`,
+            width: `${billDropdownPos.width}px`,
+            maxHeight: '260px',
+            overflowY: 'auto',
+            background: 'rgba(24, 24, 27, 0.98)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid #3f3f46',
+            borderRadius: '8px',
+            zIndex: 99999999,
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9)',
+            padding: '5px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}
+          onMouseDown={(e) => {
+            // Prevent input blur before click event fires
+            e.preventDefault();
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderBottom: '1px solid #27272a',
+              color: '#a1a1aa',
+              fontSize: '10.5px',
+              fontWeight: 700,
+              letterSpacing: '0.4px'
+            }}
+          >
+            <span>SELECT BILL TO LOAD ({filteredBillSuggestions.length})</span>
+            <span
+              style={{ cursor: 'pointer', color: '#ef4444', fontSize: '11px', padding: '1px 5px', borderRadius: '4px' }}
+              onClick={() => setBillDropdownOpen(false)}
+            >
+              ✕ Close
+            </span>
+          </div>
+
+          <div style={{ marginTop: '4px' }}>
+            {filteredBillSuggestions.length === 0 ? (
+              <div style={{ padding: '10px 8px', fontSize: '11.5px', color: '#71717a', textAlign: 'center' }}>
+                No bills found matching search
+              </div>
+            ) : (
+              filteredBillSuggestions.map((b) => {
+                const isSelected = selectedBillId === b.id;
+                return (
+                  <div
+                    key={b.id}
+                    onClick={() => {
+                      macAudio.playClick();
+                      setBillDropdownOpen(false);
+                      loadBillData(b.id);
+                    }}
+                    style={{
+                      padding: '7px 10px',
+                      fontSize: '12px',
+                      color: '#f4f4f5',
+                      cursor: 'pointer',
+                      borderRadius: '5px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: isSelected ? 'rgba(59, 130, 246, 0.25)' : 'transparent',
+                      border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid transparent',
+                      marginBottom: '2px',
+                      transition: 'background 0.12s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = '#27272a';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontWeight: 700, color: '#38bdf8' }}>#{b.token || b.id}</span>
+                        <span style={{ fontWeight: 600 }}>{b.party || 'Standard Account'}</span>
+                        {isSelected && <Check size={12} color="#34d399" />}
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#71717a' }}>{b.date || '—'}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#34d399' }}>
+                        {formatINR(Number(b.total) || 0)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

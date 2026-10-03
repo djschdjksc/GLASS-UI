@@ -308,18 +308,26 @@ export const OtherTabsView: React.FC<Props> = ({
 
   // Selected Bill Id tracking
   const [selectedBillId, setSelectedBillId] = useState<string>('');
+  const topBillId = filteredBills[0]?.id;
+  const prevTopBillIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (filteredBills.length > 0) {
-      // Keep selectedBillId if it exists in filtered list, otherwise default to first filtered bill
-      const exists = filteredBills.some(b => b.id === selectedBillId);
-      if (!exists) {
-        setSelectedBillId(filteredBills[0].id);
+      // If a brand new bill was saved to the top of the list, automatically select it
+      if (prevTopBillIdRef.current && prevTopBillIdRef.current !== topBillId) {
+        setSelectedBillId(topBillId);
+      } else {
+        const exists = filteredBills.some(b => b.id === selectedBillId);
+        if (!exists) {
+          setSelectedBillId(filteredBills[0].id);
+        }
       }
+      prevTopBillIdRef.current = topBillId;
     } else {
       setSelectedBillId('');
+      prevTopBillIdRef.current = null;
     }
-  }, [historySubTab, categoryBills, billSearchQuery, filteredBills]);
+  }, [historySubTab, categoryBills, billSearchQuery, filteredBills, topBillId]);
 
   const selectedBill = (selectedBillId ? filteredBills.find(b => b.id === selectedBillId) : null) || filteredBills[0] || categoryBills[0] || {
     id: 'empty',
@@ -1661,7 +1669,7 @@ export const OtherTabsView: React.FC<Props> = ({
                 <div style={{ 
                   fontSize: '10.5px', 
                   fontWeight: 700, 
-                  color: '#38bdf8', 
+                  color: '#ffffff', 
                   letterSpacing: '0.05em', 
                   padding: '3px 6px 5px 6px',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
@@ -1669,7 +1677,7 @@ export const OtherTabsView: React.FC<Props> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span>LEFT TABLE: RAW MATERIALS / INPUT</span>
+                  <span>PRODUCT TOTAL</span>
                   <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{displayRawItems.length} ITEMS</span>
                 </div>
 
@@ -1827,7 +1835,7 @@ export const OtherTabsView: React.FC<Props> = ({
                 <div style={{ 
                   fontSize: '10.5px', 
                   fontWeight: 700, 
-                  color: '#34d399', 
+                  color: '#ffffff', 
                   letterSpacing: '0.05em', 
                   padding: '3px 6px 5px 6px',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
@@ -1835,7 +1843,7 @@ export const OtherTabsView: React.FC<Props> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span>RIGHT TABLE: GROUP TOTAL</span>
+                  <span>SUMMARY</span>
                   <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{displayFinishedItems.length} MOULDS</span>
                 </div>
 

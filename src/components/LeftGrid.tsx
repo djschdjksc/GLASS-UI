@@ -1,13 +1,12 @@
 import { SQLITE_SHORTCUTS } from '../data/sqliteData';
+import { resolveItemNameWithMode } from '../utils/itemExpansion';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { RawItem, EnterDirection } from '../types';
 import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History, FileSpreadsheet } from 'lucide-react';
-import { downloadCSV } from '../utils/exportCsv';
-import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
+import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from 'antd';
 
@@ -35,6 +34,7 @@ interface CellCoord {
 interface Props {
   autoConvert?: boolean;
   autoItem?: boolean;
+  simpleMode?: boolean;
   items: RawItem[];
   onUpdateItem: (id: string, field: any, value: any) => void;
   onBulkPaste: (pastedRows: any[], startRow?: number, startCol?: number) => void;
@@ -79,6 +79,7 @@ const DEFAULT_LEFT_COLS = {
 export const LeftGrid: React.FC<Props> = ({
   autoConvert = true,
   autoItem = false,
+  simpleMode = false,
   items,
   onUpdateItem,
   onBulkPaste,
@@ -463,103 +464,30 @@ export const LeftGrid: React.FC<Props> = ({
       return;
     }
 
-    let finalName = rawVal.trim();
-    let autoUCap = item.uCap;
-    let autoLCap = item.lCap;
-    const valLower = rawVal.toLowerCase().trim();
+    const prevItemName = rowIndex > 0 ? filteredItems[rowIndex - 1]?.name : undefined;
+    const { finalName, autoUCap, autoLCap, matchedRule, insertedSize } = resolveItemNameWithMode({
+      rawVal,
+      rowIndex,
+      prevItemName,
+      autoConvert: !!autoConvert,
+      autoItem: !!autoItem,
+      simpleMode: !!simpleMode
+    });
 
-    // 0. Resolve active shortcuts from Manage Conversions (SQLite DB / user updated)
-    let activeShortcuts: any[] = SQLITE_SHORTCUTS;
-    try {
-      const customRules = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
-      if (customRules) {
-        const parsed = JSON.parse(customRules);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          activeShortcuts = parsed;
-        }
-      }
-    } catch {}
-
-    // Check if already fully expanded conversion name
-    let isFullConversion = false;
-    let matchedRule: any = null;
-    for (const sc of activeShortcuts) {
-      const conv = (sc.conversion || '').toLowerCase().trim();
-      if (conv && (valLower === conv || valLower.startsWith(conv + ' '))) {
-        isFullConversion = true;
-        matchedRule = sc;
-        break;
-      }
-    }
-
-    // 1. Auto-Convert Mode
-    if (!isFullConversion && autoConvert && rawVal.trim()) {
-      const sortedShortcuts = [...activeShortcuts].sort((a: any, b: any) => ((b.shortcut || '').length - (a.shortcut || '').length));
-      for (const sc of sortedShortcuts) {
-        const scCode = (sc.shortcut || '').toLowerCase().trim();
-        if (scCode && (valLower === scCode || valLower.startsWith(scCode + ' ') || (valLower.startsWith(scCode) && rawVal.length > scCode.length))) {
-          const remaining = rawVal.trim().slice(scCode.length).trim();
-          finalName = remaining ? `${sc.conversion} ${remaining}` : sc.conversion;
-          const uVal = sc.uCap ?? sc.u_cap;
-          const lVal = sc.lCap ?? sc.l_cap;
-          if (uVal && !isNaN(Number(uVal))) autoUCap = Number(uVal);
-          if (lVal && !isNaN(Number(lVal))) autoLCap = Number(lVal);
-          matchedRule = sc;
-          break;
-        }
-      }
-    }
-
-    // 2. Auto-Item Mode (Sticky previous item prefix)
-    if (!isFullConversion && autoItem && rowIndex > 0 && (/^\d+$/.test(rawVal.trim()) || rawVal.trim().length <= 3)) {
-      const prevItem = filteredItems[rowIndex - 1];
-      if (prevItem && prevItem.name) {
-        const parts = prevItem.name.trim().split(' ');
-        if (parts.length > 1) {
-          const prefix = parts.slice(0, -1).join(' ');
-          finalName = `${prefix} ${rawVal.trim()}`;
-        } else {
-          finalName = `${prevItem.name.trim()} ${rawVal.trim()}`;
-        }
-      }
-    }
-
-    // If still not matchedRule, look up by finalName
-    if (!matchedRule) {
-      const finalLower = finalName.toLowerCase().trim();
-      for (const sc of activeShortcuts) {
-        const conv = (sc.conversion || '').toLowerCase().trim();
-        const code = (sc.shortcut || '').toLowerCase().trim();
-        if (conv && (finalLower === conv || finalLower.startsWith(conv + ' ') || finalLower.startsWith(conv + '-'))) {
-          matchedRule = sc;
-          break;
-        }
-        if (code && (finalLower === code || finalLower.startsWith(code + ' '))) {
-          matchedRule = sc;
-          break;
-        }
-      }
-    }
-
-    // 3. Auto-Insert Size Column if matched rule specifies a size (e.g. 12, 9.5) and not default 10
-    if (matchedRule && matchedRule.size !== undefined && matchedRule.size !== null && String(matchedRule.size).trim() !== '') {
-      const parsedSize = parseFloat(String(matchedRule.size).replace(/[^\d.]/g, ''));
-      if (!isNaN(parsedSize) && parsedSize > 0 && parsedSize !== 10) {
-        const field = `qty_${String(parsedSize).replace('.', '_')}`;
-        const label = `(${parsedSize} FT)`;
-        if (!dynamicCols.some(c => c.field === field)) {
-          setDynamicCols(prev => {
-            if (prev.some(c => c.field === field)) return prev;
-            return [...prev, { field, label }];
-          });
-          onToast(`Auto-inserted (${parsedSize} FT) size column for ${matchedRule.conversion || finalName}`, 'info');
-        }
-      }
+    // Auto-Insert Size Column if matched rule specifies a size (e.g. 12, 9.5) and not default 10
+    if (insertedSize && !dynamicCols.some(c => c.field === `qty_${String(insertedSize).replace('.', '_')}`)) {
+      const field = `qty_${String(insertedSize).replace('.', '_')}`;
+      const label = `(${insertedSize} FT)`;
+      setDynamicCols(prev => {
+        if (prev.some(c => c.field === field)) return prev;
+        return [...prev, { field, label }];
+      });
+      onToast(`Auto-inserted (${insertedSize} FT) size column for ${matchedRule?.conversion || finalName}`, 'info');
     }
 
     if (finalName !== item.name) onUpdateItem(item.id, 'name', finalName);
-    if (autoUCap !== item.uCap) onUpdateItem(item.id, 'uCap', autoUCap);
-    if (autoLCap !== item.lCap) onUpdateItem(item.id, 'lCap', autoLCap);
+    if (autoUCap !== undefined && autoUCap !== item.uCap) onUpdateItem(item.id, 'uCap', autoUCap);
+    if (autoLCap !== undefined && autoLCap !== item.lCap) onUpdateItem(item.id, 'lCap', autoLCap);
 
     setCellDrafts(prev => {
       const next = { ...prev };
@@ -755,54 +683,6 @@ export const LeftGrid: React.FC<Props> = ({
     });
   };
 
-  const handleExportCsv = () => {
-    const headers = [
-      'SR NO',
-      'ITEM NAME',
-      ...(hasPartyCodeCol ? ['PARTY CODE'] : []),
-      ...allSizeCols.map(sc => sc.label || sc.field),
-      'U CAP',
-      'L CAP'
-    ];
-    const rows = filteredItems.map((item, idx) => [
-      idx + 1,
-      item.name || '',
-      ...(hasPartyCodeCol ? [item.partyCode || ''] : []),
-      ...allSizeCols.map(sc => (item as any)[sc.field] || 0),
-      item.uCap || 0,
-      item.lCap || 0
-    ]);
-    const ok = downloadCSV(`Raw_Items_List_${Date.now()}`, headers, rows);
-    if (ok) {
-      onToast('Downloaded Raw Items in CSV (Excel format)!', 'success');
-    }
-  };
-
-  const rawCsvColumns: CsvColumnDef<any>[] = useMemo(() => [
-    { header: 'Item Name', key: 'name', sampleValue: 'Aluminium Section 6063 T6', required: true },
-    ...(hasPartyCodeCol ? [{ header: 'Party Code', key: 'partyCode', sampleValue: 'CUST-01' }] : []),
-    { header: '10 FT Qty', key: 'qty', sampleValue: 20 },
-    { header: 'U-Cap', key: 'uCap', sampleValue: 4 },
-    { header: 'L-Cap', key: 'lCap', sampleValue: 4 }
-  ], [hasPartyCodeCol]);
-
-  const handleImportRawItems = (imported: any[], mode: 'append' | 'replace') => {
-    const valid = imported.filter(r => r.name && String(r.name).trim());
-    if (valid.length === 0) {
-      onToast('No valid item rows found in CSV', 'warning');
-      return;
-    }
-    const startRow = mode === 'replace' ? 0 : items.filter(x => x.name && x.name.trim()).length;
-    const lines = valid.map(r => [
-      String(r.name).trim(),
-      ...(hasPartyCodeCol ? [r.partyCode ? String(r.partyCode).trim() : ''] : []),
-      String(Number(r.qty) || 0),
-      String(Number(r.uCap) || 0),
-      String(Number(r.lCap) || 0)
-    ]);
-    onBulkPaste(lines, startRow, 0);
-    onToast(`Successfully imported ${valid.length} raw items!`, 'success');
-  };
 
   const executeGridPaste = (text: string, startR: number, startC: number) => {
     if (!text || !text.trim()) return;
@@ -1200,11 +1080,24 @@ export const LeftGrid: React.FC<Props> = ({
         style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           marginBottom: '8px'
         }}
       >
-        
+        <span
+          style={{
+            fontSize: '13px',
+            fontWeight: 800,
+            letterSpacing: '0.8px',
+            color: '#ffffff',
+            marginLeft: '8px',
+            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+            textTransform: 'uppercase',
+            userSelect: 'none'
+          }}
+        >
+          PRODUCT TOTAL
+        </span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Copy Button */}
@@ -1229,15 +1122,6 @@ export const LeftGrid: React.FC<Props> = ({
             <ClipboardPaste size={13} />
           </button>
 
-          {/* Universal Excel & CSV Data Center */}
-          <ExcelCsvActions<any>
-            entityName="Raw Materials"
-            filenamePrefix="Raw_Items"
-            columns={rawCsvColumns}
-            data={filteredItems.filter(x => x.name && x.name.trim() !== '')}
-            onImport={handleImportRawItems}
-            compact={true}
-          />
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (

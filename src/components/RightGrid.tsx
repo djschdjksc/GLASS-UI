@@ -4,9 +4,7 @@ import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History, FileSpreadsheet } from 'lucide-react';
-import { downloadCSV } from '../utils/exportCsv';
-import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
+import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 
 const evaluateMathExpression = (val: string): number => {
@@ -479,44 +477,6 @@ export const RightGrid: React.FC<Props> = ({
     });
   };
 
-  const handleExportCsv = () => {
-    const headers = ['SR NO', 'MOULD NAME', 'QTY', 'PRICE', 'TOTAL'];
-    const rows = filteredItems.map((item, idx) => [
-      idx + 1,
-      item.mould || '',
-      item.qty || 0,
-      item.price || 0,
-      item.total || 0
-    ]);
-    const ok = downloadCSV(`Mould_Summary_${Date.now()}`, headers, rows);
-    if (ok) {
-      onToast('Downloaded Mould Summary in CSV (Excel format)!', 'success');
-    }
-  };
-
-  const mouldCsvColumns: CsvColumnDef<any>[] = [
-    { header: 'Mould Name', key: 'mould', sampleValue: 'Standard Frame Mould', required: true },
-    { header: 'Qty', key: 'qty', sampleValue: 10 },
-    { header: 'Price', key: 'price', sampleValue: 650 },
-    { header: 'Total', key: 'total', sampleValue: 6500 }
-  ];
-
-  const handleImportMoulds = (imported: any[], mode: 'append' | 'replace') => {
-    const valid = imported.filter(r => r.mould && String(r.mould).trim());
-    if (valid.length === 0) {
-      onToast('No valid mould rows found in CSV', 'warning');
-      return;
-    }
-    const startRow = mode === 'replace' ? 0 : items.filter(x => x.mould && x.mould.trim()).length;
-    const lines = valid.map(r => [
-      String(r.mould).trim(),
-      String(Number(r.qty) || 0),
-      String(Number(r.price) || 0),
-      String(Number(r.total) || ((Number(r.qty) || 0) * (Number(r.price) || 0)))
-    ]);
-    onBulkPaste(lines, startRow, 0);
-    onToast(`Successfully imported ${valid.length} mould items!`, 'success');
-  };
 
   const executeGridPaste = (text: string, startR: number, startC: number) => {
     if (!text || !text.trim()) return;
@@ -923,8 +883,19 @@ export const RightGrid: React.FC<Props> = ({
           marginBottom: '8px'
         }}
       >
-        <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px', color: '#fbbf24' }}>
-          GROUP TOTAL
+        <span
+          style={{
+            fontSize: '13px',
+            fontWeight: 800,
+            letterSpacing: '0.8px',
+            color: '#ffffff',
+            marginLeft: '8px',
+            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+            textTransform: 'uppercase',
+            userSelect: 'none'
+          }}
+        >
+          SUMMARY
         </span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -979,15 +950,6 @@ export const RightGrid: React.FC<Props> = ({
             <ClipboardPaste size={13} />
           </button>
 
-          {/* Universal Excel & CSV Data Center */}
-          <ExcelCsvActions<any>
-            entityName="Moulds / Finished Goods"
-            filenamePrefix="Finished_Moulds"
-            columns={mouldCsvColumns}
-            data={filteredItems.filter(x => x.mould && x.mould.trim() !== '')}
-            onImport={handleImportMoulds}
-            compact={true}
-          />
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (

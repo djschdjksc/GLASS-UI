@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import type { BillHeader } from '../types';
-import { AppleTrafficLights } from './AppleTrafficLights';
 import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
@@ -12,7 +11,7 @@ import { Select as ShadcnSelect } from './ui/shadcn';
 interface Props {
   header: BillHeader;
   onChange: (updated: Partial<BillHeader>) => void;
-  onCloseApp: () => void;
+  onCloseApp?: () => void;
   onAddNewParty: (name: string) => void;
   onSkipBill?: () => void;
   onSaveBill?: () => void;
@@ -86,16 +85,15 @@ export const AppleHeader: React.FC<Props> = ({
       style={{ 
         position: 'relative',
         zIndex: 9999,
-        padding: '10px 16px', 
-        marginBottom: '10px',
+        padding: '8px 14px', 
+        marginBottom: '0px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '12px'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-        <AppleTrafficLights onClose={onCloseApp} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
 
         {/* Document Type Dropdown */}
         <div style={{ position: 'relative', width: '130px' }}>
