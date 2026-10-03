@@ -22,6 +22,7 @@ export interface BillRecord {
   lastModifiedBy?: string;
   editId?: string;
   notes?: string;
+  splitRowIndex?: number | null;
 }
 
 export interface PartyRecord {

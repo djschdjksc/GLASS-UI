@@ -67,7 +67,7 @@ export const LeftActionRail: React.FC<Props> = ({
 }) => {
   const BUTTONS = [
     { id: 'summary', name: 'Calculate Summary', icon: <Layers size={17} color="#10b981" />, action: onSummary },
-    { id: 'oldprice', name: 'Load Old Price', icon: <History size={17} color="#f59e0b" />, action: onLoadOldPrice },
+    { id: 'oldprice', name: 'Rate History (Alt+P)', icon: <History size={17} color="#f59e0b" />, action: onLoadOldPrice },
     { id: 'calc', name: 'Digital Calculator', icon: <Calculator size={17} color="#38bdf8" />, action: () => onOpenCalculator?.() },
     { id: 'audit', name: 'Audit History', icon: <History size={17} color="#c084fc" />, action: () => onOpenAuditHistory?.() },
     { id: 'operator', name: 'Operator Profile', icon: <User size={17} color="#34d399" />, action: () => onOpenUserProfile?.() },

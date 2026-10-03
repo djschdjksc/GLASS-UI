@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { FinishedItem, EnterDirection } from '../types';
 import { resolveItemNameWithMode } from '../utils/itemExpansion';
 import { TableSettingsDropdown } from './TableSettingsDropdown';
@@ -52,6 +52,7 @@ interface Props {
   onActivateTable?: () => void;
   onLoadOldPrice?: () => void;
   onActiveRowChange?: (item: FinishedItem | null) => void;
+  splitRowIndex?: number | null;
 }
 
 const DEFAULT_RIGHT_COLS = {
@@ -65,6 +66,7 @@ const DEFAULT_RIGHT_COLS = {
 export const RightGrid: React.FC<Props> = ({
   autoConvert = true,
   autoItem = false,
+  splitRowIndex = null,
   items,
   onUpdateItem,
   onBulkPaste,
@@ -225,6 +227,24 @@ export const RightGrid: React.FC<Props> = ({
 
   const totalQty = items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
   const grandTotal = items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+
+  const hasLots = useMemo(() => {
+    return items.some(it => /\(lot 1\)/i.test(it?.mould || '')) && items.some(it => /\(lot 2\)/i.test(it?.mould || ''));
+  }, [items]);
+
+  const firstLot2Idx = useMemo(() => {
+    if (!hasLots) return -1;
+    return filteredItems.findIndex(it => /\(lot 2\)/i.test(it?.mould || ''));
+  }, [filteredItems, hasLots]);
+
+  const lot1Items = useMemo(() => items.filter(it => /\(lot 1\)/i.test(it?.mould || '')), [items]);
+  const lot2Items = useMemo(() => items.filter(it => /\(lot 2\)/i.test(it?.mould || '')), [items]);
+
+  const lot1Qty = useMemo(() => lot1Items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0), [lot1Items]);
+  const lot2Qty = useMemo(() => lot2Items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0), [lot2Items]);
+
+  const lot1Total = useMemo(() => lot1Items.reduce((acc, it) => acc + (Number(it.total) || 0), 0), [lot1Items]);
+  const lot2Total = useMemo(() => lot2Items.reduce((acc, it) => acc + (Number(it.total) || 0), 0), [lot2Items]);
 
   const [isRowResizing, setIsRowResizing] = useState<boolean>(false);
   const [contextMenu, setContextMenu] = useState<RowContextMenuState>({ isOpen: false, x: 0, y: 0, rowIndex: 0 });
@@ -967,7 +987,7 @@ export const RightGrid: React.FC<Props> = ({
               onClick={onLoadOldPrice}
               className="apple-box-btn"
               style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-              title="Load Old Price from Party History (Alt+P)"
+              title="View Recent Rate History (Alt+P)"
             >
               <History size={13} color="#f59e0b" />
             </button>
@@ -1193,11 +1213,51 @@ export const RightGrid: React.FC<Props> = ({
   };
 
   return (
-                <tr 
-                  key={item.id} 
-                  className={(isRowSelected ? 'row-selected ' : '') + (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')}
-                  onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
-                >
+    <React.Fragment key={item.id}>
+      {hasLots && firstLot2Idx !== -1 && rIdx === firstLot2Idx && (
+        <tr key="__right_grid_lot_divider__" style={{ background: '#090d16' }}>
+          <td
+            colSpan={5}
+            style={{
+              padding: '6px 12px',
+              background: 'linear-gradient(90deg, rgba(30, 27, 75, 0.96) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(67, 20, 7, 0.96) 100%)',
+              borderTop: '2px dashed #f59e0b',
+              borderBottom: '2px solid rgba(245, 158, 11, 0.5)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 3px 12px rgba(0, 0, 0, 0.6)',
+              userSelect: 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: 'rgba(245, 158, 11, 0.22)',
+                color: '#fbbf24',
+                border: '1px solid rgba(245, 158, 11, 0.55)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase'
+              }}>
+                ✂️ SECTION 2 / LOT 2 ITEMS (NEW RATE)
+              </span>
+              <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>
+                Lot 1: <strong style={{ color: '#38bdf8' }}>₹{lot1Total.toLocaleString('en-IN')}</strong> ({lot1Qty} pcs)
+                &nbsp;•&nbsp;
+                Lot 2: <strong style={{ color: '#fb923c' }}>₹{lot2Total.toLocaleString('en-IN')}</strong> ({lot2Qty} pcs)
+              </span>
+            </div>
+          </td>
+        </tr>
+      )}
+      <tr 
+        key={item.id} 
+        className={(isRowSelected ? 'row-selected ' : '') + (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')}
+        onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
+      >
                   <td 
                     style={{ 
                       width: `${colWidths.index}px`, 
@@ -1382,31 +1442,75 @@ export const RightGrid: React.FC<Props> = ({
                     {formatCurrency(item.total)}
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
+              </React.Fragment>
+            );
+          })}
+        </tbody>
 
-          {/* Table Footer Row with Grand Total */}
-          <tfoot>
-            <tr>
-              <td style={{ textAlign: 'center', color: '#a1a1aa' }}>TOTAL</td>
-              <td style={{ color: '#a1a1aa', fontSize: '11px' }}>
-                <AnimatedCounter value={items.length} suffix=" Moulds Active" />
-              </td>
-              <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>
-                <AnimatedCounter value={totalQty} />
-              </td>
-              <td style={{ textAlign: 'center', color: '#a1a1aa' }}>-</td>
-              <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '14px', color: '#34c759', fontFamily: "'JetBrains Mono', monospace" }}>
-                <AnimatedCounter
-                  value={grandTotal}
-                  prefix="₹ "
-                  formatIndian={true}
-                  style={{ color: '#34c759', fontSize: '14px', fontWeight: 800 }}
-                />
-              </td>
-            </tr>
-          </tfoot>
+        {/* Table Footer Rows with Grand Total and Optional Lot Subtotals */}
+        <tfoot>
+          {hasLots && (
+            <>
+              {/* Lot 1 Subtotal Row */}
+              <tr style={{ background: 'rgba(56, 189, 248, 0.08)', borderTop: '1px solid rgba(56, 189, 248, 0.35)' }}>
+                <td style={{ textAlign: 'center', padding: '0 2px' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.2)', padding: '1px 3px', borderRadius: '3px' }}>
+                    LOT 1
+                  </span>
+                </td>
+                <td style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 700 }}>
+                  LOT 1 SUBTOTAL ({lot1Items.length} Moulds)
+                </td>
+                <td style={{ textAlign: 'center', color: '#7dd3fc', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                  <AnimatedCounter value={lot1Qty} />
+                </td>
+                <td style={{ textAlign: 'center', color: '#a1a1aa' }}>-</td>
+                <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '12px', color: '#7dd3fc', fontFamily: "'JetBrains Mono', monospace" }}>
+                  <AnimatedCounter value={lot1Total} prefix="₹ " formatIndian={true} />
+                </td>
+              </tr>
+
+              {/* Lot 2 Subtotal Row */}
+              <tr style={{ background: 'rgba(249, 115, 22, 0.08)', borderTop: '1px solid rgba(249, 115, 22, 0.35)' }}>
+                <td style={{ textAlign: 'center', padding: '0 2px' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 800, color: '#fb923c', background: 'rgba(249, 115, 22, 0.2)', padding: '1px 3px', borderRadius: '3px' }}>
+                    LOT 2
+                  </span>
+                </td>
+                <td style={{ color: '#fb923c', fontSize: '11px', fontWeight: 700 }}>
+                  LOT 2 SUBTOTAL ({lot2Items.length} Moulds)
+                </td>
+                <td style={{ textAlign: 'center', color: '#fdba74', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                  <AnimatedCounter value={lot2Qty} />
+                </td>
+                <td style={{ textAlign: 'center', color: '#a1a1aa' }}>-</td>
+                <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '12px', color: '#fdba74', fontFamily: "'JetBrains Mono', monospace" }}>
+                  <AnimatedCounter value={lot2Total} prefix="₹ " formatIndian={true} />
+                </td>
+              </tr>
+            </>
+          )}
+
+          {/* Grand Total Row */}
+          <tr style={hasLots ? { background: 'rgba(16, 185, 129, 0.08)', borderTop: '2px solid rgba(52, 211, 153, 0.4)' } : undefined}>
+            <td style={{ textAlign: 'center', color: '#a1a1aa' }}>TOTAL</td>
+            <td style={{ color: '#a1a1aa', fontSize: '11px' }}>
+              <AnimatedCounter value={items.filter(it => it.mould).length} suffix=" Moulds Active" />
+            </td>
+            <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>
+              <AnimatedCounter value={totalQty} />
+            </td>
+            <td style={{ textAlign: 'center', color: '#a1a1aa' }}>-</td>
+            <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '14px', color: '#34c759', fontFamily: "'JetBrains Mono', monospace" }}>
+              <AnimatedCounter
+                value={grandTotal}
+                prefix="₹ "
+                formatIndian={true}
+                style={{ color: '#34c759', fontSize: '14px', fontWeight: 800 }}
+              />
+            </td>
+          </tr>
+        </tfoot>
         </table>
       </div>
     

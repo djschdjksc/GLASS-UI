@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Plus, Trash2, XCircle } from 'lucide-react';
+import { Plus, Trash2, XCircle, Scissors } from 'lucide-react';
 
 export interface RowContextMenuState {
   isOpen: boolean;
@@ -15,6 +15,8 @@ interface Props {
   onInsertBelow: (index: number) => void;
   onDeleteRow: (index: number) => void;
   onClearRow: (index: number) => void;
+  splitRowIndex?: number | null;
+  onToggleTableSplit?: (index: number) => void;
 }
 
 export const RowContextMenu: React.FC<Props> = ({
@@ -23,7 +25,9 @@ export const RowContextMenu: React.FC<Props> = ({
   onInsertAbove,
   onInsertBelow,
   onDeleteRow,
-  onClearRow
+  onClearRow,
+  splitRowIndex,
+  onToggleTableSplit
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -185,6 +189,42 @@ export const RowContextMenu: React.FC<Props> = ({
         <XCircle size={13} color="#fbbf24" />
         <span>X Clear row</span>
       </button>
+
+      {onToggleTableSplit && (
+        <>
+          <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '3px 0' }} />
+          <button
+            type="button"
+            onClick={() => {
+              onToggleTableSplit(contextMenu.rowIndex);
+              onClose();
+            }}
+            className="context-menu-item"
+            style={{
+              width: '100%',
+              padding: '7px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: splitRowIndex === contextMenu.rowIndex + 1 ? 'rgba(249, 115, 22, 0.18)' : 'transparent',
+              color: splitRowIndex === contextMenu.rowIndex + 1 ? '#fb923c' : '#38bdf8',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <Scissors size={13} color={splitRowIndex === contextMenu.rowIndex + 1 ? '#fb923c' : '#38bdf8'} />
+            <span>
+              {splitRowIndex === contextMenu.rowIndex + 1
+                ? '✕ Remove Table Divide'
+                : '✂️ Divide Table (Split Below #' + (contextMenu.rowIndex + 1) + ')'}
+            </span>
+          </button>
+        </>
+      )}
     </div>
   );
 };

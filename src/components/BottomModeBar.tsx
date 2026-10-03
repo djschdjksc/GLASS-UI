@@ -28,6 +28,7 @@ export interface SavedSlipData {
   rawItems: RawItem[];
   finishedItems: FinishedItem[];
   dynamicCols?: { field: string; label: string }[];
+  splitRowIndex?: number | null;
 }
 
 export const PRESET_SLIPS: SavedSlipData[] = [
@@ -219,7 +220,8 @@ export const BottomModeBar: React.FC<Props> = ({
         date: matched.date || new Date().toISOString().split('T')[0],
         rawItems: (matched.rawItems || []).map((r: any) => ({ ...r })),
         finishedItems: (matched.finishedItems || []).map((f: any) => ({ ...f })),
-        dynamicCols: matched.dynamicCols ? matched.dynamicCols.map((c: any) => ({ ...c })) : []
+        dynamicCols: matched.dynamicCols ? matched.dynamicCols.map((c: any) => ({ ...c })) : [],
+        splitRowIndex: matched.splitRowIndex ?? null
       };
       onLoadSlipData(slipData);
       onToast(`Loaded ${currentDoc} Bill #${matched.token} — ${matched.party || 'No Party'}`, 'success');

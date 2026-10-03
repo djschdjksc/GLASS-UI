@@ -21,7 +21,8 @@ export const normalizeBaseProduct = (str: string): string => {
 };
 
 export const parseProductAndSize = (mouldName: string): ParsedMouldInfo => {
-  const trimmed = (mouldName || '').trim();
+  const clean = (mouldName || '').replace(/\s*\((?:lot|part)\s*\d+\)/gi, '').trim();
+  const trimmed = clean;
   if (!trimmed) {
     return { baseProduct: '', size: 10, hasSize: false, normalizedBase: '' };
   }

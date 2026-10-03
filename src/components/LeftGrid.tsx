@@ -65,6 +65,8 @@ interface Props {
   editOperator?: string;
   isModifiedBill?: boolean;
   onOpenAuditHistory?: () => void;
+  splitRowIndex?: number | null;
+  onToggleTableSplit?: (index: number | null) => void;
 }
 
 const DEFAULT_LEFT_COLS = {
@@ -109,7 +111,9 @@ export const LeftGrid: React.FC<Props> = ({
   editVersion = 1,
   editOperator = 'User',
   isModifiedBill = false,
-  onOpenAuditHistory
+  onOpenAuditHistory,
+  splitRowIndex = null,
+  onToggleTableSplit
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -422,6 +426,42 @@ export const LeftGrid: React.FC<Props> = ({
       return acc + rowSum;
     }, 0);
   }, [items, allSizeCols]);
+
+  const isSplitActive = typeof splitRowIndex === 'number' && splitRowIndex > 0 && splitRowIndex < items.length;
+
+  const upperItems = useMemo(() => (isSplitActive && splitRowIndex ? items.slice(0, splitRowIndex) : items), [items, splitRowIndex, isSplitActive]);
+  const lowerItems = useMemo(() => (isSplitActive && splitRowIndex ? items.slice(splitRowIndex) : []), [items, splitRowIndex, isSplitActive]);
+
+  const upperTotalQty = useMemo(() => upperItems.reduce((acc, it) => acc + (Number(it.qty) || 0), 0), [upperItems]);
+  const lowerTotalQty = useMemo(() => lowerItems.reduce((acc, it) => acc + (Number(it.qty) || 0), 0), [lowerItems]);
+
+  const upperTotalUCap = useMemo(() => upperItems.reduce((acc, it) => acc + (Number(it.uCap) || 0), 0), [upperItems]);
+  const lowerTotalUCap = useMemo(() => lowerItems.reduce((acc, it) => acc + (Number(it.uCap) || 0), 0), [lowerItems]);
+
+  const upperTotalLCap = useMemo(() => upperItems.reduce((acc, it) => acc + (Number(it.lCap) || 0), 0), [upperItems]);
+  const lowerTotalLCap = useMemo(() => lowerItems.reduce((acc, it) => acc + (Number(it.lCap) || 0), 0), [lowerItems]);
+
+  const upperGrandTotalAllCols = useMemo(() => {
+    return upperItems.reduce((acc, it) => {
+      let rowSum = 0;
+      allSizeCols.forEach(sc => {
+        rowSum += Number((it as any)[sc.field]) || 0;
+      });
+      rowSum += (Number(it.uCap) || 0) + (Number(it.lCap) || 0);
+      return acc + rowSum;
+    }, 0);
+  }, [upperItems, allSizeCols]);
+
+  const lowerGrandTotalAllCols = useMemo(() => {
+    return lowerItems.reduce((acc, it) => {
+      let rowSum = 0;
+      allSizeCols.forEach(sc => {
+        rowSum += Number((it as any)[sc.field]) || 0;
+      });
+      rowSum += (Number(it.uCap) || 0) + (Number(it.lCap) || 0);
+      return acc + rowSum;
+    }, 0);
+  }, [lowerItems, allSizeCols]);
 
   const [isRowResizing, setIsRowResizing] = useState<boolean>(false);
   const [contextMenu, setContextMenu] = useState<RowContextMenuState>({ isOpen: false, x: 0, y: 0, rowIndex: 0 });
@@ -1168,7 +1208,7 @@ export const LeftGrid: React.FC<Props> = ({
               onClick={onLoadOldPrice}
               className="apple-box-btn"
               style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-              title="Load Old Price from Party History (Alt+P)"
+              title="View Recent Rate History (Alt+P)"
             >
               <History size={13} color="#f59e0b" />
             </button>
@@ -1491,14 +1531,81 @@ export const LeftGrid: React.FC<Props> = ({
               const isRowActive = isActiveTable && activeCell?.r === rIdx;
 
               return (
-                <tr 
-                  key={item.id} 
-                  className={
-                    (isRowSelected ? 'row-selected ' : '') + 
-                    (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')
-                  }
-                  onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
-                >
+                <React.Fragment key={item.id}>
+                  {isSplitActive && rIdx === splitRowIndex && (
+                    <tr key="__table_split_divider__" style={{ background: '#090d16' }}>
+                      <td
+                        colSpan={4 + (hasPartyCodeCol ? 1 : 0) + allSizeCols.length}
+                        style={{
+                          padding: '6px 12px',
+                          background: 'linear-gradient(90deg, rgba(30, 27, 75, 0.96) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(67, 20, 7, 0.96) 100%)',
+                          borderTop: '2px dashed #f59e0b',
+                          borderBottom: '2px solid rgba(245, 158, 11, 0.5)',
+                          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.7)',
+                          userSelect: 'none'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: 'rgba(245, 158, 11, 0.22)',
+                              color: '#fbbf24',
+                              border: '1px solid rgba(245, 158, 11, 0.55)',
+                              padding: '3px 9px',
+                              borderRadius: '5px',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase'
+                            }}>
+                              ✂️ SECTION 2 / LOT 2 (LOWER HALF — SEPARATE RATES)
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>
+                              Lot 1 (Upper): <strong style={{ color: '#38bdf8' }}>Rows 1 - {splitRowIndex}</strong> ({upperGrandTotalAllCols} pcs)
+                              &nbsp;•&nbsp;
+                              Lot 2 (Lower): <strong style={{ color: '#fb923c' }}>Rows {splitRowIndex + 1} - {items.length}</strong> ({lowerGrandTotalAllCols} pcs)
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleTableSplit?.(null);
+                              onToast('Table divide removed', 'info');
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'rgba(239, 68, 68, 0.16)',
+                              color: '#f87171',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              padding: '3px 9px',
+                              borderRadius: '5px',
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                            title="Remove table divide and merge sections"
+                          >
+                            ✕ Remove Divide
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  <tr 
+                    key={item.id} 
+                    className={
+                      (isRowSelected ? 'row-selected ' : '') + 
+                      (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')
+                    }
+                    onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
+                  >
                   {/* Row Index */}
                   <td 
                     style={{ 
@@ -1818,13 +1925,81 @@ export const LeftGrid: React.FC<Props> = ({
                     );
                   })()}
                 </tr>
-              );
-            })}
-          </tbody>
+              </React.Fragment>
+            );
+          })}
+        </tbody>
 
-          {/* Table Footer Row */}
+          {/* Table Footer Rows */}
           <tfoot>
-            <tr>
+            {isSplitActive && (
+              <>
+                {/* Lot 1 (Upper Half) Subtotal Row */}
+                <tr style={{ background: 'rgba(56, 189, 248, 0.08)', borderTop: '1px solid rgba(56, 189, 248, 0.35)' }}>
+                  <td style={{ textAlign: 'center', padding: '0 2px' }}>
+                    <span style={{ fontSize: '9px', fontWeight: 800, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.2)', padding: '1px 3px', borderRadius: '3px' }}>
+                      LOT 1
+                    </span>
+                  </td>
+                  <td style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 700, textAlign: 'center', padding: '0 8px', fontFamily: "'JetBrains Mono', monospace" }}>
+                    <Tooltip title={`Lot 1 Subtotal (Rows 1-${splitRowIndex}): ${upperGrandTotalAllCols}`} placement="top" color="#0f172a">
+                      <span style={{ display: 'inline-block' }}>
+                        <AnimatedCounter value={upperGrandTotalAllCols} style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 800 }} />
+                      </span>
+                    </Tooltip>
+                  </td>
+                  {hasPartyCodeCol && <td></td>}
+                  {allSizeCols.map(sc => {
+                    const uTotal = upperItems.reduce((acc, it) => acc + (Number((it as any)[sc.field]) || 0), 0);
+                    return (
+                      <td key={sc.field} style={{ textAlign: 'center', color: '#7dd3fc', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                        <AnimatedCounter value={uTotal} />
+                      </td>
+                    );
+                  })}
+                  <td style={{ textAlign: 'center', color: '#7dd3fc', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                    <AnimatedCounter value={upperTotalUCap} />
+                  </td>
+                  <td style={{ textAlign: 'center', color: '#7dd3fc', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                    <AnimatedCounter value={upperTotalLCap} />
+                  </td>
+                </tr>
+
+                {/* Lot 2 (Lower Half) Subtotal Row */}
+                <tr style={{ background: 'rgba(249, 115, 22, 0.08)', borderTop: '1px solid rgba(249, 115, 22, 0.35)' }}>
+                  <td style={{ textAlign: 'center', padding: '0 2px' }}>
+                    <span style={{ fontSize: '9px', fontWeight: 800, color: '#fb923c', background: 'rgba(249, 115, 22, 0.2)', padding: '1px 3px', borderRadius: '3px' }}>
+                      LOT 2
+                    </span>
+                  </td>
+                  <td style={{ color: '#fb923c', fontSize: '11px', fontWeight: 700, textAlign: 'center', padding: '0 8px', fontFamily: "'JetBrains Mono', monospace" }}>
+                    <Tooltip title={`Lot 2 Subtotal (Rows ${splitRowIndex! + 1}-${items.length}): ${lowerGrandTotalAllCols}`} placement="top" color="#0f172a">
+                      <span style={{ display: 'inline-block' }}>
+                        <AnimatedCounter value={lowerGrandTotalAllCols} style={{ color: '#fb923c', fontSize: '12px', fontWeight: 800 }} />
+                      </span>
+                    </Tooltip>
+                  </td>
+                  {hasPartyCodeCol && <td></td>}
+                  {allSizeCols.map(sc => {
+                    const lTotal = lowerItems.reduce((acc, it) => acc + (Number((it as any)[sc.field]) || 0), 0);
+                    return (
+                      <td key={sc.field} style={{ textAlign: 'center', color: '#fdba74', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                        <AnimatedCounter value={lTotal} />
+                      </td>
+                    );
+                  })}
+                  <td style={{ textAlign: 'center', color: '#fdba74', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                    <AnimatedCounter value={lowerTotalUCap} />
+                  </td>
+                  <td style={{ textAlign: 'center', color: '#fdba74', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                    <AnimatedCounter value={lowerTotalLCap} />
+                  </td>
+                </tr>
+              </>
+            )}
+
+            {/* Combined Grand Total Row */}
+            <tr style={isSplitActive ? { background: 'rgba(16, 185, 129, 0.08)', borderTop: '2px solid rgba(52, 211, 153, 0.4)' } : undefined}>
               <td style={{ textAlign: 'center', padding: '0 2px' }}>
                 <Tooltip
                   title={`Edit ID: ${editId} | Operator: ${editOperator} | Version: ${editVersion} (${isModifiedBill ? 'MODIFIED REVISION' : 'ORIGINAL'})`}
@@ -1859,7 +2034,7 @@ export const LeftGrid: React.FC<Props> = ({
               </td>
               <td 
                 style={{ 
-                  color: '#38bdf8', 
+                  color: isSplitActive ? '#34d399' : '#38bdf8', 
                   fontSize: '12px', 
                   fontWeight: 700, 
                   textAlign: 'center',
@@ -1867,11 +2042,11 @@ export const LeftGrid: React.FC<Props> = ({
                   padding: '0 8px'
                 }}
               >
-                <Tooltip title={`Grand Total: ${grandTotalAllCols}`} placement="top" color="#0f172a">
+                <Tooltip title={`Grand Total (All Rows): ${grandTotalAllCols}`} placement="top" color="#0f172a">
                   <span style={{ display: 'inline-block' }}>
                     <AnimatedCounter
                       value={grandTotalAllCols}
-                      style={{ color: '#38bdf8', fontSize: '13px', fontWeight: 800 }}
+                      style={{ color: isSplitActive ? '#34d399' : '#38bdf8', fontSize: '13px', fontWeight: 800 }}
                     />
                   </span>
                 </Tooltip>
@@ -1938,6 +2113,16 @@ export const LeftGrid: React.FC<Props> = ({
           ];
           onClearCells(cells);
           onToast(`Cleared row #${idx + 1}`, 'info');
+        }}
+        splitRowIndex={splitRowIndex}
+        onToggleTableSplit={(idx) => {
+          if (splitRowIndex === idx + 1) {
+            onToggleTableSplit?.(null);
+            onToast('Table divide removed', 'info');
+          } else {
+            onToggleTableSplit?.(idx + 1);
+            onToast(`Table divided below row #${idx + 1} (Lot 1: 1-${idx + 1}, Lot 2: ${idx + 2}-${items.length})`, 'success');
+          }
         }}
       />
     </div>

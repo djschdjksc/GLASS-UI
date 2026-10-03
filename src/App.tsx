@@ -43,6 +43,7 @@ import { getUserProfile, getNextUserToken } from './services/supabaseClient';
 import { UserIdentityModal } from './components/UserIdentityModal';
 import { BillAuditHistoryModal } from './components/BillAuditHistoryModal';
 import { CloudBillNotification, type CloudNotificationData } from './components/CloudBillNotification';
+import { RateHistoryModal } from './components/RateHistoryModal';
 import { speakVoiceSummaryHindi } from './utils/hindiVoiceSummary';
 
 const playTapSound = () => {
@@ -154,6 +155,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const isCalculatorOpenRef = useRef(false);
   isCalculatorOpenRef.current = isCalculatorOpen;
+  const [isRateHistoryOpen, setIsRateHistoryOpen] = useState(false);
+  const isRateHistoryOpenRef = useRef(false);
+  isRateHistoryOpenRef.current = isRateHistoryOpen;
 
   // Global Scroll Reveal via IntersectionObserver
   // Any element with class "scroll-reveal" will animate when it enters the viewport
@@ -235,6 +239,23 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   useEffect(() => {
     localStorage.setItem('modern_has_party_code_col', String(hasPartyCodeCol));
   }, [hasPartyCodeCol]);
+
+  // Dual Section Partition (Table Divide below row index)
+  const [splitRowIndex, setSplitRowIndex] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem('modern_app_split_row_index');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    if (splitRowIndex !== null) {
+      localStorage.setItem('modern_app_split_row_index', JSON.stringify(splitRowIndex));
+    } else {
+      localStorage.removeItem('modern_app_split_row_index');
+    }
+  }, [splitRowIndex]);
 
   // Multi-device User Identity & Audit History state
   const [isUserIdentityOpen, setIsUserIdentityOpen] = useState(false);
@@ -468,6 +489,28 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       .map(f => ({ ...f }));
 
     const total = validFinishedItems.reduce((acc, f) => acc + (Number(f.total) || 0), 0);
+    // Auto-save party to database registry if not already present
+    const partyExists = localDb.getParties().some(p => p.name.trim().toLowerCase() === cleanPartyName.toLowerCase());
+    if (!partyExists) {
+      const autoNewParty: PartyRecord = {
+        id: `P-${Date.now()}`,
+        name: cleanPartyName,
+        contact: '',
+        phone: '',
+        city: 'Local',
+        station: '',
+        district: '',
+        state: '',
+        pincode: '',
+        balance: 0,
+        limit: 500000,
+        gstin: '',
+        updatedAt: Date.now(),
+        synced: false
+      };
+      localDb.saveParty(autoNewParty).catch(() => {});
+    }
+
     const tokenStr = String(header.tokenNo || '1');
     const existingId = loadedBillSnapshotRef.current?.id;
     const billToSave: BillRecord = {
@@ -490,7 +533,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       version: activeEditInfo.version,
       editId: activeEditInfo.editId,
       lastModifiedBy: activeEditInfo.operator,
-      notes: noteText
+      notes: noteText,
+      splitRowIndex: splitRowIndex
     };
 
     const previousBill = loadedBillSnapshotRef.current || localDb.getBillById(billToSave.id);
@@ -529,6 +573,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setRawItems(blankRaws);
     setFinishedItems([]);
     setDynamicCols([]);
+    setSplitRowIndex(null);
     setNoteText('');
     setActiveTable('left');
 
@@ -582,6 +627,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setFinishedItems([]);
     setDynamicCols([]);
     setHasPartyCodeCol(false);
+    setSplitRowIndex(null);
     setNoteText('');
 
     lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], [], false);
@@ -653,6 +699,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
       setDynamicCols(target.dynamicCols || []);
+      setSplitRowIndex(target.splitRowIndex ?? null);
       setNoteText((target as any).notes || (target as any).note || '');
       const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
       setHasPartyCodeCol(partyCodeCol);
@@ -728,6 +775,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
       setDynamicCols(target.dynamicCols || []);
+      setSplitRowIndex(target.splitRowIndex ?? null);
       setNoteText((target as any).notes || (target as any).note || '');
       const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
       setHasPartyCodeCol(partyCodeCol);
@@ -981,6 +1029,15 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         }
       }
 
+      // If Rate History Modal is open: Intercept Escape to close modal
+      if (isRateHistoryOpenRef.current) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setIsRateHistoryOpen(false);
+          return;
+        }
+      }
+
       // Escape key: SKIP current loaded bill or clear panel to new blank bill (only in F1/HOME)
       if (e.key === 'Escape') {
         if (activeTabRef.current === 'F1' || activeTabRef.current === 'HOME') {
@@ -1178,6 +1235,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setRawItems(slip.rawItems || []);
     setFinishedItems(slip.finishedItems || []);
     setDynamicCols(slip.dynamicCols || []);
+    setSplitRowIndex(slip.splitRowIndex ?? (foundBill?.splitRowIndex ?? null));
     lastSavedSnapshotRef.current = getBillFingerprint(
       {
         docType: slip.docType,
@@ -2176,18 +2234,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Left Panel -> Right Panel Summary Calculation Engine (Ctrl+G)
   // Groups quantities accurately. Does NOT inject default rates automatically (rates stay 0 unless user typed/loaded)
+  // Supports dual section partition (Upper / Lower / Lot 1 / Lot 2) with independent pricing
   const calculateRightGridFromLeft = useCallback(() => {
-    const { itemSummary, groupSummary, sourceMap } = groupRawItemsForSummary(rawItems, dynamicCols);
-    setSummarySourceMap(sourceMap);
-
-    const totalCalculated = Object.keys(itemSummary).length + Object.keys(groupSummary).length;
-    if (totalCalculated === 0) {
-      showToast('Left Table is empty! Enter items & quantities first.', 'warning');
-      return;
-    }
-
-    const newMoulds: FinishedItem[] = [];
-    let idCounter = 1;
+    const isSplit = splitRowIndex !== null && splitRowIndex > 0 && splitRowIndex < rawItems.length;
 
     // 1. Resolve Group Priority Map from Manage Groups (control_groups in SQLite / localStorage)
     const groupRankMap = new Map<string, number>();
@@ -2237,79 +2286,138 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       return groupRankMap.has(groupName) ? (groupRankMap.get(groupName) ?? 999) : 999;
     };
 
-    // 2. Sort Mould Items: Primary by Manage Groups position (1 is top, then 2, 3...), Secondary by item name, Tertiary by Size DESCENDING (12 FT -> 11 FT -> 10 FT)
-    const sortedItemEntries = Object.entries(itemSummary).sort(([nameA], [nameB]) => {
-      // 1. Group priority from Manage Groups
-      const rankA = getGroupRank(nameA);
-      const rankB = getGroupRank(nameB);
-      if (rankA !== rankB) return rankA - rankB;
+    let idCounter = 1;
+    const buildSectionItems = (
+      iSummary: Record<string, number>,
+      gSummary: Record<string, number>,
+      lotSuffix: string
+    ): FinishedItem[] => {
+      const sectionMoulds: FinishedItem[] = [];
 
-      // 2. Base item name
-      const baseA = nameA.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim();
-      const baseB = nameB.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim();
-      if (baseA.toLowerCase() !== baseB.toLowerCase()) return baseA.localeCompare(baseB);
+      const sortedEntries = Object.entries(iSummary).sort(([nameA], [nameB]) => {
+        const rankA = getGroupRank(nameA);
+        const rankB = getGroupRank(nameB);
+        if (rankA !== rankB) return rankA - rankB;
 
-      // 3. For the same item name, sort size DESCENDING (e.g. 12 FT -> 11 FT -> 10 FT)
-      const matchA = nameA.match(/\(([\d]+(?:\.[\d]+)?)/);
-      const matchB = nameB.match(/\(([\d]+(?:\.[\d]+)?)/);
-      const sA = matchA ? parseFloat(matchA[1]) : 0;
-      const sB = matchB ? parseFloat(matchB[1]) : 0;
-      return sB - sA;
-    });
+        const baseA = nameA.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim();
+        const baseB = nameB.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim();
+        if (baseA.toLowerCase() !== baseB.toLowerCase()) return baseA.localeCompare(baseB);
 
-    sortedItemEntries.forEach(([mouldName, sumQty]) => {
-      const parsed = parseProductAndSize(mouldName);
-      const targetNorm = parsed.normalizedBase;
-      const targetSize = parsed.size > 0 ? parsed.size : 10;
-
-      // 1. Check if this exact mould already has an existing price entered by user
-      const exactExisting = finishedItems.find(m => {
-        if (!m?.mould || !((Number(m.price) || 0) > 0)) return false;
-        return m.mould.trim().toLowerCase() === mouldName.trim().toLowerCase();
+        const matchA = nameA.match(/\(([\d]+(?:\.[\d]+)?)/);
+        const matchB = nameB.match(/\(([\d]+(?:\.[\d]+)?)/);
+        const sA = matchA ? parseFloat(matchA[1]) : 0;
+        const sB = matchB ? parseFloat(matchB[1]) : 0;
+        return sB - sA;
       });
 
-      let price = 0;
-      if (exactExisting && Number(exactExisting.price) > 0) {
-        price = Number(exactExisting.price);
-      } else {
-        // 2. Check if finishedItems has ANY other size of this product with price entered by user
-        const otherExisting = finishedItems.find(m => {
+      sortedEntries.forEach(([mouldName, sumQty]) => {
+        const labeledName = lotSuffix ? `${mouldName}${lotSuffix}` : mouldName;
+        const parsed = parseProductAndSize(labeledName);
+        const targetNorm = parsed.normalizedBase;
+        const targetSize = parsed.size > 0 ? parsed.size : 10;
+
+        // 1. Check exact match in finishedItems
+        const exactExisting = finishedItems.find(m => {
           if (!m?.mould || !((Number(m.price) || 0) > 0)) return false;
-          return parseProductAndSize(m.mould).normalizedBase === targetNorm;
+          const cleanM = m.mould.trim().toLowerCase();
+          return cleanM === labeledName.trim().toLowerCase() || cleanM === mouldName.trim().toLowerCase();
         });
 
-        if (otherExisting) {
-          const existParsed = parseProductAndSize(otherExisting.mould);
-          const existSize = existParsed.size > 0 ? existParsed.size : 10;
-          price = calculateProportionalPrice(Number(otherExisting.price), existSize, targetSize);
+        let price = 0;
+        if (exactExisting && Number(exactExisting.price) > 0) {
+          price = Number(exactExisting.price);
         } else {
-          // No arbitrary default rate! Keep rate = 0
-          price = 0;
+          // 2. Check proportional price
+          const otherExisting = finishedItems.find(m => {
+            if (!m?.mould || !((Number(m.price) || 0) > 0)) return false;
+            return parseProductAndSize(m.mould).normalizedBase === targetNorm;
+          });
+
+          if (otherExisting) {
+            const existParsed = parseProductAndSize(otherExisting.mould);
+            const existSize = existParsed.size > 0 ? existParsed.size : 10;
+            price = calculateProportionalPrice(Number(otherExisting.price), existSize, targetSize);
+          } else {
+            price = 0;
+          }
         }
+
+        sectionMoulds.push({
+          id: 'fin-calc-' + idCounter++,
+          mould: labeledName,
+          qty: sumQty,
+          price: price,
+          total: sumQty * price
+        });
+      });
+
+      // Caps / Groups
+      Object.entries(gSummary).forEach(([groupName, sumQty]) => {
+        const labeledGroup = lotSuffix ? `${groupName}${lotSuffix}` : groupName;
+        const pKey = labeledGroup.toLowerCase();
+        const baseKey = groupName.toLowerCase();
+        const existing = finishedItems.find(m => {
+          const mKey = (m?.mould || '').toLowerCase();
+          return mKey === pKey || mKey === baseKey;
+        });
+        const price = (existing && Number(existing.price) > 0) ? Number(existing.price) : 0;
+        sectionMoulds.push({
+          id: 'fin-calc-' + idCounter++,
+          mould: labeledGroup,
+          qty: sumQty,
+          price: price,
+          total: sumQty * price
+        });
+      });
+
+      return sectionMoulds;
+    };
+
+    const newMoulds: FinishedItem[] = [];
+    let totalCalculated = 0;
+
+    if (isSplit && splitRowIndex) {
+      const upperRaw = rawItems.slice(0, splitRowIndex);
+      const lowerRaw = rawItems.slice(splitRowIndex);
+
+      const upperRes = groupRawItemsForSummary(upperRaw, dynamicCols);
+      const lowerRes = groupRawItemsForSummary(lowerRaw, dynamicCols);
+
+      totalCalculated = Object.keys(upperRes.itemSummary).length + Object.keys(upperRes.groupSummary).length +
+                        Object.keys(lowerRes.itemSummary).length + Object.keys(lowerRes.groupSummary).length;
+
+      if (totalCalculated === 0) {
+        showToast('Left Table is empty! Enter items & quantities first.', 'warning');
+        return;
       }
 
-      newMoulds.push({
-        id: 'fin-calc-' + idCounter++,
-        mould: mouldName,
-        qty: sumQty,
-        price: price,
-        total: sumQty * price
+      const combinedSourceMap: Record<string, any[]> = {};
+      Object.entries(upperRes.sourceMap).forEach(([k, v]) => {
+        combinedSourceMap[`${k} (Lot 1)`] = v;
+        combinedSourceMap[k] = v;
       });
-    });
+      Object.entries(lowerRes.sourceMap).forEach(([k, v]) => {
+        combinedSourceMap[`${k} (Lot 2)`] = v;
+        if (!combinedSourceMap[k]) combinedSourceMap[k] = v;
+      });
+      setSummarySourceMap(combinedSourceMap);
 
-    // 2. Grouped Caps (Fluted Jointer / Jointer)
-    Object.entries(groupSummary).forEach(([groupName, sumQty]) => {
-      const pKey = groupName.toLowerCase();
-      const existing = finishedItems.find(m => (m?.mould || '').toLowerCase() === pKey);
-      const price = (existing && Number(existing.price) > 0) ? Number(existing.price) : 0;
-      newMoulds.push({
-        id: 'fin-calc-' + idCounter++,
-        mould: groupName,
-        qty: sumQty,
-        price: price,
-        total: sumQty * price
-      });
-    });
+      const upperMoulds = buildSectionItems(upperRes.itemSummary, upperRes.groupSummary, ' (Lot 1)');
+      const lowerMoulds = buildSectionItems(lowerRes.itemSummary, lowerRes.groupSummary, ' (Lot 2)');
+      newMoulds.push(...upperMoulds, ...lowerMoulds);
+    } else {
+      const { itemSummary, groupSummary, sourceMap } = groupRawItemsForSummary(rawItems, dynamicCols);
+      setSummarySourceMap(sourceMap);
+
+      totalCalculated = Object.keys(itemSummary).length + Object.keys(groupSummary).length;
+      if (totalCalculated === 0) {
+        showToast('Left Table is empty! Enter items & quantities first.', 'warning');
+        return;
+      }
+
+      const singleMoulds = buildSectionItems(itemSummary, groupSummary, '');
+      newMoulds.push(...singleMoulds);
+    }
 
     while (newMoulds.length < 10) {
       newMoulds.push({ id: 'fin-empty-' + idCounter++, mould: '', qty: 0, price: 0, total: 0 });
@@ -2317,13 +2425,89 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     setFinishedItems(newMoulds);
     playTapSound();
-    showToast(`⚡ Calculated Right Panel: ${totalCalculated} Groups/Moulds (Ctrl+G)`, 'success');
-  }, [rawItems, dynamicCols, finishedItems, groupRawItemsForSummary, playTapSound]);
+    showToast(`⚡ Calculated Right Panel: ${totalCalculated} Groups/Moulds (Ctrl+G)${isSplit ? ' [Divided: Lot 1 & Lot 2]' : ''}`, 'success');
+  }, [rawItems, dynamicCols, finishedItems, groupRawItemsForSummary, splitRowIndex, playTapSound]);
   calcSummaryRef.current = calculateRightGridFromLeft;
 
-  // Load Old Price from Party History:
-  // Scans history for the same person/party, finds each item/mould, and picks the LATEST rate (most recent bill)
+  // Open Recent Rate History Modal:
+  // Shows recent sold rates of all items/moulds from bill history with search, party filter,
+  // multi-selection, and 1-click loading into the bill with Shadcn UI styling.
   const handleLoadOldPriceFromHistory = useCallback(() => {
+    setIsRateHistoryOpen(true);
+  }, []);
+  loadOldPriceRef.current = handleLoadOldPriceFromHistory;
+
+  // Apply selected historical rates into current bill
+  const handleApplyHistoricalRates = useCallback((selectedRates: { mould: string; price: number }[]) => {
+    if (!selectedRates || selectedRates.length === 0) {
+      setIsRateHistoryOpen(false);
+      return;
+    }
+
+    const rateMap = new Map<string, number>();
+    selectedRates.forEach(r => {
+      rateMap.set(r.mould.toLowerCase().trim(), r.price);
+    });
+
+    let targetFinished = [...finishedItems];
+    const hasMeaningfulFinished = targetFinished.some(f => (f.mould || '').trim() && f.mould !== 'Mould Name');
+
+    // If finished table is currently empty, calculate moulds from rawItems first!
+    if (!hasMeaningfulFinished && rawItems.some(r => (r.name || '').trim())) {
+      const calculated = groupRawItemsForSummary(rawItems, dynamicCols);
+      if (calculated.length > 0) {
+        targetFinished = calculated;
+      }
+    }
+
+    let updatedCount = 0;
+    const nextFinished = targetFinished.map(item => {
+      const m = (item.mould || '').trim();
+      if (!m || m === 'Mould Name' || m === '-') return item;
+
+      const mLower = m.toLowerCase();
+      let matchedPrice = rateMap.get(mLower);
+
+      // If exact match not found, check partial / size match
+      if (matchedPrice === undefined) {
+        for (const [key, p] of rateMap.entries()) {
+          if (key === mLower || mLower.includes(key) || key.includes(mLower)) {
+            matchedPrice = p;
+            break;
+          }
+        }
+      }
+
+      if (matchedPrice !== undefined && matchedPrice > 0) {
+        updatedCount++;
+        const qty = Number(item.qty) || 0;
+        return {
+          ...item,
+          price: matchedPrice,
+          total: Math.round(qty * matchedPrice)
+        };
+      }
+      return item;
+    });
+
+    while (nextFinished.length < 10) {
+      nextFinished.push({
+        id: 'fin-empty-' + (nextFinished.length + 1),
+        mould: '',
+        qty: 0,
+        price: 0,
+        total: 0
+      });
+    }
+
+    setFinishedItems(nextFinished);
+    setIsRateHistoryOpen(false);
+    macAudio.playSuccess();
+    showToast(`⚡ Loaded ${updatedCount} historical rate(s) into bill!`, 'success');
+  }, [finishedItems, rawItems, dynamicCols, groupRawItemsForSummary, showToast]);
+
+  // Legacy party-only rate scanning logic (available as helper)
+  const handleLoadPartyOnlyPriceFromHistory = useCallback(() => {
     const currentParty = (header?.partyName || '').trim();
     if (!currentParty) {
       showToast('Please enter or select a Party Name first!', 'warning');
@@ -2516,7 +2700,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       showToast(`Found history for "${currentParty}", but no previous rates recorded for these items`, 'info');
     }
   }, [header, finishedItems, rawItems, dynamicCols, groupRawItemsForSummary, showToast]);
-  loadOldPriceRef.current = handleLoadOldPriceFromHistory;
 
   const handleBulkPasteFinished = (rows: string[][], startRow?: number, startCol: number = 0) => {
     if (!rows || rows.length === 0) return;
@@ -2734,6 +2917,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       editVersion={activeEditInfo.version}
                       editOperator={activeEditInfo.operator}
                       isModifiedBill={activeEditInfo.isModified}
+                      splitRowIndex={splitRowIndex}
+                      onToggleTableSplit={setSplitRowIndex}
                       onOpenAuditHistory={() => {
                         const curBill = loadedBillSnapshotRef.current || localDb.getBills().find(b => String(b.token) === String(header.tokenNo));
                         if (curBill) {
@@ -2758,6 +2943,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     <RightGrid
                       autoConvert={autoConvert}
                       autoItem={autoItem}
+                      splitRowIndex={splitRowIndex}
                       rowHeight={rowHeight}
                       onSetRowHeight={setRowHeight}
                       tableFontSize={tableFontSize}
@@ -3097,6 +3283,16 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         billId={auditTarget?.id || ''}
         billToken={auditTarget?.token || ''}
         partyName={auditTarget?.party}
+      />
+
+      {/* View Recent Rate History Modal (Shadcn UI Design) */}
+      <RateHistoryModal
+        isOpen={isRateHistoryOpen}
+        onClose={() => setIsRateHistoryOpen(false)}
+        currentParty={header.partyName || ''}
+        currentFinishedItems={finishedItems}
+        rawItems={rawItems}
+        onApplyRates={handleApplyHistoricalRates}
       />
 
     </div>

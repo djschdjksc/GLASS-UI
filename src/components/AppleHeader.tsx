@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { BillHeader } from '../types';
-import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History } from 'lucide-react';
+import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History, Building2 } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
 import { DOC_TYPES } from '../utils/billDocTypes';
 import { getUserProfile } from '../services/supabaseClient';
 import { Select as ShadcnSelect } from './ui/shadcn';
+import { localDb } from '../services/db/localDb';
+import type { PartyRecord } from '../services/db/schema';
 
 interface Props {
   header: BillHeader;
@@ -61,20 +63,112 @@ export const AppleHeader: React.FC<Props> = ({
   onOpenAuditHistory
 }) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
-  const [partyList, setPartyList] = useState<string[]>(REAL_PARTIES);
+  const [partyList, setPartyList] = useState<string[]>(() => {
+    const dbParties = localDb.getParties().map(p => p.name).filter(Boolean);
+    const sqliteParties = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
+      ? SQLITE_PARTIES.map((p: any) => p.party_name).filter(Boolean)
+      : COMMON_PARTIES;
+    return Array.from(new Set([...dbParties, ...sqliteParties]));
+  });
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [newPartyConfirm, setNewPartyConfirm] = useState<{
+    isOpen: boolean;
+    name: string;
+  } | null>(null);
+
+  // Subscribe to live Party changes across DB
+  useEffect(() => {
+    const unsub = localDb.subscribe('parties', (parties: PartyRecord[]) => {
+      const names = parties.map(p => p.name).filter(Boolean);
+      setPartyList(prev => Array.from(new Set([...names, ...prev])));
+    });
+    return () => unsub();
+  }, []);
 
   const partyNameStr = (header?.partyName || '').trim();
   const filteredParties = partyList.filter(p => 
     (p || '').toLowerCase().includes(partyNameStr.toLowerCase())
   );
 
-  const handleQuickAdd = () => {
-    const entered = partyNameStr;
-    if (entered && !partyList.includes(entered)) {
-      setPartyList(prev => [entered, ...prev]);
-      onAddNewParty(entered);
+  const focusNextInput = () => {
+    setTimeout(() => {
+      const typeSelect = document.getElementById('header-type-selection') as HTMLSelectElement | null;
+      if (typeSelect) {
+        typeSelect.focus();
+      }
+    }, 40);
+  };
+
+  const handleConfirmSaveNewParty = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setNewPartyConfirm(null);
+      return;
+    }
+
+    const newParty: PartyRecord = {
+      id: `P-${Date.now()}`,
+      name: trimmed,
+      contact: '',
+      phone: '',
+      city: 'Local',
+      station: '',
+      district: '',
+      state: '',
+      pincode: '',
+      balance: 0,
+      limit: 500000,
+      gstin: '',
+      updatedAt: Date.now(),
+      synced: false
+    };
+
+    try {
+      await localDb.saveParty(newParty);
+    } catch {}
+
+    setPartyList(prev => Array.from(new Set([trimmed, ...prev])));
+    onAddNewParty(trimmed);
+    onChange({ partyName: trimmed });
+    macAudio.playPop();
+    setNewPartyConfirm(null);
+    focusNextInput();
+  };
+
+  // Keyboard accessibility for confirmation modal
+  useEffect(() => {
+    if (!newPartyConfirm?.isOpen) return;
+    const handleModalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleConfirmSaveNewParty(newPartyConfirm.name);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setNewPartyConfirm(null);
+        focusNextInput();
+      }
+    };
+    window.addEventListener('keydown', handleModalKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleModalKeyDown, { capture: true });
+  }, [newPartyConfirm]);
+
+  const handleTriggerAddParty = (nameToAdd?: string) => {
+    const entered = (nameToAdd !== undefined ? nameToAdd : partyNameStr).trim();
+    if (!entered) {
+      const partyInput = document.getElementById('header-party-name') as HTMLInputElement | null;
+      partyInput?.focus();
+      return;
+    }
+    const exactMatch = partyList.find(p => p.trim().toLowerCase() === entered.toLowerCase());
+    if (exactMatch) {
+      onChange({ partyName: exactMatch });
       setShowPartySuggestions(false);
+      focusNextInput();
+    } else {
+      setShowPartySuggestions(false);
+      setNewPartyConfirm({ isOpen: true, name: entered });
     }
   };
 
@@ -154,21 +248,32 @@ export const AppleHeader: React.FC<Props> = ({
                   setFocusedIndex(prev => Math.max(prev - 1, 0));
                 } else if (e.key === 'Enter') {
                   e.preventDefault();
-                  if (showPartySuggestions && filteredParties.length > 0) {
-                    const chosen = (focusedIndex >= 0 && focusedIndex < filteredParties.length)
-                      ? filteredParties[focusedIndex]
-                      : filteredParties[0];
+                  const entered = (header?.partyName || '').trim();
+                  if (!entered) {
+                    focusNextInput();
+                    return;
+                  }
+
+                  // 1. If suggestion dropdown is open and user highlighted an item
+                  if (showPartySuggestions && filteredParties.length > 0 && focusedIndex >= 0 && focusedIndex < filteredParties.length) {
+                    const chosen = filteredParties[focusedIndex];
                     onChange({ partyName: chosen });
                     setShowPartySuggestions(false);
-                  } else {
-                    handleQuickAdd();
+                    focusNextInput();
+                    return;
                   }
-                  setTimeout(() => {
-                    const typeSelect = document.getElementById('header-type-selection') as HTMLSelectElement | null;
-                    if (typeSelect) {
-                      typeSelect.focus();
-                    }
-                  }, 40);
+
+                  // 2. Check if entered name has exact match in existing DB parties
+                  const exactMatch = partyList.find(p => p.trim().toLowerCase() === entered.toLowerCase());
+                  if (exactMatch) {
+                    onChange({ partyName: exactMatch });
+                    setShowPartySuggestions(false);
+                    focusNextInput();
+                    return;
+                  }
+
+                  // 3. New party NOT in DB: Trigger confirmation modal!
+                  handleTriggerAddParty(entered);
                 } else if (e.key === 'Escape' && showPartySuggestions) {
                   e.stopPropagation();
                   setShowPartySuggestions(false);
@@ -227,9 +332,18 @@ export const AppleHeader: React.FC<Props> = ({
                 ))}
 
                 {/* If Party Not Found or Typed New */}
-                {partyNameStr && !filteredParties.includes(partyNameStr) && (
+                {partyNameStr && !partyList.some(p => p.toLowerCase() === partyNameStr.toLowerCase()) && (
                   <div
-                    onClick={handleQuickAdd}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleTriggerAddParty(partyNameStr);
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleTriggerAddParty(partyNameStr);
+                    }}
                     style={{
                       padding: '8px 10px',
                       fontSize: '11.5px',
@@ -245,7 +359,7 @@ export const AppleHeader: React.FC<Props> = ({
                     onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.15)'}
                   >
                     <Plus size={13} />
-                    <span>Add "{partyNameStr}" as New Party</span>
+                    <span>Add "{partyNameStr}" as New Party (Database Save)</span>
                   </div>
                 )}
               </div>
@@ -255,10 +369,10 @@ export const AppleHeader: React.FC<Props> = ({
           {/* Dedicated Quick Add (+) Button next to search box */}
           <button
             type="button"
-            onClick={handleQuickAdd}
+            onClick={() => handleTriggerAddParty()}
             className="apple-box-btn"
             style={{ width: '32px', height: '32px', borderRadius: '7px', flexShrink: 0 }}
-            title="Add Party (+)"
+            title="Add New Party to Database (+)"
           >
             <span className="box-tooltip-right">Add Party (+)</span>
             <Plus size={14} />
@@ -343,6 +457,139 @@ export const AppleHeader: React.FC<Props> = ({
           <span>#{header.tokenNo}</span>
         </div>
       </div>
+
+      {/* New Party Confirmation Modal */}
+      {newPartyConfirm && newPartyConfirm.isOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(14px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999999,
+            animation: 'fadeIn 0.15s ease'
+          }}
+          onClick={() => {
+            // Do not dismiss on accidental click
+          }}
+        >
+          <div
+            style={{
+              width: '440px',
+              maxWidth: '92vw',
+              background: 'rgba(18, 22, 32, 0.98)',
+              border: '1px solid rgba(56, 189, 248, 0.45)',
+              borderRadius: '16px',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.25)',
+              padding: '22px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              animation: 'antSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '11px',
+                background: 'rgba(56, 189, 248, 0.16)',
+                border: '1px solid rgba(56, 189, 248, 0.38)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Building2 size={23} color="#38bdf8" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '15.5px', fontWeight: 700, color: '#f4f4f5', letterSpacing: '-0.01em' }}>
+                  Save New Party? / नई पार्टी सेव करें?
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: '11.5px', color: '#94a3b8' }}>
+                  Party not available in database registry
+                </p>
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.09)',
+              borderRadius: '10px',
+              padding: '13px 15px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}>
+              <div style={{ fontSize: '10.5px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                Party Name (नया नाम)
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 800, color: '#38bdf8', fontFamily: "'JetBrains Mono', sans-serif" }}>
+                {newPartyConfirm.name}
+              </div>
+              <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px', lineHeight: '1.45' }}>
+                Kya aap <strong>"{newPartyConfirm.name}"</strong> ko Database mein <strong>Permanently Save</strong> karna chahte hain?
+                <br />
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  (Save karne par yeh aage se suggestions, bill history aur ledger mein hamesha show hogi)
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewPartyConfirm(null);
+                  focusNextInput();
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: '#d4d4d8',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ No, Use Once Only (Esc)
+              </button>
+
+              <button
+                type="button"
+                autoFocus
+                onClick={() => handleConfirmSaveNewParty(newPartyConfirm.name)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(52, 211, 153, 0.55)',
+                  background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                  color: '#ffffff',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.45)'
+                }}
+              >
+                <Check size={14} />
+                <span>YES, Save Permanently (Enter)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
