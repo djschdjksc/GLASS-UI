@@ -48,7 +48,12 @@ import {
   Radio,
   Terminal,
   Shield,
-  Activity
+  Activity,
+  HardDrive,
+  Laptop,
+  Key,
+  Clock,
+  Monitor
 } from 'lucide-react';
 import {
   Button as ShadcnButton,
@@ -58,12 +63,18 @@ import {
   CardTitle as ShadcnCardTitle,
   CardDescription as ShadcnCardDescription,
   CardContent as ShadcnCardContent,
+  CardFooter as ShadcnCardFooter,
   Tabs as ShadcnTabs,
   TabsList as ShadcnTabsList,
   TabsTrigger as ShadcnTabsTrigger,
+  TabsContent as ShadcnTabsContent,
   Switch as ShadcnSwitch,
   Badge as ShadcnBadge,
-  Label as ShadcnLabel
+  Label as ShadcnLabel,
+  Avatar as ShadcnAvatar,
+  AvatarImage as ShadcnAvatarImage,
+  AvatarFallback as ShadcnAvatarFallback,
+  Progress as ShadcnProgress
 } from './ui/shadcn';
 import { getUserProfile, setUserProfile, getUserPrefix } from '../services/supabaseClient';
 import { supabaseSyncService } from '../services/supabaseSync';
@@ -75,6 +86,8 @@ import {
   saveBarcodeConfig,
   generateCode128SvgBars,
   generateQrMatrix,
+  generateDataMatrixSvgMatrix,
+  GLASS_ERP_SAMPLE_BATCH,
   generateTsplCommand,
   generateZplCommand,
   downloadThermalScriptFile,
@@ -84,6 +97,7 @@ import type {
   BarcodePreset,
   BarcodeSymbology,
   BarcodeSystemConfig,
+  GlassErpBatchItem,
   MargWorkingStyle,
   MargAskQty,
   MargDuplicatePolicy,
@@ -95,7 +109,7 @@ import type {
 import { KeyboardShortcutsVisualizer } from './KeyboardShortcutsVisualizer';
 
 export type SettingsMainTab = 'GENERAL' | 'THEME' | 'PROFILE' | 'SHORTCUTS' | 'BACKUP' | 'BARCODE';
-export type BarcodeSubTab = 'PRESETS' | 'MARG_RULES' | 'DIMENSIONS' | 'THERMAL_HEAD' | 'CONTENT' | 'PRINTER_CMDS' | 'SCANNER';
+export type BarcodeSubTab = 'PRESETS' | 'GLASS_ERP' | 'MARG_RULES' | 'DIMENSIONS' | 'THERMAL_HEAD' | 'CONTENT' | 'PRINTER_CMDS' | 'SCANNER';
 export type AppThemeMode = 'dark' | 'glass';
 
 
@@ -164,41 +178,40 @@ const LuxuryToggle: React.FC<LuxuryToggleProps> = ({ checked, onChange, title, d
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '10px 14px',
-      background: 'rgba(15, 23, 42, 0.55)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      borderRadius: '12px',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      transition: 'all 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+      background: 'rgba(24, 24, 27, 0.45)',
+      border: '1px solid #27272a',
+      borderRadius: '8px',
+      transition: 'all 0.15s ease',
       cursor: 'pointer'
     }}
     onClick={() => {
       onChange(!checked);
       macAudio.playClick();
     }}
+    onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3f3f46')}
+    onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#27272a')}
   >
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, paddingRight: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, paddingRight: '12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc' }}>{title}</span>
+        <span style={{ fontSize: '12px', fontWeight: 500, color: '#f4f4f5', letterSpacing: '-0.01em' }}>{title}</span>
         {badge && (
-          <Tag
-            color="cyan"
+          <span
             style={{
-              fontSize: '9px',
-              fontWeight: 800,
-              margin: 0,
-              padding: '0 6px',
+              fontSize: '9.5px',
+              fontWeight: 600,
+              padding: '1px 6px',
               borderRadius: '4px',
-              border: 'none',
-              background: 'rgba(56, 189, 248, 0.15)',
-              color: '#38bdf8'
+              border: '1px solid #27272a',
+              background: '#18181b',
+              color: '#a1a1aa',
+              fontFamily: 'monospace'
             }}
           >
             {badge}
-          </Tag>
+          </span>
         )}
       </div>
-      {desc && <span style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: 1.3 }}>{desc}</span>}
+      {desc && <span style={{ fontSize: '11px', color: '#71717a', lineHeight: 1.3 }}>{desc}</span>}
     </div>
     <div onClick={(e) => e.stopPropagation()}>
       <Switch
@@ -454,6 +467,8 @@ export const SettingsTabView: React.FC<Props> = ({
   const scanStartTimeRef = useRef<number | null>(null);
   const [activeCodeLang, setActiveCodeLang] = useState<'TSPL' | 'ZPL'>('TSPL');
   const [isSendingRawPrint, setIsSendingRawPrint] = useState<boolean>(false);
+  const [selectedBatchIndex, setSelectedBatchIndex] = useState<number>(0);
+  const [previewZoom, setPreviewZoom] = useState<number>(1);
 
   const handleUpdateBarcodeConfig = (updates: Partial<BarcodeSystemConfig>) => {
     setBarcodeConfig(prev => {
@@ -465,6 +480,12 @@ export const SettingsTabView: React.FC<Props> = ({
 
   const handleSelectBarcodePreset = (preset: BarcodePreset) => {
     macAudio.playPop();
+    const extraUpdates: Partial<BarcodeSystemConfig> = {};
+    if (preset.symbology) extraUpdates.symbology = preset.symbology;
+    if (preset.printGlassErpTags !== undefined) extraUpdates.printGlassErpTags = preset.printGlassErpTags;
+    if (preset.category === 'GLASS_LITE' || preset.category === 'GLASS_CRATE') {
+      extraUpdates.printGlassErpTags = true;
+    }
     handleUpdateBarcodeConfig({
       presetId: preset.id,
       widthMm: preset.widthMm,
@@ -473,7 +494,8 @@ export const SettingsTabView: React.FC<Props> = ({
       gapXMm: preset.gapX,
       gapYMm: preset.gapY,
       marginTopMm: preset.marginTop,
-      marginLeftMm: preset.marginLeft
+      marginLeftMm: preset.marginLeft,
+      ...extraUpdates
     });
     onShowToast?.(`Loaded ${preset.name}`, 'info');
   };
@@ -510,20 +532,54 @@ export const SettingsTabView: React.FC<Props> = ({
   };
 
 
-  // User Profile & Multi-Device Sync State
-  const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
-  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Main Billing Counter');
+  // User Profile & Multi-Device Sync State (2026 Linear/Supabase/Vercel Industrial Architecture)
+  const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit Kumar');
+  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Plant Supervisor');
   const [userAvatar, setUserAvatar] = useState<string>(() => localStorage.getItem('modern_app_user_avatar') || '');
-  const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Counter #1');
+  const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Station 01 (Bottero CNC)');
   const [userPhone, setUserPhone] = useState<string>(() => localStorage.getItem('modern_app_user_phone') || '+91 98765 43210');
-  const [userStatus, setUserStatus] = useState<string>(() => localStorage.getItem('modern_app_user_status') || 'Active on Billing Desk - Ready to Chat');
+  const [userStatus, setUserStatus] = useState<string>(() => localStorage.getItem('modern_app_user_status') || 'Active on Bottero CNC Cutting Line 1');
   const [userPrefix, setUserPrefix] = useState<string>(() => localStorage.getItem('modern_app_user_prefix') || getUserPrefix(localStorage.getItem('modern_app_user_name') || 'ROHIT'));
   const [isPrefixCustomized, setIsPrefixCustomized] = useState<boolean>(() => Boolean(localStorage.getItem('modern_app_user_prefix')));
   const [autoCloudSync, setAutoCloudSync] = useState<boolean>(() => localStorage.getItem('modern_app_auto_sync') !== '0');
   const [soundOnSync, setSoundOnSync] = useState<boolean>(() => localStorage.getItem('modern_app_sync_sound') !== '0');
   const [deviceOnlineStatus, setDeviceOnlineStatus] = useState<boolean>(true);
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false);
+  const [syncProgress, setSyncProgress] = useState<number>(100);
+  const [lastSyncTime, setLastSyncTime] = useState<string>('14s ago');
   const dpInputRef = useRef<HTMLInputElement>(null);
+
+  // Glass Factory Floor Specific State
+  const [operatorPunchId, setOperatorPunchId] = useState<string>(() => localStorage.getItem('modern_app_operator_punch_id') || 'GLS-9021');
+  const [assignedLine, setAssignedLine] = useState<string>(() => localStorage.getItem('modern_app_assigned_line') || 'Cutting Line 1 - Bottero CNC');
+  const [operatorShift, setOperatorShift] = useState<string>(() => localStorage.getItem('modern_app_operator_shift') || 'Shift A (08:00 AM - 04:00 PM)');
+  const [kioskPin, setKioskPin] = useState<string>(() => localStorage.getItem('modern_app_kiosk_pin') || '4082');
+  const [pinInputTest, setPinInputTest] = useState<string>('');
+  const [pinUnlockStatus, setPinUnlockStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const [profileSubTab, setProfileSubTab] = useState<'IDENTITY' | 'SYNC' | 'DEVICES' | 'PIN' | 'AUDIT'>('IDENTITY');
+
+  // Granular Factory Sync Switches
+  const [syncProductionOrders, setSyncProductionOrders] = useState<boolean>(() => localStorage.getItem('sync_prod_orders') !== '0');
+  const [syncTemplates, setSyncTemplates] = useState<boolean>(() => localStorage.getItem('sync_templates') !== '0');
+  const [syncMachineRules, setSyncMachineRules] = useState<boolean>(() => localStorage.getItem('sync_machine_rules') !== '0');
+  const [syncOfflineCache, setSyncOfflineCache] = useState<boolean>(() => localStorage.getItem('sync_offline_cache') !== '0');
+
+  // Connected Factory Devices
+  const [pairedDevices, setPairedDevices] = useState<Array<{ id: string; name: string; station: string; type: string; lastSeen: string; isCurrent: boolean; ip: string; pingMs?: number }>>([
+    { id: 'dev-1', name: 'Bottero CNC Cutting Line 1', station: 'Station 01', type: 'CNC Terminal', lastSeen: 'This Device • Active Now', isCurrent: true, ip: '192.168.1.120', pingMs: 1 },
+    { id: 'dev-2', name: 'Dispatch QC Tablet (iPad Pro)', station: 'Station 04', type: 'Mobile QC', lastSeen: '8m ago', isCurrent: false, ip: '192.168.1.144', pingMs: 4 },
+    { id: 'dev-3', name: 'Central Accounts & Billing PC', station: 'Desk 01', type: 'Office PC', lastSeen: '24m ago', isCurrent: false, ip: '192.168.1.105', pingMs: 2 },
+    { id: 'dev-4', name: 'Thermal Barcode Station (TSC TE244)', station: 'Station 02', type: 'Thermal Print Server', lastSeen: '1m ago', isCurrent: false, ip: '192.168.1.132', pingMs: 2 }
+  ]);
+
+  // Audit Logs
+  const [auditLogs, setAuditLogs] = useState<Array<{ id: string; time: string; event: string; tag: string; op: string }>>([
+    { id: 'log-1', time: '12:10:45', event: 'Cloud Delta Sync Completed (48 glass items verified)', tag: 'SYNC', op: 'GLS-9021' },
+    { id: 'log-2', time: '12:08:12', event: 'Thermal Barcode TSPL Generated for ORD-9842 (Lite L-04/12)', tag: 'PRINT', op: 'GLS-9021' },
+    { id: 'log-3', time: '11:54:20', event: 'Operator Handover: Shift A verified by Quick PIN', tag: 'SECURITY', op: 'GLS-9021' },
+    { id: 'log-4', time: '11:32:00', event: 'Bottero CNC Cutting Line 1 connected to Plant Mesh', tag: 'NETWORK', op: 'SYSTEM' },
+    { id: 'log-5', time: '10:15:30', event: 'Stock Material Intake: 40 sheets 12mm Clear Float Glass logged', tag: 'STOCK', op: 'EMP-1022' }
+  ]);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -571,26 +627,47 @@ export const SettingsTabView: React.FC<Props> = ({
     localStorage.setItem('modern_app_user_terminal', userTerminal);
     localStorage.setItem('modern_app_user_phone', userPhone);
     localStorage.setItem('modern_app_user_status', userStatus);
+    localStorage.setItem('modern_app_operator_punch_id', operatorPunchId);
+    localStorage.setItem('modern_app_assigned_line', assignedLine);
+    localStorage.setItem('modern_app_operator_shift', operatorShift);
+    localStorage.setItem('modern_app_kiosk_pin', kioskPin);
     localStorage.setItem('modern_app_auto_sync', autoCloudSync ? '1' : '0');
     localStorage.setItem('modern_app_sync_sound', soundOnSync ? '1' : '0');
+    localStorage.setItem('sync_prod_orders', syncProductionOrders ? '1' : '0');
+    localStorage.setItem('sync_templates', syncTemplates ? '1' : '0');
+    localStorage.setItem('sync_machine_rules', syncMachineRules ? '1' : '0');
+    localStorage.setItem('sync_offline_cache', syncOfflineCache ? '1' : '0');
     window.dispatchEvent(new Event('storage'));
-    onShowToast?.('User Profile & Multi-Device Sync Settings Saved!', 'success');
+    onShowToast?.('Operator Profile & Factory Sync Settings Saved!', 'success');
     macAudio.playSuccess();
+    setAuditLogs(prev => [
+      { id: `log-${Date.now()}`, time: new Date().toLocaleTimeString(), event: 'Profile credentials & production line settings updated', tag: 'PROFILE', op: operatorPunchId },
+      ...prev.slice(0, 15)
+    ]);
   };
 
   const handleForceResync = async () => {
     setIsSyncingNow(true);
+    setSyncProgress(25);
     macAudio.playClick();
-    onShowToast?.('Synchronizing data with Cloud and other counters...', 'info');
+    onShowToast?.('Synchronizing data with Cloud and plant counters...', 'info');
+    setTimeout(() => setSyncProgress(70), 300);
     try {
       await supabaseSyncService.pullAllCloudBills();
+      setSyncProgress(100);
+      setLastSyncTime('Just now');
       macAudio.playSuccess();
-      onShowToast?.('Multi-device cloud synchronization complete!', 'success');
+      onShowToast?.('All Glass Templates & Production Orders Synced!', 'success');
+      setAuditLogs(prev => [
+        { id: `log-${Date.now()}`, time: new Date().toLocaleTimeString(), event: 'All glass templates & production orders synced to cloud', tag: 'SYNC', op: operatorPunchId },
+        ...prev.slice(0, 15)
+      ]);
     } catch (err: any) {
       console.error('Cloud sync error:', err);
+      setSyncProgress(100);
       onShowToast?.('Sync notice: ' + (err.message || 'Offline mode active'), 'info');
     } finally {
-      setIsSyncingNow(false);
+      setTimeout(() => setIsSyncingNow(false), 500);
     }
   };
 
@@ -2013,83 +2090,280 @@ export const SettingsTabView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: USER PROFILE & MULTI-DEVICE SYNC (SHADCN/UI DESIGN SYSTEM)         */}
+      {/* TAB 2: USER PROFILE & MULTI-DEVICE SYNC (2026 INDUSTRIAL SHADCN/UI)        */}
       {/* ========================================================================= */}
       {activeTab === 'PROFILE' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', minHeight: 0, overflowY: 'auto', padding: '4px 12px' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '16px' }}>
-            <div>
-              <h2 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.6px', color: '#f4f4f5', margin: 0 }}>
-                Profile & Synchronization
-              </h2>
-              <p style={{ fontSize: '13px', color: '#a1a1aa', margin: '4px 0 0' }}>
-                Manage your operator credentials, multi-terminal bill prefixing, and real-time cloud data sync.
-              </p>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', minHeight: 0, overflowY: 'auto', padding: '4px 8px' }}>
+          
+          {/* 1. Header Profile Banner (Linear / Vercel Ultra-Modern Card) */}
+          <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+            <ShadcnCardContent style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                
+                {/* Left: Avatar with Live Pulse Status & Credentials */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <ShadcnAvatar size="xl" style={{ border: '2px solid #3f3f46', background: '#18181b', width: '64px', height: '64px' }}>
+                      {userAvatar ? (
+                        <ShadcnAvatarImage src={userAvatar} alt={userName} />
+                      ) : (
+                        <ShadcnAvatarFallback style={{ fontSize: '20px', fontWeight: 700, color: '#f4f4f5', background: '#27272a' }}>
+                          {userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'OP'}
+                        </ShadcnAvatarFallback>
+                      )}
+                    </ShadcnAvatar>
+                    {/* Live Presence Pulse Indicator */}
+                    <span
+                      title="Operator Active & Connected"
+                      style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        width: '14px',
+                        height: '14px',
+                        borderRadius: '50%',
+                        background: '#10b981',
+                        border: '2px solid #09090b',
+                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.8)'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+                      <h2 style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '-0.4px', color: '#f4f4f5', margin: 0 }}>
+                        {userName || 'Rohit Kumar'}
+                      </h2>
+                      <ShadcnBadge variant="default" style={{ fontSize: '10.5px', fontWeight: 600, background: '#f4f4f5', color: '#09090b' }}>
+                        {userRole}
+                      </ShadcnBadge>
+                      <ShadcnBadge variant="outline" style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#38bdf8', borderColor: '#27272a' }}>
+                        {operatorShift.split(' ')[0]} {operatorShift.split(' ')[1] || ''}
+                      </ShadcnBadge>
+                      <span
+                        style={{
+                          fontSize: '10.5px',
+                          fontFamily: 'monospace',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid #27272a',
+                          background: '#18181b',
+                          color: '#a1a1aa'
+                        }}
+                      >
+                        PUNCH: {operatorPunchId}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', marginTop: '5px', fontSize: '12px', color: '#71717a' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Layers size={13} style={{ color: '#a1a1aa' }} />
+                        <strong style={{ color: '#f4f4f5', fontWeight: 500 }}>{assignedLine}</strong>
+                      </span>
+                      <span>•</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Monitor size={13} style={{ color: '#a1a1aa' }} />
+                        <span>{userTerminal}</span>
+                      </span>
+                      <span>•</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Wifi size={13} style={{ color: '#10b981' }} />
+                        <span style={{ color: '#10b981', fontFamily: 'monospace' }}>LAN 192.168.1.120 (1ms)</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Quick Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShadcnButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      macAudio.playClick();
+                      setProfileSubTab('PIN');
+                    }}
+                    style={{ background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5' }}
+                  >
+                    <Key size={13} style={{ color: '#a1a1aa' }} />
+                    <span>Quick Kiosk PIN</span>
+                  </ShadcnButton>
+
+                  <ShadcnButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleForceResync}
+                    disabled={isSyncingNow}
+                    style={{ background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5' }}
+                  >
+                    <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} style={{ color: '#a1a1aa' }} />
+                    <span>{isSyncingNow ? 'Syncing...' : 'Sync Cloud'}</span>
+                  </ShadcnButton>
+
+                  <ShadcnButton
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveProfile}
+                    style={{ background: '#f4f4f5', color: '#09090b', fontWeight: 600 }}
+                  >
+                    <Check size={14} />
+                    <span>Save Changes</span>
+                  </ShadcnButton>
+                </div>
+              </div>
+
+              {/* Quick Industrial Status Metric Strip */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '8px',
+                  paddingTop: '12px',
+                  borderTop: '1px solid #27272a'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
+                  <Activity size={16} style={{ color: '#10b981' }} />
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Today's Output</span>
+                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>48 Glass Lites Cut</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
+                  <Zap size={16} style={{ color: '#38bdf8' }} />
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Batch Yield</span>
+                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>98.4% Kerf Optimization</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
+                  <Cloud size={16} style={{ color: '#a855f7' }} />
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Cloud Replication</span>
+                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>Realtime • {lastSyncTime}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
+                  <HardDrive size={16} style={{ color: '#fbbf24' }} />
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Resilience</span>
+                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>0 Pending • 7d Cache</span>
+                  </div>
+                </div>
+              </div>
+            </ShadcnCardContent>
+          </ShadcnCard>
+
+          {/* 2. Sub-Navigation TabsList (Linear / Supabase Style) */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#18181b',
+              padding: '3px',
+              borderRadius: '8px',
+              border: '1px solid #27272a'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+              {[
+                { key: 'IDENTITY', label: 'Operator & Shift', icon: <User size={13} /> },
+                { key: 'SYNC', label: 'Cloud & Local Sync', icon: <Cloud size={13} /> },
+                { key: 'DEVICES', label: 'Workstations & Devices', icon: <Laptop size={13} /> },
+                { key: 'PIN', label: 'Security & Quick PIN', icon: <Key size={13} /> },
+                { key: 'AUDIT', label: 'Shift Audit Log', icon: <Clock size={13} /> }
+              ].map(tab => {
+                const isActive = profileSubTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => {
+                      macAudio.playClick();
+                      setProfileSubTab(tab.key as any);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      fontSize: '12px',
+                      fontWeight: isActive ? 600 : 500,
+                      borderRadius: '6px',
+                      border: isActive ? '1px solid #3f3f46' : '1px solid transparent',
+                      cursor: 'pointer',
+                      background: isActive ? '#27272a' : 'transparent',
+                      color: isActive ? '#f4f4f5' : '#71717a',
+                      boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = '#a1a1aa';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = '#71717a';
+                        e.currentTarget.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShadcnButton
-                variant="outline"
-                size="sm"
-                onClick={handleForceResync}
-                disabled={isSyncingNow}
-              >
-                <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} />
-                <span>{isSyncingNow ? 'Syncing...' : 'Sync Cloud'}</span>
-              </ShadcnButton>
-              <ShadcnButton
-                variant="default"
-                size="sm"
-                onClick={handleSaveProfile}
-              >
-                <Check size={14} />
-                <span>Save Changes</span>
-              </ShadcnButton>
+
+            <div style={{ paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace' }}>
+                Cluster Node: <strong>GLS-NODE-01</strong>
+              </span>
             </div>
           </div>
 
-          {/* 2-Column Responsive Layout */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
-            {/* LEFT COLUMN: Operator Identity & Profile Studio */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Card 1: Operator Details */}
-              <ShadcnCard>
-                <ShadcnCardHeader>
-                  <ShadcnCardTitle>Operator Identity</ShadcnCardTitle>
-                  <ShadcnCardDescription>
-                    Personalize your display avatar, counter designation, and presence.
+          {/* ========================================================================= */}
+          {/* SUBTAB 1: OPERATOR & PRODUCTION SHIFT IDENTITY                            */}
+          {/* ========================================================================= */}
+          {profileSubTab === 'IDENTITY' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
+              
+              {/* Card 1: Factory Operator Credentials */}
+              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                  <ShadcnCardTitle style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <User size={15} style={{ color: '#a1a1aa' }} />
+                    Operator Credentials & Production Line
+                  </ShadcnCardTitle>
+                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                    Shift roster assignment, punch ID code, and factory floor machine station.
                   </ShadcnCardDescription>
                 </ShadcnCardHeader>
 
-                <ShadcnCardContent style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {/* Avatar Studio */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '16px', borderRadius: '10px', background: '#18181b', border: '1px solid #27272a' }}>
-                    {/* Circular Avatar */}
-                    <div
-                      style={{
-                        width: '72px',
-                        height: '72px',
-                        borderRadius: '50%',
-                        background: '#09090b',
-                        border: '2px solid #27272a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        flexShrink: 0
-                      }}
-                    >
+                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  
+                  {/* Avatar Picker Studio */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', borderRadius: '8px', background: '#18181b', border: '1px solid #27272a' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#09090b', border: '1px solid #27272a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
                       {userAvatar ? (
                         <img src={userAvatar} alt="DP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <span style={{ fontSize: '22px', fontWeight: 700, color: '#f4f4f5' }}>
+                        <span style={{ fontSize: '18px', fontWeight: 700, color: '#f4f4f5' }}>
                           {userName.slice(0, 2).toUpperCase() || 'OP'}
                         </span>
                       )}
                     </div>
 
-                    {/* Actions */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <input
                         type="file"
                         ref={dpInputRef}
@@ -2097,21 +2371,22 @@ export const SettingsTabView: React.FC<Props> = ({
                         onChange={handleAvatarUpload}
                         style={{ display: 'none' }}
                       />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <ShadcnButton
                           type="button"
                           variant="secondary"
                           size="sm"
                           onClick={() => dpInputRef.current?.click()}
+                          style={{ height: '28px', fontSize: '11px', background: '#27272a', color: '#f4f4f5' }}
                         >
-                          Change Avatar
+                          Upload Photo
                         </ShadcnButton>
                         {userAvatar && (
                           <ShadcnButton
                             type="button"
                             variant="ghost"
                             size="sm"
-                            style={{ color: '#ef4444' }}
+                            style={{ height: '28px', fontSize: '11px', color: '#ef4444' }}
                             onClick={() => {
                               setUserAvatar('');
                               localStorage.removeItem('modern_app_user_avatar');
@@ -2123,9 +2398,10 @@ export const SettingsTabView: React.FC<Props> = ({
                           </ShadcnButton>
                         )}
                       </div>
-                      {/* Quick Preset Emojis */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                        {['👨‍💼', '👩‍💼', '🧑‍💻', '⚡', '👑', '💼'].map((emoji) => (
+
+                      {/* Quick Emoji Presets */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {['👨‍💼', '👩‍💼', '🧑‍💻', '⚡', '🏭', '🔬'].map((emoji) => (
                           <button
                             key={emoji}
                             type="button"
@@ -2149,12 +2425,12 @@ export const SettingsTabView: React.FC<Props> = ({
                               }
                             }}
                             style={{
-                              width: '26px',
-                              height: '26px',
-                              borderRadius: '6px',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '4px',
                               border: '1px solid #27272a',
                               background: '#09090b',
-                              fontSize: '13px',
+                              fontSize: '12px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -2168,62 +2444,162 @@ export const SettingsTabView: React.FC<Props> = ({
                     </div>
                   </div>
 
-                  {/* Form fields */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {/* Name */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <ShadcnLabel>Display Name</ShadcnLabel>
+                  {/* Operator Name & Punch Code */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Operator Display Name</ShadcnLabel>
                       <ShadcnInput
                         type="text"
                         value={userName}
                         onChange={(e) => handleNameChange(e.target.value)}
-                        placeholder="e.g. Rohit (Billing Desk)"
+                        placeholder="e.g. Rohit Kumar"
+                        style={{ height: '34px', fontSize: '12px' }}
                       />
-                      <span style={{ fontSize: '12px', color: '#71717a' }}>
-                        Name shown on exported receipts, chat presence, and invoice audit stamps.
-                      </span>
                     </div>
 
-                    {/* Counter Role / Department */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <ShadcnLabel>Counter Department</ShadcnLabel>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                        {['Main Billing Counter', 'Warehouse / Godown', 'Accounts & Dispatch', 'Manager / Admin'].map((r) => {
-                          const isSelected = userRole === r;
-                          return (
-                            <button
-                              key={r}
-                              type="button"
-                              onClick={() => {
-                                setUserRole(r);
-                                macAudio.playClick();
-                              }}
-                              style={{
-                                padding: '10px 12px',
-                                borderRadius: '8px',
-                                border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
-                                background: isSelected ? '#27272a' : '#18181b',
-                                color: isSelected ? '#ffffff' : '#a1a1aa',
-                                fontSize: '12px',
-                                fontWeight: isSelected ? 600 : 400,
-                                textAlign: 'left',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              {r}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Operator Code / Punch ID</ShadcnLabel>
+                      <ShadcnInput
+                        type="text"
+                        value={operatorPunchId}
+                        onChange={(e) => setOperatorPunchId(e.target.value.toUpperCase())}
+                        placeholder="e.g. GLS-9021"
+                        style={{ height: '34px', fontSize: '12px', fontFamily: 'monospace' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Assigned Production Line */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Assigned Production Line</ShadcnLabel>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                      {[
+                        'Cutting Line 1 - Bottero CNC',
+                        'Cutting Line 2 - Bystronic',
+                        'Furnace 1 - Landglass Toughening',
+                        'DGU Insulating Unit - Lisec',
+                        'Lamination Autoclave Line',
+                        'Dispatch & Final QC Deck'
+                      ].map((line) => {
+                        const isSelected = assignedLine === line;
+                        return (
+                          <button
+                            key={line}
+                            type="button"
+                            onClick={() => {
+                              setAssignedLine(line);
+                              macAudio.playClick();
+                            }}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '6px',
+                              border: isSelected ? '1px solid #38bdf8' : '1px solid #27272a',
+                              background: isSelected ? '#18181b' : '#09090b',
+                              color: isSelected ? '#f4f4f5' : '#a1a1aa',
+                              fontSize: '11px',
+                              fontWeight: isSelected ? 600 : 400,
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {line}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Operator Shift Timing */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Factory Shift Roster</ShadcnLabel>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                      {[
+                        { key: 'Shift A (06:00 AM - 02:00 PM)', label: 'Shift A (06:00 AM – 02:00 PM)' },
+                        { key: 'Shift B (02:00 PM - 10:00 PM)', label: 'Shift B (02:00 PM – 10:00 PM)' },
+                        { key: 'Shift C (10:00 PM - 06:00 AM)', label: 'Shift C (10:00 PM – 06:00 AM)' },
+                        { key: 'General (09:00 AM - 06:00 PM)', label: 'General (09:00 AM – 06:00 PM)' }
+                      ].map((s) => {
+                        const isSelected = operatorShift.includes(s.key.split(' ')[0]);
+                        return (
+                          <button
+                            key={s.key}
+                            type="button"
+                            onClick={() => {
+                              setOperatorShift(s.key);
+                              macAudio.playClick();
+                            }}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '6px',
+                              border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
+                              background: isSelected ? '#27272a' : '#09090b',
+                              color: isSelected ? '#ffffff' : '#71717a',
+                              fontSize: '11px',
+                              fontWeight: isSelected ? 600 : 400,
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </ShadcnCardContent>
+              </ShadcnCard>
+
+              {/* Card 2: Role, Multi-Device Bill Clash Guard & Station */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                
+                {/* Department & Machine Role */}
+                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Counter Role & Department</ShadcnCardTitle>
+                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                      Authorization level for cutting lists, price override, and dispatch tokens.
+                    </ShadcnCardDescription>
+                  </ShadcnCardHeader>
+
+                  <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                      {['Plant Supervisor', 'CNC Cutting Operator', 'Quality Control Lead', 'Accounts & Dispatch Admin'].map((r) => {
+                        const isSelected = userRole === r;
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => {
+                              setUserRole(r);
+                              macAudio.playClick();
+                            }}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '6px',
+                              border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
+                              background: isSelected ? '#27272a' : '#18181b',
+                              color: isSelected ? '#ffffff' : '#a1a1aa',
+                              fontSize: '11.5px',
+                              fontWeight: isSelected ? 600 : 400,
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {r}
+                          </button>
+                        );
+                      })}
                     </div>
 
-                    {/* Terminal Identifier */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <ShadcnLabel>Terminal / Counter Machine</ShadcnLabel>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                        {['Counter #1', 'Counter #2', 'Godown PC', 'Laptop / Remote'].map((t) => {
-                          const isSelected = userTerminal === t;
+                    {/* Machine Terminal Identifier */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                      <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Machine Terminal</ShadcnLabel>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                        {['Station 01 (Bottero CNC)', 'Station 02 (Furnace Desk)', 'Station 03 (Godown PC)', 'Station 04 (QC iPad)'].map((t) => {
+                          const isSelected = userTerminal.includes(t.split(' ')[1] || t);
                           return (
                             <button
                               key={t}
@@ -2233,12 +2609,12 @@ export const SettingsTabView: React.FC<Props> = ({
                                 macAudio.playClick();
                               }}
                               style={{
-                                padding: '8px 10px',
-                                borderRadius: '8px',
-                                border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
-                                background: isSelected ? '#27272a' : '#18181b',
-                                color: isSelected ? '#ffffff' : '#a1a1aa',
-                                fontSize: '12px',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: isSelected ? '1px solid #38bdf8' : '1px solid #27272a',
+                                background: isSelected ? '#18181b' : '#09090b',
+                                color: isSelected ? '#f4f4f5' : '#71717a',
+                                fontSize: '11px',
                                 fontWeight: isSelected ? 600 : 400,
                                 textAlign: 'center',
                                 cursor: 'pointer',
@@ -2252,273 +2628,800 @@ export const SettingsTabView: React.FC<Props> = ({
                       </div>
                     </div>
 
-                    {/* Phone & Status */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <ShadcnLabel>Contact Phone</ShadcnLabel>
+                    {/* Phone & Live Broadcast Presence */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Contact Phone</ShadcnLabel>
                         <ShadcnInput
                           type="text"
                           value={userPhone}
                           onChange={(e) => setUserPhone(e.target.value)}
                           placeholder="+91 98765 43210"
+                          style={{ height: '32px', fontSize: '11.5px' }}
                         />
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <ShadcnLabel>Live Broadcast Status</ShadcnLabel>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Live Presence Status</ShadcnLabel>
                         <ShadcnInput
                           type="text"
                           value={userStatus}
                           onChange={(e) => setUserStatus(e.target.value)}
-                          placeholder="Active on Billing Desk"
+                          placeholder="Active on Cutting Line 1"
+                          style={{ height: '32px', fontSize: '11.5px' }}
                         />
                       </div>
                     </div>
-                  </div>
-                </ShadcnCardContent>
-              </ShadcnCard>
+                  </ShadcnCardContent>
+                </ShadcnCard>
+
+                {/* Multi-Device Bill Clash Guard */}
+                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Unique Bill Token Prefix</ShadcnCardTitle>
+                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                      Guarantees no duplicate invoice numbers when multiple cutting desks bill simultaneously.
+                    </ShadcnCardDescription>
+                  </ShadcnCardHeader>
+
+                  <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <ShadcnInput
+                      type="text"
+                      value={userPrefix}
+                      onChange={(e) => {
+                        setUserPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                        setIsPrefixCustomized(true);
+                      }}
+                      placeholder="e.g. ROHIT, LINE1, WH1"
+                      style={{
+                        height: '34px',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        letterSpacing: '1px'
+                      }}
+                    />
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        background: '#18181b',
+                        border: '1px solid #27272a'
+                      }}
+                    >
+                      <span style={{ fontSize: '11px', color: '#71717a' }}>Sequence Preview:</span>
+                      <ShadcnBadge variant="outline" style={{ fontFamily: 'monospace', color: '#38bdf8', fontSize: '11px' }}>
+                        {userPrefix ? `${userPrefix}-1, ${userPrefix}-2, ${userPrefix}-3...` : 'BILL-1, BILL-2...'}
+                      </ShadcnBadge>
+                    </div>
+                  </ShadcnCardContent>
+                </ShadcnCard>
+              </div>
             </div>
+          )}
 
-            {/* RIGHT COLUMN: Unique Token Prefix Guard & Realtime Cloud Sync Deck */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Card 2: Multi-Device Bill Clash Guard */}
-              <ShadcnCard>
-                <ShadcnCardHeader>
-                  <ShadcnCardTitle>Unique Bill Token Prefix</ShadcnCardTitle>
-                  <ShadcnCardDescription>
-                    Prevents invoice number collisions when multiple computers bill simultaneously.
-                  </ShadcnCardDescription>
-                </ShadcnCardHeader>
-
-                <ShadcnCardContent style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <ShadcnInput
-                    type="text"
-                    value={userPrefix}
-                    onChange={(e) => {
-                      setUserPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                      setIsPrefixCustomized(true);
-                    }}
-                    placeholder="e.g. ROHIT, CTR1, WH1"
-                    style={{
-                      fontFamily: 'monospace',
-                      fontWeight: 700,
-                      letterSpacing: '1px'
-                    }}
-                  />
-
-                  {/* Token Preview Pill */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      background: '#18181b',
-                      border: '1px solid #27272a'
-                    }}
-                  >
-                    <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
-                      Invoice Token Sequence Preview:
-                    </span>
-                    <ShadcnBadge variant="outline" style={{ fontFamily: 'monospace', color: '#38bdf8' }}>
-                      {userPrefix ? `${userPrefix}-1, ${userPrefix}-2, ${userPrefix}-3...` : 'BILL-1, BILL-2...'}
+          {/* ========================================================================= */}
+          {/* SUBTAB 2: CLOUD & LOCAL REALTIME SYNC ENGINE                               */}
+          {/* ========================================================================= */}
+          {profileSubTab === 'SYNC' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
+              
+              {/* Left: Real-Time Replication Status & Granular Switches */}
+              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Cloud size={16} style={{ color: '#a1a1aa' }} />
+                      <ShadcnCardTitle style={{ fontSize: '14px' }}>Real-Time Cloud & Plant Sync</ShadcnCardTitle>
+                    </div>
+                    <ShadcnBadge
+                      variant="secondary"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#10b981',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        fontSize: '11px'
+                      }}
+                    >
+                      <CheckCircle2 size={12} />
+                      Live Replicating
                     </ShadcnBadge>
                   </div>
-                </ShadcnCardContent>
-              </ShadcnCard>
-
-              {/* Card 3: Realtime Cloud Sync Deck */}
-              <ShadcnCard>
-                <ShadcnCardHeader>
-                  <ShadcnCardTitle>Cloud Synchronization</ShadcnCardTitle>
-                  <ShadcnCardDescription>
-                    Multi-counter database replication and peer terminal discovery.
+                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                    Replicates cutting lists, glass order updates, and inventory between cutting floor and central cloud ERP.
                   </ShadcnCardDescription>
                 </ShadcnCardHeader>
 
-                <ShadcnCardContent style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                  {/* Cloud Status Pill */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 14px',
-                      borderRadius: '8px',
-                      background: '#18181b',
-                      border: '1px solid #27272a'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
-                        Realtime Channel Active
+                <ShadcnCardContent style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  
+                  {/* Sync Status Banner */}
+                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                      <span style={{ color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <HardDrive size={14} style={{ color: '#71717a' }} />
+                        Local Offline Queue: <strong style={{ color: '#f4f4f5' }}>0 Pending Jobs</strong>
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace' }}>
+                        Last Sync: {lastSyncTime}
                       </span>
                     </div>
-                    <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace' }}>
-                      latency: 14ms • public:bills:all
-                    </span>
+
+                    {/* Progress Bar when syncing */}
+                    {isSyncingNow && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: '#38bdf8', marginBottom: '4px' }}>
+                          <span>Replicating production batches...</span>
+                          <span style={{ fontFamily: 'monospace' }}>{syncProgress}%</span>
+                        </div>
+                        <ShadcnProgress value={syncProgress} indicatorColor="#38bdf8" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Clean shadcn Toggles */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 0',
-                        borderBottom: '1px solid #27272a'
-                      }}
-                    >
+                  {/* Granular Auto-Sync Toggles */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid #27272a', paddingTop: '10px' }}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Auto Cloud Delta Sync
+                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Auto-Sync Cutting Orders & Batches
                         </div>
-                        <div style={{ fontSize: '12px', color: '#71717a' }}>
-                          Instantly merge invoices and edits created on other terminals.
+                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                          Automatically pull incoming glass jobs from ERP every 2 minutes.
                         </div>
                       </div>
                       <ShadcnSwitch
-                        checked={autoCloudSync}
+                        checked={syncProductionOrders}
                         onCheckedChange={(val: boolean) => {
-                          setAutoCloudSync(val);
-                          localStorage.setItem('modern_app_auto_sync', val ? '1' : '0');
+                          setSyncProductionOrders(val);
+                          localStorage.setItem('sync_prod_orders', val ? '1' : '0');
                           macAudio.playClick();
                         }}
                       />
                     </div>
 
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 0',
-                        borderBottom: '1px solid #27272a'
-                      }}
-                    >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Audio Alerts on Remote Invoices
+                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Barcode & Thermal Label Templates Backup
                         </div>
-                        <div style={{ fontSize: '12px', color: '#71717a' }}>
-                          Play notification chime when remote colleagues save a bill.
+                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                          Synchronize custom 50x30 / 100x50 mm templates across all line printers.
                         </div>
                       </div>
                       <ShadcnSwitch
-                        checked={soundOnSync}
+                        checked={syncTemplates}
                         onCheckedChange={(val: boolean) => {
-                          setSoundOnSync(val);
-                          localStorage.setItem('modern_app_sync_sound', val ? '1' : '0');
+                          setSyncTemplates(val);
+                          localStorage.setItem('sync_templates', val ? '1' : '0');
                           macAudio.playClick();
                         }}
                       />
                     </div>
 
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 0'
-                      }}
-                    >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Broadcast Online Presence
+                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Machine Configurations & CNC Rules
                         </div>
-                        <div style={{ fontSize: '12px', color: '#71717a' }}>
-                          Show this terminal as online in team network chat and peer list.
+                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                          Propagate glass margin, kerf cutting width & tolerance settings.
                         </div>
                       </div>
                       <ShadcnSwitch
-                        checked={deviceOnlineStatus}
+                        checked={syncMachineRules}
                         onCheckedChange={(val: boolean) => {
-                          setDeviceOnlineStatus(val);
+                          setSyncMachineRules(val);
+                          localStorage.setItem('sync_machine_rules', val ? '1' : '0');
+                          macAudio.playClick();
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+                      <div>
+                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
+                          Offline Resilience Local Cache
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#71717a' }}>
+                          Retain last 7 days cutting jobs on device if factory Wi-Fi cuts out.
+                        </div>
+                      </div>
+                      <ShadcnSwitch
+                        checked={syncOfflineCache}
+                        onCheckedChange={(val: boolean) => {
+                          setSyncOfflineCache(val);
+                          localStorage.setItem('sync_offline_cache', val ? '1' : '0');
                           macAudio.playClick();
                         }}
                       />
                     </div>
                   </div>
+                </ShadcnCardContent>
 
-                  {/* Connected Stations List */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#a1a1aa' }}>
-                      Connected Peer Stations
-                    </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          background: '#18181b',
-                          border: '1px solid #27272a'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                          <span style={{ fontSize: '12px', fontWeight: 500, color: '#f4f4f5' }}>
-                            {userName} ({userTerminal} - This Machine)
+                <ShadcnCardFooter style={{ borderTop: '1px solid #27272a', background: '#121215', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: '#71717a', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Wifi size={13} style={{ color: '#10b981' }} /> Plant LAN: 192.168.1.120 (1ms latency)
+                  </span>
+                  <ShadcnButton
+                    type="button"
+                    size="sm"
+                    onClick={handleForceResync}
+                    disabled={isSyncingNow}
+                    style={{ background: '#f4f4f5', color: '#09090b', fontWeight: 600, height: '32px' }}
+                  >
+                    <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} />
+                    <span>{isSyncingNow ? 'Syncing...' : 'Sync Now'}</span>
+                  </ShadcnButton>
+                </ShadcnCardFooter>
+              </ShadcnCard>
+
+              {/* Right: Network Latency, Storage & Bandwidth Stats */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                
+                {/* Network & Latency Health */}
+                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Plant Network Diagnostics</ShadcnCardTitle>
+                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                      Latency to central Supabase cloud and local cutting table LAN.
+                    </ShadcnCardDescription>
+                  </ShadcnCardHeader>
+
+                  <ShadcnCardContent style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+                        <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 500 }}>Central Cloud Server</span>
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#38bdf8' }}>18ms (Fast)</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+                        <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 500 }}>Bottero CNC Cutting LAN</span>
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#10b981' }}>1.2ms (Zero Lag)</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8' }} />
+                        <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 500 }}>Thermal Label Server</span>
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#a1a1aa' }}>2.0ms</span>
+                    </div>
+                  </ShadcnCardContent>
+                </ShadcnCard>
+
+                {/* Storage Health */}
+                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Storage & Replication Health</ShadcnCardTitle>
+                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                      IndexedDB & LocalStorage footprint on this terminal.
+                    </ShadcnCardDescription>
+                  </ShadcnCardHeader>
+
+                  <ShadcnCardContent style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#a1a1aa', marginBottom: '4px' }}>
+                        <span>Local Cache Utilization</span>
+                        <span style={{ fontFamily: 'monospace', color: '#f4f4f5' }}>2.4 MB / 50 MB (4.8%)</span>
+                      </div>
+                      <ShadcnProgress value={4.8} indicatorColor="#10b981" />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a', fontSize: '11.5px' }}>
+                      <span style={{ color: '#71717a' }}>Synchronized Invoices</span>
+                      <span style={{ color: '#f4f4f5', fontFamily: 'monospace', fontWeight: 600 }}>{bills.length} Records</span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a', fontSize: '11.5px' }}>
+                      <span style={{ color: '#71717a' }}>Thermal Presets</span>
+                      <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>{BARCODE_PRESETS.length} Templates Active</span>
+                    </div>
+                  </ShadcnCardContent>
+                </ShadcnCard>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUBTAB 3: CONNECTED WORKSTATIONS & FACTORY DEVICES                         */}
+          {/* ========================================================================= */}
+          {profileSubTab === 'DEVICES' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px' }}>
+              
+              {/* Paired Devices List */}
+              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Laptop size={16} style={{ color: '#a1a1aa' }} />
+                      <ShadcnCardTitle style={{ fontSize: '14px' }}>Active Factory Floor Terminals</ShadcnCardTitle>
+                    </div>
+                    <ShadcnBadge variant="outline" style={{ fontSize: '10.5px', fontFamily: 'monospace' }}>
+                      {pairedDevices.length} Connected
+                    </ShadcnBadge>
+                  </div>
+                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                    CNC cutting stations, mobile QC inspection tablets, and office billing computers paired with your profile.
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+
+                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {pairedDevices.map((device) => (
+                    <div
+                      key={device.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 14px',
+                        borderRadius: '8px',
+                        background: device.isCurrent ? '#18181b' : '#0f0f12',
+                        border: device.isCurrent ? '1px solid #3f3f46' : '1px solid #27272a',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: '#09090b',
+                            border: '1px solid #27272a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {device.type.includes('CNC') ? (
+                            <Monitor size={18} style={{ color: '#38bdf8' }} />
+                          ) : device.type.includes('QC') ? (
+                            <Smartphone size={18} style={{ color: '#10b981' }} />
+                          ) : device.type.includes('Print') ? (
+                            <Printer size={18} style={{ color: '#fbbf24' }} />
+                          ) : (
+                            <Laptop size={18} style={{ color: '#a855f7' }} />
+                          )}
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5' }}>
+                              {device.name}
+                            </span>
+                            {device.isCurrent && (
+                              <span style={{ fontSize: '9.5px', background: '#27272a', color: '#f4f4f5', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                                THIS DEVICE
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '11px', color: '#71717a', display: 'block', marginTop: '2px' }}>
+                            {device.type} • {device.station} • IP: <code style={{ color: '#a1a1aa' }}>{device.ip}</code>
                           </span>
                         </div>
-                        <ShadcnBadge variant="outline" style={{ fontFamily: 'monospace', color: '#38bdf8' }}>
-                          {userPrefix || 'ROHIT'}
-                        </ShadcnBadge>
                       </div>
 
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          background: '#18181b',
-                          border: '1px solid #27272a'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                          <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
-                            Warehouse Dispatch (Counter #2)
-                          </span>
-                        </div>
-                        <ShadcnBadge variant="secondary" style={{ fontFamily: 'monospace', color: '#71717a' }}>
-                          WH
-                        </ShadcnBadge>
-                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', color: device.isCurrent ? '#10b981' : '#71717a', fontFamily: 'monospace' }}>
+                          {device.lastSeen}
+                        </span>
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            macAudio.playPop();
+                            onShowToast?.(`Ping to ${device.name} (${device.ip}): ${device.pingMs || 1.4}ms OK`, 'success');
+                          }}
+                          style={{
+                            background: '#18181b',
+                            border: '1px solid #27272a',
+                            color: '#a1a1aa',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '10.5px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Wifi size={11} />
+                          Ping
+                        </button>
 
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          background: '#18181b',
-                          border: '1px solid #27272a'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                          <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
-                            Accounts & Ledger Desk (Counter #3)
-                          </span>
-                        </div>
-                        <ShadcnBadge variant="secondary" style={{ fontFamily: 'monospace', color: '#71717a' }}>
-                          ACC
-                        </ShadcnBadge>
+                        {!device.isCurrent && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              macAudio.playTrash();
+                              setPairedDevices(prev => prev.filter(d => d.id !== device.id));
+                              onShowToast?.(`Unlinked workstation ${device.name}`, 'info');
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid #27272a',
+                              color: '#ef4444',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '10.5px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Unlink
+                          </button>
+                        )}
                       </div>
                     </div>
+                  ))}
+                </ShadcnCardContent>
+              </ShadcnCard>
+
+              {/* Pair New Machine Terminal Card */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Pair New Machine Station</ShadcnCardTitle>
+                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                      Enter this one-time 6-digit PIN on any tablet or cutting table terminal to pair immediately.
+                    </ShadcnCardDescription>
+                  </ShadcnCardHeader>
+
+                  <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                    <div
+                      style={{
+                        padding: '14px 24px',
+                        borderRadius: '8px',
+                        background: '#18181b',
+                        border: '1px dashed #38bdf8',
+                        textAlign: 'center',
+                        width: '100%',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <span style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '1px', display: 'block' }}>
+                        ONE-TIME PAIRING CODE
+                      </span>
+                      <span style={{ fontSize: '26px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace', letterSpacing: '4px' }}>
+                        749-218
+                      </span>
+                      <span style={{ fontSize: '10px', color: '#a1a1aa', display: 'block', marginTop: '2px' }}>
+                        Expires in 09:42 minutes • Plant Wi-Fi Only
+                      </span>
+                    </div>
+
+                    <ShadcnButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        macAudio.playClick();
+                        onShowToast?.('New terminal pairing code generated: 832-504', 'success');
+                      }}
+                      style={{ width: '100%', background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5' }}
+                    >
+                      <RefreshCw size={13} />
+                      Generate Fresh Code
+                    </ShadcnButton>
+                  </ShadcnCardContent>
+                </ShadcnCard>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUBTAB 4: SECURITY & QUICK KIOSK PIN                                      */}
+          {/* ========================================================================= */}
+          {profileSubTab === 'PIN' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
+              
+              {/* Quick PIN Configuration */}
+              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Key size={16} style={{ color: '#a1a1aa' }} />
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Factory Kiosk Quick-Switch PIN</ShadcnCardTitle>
+                  </div>
+                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                    On the factory floor, operators change shifts without re-typing long master passwords. A 4-digit PIN enables 1-second machine handover.
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+
+                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                      Current 4-Digit Handover PIN:
+                    </ShadcnLabel>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {[0, 1, 2, 3].map((idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            width: '44px',
+                            height: '48px',
+                            borderRadius: '8px',
+                            border: '1px solid #3f3f46',
+                            background: '#18181b',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '20px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace',
+                            color: '#f4f4f5'
+                          }}
+                        >
+                          {kioskPin[idx] || '•'}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Change Kiosk PIN (4 Digits)</ShadcnLabel>
+                    <ShadcnInput
+                      type="password"
+                      maxLength={4}
+                      value={kioskPin}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                        setKioskPin(val);
+                      }}
+                      placeholder="e.g. 4082"
+                      style={{ height: '36px', fontSize: '16px', letterSpacing: '4px', fontFamily: 'monospace' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Station Auto-Lock Timer</ShadcnLabel>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                      {['Never (Kiosk)', '15 Minutes', '30 Minutes', 'Shift End (8h)'].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          style={{
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            border: t.includes('Never') ? '1px solid #38bdf8' : '1px solid #27272a',
+                            background: t.includes('Never') ? '#18181b' : '#09090b',
+                            color: t.includes('Never') ? '#f4f4f5' : '#71717a',
+                            fontSize: '11px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </ShadcnCardContent>
+              </ShadcnCard>
+
+              {/* Interactive PIN Verification Test Sandbox */}
+              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                  <ShadcnCardTitle style={{ fontSize: '14px' }}>Test Kiosk Switch Simulation</ShadcnCardTitle>
+                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                    Verify that your 4-digit PIN works seamlessly during operator handover.
+                  </ShadcnCardDescription>
+                </ShadcnCardHeader>
+
+                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      background: '#18181b',
+                      border: '1px solid #27272a',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}
+                  >
+                    <span style={{ fontSize: '11.5px', color: '#a1a1aa', fontWeight: 500 }}>
+                      Enter Kiosk PIN to Handover Station:
+                    </span>
+
+                    <input
+                      type="password"
+                      maxLength={4}
+                      value={pinInputTest}
+                      onChange={(e) => setPinInputTest(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                      placeholder="••••"
+                      style={{
+                        width: '140px',
+                        height: '42px',
+                        background: '#09090b',
+                        border: '1px solid #3f3f46',
+                        borderRadius: '6px',
+                        color: '#f4f4f5',
+                        textAlign: 'center',
+                        fontSize: '24px',
+                        fontFamily: 'monospace',
+                        letterSpacing: '8px',
+                        outline: 'none'
+                      }}
+                    />
+
+                    <ShadcnButton
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        if (pinInputTest === kioskPin) {
+                          macAudio.playSuccess();
+                          setPinUnlockStatus('SUCCESS');
+                          onShowToast?.(`Station Handover Verified: Operator ${operatorPunchId} Active!`, 'success');
+                          setTimeout(() => setPinUnlockStatus('IDLE'), 3000);
+                        } else {
+                          macAudio.playPosError();
+                          setPinUnlockStatus('ERROR');
+                          onShowToast?.('Incorrect Kiosk PIN. Access denied.', 'warning');
+                        }
+                      }}
+                      style={{
+                        background: pinUnlockStatus === 'SUCCESS' ? '#10b981' : pinUnlockStatus === 'ERROR' ? '#ef4444' : '#f4f4f5',
+                        color: pinUnlockStatus === 'SUCCESS' || pinUnlockStatus === 'ERROR' ? '#ffffff' : '#09090b',
+                        fontWeight: 600,
+                        width: '100%',
+                        height: '34px'
+                      }}
+                    >
+                      {pinUnlockStatus === 'SUCCESS' ? (
+                        <>
+                          <Check size={14} />
+                          <span>Handover Verified (1s)</span>
+                        </>
+                      ) : pinUnlockStatus === 'ERROR' ? (
+                        <>
+                          <Shield size={14} />
+                          <span>PIN Mismatch</span>
+                        </>
+                      ) : (
+                        <span>Simulate Station Switch</span>
+                      )}
+                    </ShadcnButton>
                   </div>
                 </ShadcnCardContent>
               </ShadcnCard>
             </div>
-          </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUBTAB 5: SHIFT AUDIT & OPERATOR ACTIVITY LOG                             */}
+          {/* ========================================================================= */}
+          {profileSubTab === 'AUDIT' && (
+            <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
+              <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock size={16} style={{ color: '#a1a1aa' }} />
+                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Shift Activity & Industrial Event Audit</ShadcnCardTitle>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const csvContent = 'data:text/csv;charset=utf-8,' +
+                          'Time,Event,Tag,Operator\n' +
+                          auditLogs.map(l => `"${l.time}","${l.event}","${l.tag}","${l.op}"`).join('\n');
+                        const encodedUri = encodeURI(csvContent);
+                        const link = document.createElement('a');
+                        link.setAttribute('href', encodedUri);
+                        link.setAttribute('download', `factory_audit_shift_${operatorPunchId}.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        macAudio.playSuccess();
+                        onShowToast?.('Exported Shift Audit (.CSV)!', 'success');
+                      }}
+                      style={{
+                        background: '#18181b',
+                        border: '1px solid #27272a',
+                        color: '#f4f4f5',
+                        padding: '4px 10px',
+                        borderRadius: '5px',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Download size={12} />
+                      Export .CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuditLogs([]);
+                        macAudio.playTrash();
+                        onShowToast?.('Shift audit log cleared', 'info');
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid #27272a',
+                        color: '#71717a',
+                        padding: '4px 8px',
+                        borderRadius: '5px',
+                        fontSize: '11px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                <ShadcnCardDescription style={{ fontSize: '12px' }}>
+                  Immutable chronological log of production batches, barcode labels generated, and peer sync operations.
+                </ShadcnCardDescription>
+              </ShadcnCardHeader>
+
+              <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {auditLogs.length === 0 ? (
+                  <div style={{ padding: '30px', textAlign: 'center', color: '#71717a', fontSize: '12px' }}>
+                    No audit records logged yet in this shift.
+                  </div>
+                ) : (
+                  auditLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        background: '#18181b',
+                        border: '1px solid #27272a',
+                        fontSize: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace', minWidth: '55px' }}>
+                          {log.time}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '9.5px',
+                            fontFamily: 'monospace',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            border: '1px solid #27272a',
+                            background: '#09090b',
+                            color: log.tag === 'SYNC' ? '#10b981' : log.tag === 'PRINT' ? '#38bdf8' : log.tag === 'SECURITY' ? '#a855f7' : '#a1a1aa'
+                          }}
+                        >
+                          {log.tag}
+                        </span>
+                        <span style={{ color: '#f4f4f5' }}>{log.event}</span>
+                      </div>
+
+                      <span style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#71717a' }}>
+                        OP: {log.op}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </ShadcnCardContent>
+            </ShadcnCard>
+          )}
+
         </div>
       )}
       {/* ========================================================================= */}
@@ -2792,100 +3695,138 @@ export const SettingsTabView: React.FC<Props> = ({
       {/* TAB 5: COMPREHENSIVE BARCODE & THERMAL LABEL DESIGNER                     */}
       {/* ========================================================================= */}
       {activeTab === 'BARCODE' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '12px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: Sub-Tab Controls */}
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px', minHeight: 0, overflow: 'hidden' }}>
+          {/* Left Column: Shadcn Configuration Panel */}
           <div
-            className="glass-panel"
             style={{
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '12px',
               padding: '16px',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.5)'
             }}
           >
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Header: Clean Typography & Subtle Action Button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #27272a' }}>
               <div>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Barcode size={16} color="#a855f7" />
-                  BARCODE & LABEL DESIGNER SUITE
-                </span>
-                <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
-                  Multi-printer presets, custom millimeter geometry, symbology & scanner engine
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#f4f4f5', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Barcode size={15} style={{ color: '#a1a1aa' }} />
+                    Barcode & Label Studio
+                  </span>
+                  <span style={{ fontSize: '9.5px', fontWeight: 500, border: '1px solid #27272a', background: '#18181b', color: '#a1a1aa', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                    v3.2 • ECC-200
+                  </span>
+                </div>
+                <span style={{ fontSize: '11px', color: '#71717a', marginTop: '2px', display: 'block' }}>
+                  Industrial thermal print layout, millimeter geometry & CNC glass cutting tags
                 </span>
               </div>
               <button
                 type="button"
                 onClick={handleResetBarcodeDefaults}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#cbd5e1',
+                  background: 'transparent',
+                  border: '1px solid #27272a',
+                  color: '#a1a1aa',
                   borderRadius: '6px',
-                  padding: '4px 10px',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
+                  padding: '5px 12px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#f4f4f5';
+                  e.currentTarget.style.background = '#18181b';
+                  e.currentTarget.style.borderColor = '#3f3f46';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#a1a1aa';
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderColor = '#27272a';
                 }}
               >
                 Reset Defaults
               </button>
             </div>
 
-            {/* Sub-Tab Navigation Bar */}
+            {/* Sub-Tab Navigation Bar (Shadcn TabsList) */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                background: 'rgba(0, 0, 0, 0.35)',
+                gridTemplateColumns: 'repeat(8, 1fr)',
+                background: '#18181b',
                 padding: '3px',
                 borderRadius: '8px',
-                gap: '3px',
-                border: '1px solid rgba(255, 255, 255, 0.06)'
+                gap: '2px',
+                border: '1px solid #27272a'
               }}
             >
               {[
                 { key: 'PRESETS', label: 'Presets' },
+                { key: 'GLASS_ERP', label: 'Glass ERP' },
                 { key: 'MARG_RULES', label: 'Marg Rules' },
                 { key: 'DIMENSIONS', label: 'Dimensions' },
                 { key: 'THERMAL_HEAD', label: 'Thermal Head' },
                 { key: 'CONTENT', label: 'Content' },
                 { key: 'PRINTER_CMDS', label: 'TSPL / ZPL' },
                 { key: 'SCANNER', label: 'Scanner Gun' }
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => {
-                    macAudio.playClick();
-                    setBarcodeSubTab(tab.key as BarcodeSubTab);
-                  }}
-                  style={{
-                    padding: '6px 2px',
-                    fontSize: '10px',
-                    fontWeight: barcodeSubTab === tab.key ? 700 : 500,
-                    borderRadius: '5px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: barcodeSubTab === tab.key ? 'rgba(168, 85, 247, 0.28)' : 'transparent',
-                    color: barcodeSubTab === tab.key ? '#ffffff' : '#94a3b8',
-                    boxShadow: barcodeSubTab === tab.key ? 'inset 0 0 0 1px rgba(168, 85, 247, 0.5)' : 'none',
-                    transition: 'all 0.15s ease',
-                    textAlign: 'center'
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              ].map(tab => {
+                const isActive = barcodeSubTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => {
+                      macAudio.playClick();
+                      setBarcodeSubTab(tab.key as BarcodeSubTab);
+                    }}
+                    style={{
+                      padding: '6px 2px',
+                      fontSize: '10.5px',
+                      fontWeight: isActive ? 600 : 500,
+                      borderRadius: '6px',
+                      border: isActive ? '1px solid #3f3f46' : '1px solid transparent',
+                      cursor: 'pointer',
+                      background: isActive ? '#27272a' : 'transparent',
+                      color: isActive ? '#f4f4f5' : '#71717a',
+                      boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = '#a1a1aa';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = '#71717a';
+                        e.currentTarget.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* SUB-TAB 1: PRESETS */}
             {barcodeSubTab === 'PRESETS' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#e2e8f0' }}>
-                  Select Standard Printer / Sheet Template:
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Standard Templates & Printer Presets
+                  </span>
+                  <span style={{ fontSize: '10px', color: '#71717a' }}>{BARCODE_PRESETS.length} Profiles Available</span>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                   {BARCODE_PRESETS.map(preset => {
                     const isSelected = barcodeConfig.presetId === preset.id;
@@ -2894,44 +3835,59 @@ export const SettingsTabView: React.FC<Props> = ({
                         key={preset.id}
                         onClick={() => handleSelectBarcodePreset(preset)}
                         style={{
-                          background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                          border: isSelected ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? '#18181b' : '#09090b',
+                          border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
+                          boxShadow: isSelected ? '0 0 0 1px #f4f4f5' : 'none',
                           borderRadius: '8px',
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           transition: 'all 0.15s ease'
                         }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#3f3f46';
+                            e.currentTarget.style.background = '#121215';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#27272a';
+                            e.currentTarget.style.background = '#09090b';
+                          }
+                        }}
                       >
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                            <span style={{ fontSize: '11.5px', fontWeight: 700, color: isSelected ? '#ffffff' : '#e2e8f0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: isSelected ? '#f4f4f5' : '#e4e4e7' }}>
                               {preset.name}
                             </span>
                             <span
                               style={{
-                                fontSize: '9px',
-                                padding: '1px 5px',
+                                fontSize: '9.5px',
+                                fontFamily: 'monospace',
+                                padding: '1px 6px',
                                 borderRadius: '4px',
-                                fontWeight: 700,
-                                background: preset.category === 'THERMAL' ? 'rgba(56, 189, 248, 0.2)' : preset.category === 'A4_SHEET' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                                color: preset.category === 'THERMAL' ? '#38bdf8' : preset.category === 'A4_SHEET' ? '#34d399' : '#fbbf24'
+                                fontWeight: 600,
+                                border: '1px solid #27272a',
+                                background: '#18181b',
+                                color: '#a1a1aa'
                               }}
                             >
                               {preset.category}
                             </span>
                           </div>
-                          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                          <span style={{ fontSize: '11px', color: '#71717a' }}>
                             {preset.description}
                           </span>
                         </div>
-                        <div style={{ textAlign: 'right', minWidth: '70px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#c084fc', display: 'block' }}>
+                        <div style={{ textAlign: 'right', minWidth: '75px' }}>
+                          <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#f4f4f5', display: 'block', fontFamily: 'monospace' }}>
                             {preset.widthMm}×{preset.heightMm} mm
                           </span>
-                          <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+                          <span style={{ fontSize: '10px', color: '#71717a' }}>
                             {preset.columns} Across
                           </span>
                         </div>
@@ -2942,21 +3898,23 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* SUB-TAB 2: MARG ERP CONTROL ROOM RULES */}
+            {/* SUB-TAB: MARG ERP CONTROL ROOM RULES */}
             {barcodeSubTab === 'MARG_RULES' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '8px', padding: '10px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <ShieldCheck size={14} />
-                    MARG ERP 9+ CONTROL ROOM BILLING BEHAVIOR
-                  </span>
-                  <span style={{ fontSize: '10px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ShieldCheck size={15} style={{ color: '#a1a1aa' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#f4f4f5' }}>
+                      Marg ERP 9+ Control Room Behavior
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#71717a', display: 'block', marginTop: '3px' }}>
                     Official industrial parameters for high-speed POS retail counter, wholesale, and weighing scale billing
                   </span>
                 </div>
 
                 <div>
-                  <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
                     Item Working Style in Billing:
                   </span>
                   <Segmented
@@ -2964,8 +3922,8 @@ export const SettingsTabView: React.FC<Props> = ({
                     value={barcodeConfig.workingStyle}
                     onChange={(val: any) => handleUpdateBarcodeConfig({ workingStyle: val })}
                     options={[
-                      { label: 'R - Realtime (Scan + Name Search)', value: 'REALTIME' },
-                      { label: 'O - Only Barcode (Strict Cashier Lock)', value: 'ONLY_BARCODE' },
+                      { label: 'R - Realtime (Scan + Name)', value: 'REALTIME' },
+                      { label: 'O - Only Barcode', value: 'ONLY_BARCODE' },
                       { label: 'B - Batch Specific', value: 'BATCH_WISE' },
                       { label: 'S - Serial / IMEI', value: 'SERIAL_WISE' },
                       { label: 'M - MRP / Size Wise', value: 'MRP_WISE' }
@@ -2975,7 +3933,7 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
                       Ask Barcode Qty on Sales:
                     </span>
                     <Segmented
@@ -2984,13 +3942,13 @@ export const SettingsTabView: React.FC<Props> = ({
                       onChange={(val: any) => handleUpdateBarcodeConfig({ askQtyMode: val, askQtyOnScan: val !== 'NO' })}
                       options={[
                         { label: 'N - Rapid (1 Qty auto)', value: 'NO' },
-                        { label: 'Y - Ask Qty (Cursor pauses)', value: 'YES' },
+                        { label: 'Y - Ask Qty (Pause)', value: 'YES' },
                         { label: 'P - Modal Popup', value: 'POPUP' }
                       ]}
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
                       Same Item Rescan Action:
                     </span>
                     <Segmented
@@ -3008,7 +3966,7 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
                       Duplicate Barcode in Master:
                     </span>
                     <Segmented
@@ -3016,14 +3974,14 @@ export const SettingsTabView: React.FC<Props> = ({
                       value={barcodeConfig.duplicatePolicy}
                       onChange={(val: any) => handleUpdateBarcodeConfig({ duplicatePolicy: val })}
                       options={[
-                        { label: '3 - No (Strict Error)', value: 'NO' },
+                        { label: '3 - Strict Error', value: 'NO' },
                         { label: '1 - Warn Confirm', value: 'WARN' },
-                        { label: '2 - Allowed (Popup List)', value: 'ALLOW' }
+                        { label: '2 - Allowed (List)', value: 'ALLOW' }
                       ]}
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
                       Barcode Not Found in Master:
                     </span>
                     <Segmented
@@ -3039,9 +3997,9 @@ export const SettingsTabView: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', borderTop: '1px solid #27272a', paddingTop: '10px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
                       Barcode Series Creation:
                     </span>
                     <Segmented
@@ -3057,7 +4015,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Prefix</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Prefix</span>
                     <Input
                       value={barcodeConfig.autoPrefix || 'BAL-'}
                       onChange={(e) => handleUpdateBarcodeConfig({ autoPrefix: e.target.value })}
@@ -3065,7 +4023,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Next Serial #</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Next Serial #</span>
                     <InputNumber
                       min={1}
                       max={999999}
@@ -3076,7 +4034,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid #27272a', paddingTop: '10px' }}>
                   <LuxuryToggle
                     title="Auto-Generate Barcode on New Item"
                     desc="Automatically assigns barcode when adding inventory items"
@@ -3093,12 +4051,293 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* SUB-TAB 3: DIMENSIONS */}
+            {/* SUB-TAB: GLASS ERP & CNC CUTTING */}
+            {barcodeSubTab === 'GLASS_ERP' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Layers size={15} style={{ color: '#a1a1aa' }} />
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#f4f4f5' }}>
+                        Glass ERP & CNC Cutting Engine
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '9.5px',
+                        fontFamily: 'monospace',
+                        padding: '1px 6px',
+                        border: '1px solid #27272a',
+                        background: '#09090b',
+                        color: '#a1a1aa',
+                        borderRadius: '4px',
+                        fontWeight: 500
+                      }}
+                    >
+                      Lisec / Bottero / Bystronic
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#71717a', display: 'block', marginTop: '3px' }}>
+                    Dynamic lite metadata, edge/flow orientation arrows, furnace tempered corner stamps, rack slot positioning, and 2D DataMatrix (ECC-200) table compatibility.
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <LuxuryToggle
+                    title="Enable Glass ERP Mode"
+                    desc="Prints Lite ID, glass size (W×H mm), thickness, route & rack on label"
+                    checked={barcodeConfig.printGlassErpTags ?? true}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ printGlassErpTags: checked })}
+                  />
+                  <LuxuryToggle
+                    title="Auto-Fit Dynamic Font"
+                    desc="Auto-shrinks font when company or glass job string is long"
+                    checked={barcodeConfig.autoFitFontSize ?? true}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ autoFitFontSize: checked })}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <LuxuryToggle
+                    title="Strict 1-Bit Monochrome"
+                    desc="Guarantees pure #000000 on #ffffff for thermal heads"
+                    checked={barcodeConfig.colorMode === '1BIT_MONOCHROME'}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ colorMode: checked ? '1BIT_MONOCHROME' : 'GRAYSCALE' })}
+                  />
+                  <LuxuryToggle
+                    title="Strict Boundary Overflow Guard"
+                    desc="Highlights label edge red if content exceeds physical millimeter height"
+                    checked={barcodeConfig.strictBoundingBox ?? true}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ strictBoundingBox: checked })}
+                  />
+                </div>
+
+                {/* Glass Lite Specifications Form */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Order # (Job ID)
+                    </span>
+                    <Input
+                      value={barcodeConfig.orderNo || 'ORD-9842'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ orderNo: e.target.value })}
+                      placeholder="e.g. ORD-9842"
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Lite / Piece ID
+                    </span>
+                    <Input
+                      value={barcodeConfig.liteId || 'L-04/12'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ liteId: e.target.value })}
+                      placeholder="e.g. L-04/12"
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Thickness
+                    </span>
+                    <Input
+                      value={barcodeConfig.thicknessMm || '12mm'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ thicknessMm: e.target.value })}
+                      placeholder="e.g. 12mm / 24mm DGU"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Cut Width (mm)
+                    </span>
+                    <InputNumber
+                      min={50}
+                      max={5000}
+                      value={barcodeConfig.widthMmGlass || 1450}
+                      onChange={(val) => handleUpdateBarcodeConfig({ widthMmGlass: val || 1450 })}
+                      addonAfter="mm"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Cut Height (mm)
+                    </span>
+                    <InputNumber
+                      min={50}
+                      max={5000}
+                      value={barcodeConfig.heightMmGlass || 820}
+                      onChange={(val) => handleUpdateBarcodeConfig({ heightMmGlass: val || 820 })}
+                      addonAfter="mm"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Glass Composition / Type
+                    </span>
+                    <Input
+                      value={barcodeConfig.glassType || 'Clear Toughened'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ glassType: e.target.value })}
+                      placeholder="e.g. Clear Toughened / Low-E DGU"
+                    />
+                  </div>
+                </div>
+
+                {/* Logistics, Rack & Route */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Delivery Rack No
+                    </span>
+                    <Input
+                      value={barcodeConfig.rackNo || 'A-14'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ rackNo: e.target.value })}
+                      placeholder="e.g. A-14"
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Rack Slot
+                    </span>
+                    <Input
+                      value={barcodeConfig.slotNo || '08'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ slotNo: e.target.value })}
+                      placeholder="e.g. 08"
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Process Route Sequence
+                    </span>
+                    <Input
+                      value={barcodeConfig.processRoute || 'CUT ➔ EDGE ➔ TEMPER ➔ DGU'}
+                      onChange={(e) => handleUpdateBarcodeConfig({ processRoute: e.target.value })}
+                      placeholder="e.g. CUT ➔ EDGE ➔ TEMPER"
+                    />
+                  </div>
+                </div>
+
+                {/* Coating Side & Physical Orientation Markers */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 1.2fr', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Coating Surface Side:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.coatingSide || 'NONE'}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ coatingSide: val })}
+                      options={[
+                        { label: 'None', value: 'NONE' },
+                        { label: 'Tin', value: 'TIN_SIDE' },
+                        { label: 'Air', value: 'AIR_SIDE' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Edge / Flow Arrow:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.edgeArrow || 'UP'}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ edgeArrow: val })}
+                      options={[
+                        { label: 'None', value: 'NONE' },
+                        { label: '↑ Up', value: 'UP' },
+                        { label: '→ Right', value: 'RIGHT' },
+                        { label: '↓ Down', value: 'DOWN' },
+                        { label: '← Left', value: 'LEFT' }
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+                      Tempered Stamp Corner:
+                    </span>
+                    <Segmented
+                      block
+                      value={barcodeConfig.stampCorner || 'BOTTOM_RIGHT'}
+                      onChange={(val: any) => handleUpdateBarcodeConfig({ stampCorner: val })}
+                      options={[
+                        { label: 'None', value: 'NONE' },
+                        { label: 'TL', value: 'TOP_LEFT' },
+                        { label: 'TR', value: 'TOP_RIGHT' },
+                        { label: 'BL', value: 'BOTTOM_LEFT' },
+                        { label: 'BR', value: 'BOTTOM_RIGHT' }
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                {/* Clickable Quick Tags Insertion Helper */}
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '10px 12px' }}>
+                  <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '8px' }}>
+                    Quick Tags — Click to insert into footer / header template:
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {[
+                      { tag: '{ORDER_NO}', label: 'Order #' },
+                      { tag: '{LITE_ID}', label: 'Lite ID' },
+                      { tag: '{WIDTH_MM}', label: 'Width' },
+                      { tag: '{HEIGHT_MM}', label: 'Height' },
+                      { tag: '{GLASS_TYPE}', label: 'Glass Type' },
+                      { tag: '{THICKNESS}', label: 'Thickness' },
+                      { tag: '{RACK_NO}', label: 'Rack' },
+                      { tag: '{SLOT_NO}', label: 'Slot' },
+                      { tag: '{PROCESS_ROUTE}', label: 'Route' }
+                    ].map(t => (
+                      <button
+                        key={t.tag}
+                        type="button"
+                        onClick={() => {
+                          macAudio.playPop();
+                          const currentFooter = barcodeConfig.customFooter || '';
+                          handleUpdateBarcodeConfig({
+                            customFooter: currentFooter ? `${currentFooter} ${t.tag}` : t.tag
+                          });
+                          onShowToast?.(`Inserted ${t.tag} into footer`, 'info');
+                        }}
+                        style={{
+                          background: '#09090b',
+                          border: '1px solid #27272a',
+                          color: '#e4e4e7',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#3f3f46';
+                          e.currentTarget.style.color = '#f4f4f5';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#27272a';
+                          e.currentTarget.style.color = '#e4e4e7';
+                        }}
+                      >
+                        <code style={{ fontFamily: 'monospace', color: '#a1a1aa' }}>{t.tag}</code>
+                        <span style={{ fontSize: '9.5px', color: '#71717a' }}>({t.label})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB: DIMENSIONS */}
             {barcodeSubTab === 'DIMENSIONS' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Label Width (mm)</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Label Width (mm)</span>
                     <InputNumber
                       min={10}
                       max={200}
@@ -3109,7 +4348,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Label Height (mm)</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Label Height (mm)</span>
                     <InputNumber
                       min={10}
                       max={200}
@@ -3123,7 +4362,7 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Columns Across</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Columns Across</span>
                     <InputNumber
                       min={1}
                       max={8}
@@ -3133,7 +4372,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Gap Horiz. (mm)</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Gap Horiz. (mm)</span>
                     <InputNumber
                       min={0}
                       max={20}
@@ -3143,7 +4382,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Gap Vert. (mm)</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Gap Vert. (mm)</span>
                     <InputNumber
                       min={0}
                       max={20}
@@ -3154,9 +4393,9 @@ export const SettingsTabView: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', borderTop: '1px solid #27272a', paddingTop: '10px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Top Margin (mm)</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Top Margin (mm)</span>
                     <InputNumber
                       min={0}
                       max={50}
@@ -3166,7 +4405,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Left Margin (mm)</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Left Margin (mm)</span>
                     <InputNumber
                       min={0}
                       max={50}
@@ -3176,7 +4415,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '3px' }}>Print Head DPI</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Print Head DPI</span>
                     <Segmented
                       block
                       value={barcodeConfig.dpi}
@@ -3191,12 +4430,12 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* SUB-TAB 4: THERMAL HEAD & HARDWARE CALIBRATION */}
+            {/* SUB-TAB: THERMAL HEAD & HARDWARE CALIBRATION */}
             {barcodeSubTab === 'THERMAL_HEAD' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Thermal Media Sensor:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Thermal Media Sensor:</span>
                     <Segmented
                       block
                       value={barcodeConfig.sensorMode}
@@ -3209,7 +4448,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Print Speed:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Print Speed:</span>
                     <Segmented
                       block
                       value={barcodeConfig.printSpeedIps}
@@ -3224,10 +4463,10 @@ export const SettingsTabView: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700 }}>Thermal Burn Darkness / Heat Density (1–15):</span>
-                    <span style={{ fontSize: '10.5px', color: '#a855f7', fontWeight: 800 }}>Level {barcodeConfig.printDarkness} / 15</span>
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500 }}>Thermal Burn Darkness / Heat Density:</span>
+                    <span style={{ fontSize: '11px', color: '#f4f4f5', fontWeight: 600, fontFamily: 'monospace' }}>Level {barcodeConfig.printDarkness} / 15</span>
                   </div>
                   <Slider
                     min={1}
@@ -3239,7 +4478,7 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Orientation:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Orientation:</span>
                     <Segmented
                       block
                       value={barcodeConfig.orientation}
@@ -3253,7 +4492,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Symbology:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Symbology:</span>
                     <Segmented
                       block
                       value={barcodeConfig.symbology}
@@ -3261,12 +4500,13 @@ export const SettingsTabView: React.FC<Props> = ({
                       options={[
                         { label: 'Code 128', value: 'CODE128' },
                         { label: 'EAN-13', value: 'EAN13' },
-                        { label: 'QR', value: 'QR' }
+                        { label: 'QR', value: 'QR' },
+                        { label: 'DataMatrix (CNC)', value: 'DATAMATRIX' }
                       ]}
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Bar Height (mm):</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Bar Height (mm):</span>
                     <InputNumber
                       min={6}
                       max={40}
@@ -3278,9 +4518,9 @@ export const SettingsTabView: React.FC<Props> = ({
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', borderTop: '1px solid #27272a', paddingTop: '10px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Human Readable Text:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Human Readable Text:</span>
                     <Segmented
                       block
                       value={barcodeConfig.textPosition}
@@ -3293,7 +4533,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Tear-off Cutter Offset:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Tear-off Cutter Offset:</span>
                     <InputNumber
                       min={-10}
                       max={20}
@@ -3307,9 +4547,9 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* SUB-TAB 5: LABEL CONTENT */}
+            {/* SUB-TAB: LABEL CONTENT */}
             {barcodeSubTab === 'CONTENT' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <LuxuryToggle
                   title="Print Company Header"
                   desc="Top shop title banner"
@@ -3444,7 +4684,7 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Text Alignment:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Text Alignment:</span>
                     <Segmented
                       block
                       value={barcodeConfig.textAlign}
@@ -3457,7 +4697,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Custom Footer:</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Custom Footer:</span>
                     <Input
                       value={barcodeConfig.customFooter || ''}
                       onChange={(e) => handleUpdateBarcodeConfig({ customFooter: e.target.value })}
@@ -3483,26 +4723,28 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* SUB-TAB 6: TSPL & ZPL DIRECT PRINTER COMMANDS */}
+            {/* SUB-TAB: TSPL & ZPL DIRECT PRINTER COMMANDS */}
             {barcodeSubTab === 'PRINTER_CMDS' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '10px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Printer size={14} />
-                    DIRECT THERMAL PRINTER COMMAND GENERATOR (TSPL / ZPL-II)
-                  </span>
-                  <span style={{ fontSize: '10px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Printer size={15} style={{ color: '#a1a1aa' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#f4f4f5' }}>
+                      Direct Thermal Printer Command Generator (TSPL / ZPL-II)
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#71717a', display: 'block', marginTop: '3px' }}>
                     Industrial command code generated directly from your label configuration without Windows raster lag
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <Segmented
                     value={activeCodeLang}
                     onChange={(val: any) => setActiveCodeLang(val)}
                     options={[
-                      { label: 'TSPL (TVS LP-46 / TSC TE244 / Godex)', value: 'TSPL' },
-                      { label: 'ZPL-II (Zebra ZD220 / ZD230 / GT800)', value: 'ZPL' }
+                      { label: 'TSPL (TVS LP-46 / TSC TE244)', value: 'TSPL' },
+                      { label: 'ZPL-II (Zebra ZD220 / ZD230)', value: 'ZPL' }
                     ]}
                   />
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -3516,14 +4758,23 @@ export const SettingsTabView: React.FC<Props> = ({
                         onShowToast?.(`Copied ${activeCodeLang} code to clipboard!`, 'success');
                       }}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.08)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        color: '#f8fafc',
-                        padding: '4px 10px',
-                        borderRadius: '5px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        cursor: 'pointer'
+                        background: '#18181b',
+                        border: '1px solid #27272a',
+                        color: '#f4f4f5',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#3f3f46';
+                        e.currentTarget.style.background = '#27272a';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#27272a';
+                        e.currentTarget.style.background = '#18181b';
                       }}
                     >
                       Copy Script
@@ -3538,14 +4789,23 @@ export const SettingsTabView: React.FC<Props> = ({
                         onShowToast?.(`Downloaded ${activeCodeLang} PRN file!`, 'success');
                       }}
                       style={{
-                        background: 'rgba(56, 189, 248, 0.2)',
-                        border: '1px solid rgba(56, 189, 248, 0.4)',
-                        color: '#38bdf8',
-                        padding: '4px 10px',
-                        borderRadius: '5px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        cursor: 'pointer'
+                        background: '#18181b',
+                        border: '1px solid #27272a',
+                        color: '#f4f4f5',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#3f3f46';
+                        e.currentTarget.style.background = '#27272a';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#27272a';
+                        e.currentTarget.style.background = '#18181b';
                       }}
                     >
                       Download .PRN
@@ -3559,20 +4819,27 @@ export const SettingsTabView: React.FC<Props> = ({
                         handleSendRawPrint(code);
                       }}
                       style={{
-                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                        border: '1px solid rgba(56, 189, 248, 0.5)',
-                        color: '#ffffff',
-                        padding: '4px 12px',
-                        borderRadius: '5px',
-                        fontSize: '10.5px',
-                        fontWeight: 700,
+                        background: '#f4f4f5',
+                        border: '1px solid #f4f4f5',
+                        color: '#09090b',
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 600,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '5px',
-                        cursor: isSendingRawPrint ? 'wait' : 'pointer'
+                        cursor: isSendingRawPrint ? 'wait' : 'pointer',
+                        transition: 'opacity 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
                       }}
                     >
-                      <Zap size={12} />
+                      <Zap size={13} />
                       <span>{isSendingRawPrint ? 'Sending...' : 'Send Raw Direct'}</span>
                     </button>
                   </div>
@@ -3580,17 +4847,17 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <div
                   style={{
-                    background: '#090d16',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '6px',
-                    padding: '10px 12px',
-                    fontFamily: 'Consolas, Monaco, monospace',
-                    fontSize: '10.5px',
-                    color: '#38bdf8',
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                    color: '#a1a1aa',
                     maxHeight: '180px',
                     overflowY: 'auto',
                     whiteSpace: 'pre-wrap',
-                    lineHeight: 1.4
+                    lineHeight: 1.45
                   }}
                 >
                   {(() => {
@@ -3601,22 +4868,24 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             )}
 
-            {/* SUB-TAB 7: SCANNER HARDWARE */}
+            {/* SUB-TAB: SCANNER HARDWARE */}
             {barcodeSubTab === 'SCANNER' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', padding: '10px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Scan size={14} />
-                    HARDWARE BARCODE SCANNER INTEGRATION
-                  </span>
-                  <span style={{ fontSize: '10px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Scan size={15} style={{ color: '#a1a1aa' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#f4f4f5' }}>
+                      Hardware Barcode Scanner Integration
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#71717a', display: 'block', marginTop: '3px' }}>
                     Auto-detects USB, Wireless 2.4G & Bluetooth laser guns with high-speed key burst timing
                   </span>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Scanner Suffix</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Scanner Suffix</span>
                     <Segmented
                       block
                       value={barcodeConfig.scannerSuffix}
@@ -3629,7 +4898,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Sound Feedback</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Sound Feedback</span>
                     <Segmented
                       block
                       value={barcodeConfig.soundType}
@@ -3642,7 +4911,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#cbd5e1', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Min Length</span>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 500, display: 'block', marginBottom: '4px' }}>Min Length</span>
                     <InputNumber
                       min={1}
                       max={20}
@@ -3670,17 +4939,19 @@ export const SettingsTabView: React.FC<Props> = ({
                 </div>
 
                 {/* Interactive Live Scanner Test Console with Burst Latency Detector */}
-                <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Zap size={13} color="#a855f7" />
-                      TEST HARDWARE SCANNER INPUT (BURST LATENCY DETECTOR):
-                    </span>
+                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Zap size={14} style={{ color: '#a1a1aa' }} />
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#f4f4f5' }}>
+                        Test Hardware Scanner (Burst Latency Detector)
+                      </span>
+                    </div>
                     {scannerTestHistory.length > 0 && (
                       <button
                         type="button"
                         onClick={() => setScannerTestHistory([])}
-                        style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '9.5px', cursor: 'pointer', padding: 0 }}
+                        style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '10px', cursor: 'pointer', padding: 0 }}
                       >
                         Clear History
                       </button>
@@ -3723,36 +4994,45 @@ export const SettingsTabView: React.FC<Props> = ({
                     placeholder="Click here and scan a barcode with your barcode gun..."
                     style={{
                       width: '100%',
-                      background: 'rgba(15, 23, 42, 0.9)',
-                      border: '1px solid #a855f7',
-                      color: '#ffffff',
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      color: '#f4f4f5',
                       borderRadius: '6px',
                       padding: '7px 10px',
-                      fontSize: '11.5px',
-                      outline: 'none'
+                      fontSize: '12px',
+                      outline: 'none',
+                      transition: 'border-color 0.15s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = '#52525b';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '#27272a';
                     }}
                   />
                   {scannerTestHistory.length > 0 && (
-                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                      <span style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 700 }}>Recent Scans:</span>
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '10px', color: '#71717a', fontWeight: 500 }}>Recent Scans:</span>
                       {scannerTestHistory.map((h, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10.5px', background: 'rgba(255,255,255,0.04)', padding: '3px 8px', borderRadius: '4px' }}>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', background: '#09090b', border: '1px solid #27272a', padding: '4px 8px', borderRadius: '4px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 800 }}>{h.code}</span>
+                            <span style={{ color: '#f4f4f5', fontFamily: 'monospace', fontWeight: 600 }}>{h.code}</span>
                             <span
                               style={{
-                                fontSize: '8.5px',
+                                fontSize: '9px',
                                 padding: '1px 6px',
                                 borderRadius: '4px',
-                                fontWeight: 800,
-                                background: h.isLaserGun ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                                color: h.isLaserGun ? '#34d399' : '#fbbf24'
+                                fontWeight: 500,
+                                fontFamily: 'monospace',
+                                border: '1px solid #27272a',
+                                background: '#18181b',
+                                color: h.isLaserGun ? '#f4f4f5' : '#a1a1aa'
                               }}
                             >
-                              {h.isLaserGun ? `⚡ LASER GUN (${h.durationMs}ms)` : `⌨️ TYPED (${h.durationMs}ms)`}
+                              {h.isLaserGun ? `⚡ LASER (${h.durationMs}ms)` : `⌨️ KEYBOARD (${h.durationMs}ms)`}
                             </span>
                           </div>
-                          <span style={{ color: '#64748b', fontSize: '9.5px' }}>{h.time}</span>
+                          <span style={{ color: '#71717a', fontSize: '10px', fontFamily: 'monospace' }}>{h.time}</span>
                         </div>
                       ))}
                     </div>
@@ -3762,234 +5042,595 @@ export const SettingsTabView: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Right Column: Live 1:1 Scale Barcode Label Preview */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Maximize2 size={13} color="#a855f7" />
-                THERMAL LABEL PREVIEW (1:1 PROPORTION)
-              </span>
-              <span style={{ fontSize: '10px', color: '#a855f7', fontWeight: 700 }}>
-                {barcodeConfig.widthMm}mm × {barcodeConfig.heightMm}mm • {barcodeConfig.dpi} DPI
-              </span>
-            </div>
+          {/* Right Column: Live 1:1 Scale Barcode Label Preview with Glass ERP Batch Engine */}
+          {(() => {
+            const currentBatchItem = GLASS_ERP_SAMPLE_BATCH[selectedBatchIndex % GLASS_ERP_SAMPLE_BATCH.length];
+            const resolveDynamicTags = (template: string) => {
+              if (!template) return '';
+              return template
+                .replace(/\{ORDER_NO\}/g, barcodeConfig.orderNo || currentBatchItem.orderNo)
+                .replace(/\{LITE_ID\}/g, barcodeConfig.liteId || currentBatchItem.liteId)
+                .replace(/\{WIDTH_MM\}/g, String(barcodeConfig.widthMmGlass || currentBatchItem.widthMm))
+                .replace(/\{HEIGHT_MM\}/g, String(barcodeConfig.heightMmGlass || currentBatchItem.heightMm))
+                .replace(/\{GLASS_TYPE\}/g, barcodeConfig.glassType || currentBatchItem.glassType)
+                .replace(/\{THICKNESS\}/g, barcodeConfig.thicknessMm || currentBatchItem.thicknessMm)
+                .replace(/\{RACK_NO\}/g, barcodeConfig.rackNo || currentBatchItem.rackNo)
+                .replace(/\{SLOT_NO\}/g, barcodeConfig.slotNo || currentBatchItem.slotNo)
+                .replace(/\{PROCESS_ROUTE\}/g, barcodeConfig.processRoute || currentBatchItem.processRoute)
+                .replace(/\{COATING_SIDE\}/g, barcodeConfig.coatingSide || currentBatchItem.coatingSide)
+                .replace(/\{CUSTOMER_NAME\}/g, currentBatchItem.customerName);
+            };
 
-            {/* Sticker Mockup with Accurate Sizing & Real SVG Bars */}
-            <div
-              style={{
-                width: `${Math.min(300, Math.max(180, barcodeConfig.widthMm * 4.5))}px`,
-                minHeight: `${Math.min(240, Math.max(120, barcodeConfig.heightMm * 4.5))}px`,
-                background: '#ffffff',
-                borderRadius: '6px',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.2)',
-                border: barcodeConfig.showBorder ? `1px ${barcodeConfig.borderStyle || 'dashed'} #94a3b8` : 'none',
-                padding: '10px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                color: '#000000',
-                fontFamily: 'Inter, system-ui, sans-serif',
-                textAlign: barcodeConfig.textAlign
-              }}
-            >
-              {barcodeConfig.printHeader && (
-                <div
-                  style={{
-                    fontSize: `${barcodeConfig.headerFontSize}px`,
-                    fontWeight: barcodeConfig.headerBold !== false ? 900 : 700,
-                    letterSpacing: '0.4px',
-                    borderBottom: '1px solid #1e293b',
-                    paddingBottom: '2px',
-                    lineHeight: 1.1
-                  }}
-                >
-                  {barcodeConfig.headerText || 'COMPANY NAME'}
-                </div>
-              )}
+            const previewWidthPx = Math.round(Math.min(320, Math.max(180, barcodeConfig.widthMm * 3.8)) * previewZoom);
+            const previewMinHeightPx = Math.round(Math.min(280, Math.max(120, barcodeConfig.heightMm * 3.8)) * previewZoom);
 
-              {barcodeConfig.printSubHeader && (
-                <div
-                  style={{
-                    fontSize: `${barcodeConfig.subHeaderFontSize || 8}px`,
-                    fontWeight: 600,
-                    color: '#475569',
-                    marginTop: '2px',
-                    lineHeight: 1.1
-                  }}
-                >
-                  {barcodeConfig.subHeaderText || 'GSTIN: 07AAAAA0000A1Z5'}
-                </div>
-              )}
-
-              {barcodeConfig.printItemName && (
-                <div
-                  style={{
-                    fontSize: `${barcodeConfig.itemNameFontSize}px`,
-                    fontWeight: 800,
-                    margin: '3px 0',
-                    lineHeight: 1.15
-                  }}
-                >
-                  Mould 14x20 Standard Housing
-                </div>
-              )}
-
-              {barcodeConfig.printItemSize && (
-                <div style={{ fontSize: `${barcodeConfig.itemSizeFontSize || 9}px`, fontWeight: 700, color: '#334155' }}>
-                  DIMENSIONS: 14" × 20" (10FT)
-                </div>
-              )}
-
-              {/* Dynamic Barcode Generation (Code128 or QR) */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: barcodeConfig.textAlign === 'center' ? 'center' : barcodeConfig.textAlign === 'right' ? 'flex-end' : 'flex-start', margin: '4px 0' }}>
-                {barcodeConfig.textPosition === 'above' && (
-                  <span style={{ fontSize: '9px', fontFamily: 'monospace', fontWeight: 800, letterSpacing: '1px', marginBottom: '2px' }}>
-                    *MLD-1420-STD*
-                  </span>
-                )}
-
-                {barcodeConfig.symbology === 'QR' ? (
-                  <div style={{ width: '56px', height: '56px', display: 'grid', gridTemplateColumns: 'repeat(21, 1fr)', gap: '0px', background: '#fff', padding: '2px' }}>
-                    {generateQrMatrix('MLD-1420-STD').map((row, rI) =>
-                      row.map((cell, cI) => (
-                        <div key={`${rI}-${cI}`} style={{ background: cell ? '#000' : '#fff' }} />
-                      ))
-                    )}
-                  </div>
-                ) : (
-                  (() => {
-                    const { svgBars, totalWidth } = generateCode128SvgBars('MLD-1420-STD', barcodeConfig.barHeightMm, barcodeConfig.barScale);
-                    return (
-                      <svg width="100%" height={barcodeConfig.barHeightMm * 2.2} viewBox={`0 0 ${totalWidth} ${barcodeConfig.barHeightMm * 2.2}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', maxWidth: '100%' }}>
-                        {svgBars.map((b, i) => (
-                          <rect key={i} x={b.x} y={0} width={b.width} height={barcodeConfig.barHeightMm * 2.2} fill="#000000" />
-                        ))}
-                      </svg>
-                    );
-                  })()
-                )}
-
-                {barcodeConfig.textPosition === 'below' && (
-                  <span style={{ fontSize: '9px', fontFamily: 'monospace', fontWeight: 800, letterSpacing: '1.5px', marginTop: '2px' }}>
-                    *MLD-1420-STD*
-                  </span>
-                )}
-              </div>
-
-              {/* Specs Line: HSN, Batch, Date */}
-              {(barcodeConfig.printHsn || barcodeConfig.printBatch || barcodeConfig.printDate) && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#64748b', fontWeight: 700, margin: '2px 0' }}>
-                  {barcodeConfig.printHsn && <span>HSN: 7007</span>}
-                  {barcodeConfig.printBatch && <span>B.No: B26-1</span>}
-                  {barcodeConfig.printDate && <span>PKD: 10/26</span>}
-                </div>
-              )}
-
-              {/* Footer Row: Tag & Price */}
+            return (
               <div
                 style={{
+                  background: '#09090b',
+                  border: '1px solid #27272a',
+                  borderRadius: '12px',
+                  padding: '16px',
                   display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  borderTop: '1px solid #cbd5e1',
-                  paddingTop: '3px',
-                  marginTop: '2px'
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                  overflowY: 'auto'
                 }}
               >
-                {barcodeConfig.printTag ? (
-                  <span style={{ fontSize: '8.5px', fontWeight: 800, color: '#475569', letterSpacing: '0.5px' }}>
-                    TAG: ITEM
-                  </span>
-                ) : <span />}
-
-                {barcodeConfig.printPrice && (
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: `${barcodeConfig.priceFontSize}px`, fontWeight: 900, color: '#0f172a' }}>
-                      {barcodeConfig.pricePrefix}650.00
+                {/* Header with Dimension Specs & Zoom Controls */}
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid #27272a' }}>
+                  <div>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#f4f4f5', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Maximize2 size={14} style={{ color: '#a1a1aa' }} />
+                      Monochrome Thermal Preview
                     </span>
-                    {barcodeConfig.showTaxInclusive && (
-                      <span style={{ display: 'block', fontSize: '7.5px', color: '#64748b', fontWeight: 600, lineHeight: 1 }}>
-                        (Incl. of all taxes)
-                      </span>
-                    )}
+                    <span style={{ fontSize: '10px', color: '#71717a', fontFamily: 'monospace', display: 'block', marginTop: '2px' }}>
+                      {barcodeConfig.widthMm}×{barcodeConfig.heightMm}mm • {barcodeConfig.dpi} DPI • 203 DPI Head
+                    </span>
                   </div>
-                )}
-              </div>
-
-              {barcodeConfig.customFooter && (
-                <div style={{ fontSize: `${barcodeConfig.footerFontSize || 8}px`, fontWeight: 700, color: '#64748b', textAlign: 'center', marginTop: '2px', borderTop: '1px dotted #e2e8f0', paddingTop: '1px' }}>
-                  {barcodeConfig.customFooter}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '9.5px', color: '#71717a', fontWeight: 600 }}>ZOOM:</span>
+                    {[
+                      { label: '100%', val: 1 },
+                      { label: '125%', val: 1.25 },
+                      { label: '150%', val: 1.5 }
+                    ].map(z => (
+                      <button
+                        key={z.label}
+                        type="button"
+                        onClick={() => {
+                          macAudio.playPop();
+                          setPreviewZoom(z.val);
+                        }}
+                        style={{
+                          background: previewZoom === z.val ? '#27272a' : 'transparent',
+                          border: previewZoom === z.val ? '1px solid #3f3f46' : '1px solid transparent',
+                          color: previewZoom === z.val ? '#f4f4f5' : '#71717a',
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {z.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Bottom Actions */}
-            <div style={{ width: '100%', display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  const sampleItem = { name: 'Mould 14x20 Standard Housing', code: 'MLD-1420-STD', price: 650.00, tag: 'ITEM', size: '10FT' };
-                  const tspl = generateTsplCommand(barcodeConfig, sampleItem);
-                  downloadThermalScriptFile(tspl, `label_test_${barcodeConfig.widthMm}x${barcodeConfig.heightMm}.prn`);
-                  macAudio.playSuccess();
-                  onShowToast?.('Downloaded .PRN file for direct printer spooling!', 'success');
-                }}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#e2e8f0',
-                  height: '34px',
-                  padding: '0 12px',
-                  borderRadius: '7px',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  cursor: 'pointer'
-                }}
-              >
-                <Download size={13} />
-                <span>Export .PRN</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  macAudio.playSuccess();
-                  onShowToast?.('Marg ERP Barcode configuration saved & active!', 'success');
-                }}
-                style={{
-                  flex: 1,
-                  background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
-                  border: '1px solid rgba(168, 85, 247, 0.5)',
-                  color: '#ffffff',
-                  height: '34px',
-                  borderRadius: '7px',
-                  fontWeight: 700,
-                  fontSize: '11px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(168, 85, 247, 0.3)'
-                }}
-              >
-                <Check size={14} />
-                <span>Save & Apply Settings</span>
-              </button>
-            </div>
-          </div>
+                {/* Batch Piece Navigation Slider (Real Glass Sample Items) */}
+                <div
+                  style={{
+                    width: '100%',
+                    background: '#18181b',
+                    border: '1px solid #27272a',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      macAudio.playClick();
+                      setSelectedBatchIndex(prev => (prev > 0 ? prev - 1 : GLASS_ERP_SAMPLE_BATCH.length - 1));
+                    }}
+                    style={{
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      color: '#f4f4f5',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#3f3f46';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#27272a';
+                    }}
+                  >
+                    ◀ Prev
+                  </button>
+
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#f4f4f5' }}>
+                        Piece {selectedBatchIndex + 1} of {GLASS_ERP_SAMPLE_BATCH.length}:
+                      </span>
+                      <span style={{ fontSize: '10px', fontFamily: 'monospace', background: '#09090b', border: '1px solid #27272a', padding: '1px 6px', borderRadius: '4px', color: '#a1a1aa' }}>
+                        {currentBatchItem.liteId}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', marginTop: '1px' }}>
+                      {currentBatchItem.glassType} • {currentBatchItem.widthMm}×{currentBatchItem.heightMm}mm ({currentBatchItem.thicknessMm})
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      macAudio.playClick();
+                      setSelectedBatchIndex(prev => (prev + 1) % GLASS_ERP_SAMPLE_BATCH.length);
+                    }}
+                    style={{
+                      background: '#09090b',
+                      border: '1px solid #27272a',
+                      color: '#f4f4f5',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#3f3f46';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#27272a';
+                    }}
+                  >
+                    Next ▶
+                  </button>
+                </div>
+
+                {/* Studio Canvas Mat Workspace (Subtle Dot Grid) */}
+                <div
+                  style={{
+                    width: '100%',
+                    background: 'radial-gradient(circle, #27272a 1px, transparent 1px) 0 0 / 14px 14px, #050506',
+                    border: '1px solid #27272a',
+                    borderRadius: '8px',
+                    padding: '24px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '340px'
+                  }}
+                >
+                  {/* Top Horizontal Millimeter Ruler */}
+                  <div
+                    style={{
+                      width: `${previewWidthPx}px`,
+                      height: '14px',
+                      borderBottom: '1px solid #27272a',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '7.5px',
+                      color: '#71717a',
+                      fontFamily: 'monospace',
+                      padding: '0 2px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <span>0mm</span>
+                    <span>{Math.round(barcodeConfig.widthMm / 2)}mm</span>
+                    <span>{barcodeConfig.widthMm}mm</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                    {/* Left Vertical Millimeter Ruler */}
+                    <div
+                      style={{
+                        width: '18px',
+                        height: `${previewMinHeightPx}px`,
+                        borderRight: '1px solid #27272a',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        fontSize: '7px',
+                        color: '#71717a',
+                        fontFamily: 'monospace',
+                        paddingRight: '2px',
+                        textAlign: 'right',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <span>0</span>
+                      <span>{Math.round(barcodeConfig.heightMm / 2)}</span>
+                      <span>{barcodeConfig.heightMm}</span>
+                    </div>
+
+                    {/* Strict 1-Bit Monochrome Thermal Label Canvas */}
+                    <div
+                      style={{
+                        width: `${previewWidthPx}px`,
+                        minHeight: `${previewMinHeightPx}px`,
+                        background: '#ffffff',
+                        borderRadius: '3px',
+                        boxShadow: '0 10px 28px rgba(0,0,0,0.9), 0 0 0 1px #000000',
+                        border: barcodeConfig.strictBoundingBox
+                          ? '1px dashed #000000'
+                          : barcodeConfig.showBorder
+                          ? `1px ${barcodeConfig.borderStyle || 'solid'} #000000`
+                          : 'none',
+                        padding: `${Math.round(8 * previewZoom)}px ${Math.round(10 * previewZoom)}px`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        color: '#000000',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        textAlign: barcodeConfig.textAlign,
+                        position: 'relative',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      {/* Physical Corner Stamp Badge */}
+                      {barcodeConfig.stampCorner && barcodeConfig.stampCorner !== 'NONE' && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: barcodeConfig.stampCorner.includes('TOP') ? '4px' : 'auto',
+                            bottom: barcodeConfig.stampCorner.includes('BOTTOM') ? '4px' : 'auto',
+                            left: barcodeConfig.stampCorner.includes('LEFT') ? '4px' : 'auto',
+                            right: barcodeConfig.stampCorner.includes('RIGHT') ? '4px' : 'auto',
+                            border: '1.5px solid #000000',
+                            borderRadius: '3px',
+                            padding: '1px 3px',
+                            fontSize: '6.5px',
+                            fontWeight: 900,
+                            lineHeight: 1,
+                            background: '#ffffff',
+                            color: '#000000',
+                            letterSpacing: '0.2px'
+                          }}
+                        >
+                          ⬡ STAMP: {barcodeConfig.stampCorner === 'BOTTOM_RIGHT' ? 'BR' : barcodeConfig.stampCorner === 'TOP_LEFT' ? 'TL' : barcodeConfig.stampCorner === 'TOP_RIGHT' ? 'TR' : 'BL'}
+                        </div>
+                      )}
+
+                      {/* Top Header & Orientation Flow Indicator */}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px' }}>
+                          {barcodeConfig.printHeader && (
+                            <div
+                              style={{
+                                fontSize: `${Math.round((barcodeConfig.autoFitFontSize ? Math.min(barcodeConfig.headerFontSize, 12) : barcodeConfig.headerFontSize) * previewZoom)}px`,
+                                fontWeight: 900,
+                                letterSpacing: '0.3px',
+                                borderBottom: '1px solid #000000',
+                                paddingBottom: '2px',
+                                lineHeight: 1.1,
+                                flex: 1,
+                                color: '#000000'
+                              }}
+                            >
+                              {barcodeConfig.headerText || 'EXCEL GLASS INDUSTRIES'}
+                            </div>
+                          )}
+
+                          {barcodeConfig.edgeArrow && barcodeConfig.edgeArrow !== 'NONE' && (
+                            <span
+                              style={{
+                                fontSize: '7.5px',
+                                fontWeight: 900,
+                                background: '#000000',
+                                color: '#ffffff',
+                                padding: '1px 4px',
+                                borderRadius: '2px',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {barcodeConfig.edgeArrow === 'UP' && '↑ FLOW'}
+                              {barcodeConfig.edgeArrow === 'RIGHT' && '→ FLOW'}
+                              {barcodeConfig.edgeArrow === 'DOWN' && '↓ FLOW'}
+                              {barcodeConfig.edgeArrow === 'LEFT' && '← FLOW'}
+                            </span>
+                          )}
+                        </div>
+
+                        {barcodeConfig.printSubHeader && (
+                          <div
+                            style={{
+                              fontSize: `${Math.round((barcodeConfig.subHeaderFontSize || 8) * previewZoom)}px`,
+                              fontWeight: 700,
+                              color: '#000000',
+                              marginTop: '2px',
+                              lineHeight: 1.1
+                            }}
+                          >
+                            {barcodeConfig.subHeaderText || 'CNC CUTTING & TEMPERING UNIT'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Glass Manufacturing Lite Information Block */}
+                      {(barcodeConfig.printGlassErpTags ?? true) && (
+                        <div
+                          style={{
+                            margin: '3px 0',
+                            padding: '3px 0',
+                            borderTop: '1px solid #000000',
+                            borderBottom: '1px solid #000000',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.5px',
+                            textAlign: 'left'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ fontSize: `${Math.round(9 * previewZoom)}px`, fontWeight: 900, color: '#000000' }}>
+                              JOB: {barcodeConfig.orderNo || currentBatchItem.orderNo} • {barcodeConfig.liteId || currentBatchItem.liteId}
+                            </span>
+                            <span style={{ fontSize: `${Math.round(8 * previewZoom)}px`, fontWeight: 800, color: '#000000' }}>
+                              {barcodeConfig.thicknessMm || currentBatchItem.thicknessMm}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: `${Math.round(10 * previewZoom)}px`, fontWeight: 900, color: '#000000', letterSpacing: '0.2px' }}>
+                            CUT: {barcodeConfig.widthMmGlass || currentBatchItem.widthMm} × {barcodeConfig.heightMmGlass || currentBatchItem.heightMm} mm
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: `${Math.round(7.5 * previewZoom)}px`, fontWeight: 800, color: '#000000' }}>
+                            <span>TYPE: {barcodeConfig.glassType || currentBatchItem.glassType}</span>
+                            <span>RACK: {barcodeConfig.rackNo || currentBatchItem.rackNo} / {barcodeConfig.slotNo || currentBatchItem.slotNo}</span>
+                          </div>
+
+                          <div style={{ fontSize: `${Math.round(7 * previewZoom)}px`, fontWeight: 700, color: '#000000' }}>
+                            ROUTE: {barcodeConfig.processRoute || currentBatchItem.processRoute}
+                            {barcodeConfig.coatingSide && barcodeConfig.coatingSide !== 'NONE' ? ` • [${barcodeConfig.coatingSide}]` : ''}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Symbology: DataMatrix (ECC-200), QR, or Code 128 */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: barcodeConfig.textAlign === 'center' ? 'center' : barcodeConfig.textAlign === 'right' ? 'flex-end' : 'flex-start',
+                          margin: '3px 0'
+                        }}
+                      >
+                        {barcodeConfig.textPosition === 'above' && (
+                          <span style={{ fontSize: `${Math.round(8 * previewZoom)}px`, fontFamily: 'monospace', fontWeight: 900, letterSpacing: '1px', marginBottom: '1px', color: '#000000' }}>
+                            *{currentBatchItem.orderNo}-{currentBatchItem.liteId}*
+                          </span>
+                        )}
+
+                        {barcodeConfig.symbology === 'DATAMATRIX' ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div
+                              style={{
+                                width: `${Math.round(44 * previewZoom)}px`,
+                                height: `${Math.round(44 * previewZoom)}px`,
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(16, 1fr)',
+                                gap: 0,
+                                background: '#000000',
+                                padding: '1.5px',
+                                border: '1px solid #000000'
+                              }}
+                            >
+                              {generateDataMatrixSvgMatrix(`${currentBatchItem.orderNo}/${currentBatchItem.liteId}`).map((row, rI) =>
+                                row.map((cell, cI) => (
+                                  <div key={`${rI}-${cI}`} style={{ background: cell ? '#000000' : '#ffffff' }} />
+                                ))
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
+                              <span style={{ display: 'block', fontSize: `${Math.round(7.5 * previewZoom)}px`, fontWeight: 900, color: '#000000', fontFamily: 'monospace' }}>
+                                ECC-200 CNC
+                              </span>
+                              <span style={{ display: 'block', fontSize: `${Math.round(6.5 * previewZoom)}px`, color: '#000000', fontWeight: 700 }}>
+                                TABLE READY
+                              </span>
+                            </div>
+                          </div>
+                        ) : barcodeConfig.symbology === 'QR' ? (
+                          <div
+                            style={{
+                              width: `${Math.round(52 * previewZoom)}px`,
+                              height: `${Math.round(52 * previewZoom)}px`,
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(21, 1fr)',
+                              gap: 0,
+                              background: '#ffffff',
+                              padding: '2px',
+                              border: '1px solid #000000'
+                            }}
+                          >
+                            {generateQrMatrix(`${currentBatchItem.orderNo}-${currentBatchItem.liteId}`).map((row, rI) =>
+                              row.map((cell, cI) => (
+                                <div key={`${rI}-${cI}`} style={{ background: cell ? '#000000' : '#ffffff' }} />
+                              ))
+                            )}
+                          </div>
+                        ) : (
+                          (() => {
+                            const { svgBars, totalWidth } = generateCode128SvgBars(`${currentBatchItem.orderNo}-${currentBatchItem.liteId}`, barcodeConfig.barHeightMm, barcodeConfig.barScale);
+                            return (
+                              <svg
+                                width="100%"
+                                height={Math.round(barcodeConfig.barHeightMm * 1.8 * previewZoom)}
+                                viewBox={`0 0 ${totalWidth} ${barcodeConfig.barHeightMm * 1.8}`}
+                                preserveAspectRatio="xMidYMid meet"
+                                style={{ display: 'block', maxWidth: '100%' }}
+                              >
+                                {svgBars.map((b, i) => (
+                                  <rect key={i} x={b.x} y={0} width={b.width} height={barcodeConfig.barHeightMm * 1.8} fill="#000000" />
+                                ))}
+                              </svg>
+                            );
+                          })()
+                        )}
+
+                        {barcodeConfig.textPosition === 'below' && (
+                          <span style={{ fontSize: `${Math.round(8 * previewZoom)}px`, fontFamily: 'monospace', fontWeight: 900, letterSpacing: '1px', marginTop: '1px', color: '#000000' }}>
+                            *{currentBatchItem.orderNo}-{currentBatchItem.liteId}*
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Specs Line: HSN, Batch, Date */}
+                      {(barcodeConfig.printHsn || barcodeConfig.printBatch || barcodeConfig.printDate) && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: `${Math.round(7 * previewZoom)}px`, color: '#000000', fontWeight: 800, margin: '1px 0' }}>
+                          {barcodeConfig.printHsn && <span>HSN: 7007</span>}
+                          {barcodeConfig.printBatch && <span>LOT: {currentBatchItem.orderNo.slice(-3)}</span>}
+                          {barcodeConfig.printDate && <span>DATE: 10/26</span>}
+                        </div>
+                      )}
+
+                      {/* Footer Row: Tag & Price / Customer */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          borderTop: '1px solid #000000',
+                          paddingTop: '2px',
+                          marginTop: '2px'
+                        }}
+                      >
+                        <span style={{ fontSize: `${Math.round(7.5 * previewZoom)}px`, fontWeight: 800, color: '#000000' }}>
+                          {currentBatchItem.customerName ? currentBatchItem.customerName.slice(0, 18) : 'TAG: GLASS LITE'}
+                        </span>
+
+                        {barcodeConfig.printPrice && (
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: `${Math.round(barcodeConfig.priceFontSize * previewZoom)}px`, fontWeight: 900, color: '#000000' }}>
+                              {barcodeConfig.pricePrefix}1,450.00
+                            </span>
+                            {barcodeConfig.showTaxInclusive && (
+                              <span style={{ display: 'block', fontSize: `${Math.round(6.5 * previewZoom)}px`, color: '#000000', fontWeight: 700, lineHeight: 1 }}>
+                                (Incl. all taxes)
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {barcodeConfig.customFooter && (
+                        <div
+                          style={{
+                            fontSize: `${Math.round((barcodeConfig.footerFontSize || 8) * previewZoom)}px`,
+                            fontWeight: 800,
+                            color: '#000000',
+                            textAlign: 'center',
+                            marginTop: '2px',
+                            borderTop: '1px dotted #000000',
+                            paddingTop: '1px'
+                          }}
+                        >
+                          {resolveDynamicTags(barcodeConfig.customFooter)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Actions: PRN Script Export & Save Settings */}
+                <div style={{ width: '100%', display: 'flex', gap: '8px', paddingTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const activeItem = {
+                        name: `${currentBatchItem.glassType} (${currentBatchItem.widthMm}x${currentBatchItem.heightMm}mm)`,
+                        code: `${currentBatchItem.orderNo}-${currentBatchItem.liteId}`,
+                        price: 1450.00,
+                        tag: 'LITE',
+                        size: `${currentBatchItem.widthMm}x${currentBatchItem.heightMm}`
+                      };
+                      const tspl = generateTsplCommand(barcodeConfig, activeItem);
+                      downloadThermalScriptFile(tspl, `glass_label_${currentBatchItem.liteId.replace(/[^A-Za-z0-9]/g, '_')}.prn`);
+                      macAudio.playSuccess();
+                      onShowToast?.(`Exported .PRN with ECC-200 DataMatrix for ${currentBatchItem.liteId}!`, 'success');
+                    }}
+                    style={{
+                      background: '#18181b',
+                      border: '1px solid #27272a',
+                      color: '#f4f4f5',
+                      height: '36px',
+                      padding: '0 14px',
+                      borderRadius: '6px',
+                      fontWeight: 500,
+                      fontSize: '11px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#3f3f46';
+                      e.currentTarget.style.background = '#27272a';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#27272a';
+                      e.currentTarget.style.background = '#18181b';
+                    }}
+                  >
+                    <Download size={13} style={{ color: '#a1a1aa' }} />
+                    <span>Export .PRN</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      macAudio.playSuccess();
+                      onShowToast?.('Glass ERP & Barcode configuration saved & active!', 'success');
+                    }}
+                    style={{
+                      flex: 1,
+                      background: '#f4f4f5',
+                      border: '1px solid #f4f4f5',
+                      color: '#09090b',
+                      height: '36px',
+                      borderRadius: '6px',
+                      fontWeight: 600,
+                      fontSize: '11px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                    }}
+                  >
+                    <Check size={14} />
+                    <span>Save & Apply Settings</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -510,6 +510,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       controlledValue !== undefined ? String(controlledValue) : defaultValue !== undefined ? String(defaultValue) : ''
     );
     const [highlightedIdx, setHighlightedIdx] = useState<number>(-1);
+    const [isFocused, setIsFocused] = useState(false);
     const [coords, setCoords] = useState<{ top: number; left: number; width: number; openUpward: boolean }>({
       top: 0,
       left: 0,
@@ -658,8 +659,36 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         }
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          e.stopPropagation();
           if (highlightedIdx >= 0 && highlightedIdx < parsedOptions.length) {
-            handleSelectOption(parsedOptions[highlightedIdx]);
+            const opt = parsedOptions[highlightedIdx];
+            if (!opt.disabled) {
+              setInternalValue(opt.value);
+              setIsOpen(false);
+              if (onChange) onChange({ target: { value: opt.value, name } });
+              if (onValueChange) onValueChange(opt.value);
+              // Move focus to next focusable element
+              setTimeout(() => {
+                if (!triggerRef.current) return;
+                const focusableSelectors = [
+                  'input:not([disabled]):not([type="hidden"])',
+                  'textarea:not([disabled])',
+                  'select:not([disabled])',
+                  'button:not([disabled])',
+                  '[tabindex]:not([tabindex="-1"]):not([disabled])'
+                ].join(',');
+                const allFocusable = Array.from(
+                  document.querySelectorAll<HTMLElement>(focusableSelectors)
+                ).filter(el => el.offsetParent !== null); // only visible elements
+                const currentIdx = allFocusable.indexOf(triggerRef.current);
+                const nextEl = allFocusable[currentIdx + 1];
+                if (nextEl) {
+                  nextEl.focus();
+                } else {
+                  triggerRef.current.blur();
+                }
+              }, 0);
+            }
           }
           return;
         }
@@ -694,7 +723,11 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           id={id}
           data-np-target={dataNpTarget}
           disabled={disabled}
-          onClick={handleToggle}
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+            // Only handle genuine mouse clicks, not keyboard-synthesized clicks
+            if (e.detail === 0) return; // detail===0 means keyboard-triggered click
+            handleToggle();
+          }}
           onKeyDown={handleTriggerKeyDown}
           className={className}
           style={{
@@ -704,7 +737,12 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             alignItems: 'center',
             justifyContent: 'space-between',
             borderRadius: '6px',
-            border: isOpen ? '1px solid #52525b' : '1px solid #27272a',
+            border: isOpen
+              ? '1px solid #52525b'
+              : isFocused
+              ? '1px solid #a1a1aa'
+              : '1px solid #27272a',
+            boxShadow: isFocused && !isOpen ? '0 0 0 2px rgba(161,161,170,0.15)' : 'none',
             background: '#09090b',
             padding: '0 10px',
             fontSize: '12px',
@@ -720,6 +758,8 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             gap: '8px',
             ...style
           }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           {...restProps}
         >
           <span
@@ -992,5 +1032,110 @@ export type {
   ShadcnDateRangePickerProps as DateRangePickerProps
 } from '../common/ShadcnDatePicker';
 
+// =========================================================================
+// 13. AVATAR COMPONENTS (ui.shadcn.com/docs/components/avatar)
+// =========================================================================
+export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+  size?: 'sm' | 'default' | 'lg' | 'xl';
+}
 
+export const Avatar: React.FC<AvatarProps> = ({ size = 'default', style, children, ...props }) => {
+  const dim = size === 'sm' ? 32 : size === 'lg' ? 48 : size === 'xl' ? 64 : 40;
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        height: `${dim}px`,
+        width: `${dim}px`,
+        flexShrink: 0,
+        overflow: 'hidden',
+        borderRadius: '9999px',
+        border: '1px solid #27272a',
+        background: '#18181b',
+        boxSizing: 'border-box',
+        ...style
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
 
+export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ style, ...props }) => (
+  <img
+    style={{
+      aspectRatio: '1 / 1',
+      height: '100%',
+      width: '100%',
+      objectFit: 'cover',
+      ...style
+    }}
+    {...props}
+  />
+);
+
+export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ style, children, ...props }) => (
+  <div
+    style={{
+      display: 'flex',
+      height: '100%',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '9999px',
+      background: '#27272a',
+      color: '#f4f4f5',
+      fontSize: '14px',
+      fontWeight: 600,
+      ...style
+    }}
+    {...props}
+  >
+    {children}
+  </div>
+);
+
+// =========================================================================
+// 14. PROGRESS COMPONENT (ui.shadcn.com/docs/components/progress)
+// =========================================================================
+export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
+  value?: number;
+  max?: number;
+  indicatorColor?: string;
+}
+
+export const Progress: React.FC<ProgressProps> = ({
+  value = 0,
+  max = 100,
+  indicatorColor = '#f4f4f5',
+  style,
+  ...props
+}) => {
+  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+  return (
+    <div
+      style={{
+        position: 'relative',
+        height: '6px',
+        width: '100%',
+        overflow: 'hidden',
+        borderRadius: '9999px',
+        background: '#27272a',
+        ...style
+      }}
+      {...props}
+    >
+      <div
+        style={{
+          height: '100%',
+          width: `${percentage}%`,
+          background: indicatorColor,
+          borderRadius: '9999px',
+          transition: 'width 0.3s ease'
+        }}
+      />
+    </div>
+  );
+};

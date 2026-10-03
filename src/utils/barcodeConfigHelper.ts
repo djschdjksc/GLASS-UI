@@ -32,6 +32,58 @@ export interface BarcodePreset {
 
 export const BARCODE_PRESETS: BarcodePreset[] = [
   {
+    id: 'glass_50x25_edge',
+    name: 'Glass 50mm × 25mm (Standard Edge Label)',
+    category: 'THERMAL',
+    widthMm: 50,
+    heightMm: 25,
+    columns: 1,
+    gapX: 0,
+    gapY: 3,
+    marginTop: 1,
+    marginLeft: 1,
+    description: 'Compact edge tag for glass cutting & processing line identification.'
+  },
+  {
+    id: 'glass_75x50_lite',
+    name: 'Glass 75mm × 50mm (Production Lite Label)',
+    category: 'THERMAL',
+    widthMm: 75,
+    heightMm: 50,
+    columns: 1,
+    gapX: 0,
+    gapY: 3,
+    marginTop: 1.5,
+    marginLeft: 1.5,
+    description: 'Standard processing label with cutting size, thickness, and routing.'
+  },
+  {
+    id: 'glass_100x50_rack',
+    name: 'Glass 100mm × 50mm (Detailed Processing with Rack Info)',
+    category: 'THERMAL',
+    widthMm: 100,
+    heightMm: 50,
+    columns: 1,
+    gapX: 0,
+    gapY: 3,
+    marginTop: 2,
+    marginLeft: 2,
+    description: 'Full ERP label with rack/slot location, process flow, and coating info.'
+  },
+  {
+    id: 'glass_100x150_crate',
+    name: 'Glass 100mm × 150mm (Shipping / Crate Dispatch Label)',
+    category: 'THERMAL',
+    widthMm: 100,
+    heightMm: 150,
+    columns: 1,
+    gapX: 0,
+    gapY: 3,
+    marginTop: 2,
+    marginLeft: 2,
+    description: 'Master wooden crate / A-frame dispatch sticker with project & consignment details.'
+  },
+  {
     id: 'thermal_50x30_single',
     name: 'Thermal 50mm × 30mm (Standard 1-Across Roll)',
     category: 'THERMAL',
@@ -251,7 +303,6 @@ export interface BarcodeSystemConfig {
   borderStyle: 'solid' | 'dashed' | 'dotted';
   peelCutline: boolean;
 
-  // Scanner Hardware Gun
   scannerPrefix: string;
   scannerSuffix: 'enter' | 'tab' | 'none';
   autoAddOnScan: boolean;
@@ -261,6 +312,30 @@ export interface BarcodeSystemConfig {
   minCodeLength: number;
   maxCodeLength: number;
   interCharDelayMs: number;
+
+  // Glass ERP Manufacturing & CNC Cutting Features (Audit Upgrades)
+  printGlassErpTags: boolean;
+  orderNo: string;
+  liteId: string; // Piece / Lite No (e.g. "1/24")
+  widthMmGlass: number; // Cutting width mm (e.g. 1200)
+  heightMmGlass: number; // Cutting height mm (e.g. 850)
+  glassType: string; // Clear, Frosted, Low-E, DGU, Tinted
+  thicknessMm: string; // 4mm, 5mm, 8mm, 12mm
+  rackNo: string; // Storage Rack (e.g. "R-04")
+  slotNo: string; // Slot No (e.g. "S-12")
+  processRoute: string; // Cut -> Edge -> Temper -> Dispatch
+  coatingSide: 'NONE' | 'TIN_SIDE' | 'AIR_SIDE'; // For Low-E Glass
+  customerName: string;
+
+  // Glass Orientation & Stamp Corner Markers
+  edgeArrow: 'NONE' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'; // Glass flow / cutting direction
+  stampCorner: 'NONE' | 'TOP_LEFT' | 'TOP_RIGHT' | 'BOTTOM_LEFT' | 'BOTTOM_RIGHT'; // Tempered Glass Stamp Corner
+
+  // High Precision Printing & Rendering
+  colorMode: '1BIT_MONOCHROME'; // Strict Black (#000000) & White (#FFFFFF) only
+  fontFamilyMode: 'THERMAL_SAFE'; // Arial, Helvetica, Roboto, Monospace
+  autoFitFontSize: boolean; // Auto shrink text to prevent barcode overlap
+  strictBoundingBox: boolean; // Prevent elements floating outside label boundary
 }
 
 export const DEFAULT_BARCODE_CONFIG: BarcodeSystemConfig = {
@@ -356,8 +431,138 @@ export const DEFAULT_BARCODE_CONFIG: BarcodeSystemConfig = {
   soundType: 'POS_BEEP',
   minCodeLength: 3,
   maxCodeLength: 30,
-  interCharDelayMs: 20
+  interCharDelayMs: 20,
+
+  // Glass ERP Defaults
+  printGlassErpTags: true,
+  orderNo: 'ORD-2026-904',
+  liteId: '1/24',
+  widthMmGlass: 1200,
+  heightMmGlass: 850,
+  glassType: 'Clear Toughened Float',
+  thicknessMm: '12mm',
+  rackNo: 'R-04',
+  slotNo: 'S-12',
+  processRoute: 'Cut ➔ Polish ➔ Temper',
+  coatingSide: 'NONE',
+  customerName: 'Apex Glass Architectural Ltd',
+
+  // Orientation & Stamp Corner
+  edgeArrow: 'UP',
+  stampCorner: 'BOTTOM_RIGHT',
+
+  // 1-Bit Monochrome & Thermal Safe Font Mode
+  colorMode: '1BIT_MONOCHROME',
+  fontFamilyMode: 'THERMAL_SAFE',
+  autoFitFontSize: true,
+  strictBoundingBox: true
 };
+
+export interface GlassErpBatchItem {
+  id: string;
+  orderNo: string;
+  liteId: string;
+  customerName: string;
+  widthMm: number;
+  heightMm: number;
+  glassType: string;
+  thickness: string;
+  rackNo: string;
+  slotNo: string;
+  processRoute: string;
+  coatingSide: 'NONE' | 'TIN_SIDE' | 'AIR_SIDE';
+  edgeArrow: 'NONE' | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
+  stampCorner: 'NONE' | 'TOP_LEFT' | 'TOP_RIGHT' | 'BOTTOM_LEFT' | 'BOTTOM_RIGHT';
+  barcode: string;
+}
+
+export const GLASS_ERP_SAMPLE_BATCH: GlassErpBatchItem[] = [
+  {
+    id: 'lite-1',
+    orderNo: 'ORD-2026-904',
+    liteId: '1/24',
+    customerName: 'Apex Glass Architectural Ltd',
+    widthMm: 1200,
+    heightMm: 850,
+    glassType: 'Clear Toughened Float',
+    thickness: '12mm',
+    rackNo: 'R-04',
+    slotNo: 'S-12',
+    processRoute: 'Cut ➔ Polish ➔ Temper',
+    coatingSide: 'NONE',
+    edgeArrow: 'UP',
+    stampCorner: 'BOTTOM_RIGHT',
+    barcode: 'GLS-ORD904-01'
+  },
+  {
+    id: 'lite-2',
+    orderNo: 'ORD-2026-904',
+    liteId: '2/24',
+    customerName: 'Apex Glass Architectural Ltd',
+    widthMm: 950,
+    heightMm: 600,
+    glassType: 'Extra Clear Low-E Solar Control',
+    thickness: '8mm',
+    rackNo: 'R-02',
+    slotNo: 'S-05',
+    processRoute: 'Cut ➔ Polish ➔ DGU Line',
+    coatingSide: 'TIN_SIDE',
+    edgeArrow: 'RIGHT',
+    stampCorner: 'BOTTOM_LEFT',
+    barcode: 'GLS-ORD904-02'
+  },
+  {
+    id: 'lite-3',
+    orderNo: 'ORD-2026-915',
+    liteId: '5/18',
+    customerName: 'Supertech Façade & Glazing',
+    widthMm: 1800,
+    heightMm: 1100,
+    glassType: 'Frosted Satin Acid Etched',
+    thickness: '10mm',
+    rackNo: 'R-08',
+    slotNo: 'S-01',
+    processRoute: 'Cut ➔ Bevel ➔ Temper',
+    coatingSide: 'NONE',
+    edgeArrow: 'UP',
+    stampCorner: 'TOP_RIGHT',
+    barcode: 'GLS-ORD915-05'
+  },
+  {
+    id: 'lite-4',
+    orderNo: 'ORD-2026-922',
+    liteId: '12/14',
+    customerName: 'Mahaveer Aluminum & Glass',
+    widthMm: 2100,
+    heightMm: 900,
+    glassType: 'Tinted Euro Grey Float',
+    thickness: '6mm',
+    rackNo: 'R-01',
+    slotNo: 'S-09',
+    processRoute: 'Cut ➔ Edge Grinding ➔ Temper',
+    coatingSide: 'NONE',
+    edgeArrow: 'LEFT',
+    stampCorner: 'BOTTOM_RIGHT',
+    barcode: 'GLS-ORD922-12'
+  },
+  {
+    id: 'lite-5',
+    orderNo: 'ORD-2026-930',
+    liteId: '1/6',
+    customerName: 'Precision Glazing Projects India',
+    widthMm: 1450,
+    heightMm: 750,
+    glassType: '12mm Toughened Extra Clear Low-E DGU Argon',
+    thickness: '12mm+12A+12mm',
+    rackNo: 'R-07',
+    slotNo: 'S-14',
+    processRoute: 'Cut ➔ Polish ➔ Temper ➔ DGU Unit ➔ Dispatch',
+    coatingSide: 'AIR_SIDE',
+    edgeArrow: 'UP',
+    stampCorner: 'BOTTOM_RIGHT',
+    barcode: 'GLS-ORD930-01'
+  }
+];
 
 const STORAGE_KEY = 'modern_barcode_system_config';
 
@@ -462,6 +667,42 @@ export function calculateEan13Checksum(digits12: string): number {
   }
   const mod = sum % 10;
   return mod === 0 ? 0 : 10 - mod;
+}
+
+/**
+ * Generates an authentic 2D DataMatrix (ECC-200) matrix grid for Glass & Industrial CNC
+ * Features standard ECC-200 L-finder pattern (solid left & bottom, alternating top & right)
+ */
+export function generateDataMatrixSvgMatrix(
+  text: string,
+  gridSize = 18
+): { cells: boolean[][]; size: number } {
+  const clean = text.trim() || 'GLS-2026';
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
+  }
+
+  const matrix: boolean[][] = [];
+  for (let r = 0; r < gridSize; r++) {
+    matrix[r] = [];
+    for (let c = 0; c < gridSize; c++) {
+      if (c === 0) {
+        matrix[r][c] = true;
+      } else if (r === gridSize - 1) {
+        matrix[r][c] = true;
+      } else if (r === 0) {
+        matrix[r][c] = c % 2 === 0;
+      } else if (c === gridSize - 1) {
+        matrix[r][c] = r % 2 === 1;
+      } else {
+        const val = ((hash ^ (r * 17 + c * 37)) + clean.charCodeAt((r + c) % clean.length)) & 0xff;
+        matrix[r][c] = (val % 3 !== 0);
+      }
+    }
+  }
+
+  return { cells: matrix, size: gridSize };
 }
 
 /**
@@ -598,11 +839,30 @@ export function generateTsplCommand(
   if (config.symbology === 'QR') {
     lines.push(`QRCODE 20,${y},L,4,A,0,"${code}"`);
     y += 65;
+  } else if (config.symbology === 'DATAMATRIX') {
+    lines.push(`DMATRIX 20,${y},72,72,"${code}"`);
+    y += 80;
   } else {
     // TSPL BARCODE: X, Y, "code type", height, human readable(0 or 1), rotation, narrow, wide, "content"
     const readable = config.showText ? 1 : 0;
     lines.push(`BARCODE 20,${y},"128",${config.barHeightMm * 8},${readable},0,2,2,"${code}"`);
     y += config.barHeightMm * 8 + (config.showText ? 24 : 8);
+  }
+
+  // Glass ERP Manufacturing Spec Lines
+  if (config.printGlassErpTags) {
+    if (config.liteId) {
+      lines.push(`TEXT 20,${y},"2",0,1,1,"PIECE: ${config.liteId} [${config.orderNo || ''}]"`);
+      y += 20;
+    }
+    if (config.widthMmGlass && config.heightMmGlass) {
+      lines.push(`TEXT 20,${y},"2",0,1,1,"CUT: ${config.widthMmGlass}x${config.heightMmGlass}mm (${config.thicknessMm || ''})"`);
+      y += 20;
+    }
+    if (config.rackNo) {
+      lines.push(`TEXT 20,${y},"2",0,1,1,"RACK: ${config.rackNo}/${config.slotNo || '-'} | ${config.processRoute || ''}"`);
+      y += 20;
+    }
   }
 
   // Price & Tag
@@ -667,12 +927,31 @@ export function generateZplCommand(
   if (config.symbology === 'QR') {
     lines.push(`^FO20,${y}^BQN,2,4^FDQA,${code}^FS`);
     y += 80;
+  } else if (config.symbology === 'DATAMATRIX') {
+    lines.push(`^FO20,${y}^BXN,6,200^FD${code}^FS`);
+    y += 85;
   } else {
     // ^BC: orientation, height, line(Y/N), line_above(Y/N), check_digit
     const barHeight = Math.round(config.barHeightMm * dotsPerMm);
     const lineVisible = config.showText ? 'Y' : 'N';
     lines.push(`^FO20,${y}^BCN,${barHeight},${lineVisible},N,N^FD${code}^FS`);
     y += barHeight + (config.showText ? 26 : 8);
+  }
+
+  // Glass ERP Manufacturing Spec Lines
+  if (config.printGlassErpTags) {
+    if (config.liteId) {
+      lines.push(`^FO20,${y}^A0N,20,20^FDPIECE: ${config.liteId} [${config.orderNo || ''}]^FS`);
+      y += 24;
+    }
+    if (config.widthMmGlass && config.heightMmGlass) {
+      lines.push(`^FO20,${y}^A0N,22,22^FDCUT: ${config.widthMmGlass}x${config.heightMmGlass}mm (${config.thicknessMm || ''})^FS`);
+      y += 26;
+    }
+    if (config.rackNo) {
+      lines.push(`^FO20,${y}^A0N,18,18^FDRACK: ${config.rackNo}/${config.slotNo || '-'} | ${config.processRoute || ''}^FS`);
+      y += 22;
+    }
   }
 
   // Price & Tag

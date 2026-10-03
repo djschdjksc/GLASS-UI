@@ -2,6 +2,7 @@ export interface BillHeader {
   docType: string;
   partyName: string;
   typeSelection: string;
+  vehicleType: string;
   vehicleNo: string;
   date: string;
   tokenNo: number | string;

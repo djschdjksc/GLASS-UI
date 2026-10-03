@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { BillHeader } from '../types';
 import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History, Building2 } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
@@ -6,7 +7,7 @@ import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
 import { DOC_TYPES } from '../utils/billDocTypes';
 import { getUserProfile } from '../services/supabaseClient';
-import { Select as ShadcnSelect } from './ui/shadcn';
+import { Select as ShadcnSelect, Button, Input } from './ui/shadcn';
 import { localDb } from '../services/db/localDb';
 import type { PartyRecord } from '../services/db/schema';
 
@@ -45,6 +46,18 @@ const REAL_PARTIES: string[] = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
 
 const TYPE_SELECTIONS = ['RETAIL', 'WHOLESALE', 'JOB WORK', 'INTER-STATE', 'EXPORT'];
 
+const DEFAULT_VEHICLE_TYPES = [
+  'OWN VEHICLE',
+  'TRUCK',
+  'TEMPO',
+  'AUTO',
+  'COURIER',
+  'HAND DELIVERY',
+  'TRAIN',
+  'BUS',
+  'BY HAND',
+];
+
 export const AppleHeader: React.FC<Props> = ({ 
   header, 
   onChange, 
@@ -75,6 +88,10 @@ export const AppleHeader: React.FC<Props> = ({
     isOpen: boolean;
     name: string;
   } | null>(null);
+  const [vehicleTypes, setVehicleTypes] = useState<string[]>(DEFAULT_VEHICLE_TYPES);
+  const [addVehicleTypeModal, setAddVehicleTypeModal] = useState(false);
+  const [newVehicleTypeInput, setNewVehicleTypeInput] = useState('');
+
 
   // Subscribe to live Party changes across DB
   useEffect(() => {
@@ -92,9 +109,15 @@ export const AppleHeader: React.FC<Props> = ({
 
   const focusNextInput = () => {
     setTimeout(() => {
-      const typeSelect = document.getElementById('header-type-selection') as HTMLSelectElement | null;
-      if (typeSelect) {
-        typeSelect.focus();
+      const vehSelect = document.getElementById('header-vehicle-type') as HTMLElement | null;
+      if (vehSelect) {
+        vehSelect.focus();
+      } else {
+        const vno = document.getElementById('header-vehicle-no') as HTMLInputElement | null;
+        if (vno) {
+          vno.focus();
+          vno.select();
+        }
       }
     }, 40);
   };
@@ -366,44 +389,67 @@ export const AppleHeader: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Dedicated Quick Add (+) Button next to search box */}
-          <button
+          {/* Dedicated Quick Add (+) Button next to search box (Shadcn UI Button) */}
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => handleTriggerAddParty()}
-            className="apple-box-btn"
-            style={{ width: '32px', height: '32px', borderRadius: '7px', flexShrink: 0 }}
+            style={{
+              width: '32px',
+              height: '32px',
+              padding: 0,
+              borderRadius: '6px',
+              borderColor: '#27272a',
+              backgroundColor: '#18181b',
+              color: '#f4f4f5',
+              flexShrink: 0
+            }}
             title="Add New Party to Database (+)"
           >
-            <span className="box-tooltip-right">Add Party (+)</span>
             <Plus size={14} />
-          </button>
+          </Button>
         </div>
 
-        {/* Type Selection Dropdown */}
-        <div style={{ position: 'relative', width: '110px' }}>
+        {/* Vehicle Type Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <ShadcnSelect
-            id="header-type-selection"
+            id="header-vehicle-type"
             data-np-target="1-3"
-            style={{ width: '100%', height: '32px' }}
-            value={header.typeSelection}
-            onChange={(e: any) => onChange({ typeSelection: e.target.value })}
+            style={{ width: '130px', height: '32px' }}
+            value={header.vehicleType || vehicleTypes[0]}
+            onChange={(e: any) => onChange({ vehicleType: e.target.value })}
             onKeyDown={(e: any) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                const vehicleInput = document.getElementById('header-vehicle-no') as HTMLInputElement | null;
-                if (vehicleInput) {
-                  vehicleInput.focus();
-                  vehicleInput.select();
-                }
+                const vno = document.getElementById('header-vehicle-no') as HTMLInputElement | null;
+                if (vno) { vno.focus(); vno.select(); }
               }
             }}
           >
-            {TYPE_SELECTIONS.map(ts => (
-              <option key={ts} value={ts}>
-                {ts}
-              </option>
+            {vehicleTypes.map(vt => (
+              <option key={vt} value={vt}>{vt}</option>
             ))}
           </ShadcnSelect>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => { setNewVehicleTypeInput(''); setAddVehicleTypeModal(true); }}
+            style={{
+              width: '32px',
+              height: '32px',
+              padding: 0,
+              borderRadius: '6px',
+              borderColor: '#27272a',
+              backgroundColor: '#18181b',
+              color: '#f4f4f5',
+              flexShrink: 0
+            }}
+            title="Add New Vehicle Type (+)"
+          >
+            <Plus size={14} />
+          </Button>
         </div>
 
         {/* Vehicle No Input */}
@@ -589,6 +635,114 @@ export const AppleHeader: React.FC<Props> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Vehicle Type Modal (Shadcn Dialog Style) */}
+      {addVehicleTypeModal && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 99999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => setAddVehicleTypeModal(false)}
+        >
+          <div
+            style={{
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '10px',
+              padding: '22px 24px',
+              width: '380px',
+              maxWidth: '92vw',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: '#fafafa' }}>Add Vehicle Type</div>
+                <div style={{ fontSize: '12px', color: '#a1a1aa', marginTop: '2px' }}>New vehicle type will appear in the dropdown.</div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setAddVehicleTypeModal(false)}
+                style={{ width: '28px', height: '28px', padding: 0, color: '#71717a' }}
+              >
+                ✕
+              </Button>
+            </div>
+
+            <Input
+              autoFocus
+              type="text"
+              placeholder="e.g. MINI TRUCK, AUTO..."
+              value={newVehicleTypeInput}
+              onChange={e => setNewVehicleTypeInput(e.target.value.toUpperCase())}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const trimmed = newVehicleTypeInput.trim();
+                  if (trimmed && !vehicleTypes.includes(trimmed)) {
+                    setVehicleTypes(prev => [...prev, trimmed]);
+                    onChange({ vehicleType: trimmed });
+                  }
+                  setAddVehicleTypeModal(false);
+                } else if (e.key === 'Escape') {
+                  setAddVehicleTypeModal(false);
+                }
+              }}
+              style={{
+                height: '38px',
+                fontSize: '13px',
+                fontFamily: 'monospace',
+                letterSpacing: '0.04em'
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAddVehicleTypeModal(false)}
+                style={{ height: '34px', fontSize: '12px' }}
+              >
+                Cancel (Esc)
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  const trimmed = newVehicleTypeInput.trim();
+                  if (trimmed && !vehicleTypes.includes(trimmed)) {
+                    setVehicleTypes(prev => [...prev, trimmed]);
+                    onChange({ vehicleType: trimmed });
+                  }
+                  setAddVehicleTypeModal(false);
+                }}
+                style={{ height: '34px', fontSize: '12px', gap: '6px' }}
+              >
+                <Check size={14} /> Add Type
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

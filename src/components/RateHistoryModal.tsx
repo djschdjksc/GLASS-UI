@@ -96,7 +96,7 @@ export const RateHistoryModal: React.FC<Props> = ({
 
   // Compute rate history across all saved bills
   const rateHistoryData = useMemo(() => {
-    if (!isOpen) return [];
+    if (!isOpen) return { all: [], party: [] };
 
     const allBills = localDb.getBills();
     const sourceBills = allBills && allBills.length > 0 ? allBills : (SQLITE_BILLS || []);
@@ -112,8 +112,8 @@ export const RateHistoryModal: React.FC<Props> = ({
       return (Number(b.updatedAt || 0)) - (Number(a.updatedAt || 0));
     });
 
-    // Map: mouldKey -> history entries
-    const mouldMap = new Map<string, {
+    // --- Global map: mouldKey -> most recent entry across ALL bills ---
+    const globalMap = new Map<string, {
       mould: string;
       latestPrice: number;
       latestDate: string;
@@ -122,11 +122,25 @@ export const RateHistoryModal: React.FC<Props> = ({
       history: { price: number; date: string; token: string; party: string }[];
     }>();
 
+    // --- Party map: mouldKey -> most recent entry for THIS party only ---
+    // Contains ALL unique items ever sent to this party, each with its most recent rate for that party
+    const partyMap = new Map<string, {
+      mould: string;
+      latestPrice: number;
+      latestDate: string;
+      latestToken: string;
+      latestParty: string;
+      history: { price: number; date: string; token: string; party: string }[];
+    }>();
+
+    const cleanCurrentParty = (currentParty || '').trim().toLowerCase();
+
     for (const bill of sortedBills) {
       const bParty = (bill.party || '').trim();
       const bDate = bill.date || '';
       const bToken = String(bill.token || '');
       const items = bill.finishedItems || [];
+      const isThisPartyBill = cleanCurrentParty && bParty.toLowerCase().includes(cleanCurrentParty);
 
       for (const item of items) {
         const rawMould = (item.mould || '').trim();
@@ -134,53 +148,77 @@ export const RateHistoryModal: React.FC<Props> = ({
         if (!rawMould || rawMould === 'Mould Name' || rawMould === '-' || price <= 0) continue;
 
         const key = rawMould.toLowerCase();
-        if (!mouldMap.has(key)) {
-          mouldMap.set(key, {
+        const entry = { price, date: bDate, token: bToken, party: bParty };
+
+        // Global map (all bills, most recent rate per item)
+        if (!globalMap.has(key)) {
+          globalMap.set(key, {
             mould: rawMould,
             latestPrice: price,
             latestDate: bDate,
             latestToken: bToken,
             latestParty: bParty,
-            history: [{ price, date: bDate, token: bToken, party: bParty }]
+            history: [entry]
           });
         } else {
-          const entry = mouldMap.get(key)!;
-          // Add up to 5 history entries if different or recent
-          if (entry.history.length < 5) {
-            entry.history.push({ price, date: bDate, token: bToken, party: bParty });
+          const g = globalMap.get(key)!;
+          if (g.history.length < 5) g.history.push(entry);
+        }
+
+        // Party map: collect ALL unique items for this party, most recent rate per item
+        if (isThisPartyBill) {
+          if (!partyMap.has(key)) {
+            // First time seeing this item for this party = most recent (bills are sorted newest first)
+            partyMap.set(key, {
+              mould: rawMould,
+              latestPrice: price,
+              latestDate: bDate,
+              latestToken: bToken,
+              latestParty: bParty,
+              history: [entry]
+            });
+          } else {
+            // Already have the most recent rate; just keep adding history
+            const p = partyMap.get(key)!;
+            if (p.history.length < 5) p.history.push(entry);
           }
         }
       }
     }
 
-    const itemsList: RateHistoryItem[] = [];
-    mouldMap.forEach((val, key) => {
-      const isInCurrent = currentBillMouldNames.has(key);
-      itemsList.push({
-        id: `rate-hist-${key}`,
-        mould: val.mould,
-        latestPrice: val.latestPrice,
-        latestDate: val.latestDate,
-        latestToken: val.latestToken,
-        latestParty: val.latestParty,
-        isInCurrentBill: isInCurrent,
-        history: val.history
+    const buildList = (map: typeof globalMap) => {
+      const itemsList: RateHistoryItem[] = [];
+      map.forEach((val, key) => {
+        const isInCurrent = currentBillMouldNames.has(key);
+        itemsList.push({
+          id: `rate-hist-${key}`,
+          mould: val.mould,
+          latestPrice: val.latestPrice,
+          latestDate: val.latestDate,
+          latestToken: val.latestToken,
+          latestParty: val.latestParty,
+          isInCurrentBill: isInCurrent,
+          history: val.history
+        });
       });
-    });
+      return itemsList.sort((a, b) => {
+        if (a.isInCurrentBill && !b.isInCurrentBill) return -1;
+        if (!a.isInCurrentBill && b.isInCurrentBill) return 1;
+        return a.mould.localeCompare(b.mould);
+      });
+    };
 
-    // Sort: Current bill items first, then alphabetically
-    return itemsList.sort((a, b) => {
-      if (a.isInCurrentBill && !b.isInCurrentBill) return -1;
-      if (!a.isInCurrentBill && b.isInCurrentBill) return 1;
-      return a.mould.localeCompare(b.mould);
-    });
-  }, [isOpen, currentBillMouldNames]);
+    return {
+      all: buildList(globalMap),
+      party: buildList(partyMap)
+    };
+  }, [isOpen, currentBillMouldNames, currentParty]);
 
   // Initial selection: select items in current bill by default
   useEffect(() => {
-    if (isOpen && rateHistoryData.length > 0) {
+    if (isOpen && rateHistoryData.all.length > 0) {
       const initial = new Set<string>();
-      rateHistoryData.forEach(item => {
+      rateHistoryData.all.forEach(item => {
         if (item.isInCurrentBill) {
           initial.add(item.mould);
         }
@@ -189,18 +227,17 @@ export const RateHistoryModal: React.FC<Props> = ({
     }
   }, [isOpen, rateHistoryData]);
 
-  // Clean current party name for matching
-  const cleanParty = (currentParty || '').trim().toLowerCase();
+  // Source list based on active tab
+  const sourceData = useMemo(() => {
+    if (activeTab === 'party') return rateHistoryData.party;
+    return rateHistoryData.all;
+  }, [rateHistoryData, activeTab]);
 
   // Filtered items based on tab & search
   const filteredData = useMemo(() => {
-    return rateHistoryData.filter(item => {
-      // Tab filter
+    return sourceData.filter(item => {
+      // current_bill tab filter
       if (activeTab === 'current_bill' && !item.isInCurrentBill) return false;
-      if (activeTab === 'party') {
-        const matchesParty = cleanParty && item.history.some(h => (h.party || '').trim().toLowerCase().includes(cleanParty));
-        if (!matchesParty) return false;
-      }
 
       // Search filter
       if (searchQuery.trim()) {
@@ -213,7 +250,7 @@ export const RateHistoryModal: React.FC<Props> = ({
 
       return true;
     });
-  }, [rateHistoryData, activeTab, cleanParty, searchQuery]);
+  }, [sourceData, activeTab, searchQuery]);
 
   // Toggle selection
   const toggleSelect = (mould: string) => {
@@ -236,8 +273,14 @@ export const RateHistoryModal: React.FC<Props> = ({
   };
 
   const handleApply = () => {
-    const toApply = rateHistoryData
-      .filter(item => selectedMoulds.has(item.mould))
+    const allItems = [...rateHistoryData.all, ...rateHistoryData.party];
+    const seen = new Set<string>();
+    const toApply = allItems
+      .filter(item => {
+        if (!selectedMoulds.has(item.mould) || seen.has(item.mould)) return false;
+        seen.add(item.mould);
+        return true;
+      })
       .map(item => ({
         mould: item.mould,
         price: item.latestPrice
@@ -437,7 +480,7 @@ export const RateHistoryModal: React.FC<Props> = ({
                   transition: 'all 0.15s ease'
                 }}
               >
-                Current Bill Items ({rateHistoryData.filter(i => i.isInCurrentBill).length})
+                Current Bill Items ({rateHistoryData.all.filter(i => i.isInCurrentBill).length})
               </button>
 
               {currentParty && (
@@ -475,7 +518,7 @@ export const RateHistoryModal: React.FC<Props> = ({
                   transition: 'all 0.15s ease'
                 }}
               >
-                All Items ({rateHistoryData.length})
+                All Items ({rateHistoryData.all.length})
               </button>
             </div>
 

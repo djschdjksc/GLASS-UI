@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   CornerDownRight, 
   ArrowDown, 
@@ -25,6 +26,7 @@ interface Props {
   onSetTableFontSize: (size: number) => void;
   onToast: (msg: string, type?: 'success' | 'info' | 'warning') => void;
   align?: 'left' | 'right';
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 export const TableSettingsDropdown: React.FC<Props> = ({
@@ -37,13 +39,54 @@ export const TableSettingsDropdown: React.FC<Props> = ({
   tableFontSize,
   onSetTableFontSize,
   onToast,
-  align = 'left'
+  align = 'left',
+  triggerRef
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left?: number; right?: number }>({ top: 0 });
+
+  // Compute fixed positioning relative to viewport
+  useEffect(() => {
+    if (!isOpen) return;
+    const triggerEl = triggerRef?.current || anchorRef.current?.parentElement;
+    if (triggerEl) {
+      const rect = triggerEl.getBoundingClientRect();
+      const popoverWidth = 310;
+      let left: number | undefined;
+      let right: number | undefined;
+
+      if (align === 'right') {
+        const calculatedRight = Math.max(8, window.innerWidth - rect.right);
+        if (calculatedRight + popoverWidth > window.innerWidth) {
+          left = 8;
+        } else {
+          right = calculatedRight;
+        }
+      } else {
+        const calculatedLeft = rect.left;
+        if (calculatedLeft + popoverWidth > window.innerWidth) {
+          left = Math.max(8, window.innerWidth - popoverWidth - 8);
+        } else {
+          left = Math.max(8, calculatedLeft);
+        }
+      }
+
+      setCoords({
+        top: rect.bottom + 6,
+        left,
+        right
+      });
+    }
+  }, [isOpen, align, triggerRef]);
 
   // Close when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
+      const triggerEl = triggerRef?.current || anchorRef.current?.parentElement;
+      if (triggerEl && triggerEl.contains(e.target as Node)) {
+        return;
+      }
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -55,7 +98,7 @@ export const TableSettingsDropdown: React.FC<Props> = ({
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   // Close on Escape key (Shadcn pattern)
   useEffect(() => {
@@ -70,8 +113,6 @@ export const TableSettingsDropdown: React.FC<Props> = ({
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const ROW_HEIGHT_PRESETS = [
     { label: 'Compact', value: 24 },
@@ -94,20 +135,21 @@ export const TableSettingsDropdown: React.FC<Props> = ({
     { key: 'up', label: 'Up', icon: <ArrowUp size={13} />, hint: '🠕 Prev Row' },
   ];
 
-  return (
+  const popoverContent = isOpen ? (
     <div
       ref={panelRef}
       style={{
-        position: 'absolute',
-        top: 'calc(100% + 6px)',
-        [align === 'right' ? 'right' : 'left']: 0,
+        position: 'fixed',
+        top: `${coords.top}px`,
+        ...(coords.left !== undefined ? { left: `${coords.left}px` } : {}),
+        ...(coords.right !== undefined ? { right: `${coords.right}px` } : {}),
         width: '300px',
         backgroundColor: '#09090b',
         border: '1px solid #27272a',
         borderRadius: '8px',
         padding: '16px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-        zIndex: 99999,
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+        zIndex: 99999999,
         display: 'flex',
         flexDirection: 'column',
         gap: '14px',
@@ -474,5 +516,12 @@ export const TableSettingsDropdown: React.FC<Props> = ({
         </span>
       </div>
     </div>
+  ) : null;
+
+  return (
+    <>
+      <span ref={anchorRef} style={{ display: 'none' }} />
+      {isOpen && popoverContent && createPortal(popoverContent, document.body)}
+    </>
   );
 };

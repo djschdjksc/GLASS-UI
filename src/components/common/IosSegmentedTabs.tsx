@@ -93,6 +93,27 @@ export const IosSegmentedTabs = <T extends string = string>({
         }
         .cc-ios-tabs__item:hover { color: #f8fafc; }
         .cc-ios-tabs__item.active { color: #ffffff; }
+        .cc-ios-tab-shortcut {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(15, 15, 20, 0.92);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #cbd5e1;
+          font-size: 10px;
+          font-weight: 600;
+          padding: 3px 8px;
+          border-radius: 6px;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+          backdrop-filter: blur(8px);
+          z-index: 100;
+          letter-spacing: 0.04em;
+        }
+        .cc-ios-tabs__item:hover .cc-ios-tab-shortcut { opacity: 1; }
       `}</style>
 
       <div
@@ -131,6 +152,7 @@ export const IosSegmentedTabs = <T extends string = string>({
               }}
               onMouseEnter={() => macAudio.playHover()}
               className={`cc-ios-tabs__item ${isActive ? 'active' : ''}`}
+              title={tab.shortcut ? `${String(tab.label)} (${tab.shortcut})` : undefined}
               style={{
                 height: `${itemHeight}px`,
                 fontSize: `${fontSize}px`,
@@ -168,19 +190,7 @@ export const IosSegmentedTabs = <T extends string = string>({
               )}
 
               {tab.shortcut && (
-                <span
-                  style={{
-                    fontSize: `${fontSize - 2.5}px`,
-                    opacity: isActive ? 0.9 : 0.5,
-                    marginLeft: '2px',
-                    color: isActive ? '#ffffff' : '#cbd5e1',
-                    fontWeight: 500,
-                    letterSpacing: '0.02em',
-                    transition: 'opacity 260ms ease, color 260ms ease',
-                  }}
-                >
-                  ({tab.shortcut})
-                </span>
+                <span className="cc-ios-tab-shortcut">{tab.shortcut}</span>
               )}
             </div>
           );

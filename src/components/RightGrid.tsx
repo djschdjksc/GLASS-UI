@@ -194,6 +194,7 @@ export const RightGrid: React.FC<Props> = ({
   const [selectedCol, setSelectedCol] = useState<number | null>(null);
   const [showDirMenu, setShowDirMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
   // Local editing cache
   const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
@@ -1010,6 +1011,7 @@ export const RightGrid: React.FC<Props> = ({
           {/* Table Settings Button & Popover */}
           <div style={{ position: 'relative' }}>
             <button
+              ref={settingsBtnRef}
               type="button"
               onClick={() => setShowSettings(prev => !prev)}
               className="apple-box-btn"
@@ -1036,6 +1038,7 @@ export const RightGrid: React.FC<Props> = ({
               onSetTableFontSize={onSetTableFontSize}
               onToast={onToast}
               align="right"
+              triggerRef={settingsBtnRef}
             />
           </div>
 

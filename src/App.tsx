@@ -81,6 +81,7 @@ export const createBlankHeader = (docType: string = 'SALE'): BillHeader => {
     docType: normalizeDocType(docType),
     partyName: '',
     typeSelection: 'WHOLESALE',
+    vehicleType: 'OWN VEHICLE',
     vehicleNo: '',
     date: getTodayLocalDateStr(),
     tokenNo: nextToken
@@ -94,6 +95,16 @@ export const createBlankRawItems = (): RawItem[] => {
     qty: 0,
     uCap: 0,
     lCap: 0
+  }));
+};
+
+export const createBlankFinishedItems = (): FinishedItem[] => {
+  return Array.from({ length: 10 }, (_, i) => ({
+    id: String(Date.now() + 1000 + i),
+    mould: '',
+    qty: 0,
+    price: 0,
+    total: 0
   }));
 };
 
@@ -212,7 +223,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     localStorage.setItem('modern_app_raw_items', JSON.stringify(rawItems));
   }, [rawItems]);
 
-  const [finishedItems, setFinishedItems] = useState<FinishedItem[]>([]);
+  const [finishedItems, setFinishedItems] = useState<FinishedItem[]>(() => {
+    return createBlankFinishedItems();
+  });
   useEffect(() => {
     localStorage.setItem('modern_app_finished_items', JSON.stringify(finishedItems));
   }, [finishedItems]);
@@ -556,6 +569,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       docType: currentDoc,
       partyName: '',
       typeSelection: 'WHOLESALE',
+      vehicleType: 'OWN VEHICLE',
       vehicleNo: '',
       date: todayStr,
       tokenNo: nextToken
@@ -569,21 +583,23 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       lCap: 0
     }));
 
+    const blankFinished = createBlankFinishedItems();
+
     setHeader(blankHeader);
     setRawItems(blankRaws);
-    setFinishedItems([]);
+    setFinishedItems(blankFinished);
     setDynamicCols([]);
     setSplitRowIndex(null);
     setNoteText('');
     setActiveTable('left');
 
-    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], []);
+    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, blankFinished, []);
 
     // Sync clean new bill to localStorage
     try {
       localStorage.setItem('modern_app_header', JSON.stringify(blankHeader));
       localStorage.setItem('modern_app_raw_items', JSON.stringify(blankRaws));
-      localStorage.setItem('modern_app_finished_items', JSON.stringify([]));
+      localStorage.setItem('modern_app_finished_items', JSON.stringify(blankFinished));
       localStorage.setItem('modern_left_dyncols', JSON.stringify([]));
     } catch {}
 
@@ -609,6 +625,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       docType: currentDoc,
       partyName: '',
       typeSelection: 'WHOLESALE',
+      vehicleType: 'OWN VEHICLE',
       vehicleNo: '',
       date: todayStr,
       tokenNo: nextToken
@@ -622,15 +639,17 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       lCap: 0
     }));
 
+    const blankFinished = createBlankFinishedItems();
+
     setHeader(blankHeader);
     setRawItems(blankRaws);
-    setFinishedItems([]);
+    setFinishedItems(blankFinished);
     setDynamicCols([]);
     setHasPartyCodeCol(false);
     setSplitRowIndex(null);
     setNoteText('');
 
-    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, [], [], false);
+    lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, blankFinished, [], false);
     setConfirmClearDialog(null);
 
     showToast(`New Blank ${currentDoc} Bill #${nextToken} Ready (Panel Cleared)`, 'success');
@@ -3172,7 +3191,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         onApplyPendingSlip={(pendingHeader, pendingRawItems, noteString) => {
           setHeader(pendingHeader);
           setRawItems(pendingRawItems);
-          setFinishedItems([]);
+          setFinishedItems(createBlankFinishedItems());
           setNoteText(noteString);
           setActiveTab('F1');
           triggerCelebrationBlast();

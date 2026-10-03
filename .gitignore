@@ -26,7 +26,6 @@ dist-ssr
 # Python
 __pycache__/
 *.pyc
-
 # SQLite Local Database
 *.db
 *.db-shm

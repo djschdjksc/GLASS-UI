@@ -1383,13 +1383,17 @@ export const OtherTabsView: React.FC<Props> = ({
               justifyContent: 'space-between',
               padding: '6px 10px',
               borderRadius: '8px',
-              flexShrink: 0
+              flexShrink: 0,
+              minWidth: 0,
+              flexWrap: 'wrap',
+              gap: '8px'
             }}
           >
             <IosSegmentedTabs<'SALE' | 'SALE_RETURN' | 'ORDER' | 'PURCHASE'>
               activeKey={historySubTab}
               onChange={setHistorySubTab}
-              width={680}
+              width="100%"
+              style={{ maxWidth: '680px', flex: '1 1 320px', minWidth: '260px' }}
               tabs={[
                 {
                   key: 'SALE',
@@ -1469,17 +1473,21 @@ export const OtherTabsView: React.FC<Props> = ({
           </div>
 
           {/* 3-Panel Layout Container */}
-          <div style={{ flex: 1, display: 'flex', gap: '8px', minHeight: 0 }}>
-            {/* PANEL 1: Bill List / Navigator (Left 26%) */}
+          <div style={{ flex: 1, display: 'flex', gap: '8px', minHeight: 0, minWidth: 0, width: '100%', overflow: 'hidden' }}>
+            {/* PANEL 1: Bill List / Navigator (Left ~24%) */}
             <div 
               className="glass-panel" 
               style={{ 
-                width: '26%', 
+                flex: '0 1 24%',
+                width: '24%',
+                minWidth: '180px',
+                maxWidth: '320px',
                 display: 'flex', 
                 flexDirection: 'column', 
                 borderRadius: '8px', 
                 padding: '6px',
                 minHeight: 0,
+                overflow: 'hidden',
                 border: f2FocusArea === 'bills' ? '1px solid rgba(56, 189, 248, 0.4)' : undefined
               }}
               onClick={() => setF2FocusArea('bills')}
@@ -1535,9 +1543,9 @@ export const OtherTabsView: React.FC<Props> = ({
               </div>
           </div>
 
-          {/* RIGHT 74%: Selected Bill Header & Dual Tables */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
-            {/* Top Quick Status & Actions Bar (All buttons styled uniformly) */}
+          {/* RIGHT 76%: Selected Bill Header & Dual Tables (Panel 2 & 3) */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, overflow: 'hidden' }}>
+            {/* Top Quick Status & Actions Bar */}
             <div 
               className="glass-panel" 
               style={{ 
@@ -1545,7 +1553,11 @@ export const OtherTabsView: React.FC<Props> = ({
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between', 
-                borderRadius: '8px' 
+                borderRadius: '8px',
+                minWidth: 0,
+                flexWrap: 'wrap',
+                gap: '8px',
+                flexShrink: 0
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px' }}>
@@ -1661,17 +1673,19 @@ export const OtherTabsView: React.FC<Props> = ({
             </div>
 
             {/* DUAL TABLES CONTAINER: PANEL 2 (Left Table) + PANEL 3 (Right Table) */}
-            <div style={{ flex: 1, display: 'flex', gap: '8px', minHeight: 0 }}>
+            <div style={{ flex: 1, display: 'flex', gap: '8px', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
               {/* PANEL 2: LEFT TABLE (Raw Materials / Input Specs) */}
               <div 
                 className="glass-panel" 
                 style={{ 
                   flex: 1, 
+                  minWidth: 0,
                   display: 'flex', 
                   flexDirection: 'column', 
                   borderRadius: '8px', 
                   padding: '6px',
                   minHeight: 0,
+                  overflow: 'hidden',
                   border: f2FocusArea === 'raw' ? '1px solid rgba(56, 189, 248, 0.4)' : undefined
                 }}
                 onClick={() => setF2FocusArea('raw')}
@@ -1691,7 +1705,7 @@ export const OtherTabsView: React.FC<Props> = ({
                   <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{displayRawItems.length} ITEMS</span>
                 </div>
 
-                <div style={{ flex: 1, overflow: 'auto', minHeight: 0, marginTop: '2px' }}>
+                <div style={{ flex: 1, overflow: 'auto', minHeight: 0, minWidth: 0, marginTop: '2px' }}>
                   <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
@@ -1833,11 +1847,13 @@ export const OtherTabsView: React.FC<Props> = ({
                 className="glass-panel" 
                 style={{ 
                   flex: 1, 
+                  minWidth: 0,
                   display: 'flex', 
                   flexDirection: 'column', 
                   borderRadius: '8px', 
                   padding: '6px',
                   minHeight: 0,
+                  overflow: 'hidden',
                   border: f2FocusArea === 'finished' ? '1px solid rgba(56, 189, 248, 0.4)' : undefined
                 }}
                 onClick={() => setF2FocusArea('finished')}
@@ -1857,7 +1873,7 @@ export const OtherTabsView: React.FC<Props> = ({
                   <span style={{ color: '#e2e8f0', fontSize: '10px' }}>{displayFinishedItems.length} MOULDS</span>
                 </div>
 
-                <div style={{ flex: 1, overflow: 'auto', minHeight: 0, marginTop: '2px' }}>
+                <div style={{ flex: 1, overflow: 'auto', minHeight: 0, minWidth: 0, marginTop: '2px' }}>
                   <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
