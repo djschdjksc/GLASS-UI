@@ -413,146 +413,131 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
     }
   };
 
-  // Helper: placement for Step 1 Zone tooltips (strictly inside the screen bounds)
+  // Helper: placement for Step 1 Zone tooltips (strictly per zone.id)
   const getZonePlacement = (zone: NavZone, rect: ElementRect): {
     style: React.CSSProperties;
     arrowDirection: 'up' | 'down' | 'left' | 'right';
-    arrowOffset?: string;
   } => {
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
 
-    // Action Rail (Zone 2, left side docked) -> inner side is to the right
-    if (zone.id === 2 || rect.left < 85) {
+    // 1. BILL HEADER (Zone 1) -> Placed nicely right below header on left side
+    if (zone.id === 1) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(16, Math.min(rect.top + 16, screenH - 45))}px`,
-          left: `${rect.left + rect.width + 12}px`,
+          top: `${rect.bottom + 8}px`,
+          left: `${rect.left + 24}px`,
+        },
+        arrowDirection: 'up'
+      };
+    }
+
+    // 2. ACTION RAIL (Zone 2) -> To the right of the rail, arrow pointing left
+    if (zone.id === 2) {
+      return {
+        style: {
+          position: 'absolute',
+          top: `${Math.max(16, Math.min(rect.top + 20, screenH - 45))}px`,
+          left: `${rect.right + 12}px`,
         },
         arrowDirection: 'left'
       };
     }
 
-    // Module Rail (Zone 6, right side docked) -> inner side is to the left
-    if (zone.id === 6 || rect.right > screenW - 85) {
-      return {
-        style: {
-          position: 'absolute',
-          top: `${Math.max(16, Math.min(rect.top + 16, screenH - 45))}px`,
-          right: `${screenW - rect.left + 14}px`,
-        },
-        arrowDirection: 'right'
-      };
-    }
-
-    // Top header (Zone 1) -> place inside header at top-left
-    if (zone.id === 1 || rect.top < 65) {
-      return {
-        style: {
-          position: 'absolute',
-          top: `${Math.max(10, rect.top + 8)}px`,
-          left: `${Math.max(16, rect.left + 16)}px`,
-        },
-        arrowDirection: 'up'
-      };
-    }
-
-    // Finished Moulds Grid (Zone 4) -> on the right side of the screen
-    // Keep it on the inner side (towards left of the table, never right edge)
-    if (zone.id === 4) {
-      return {
-        style: {
-          position: 'absolute',
-          top: `${Math.max(16, rect.top + 10)}px`,
-          left: `${Math.max(16, rect.left + 16)}px`,
-        },
-        arrowDirection: 'up'
-      };
-    }
-
-    // Raw Materials Grid (Zone 3) -> inside top-left of the table
+    // 3. RAW MATERIALS GRID (Zone 3) -> Top-left of table
     if (zone.id === 3) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(16, rect.top + 10)}px`,
-          left: `${Math.max(16, rect.left + 16)}px`,
+          top: `${rect.top + 8}px`,
+          left: `${rect.left + 16}px`,
         },
         arrowDirection: 'up'
       };
     }
 
-    // Mode & Slip bar (Zone 5) -> bottom bar, place inside bottom bar
-    if (zone.id === 5 || rect.bottom > screenH - 65) {
+    // 4. FINISHED MOULDS GRID (Zone 4) -> Top-left of table (inner side, safe from right edge)
+    if (zone.id === 4) {
       return {
         style: {
           position: 'absolute',
-          bottom: `${Math.max(16, screenH - rect.bottom + 8)}px`,
-          left: `${Math.max(16, rect.left + 16)}px`,
+          top: `${rect.top + 8}px`,
+          left: `${rect.left + 16}px`,
+        },
+        arrowDirection: 'up'
+      };
+    }
+
+    // 5. MODE & SLIP BAR (Zone 5) -> Above the bottom bar
+    if (zone.id === 5) {
+      return {
+        style: {
+          position: 'absolute',
+          bottom: `${Math.max(12, screenH - rect.top + 8)}px`,
+          left: `${rect.left + 24}px`,
         },
         arrowDirection: 'down'
       };
     }
 
-    // Default fallback (strictly inside screen)
+    // 6. MODULE NAVIGATION (Zone 6) -> To the left of the rail, arrow pointing right
+    if (zone.id === 6) {
+      return {
+        style: {
+          position: 'absolute',
+          top: `${Math.max(16, Math.min(rect.top + 20, screenH - 45))}px`,
+          right: `${Math.max(10, screenW - rect.left + 12)}px`,
+        },
+        arrowDirection: 'right'
+      };
+    }
+
+    // Fallback
     return {
       style: {
         position: 'absolute',
-        top: `${Math.max(16, rect.top + 10)}px`,
-        left: `${Math.max(16, rect.left + 16)}px`,
+        top: `${rect.top + 8}px`,
+        left: `${rect.left + 16}px`,
       },
       arrowDirection: 'up'
     };
   };
 
-  // Helper: placement for Step 2 Target tooltips (strictly inside the screen bounds)
+  // Helper: placement for Step 2 Target tooltips
   const getTargetPlacement = (rect: ElementRect, zoneId: number): {
     style: React.CSSProperties;
     arrowDirection: 'up' | 'down' | 'left' | 'right';
-    arrowOffset?: string;
   } => {
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
 
-    // 1. Left rail (Zone 2) -> inner side is to the right
-    if (zoneId === 2 || rect.left < 85) {
+    // 1. Action Rail targets (Zone 2) -> to the right of each button
+    if (zoneId === 2) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(8, Math.min(rect.top + (rect.height - 28) / 2, screenH - 40))}px`,
-          left: `${rect.left + rect.width + 10}px`,
+          top: `${Math.max(6, Math.min(rect.top + (rect.height - 28) / 2, screenH - 35))}px`,
+          left: `${rect.right + 10}px`,
         },
         arrowDirection: 'left'
       };
     }
 
-    // 2. Right rail (Zone 6) -> inner side is to the left
-    if (zoneId === 6 || rect.right > screenW - 85) {
+    // 2. Module Rail targets (Zone 6) -> to the left of each tab button
+    if (zoneId === 6) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(8, Math.min(rect.top + (rect.height - 28) / 2, screenH - 40))}px`,
-          right: `${screenW - rect.left + 10}px`,
+          top: `${Math.max(6, Math.min(rect.top + (rect.height - 28) / 2, screenH - 35))}px`,
+          right: `${Math.max(8, screenW - rect.left + 10)}px`,
         },
         arrowDirection: 'right'
       };
     }
 
-    // 3. Targets near the right edge of screen (e.g. Token No, right table buttons)
-    if (rect.right > screenW - 170) {
-      return {
-        style: {
-          position: 'absolute',
-          top: `${Math.max(8, Math.min(rect.top + (rect.height - 28) / 2, screenH - 40))}px`,
-          right: `${screenW - rect.left + 8}px`,
-        },
-        arrowDirection: 'right'
-      };
-    }
-
-    // 4. Near the top of screen (Zone 1 Bill Header)
-    if (rect.top < 65) {
+    // 3. Bill Header targets (Zone 1) -> below each input
+    if (zoneId === 1) {
       const centerX = rect.left + rect.width / 2;
       const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
       return {
@@ -565,8 +550,8 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
       };
     }
 
-    // 5. Near the bottom of screen (Zone 5 Mode bar)
-    if (rect.bottom > screenH - 65) {
+    // 4. Mode Bar targets (Zone 5) -> above each button
+    if (zoneId === 5) {
       const centerX = rect.left + rect.width / 2;
       const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
       return {
@@ -579,7 +564,20 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
       };
     }
 
-    // 6. Default: placed above target, strictly clamped horizontally
+    // 5. Grid targets (Zones 3 & 4)
+    // If target is near the right edge of screen:
+    if (rect.right > screenW - 160) {
+      return {
+        style: {
+          position: 'absolute',
+          top: `${Math.max(6, Math.min(rect.top + (rect.height - 28) / 2, screenH - 35))}px`,
+          right: `${screenW - rect.left + 8}px`,
+        },
+        arrowDirection: 'right'
+      };
+    }
+
+    // Default for table buttons/cells: placed above target
     const centerX = rect.left + rect.width / 2;
     const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
     return {
@@ -594,9 +592,21 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
 
   return (
     <>
+      <style>{`
+        @keyframes numpadLightGlow {
+          0%, 100% {
+            opacity: 0.85;
+            filter: drop-shadow(0 0 6px currentColor);
+          }
+          50% {
+            opacity: 1;
+            filter: drop-shadow(0 0 14px currentColor);
+          }
+        }
+      `}</style>
+
       {/* ----------------------------------------------------------------- */}
-      {/* ACTIVE NUMPAD NAVIGATOR: ONLY CLEAN FLOATING POINTING TOOLTIPS    */}
-      {/* ZERO BORDERS AROUND COMPONENTS/BUTTONS, ZERO TOP HEADER BANNERS   */}
+      {/* ACTIVE NUMPAD NAVIGATOR: GLOWING GROUP BORDERS + POINTING TOOLTIPS */}
       {/* ----------------------------------------------------------------- */}
       {isOpen && (
         <div
@@ -610,157 +620,211 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
             transition: 'all 0.15s ease'
           }}
         >
-          {/* STEP 1: ZONE FLOATING POINTING TOOLTIPS (STRICTLY INSIDE SCREEN) */}
-          {/* ---------------------------------------------------------------- */}
+          {/* STEP 1: GLOWING BORDER AROUND GROUPS + FLOATING POINTING TOOLTIPS */}
+          {/* ----------------------------------------------------------------- */}
           {!selectedZone && zoneBadges.map(({ zone, rect }) => {
             const placement = getZonePlacement(zone, rect);
 
             return (
-              <div
-                key={zone.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playBeep();
-                  setSelectedZone(zone);
-                }}
-                style={{
-                  ...placement.style,
-                  zIndex: 999999,
-                  background: '#1c1c1e',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.16)',
-                  borderRadius: '9999px',
-                  height: '28px',
-                  padding: '3px 4px 3px 12px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
-                  fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
-                  whiteSpace: 'nowrap',
-                  userSelect: 'none',
-                  lineHeight: '1',
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#ffffff',
-                    letterSpacing: '-0.01em',
-                    whiteSpace: 'nowrap',
-                    lineHeight: '1',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
+              <React.Fragment key={zone.id}>
+                {/* Glowing Light Border around the Group */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playBeep();
+                    setSelectedZone(zone);
                   }}
-                >
-                  <span style={{ fontSize: '13px', lineHeight: 1 }}>{zone.icon}</span>
-                  <span>{zone.name}</span>
-                </span>
-                <kbd
                   style={{
+                    position: 'absolute',
+                    top: `${rect.top}px`,
+                    left: `${rect.left}px`,
+                    width: `${rect.width}px`,
+                    height: `${rect.height}px`,
+                    border: `1.5px solid ${zone.color}bb`,
+                    borderRadius: '10px',
+                    background: `${zone.color}06`,
+                    boxShadow: `0 0 18px ${zone.color}45, 0 0 32px ${zone.color}20, inset 0 0 14px ${zone.color}15`,
+                    color: zone.color,
+                    animation: 'numpadLightGlow 2.5s ease-in-out infinite',
+                    pointerEvents: 'auto',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                />
+
+                {/* Floating Capsule Tooltip with Pointing Arrow & Number Badge */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playBeep();
+                    setSelectedZone(zone);
+                  }}
+                  style={{
+                    ...placement.style,
+                    zIndex: 999999,
+                    background: '#1c1c1e',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    borderRadius: '9999px',
+                    height: '28px',
+                    padding: '3px 4px 3px 12px',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#3f3f42',
-                    color: '#f4f4f5',
-                    padding: '3px 8.5px',
-                    borderRadius: '9999px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
-                    letterSpacing: '0.02em',
-                    lineHeight: '1',
-                    border: 'none',
-                    boxShadow: 'none',
+                    gap: '8px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
                     whiteSpace: 'nowrap',
                     userSelect: 'none',
+                    lineHeight: '1',
+                    cursor: 'pointer',
+                    pointerEvents: 'auto',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {zone.id}
-                </kbd>
-                {renderPointingArrow(placement.arrowDirection, placement.arrowOffset)}
-              </div>
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#ffffff',
+                      letterSpacing: '-0.01em',
+                      whiteSpace: 'nowrap',
+                      lineHeight: '1',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span style={{ fontSize: '13px', lineHeight: 1 }}>{zone.icon}</span>
+                    <span>{zone.name}</span>
+                  </span>
+                  <kbd
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#3f3f42',
+                      color: '#f4f4f5',
+                      padding: '3px 8.5px',
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                      letterSpacing: '0.02em',
+                      lineHeight: '1',
+                      border: 'none',
+                      boxShadow: 'none',
+                      whiteSpace: 'nowrap',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {zone.id}
+                  </kbd>
+                  {renderPointingArrow(placement.arrowDirection)}
+                </div>
+              </React.Fragment>
             );
           })}
 
           {/* ----------------------------------------------------------------- */}
-          {/* STEP 2: SIMULTANEOUS TARGET POINTING TOOLTIPS WITH NUMBERING       */}
+          {/* STEP 2: SIMULTANEOUS TARGET POINTING TOOLTIPS ONLY (NO BUTTON BORDERS) */}
           {/* ----------------------------------------------------------------- */}
-          {selectedZone && targetBadges.map(({ target, rect }) => {
-            const placement = getTargetPlacement(rect, selectedZone.id);
+          {selectedZone && (
+            <>
+              {/* Highlight surrounding selected zone container with a gentle radiant glow */}
+              {(() => {
+                const zoneEl = document.querySelector(selectedZone.selector) as HTMLElement | null;
+                if (!zoneEl) return null;
+                const r = zoneEl.getBoundingClientRect();
+                return (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: `${r.top - 4}px`,
+                      left: `${r.left - 4}px`,
+                      width: `${r.width + 8}px`,
+                      height: `${r.height + 8}px`,
+                      border: `1.5px solid ${selectedZone.color}77`,
+                      boxShadow: `0 0 20px ${selectedZone.color}30`,
+                      borderRadius: '10px',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                );
+              })()}
 
-            return (
-              <div
-                key={target.num}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  executeTarget(target);
-                }}
-                style={{
-                  ...placement.style,
-                  zIndex: 999999,
-                  background: '#1c1c1e',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.16)',
-                  borderRadius: '9999px',
-                  height: '28px',
-                  padding: '3px 4px 3px 12px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
-                  fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
-                  whiteSpace: 'nowrap',
-                  userSelect: 'none',
-                  lineHeight: '1',
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    color: '#ffffff',
-                    letterSpacing: '-0.01em',
-                    whiteSpace: 'nowrap',
-                    lineHeight: '1',
-                  }}
-                >
-                  {target.label}
-                </span>
-                <kbd
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#3f3f42',
-                    color: '#f4f4f5',
-                    padding: '3px 8.5px',
-                    borderRadius: '9999px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
-                    letterSpacing: '0.02em',
-                    lineHeight: '1',
-                    border: 'none',
-                    boxShadow: 'none',
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
-                  }}
-                >
-                  {target.num}
-                </kbd>
-                {renderPointingArrow(placement.arrowDirection, placement.arrowOffset)}
-              </div>
-            );
-          })}
+              {/* Each Target Element: ONLY Floating Capsule Pointing Tooltip (NO button borders) */}
+              {targetBadges.map(({ target, rect }) => {
+                const placement = getTargetPlacement(rect, selectedZone.id);
+
+                return (
+                  <div
+                    key={target.num}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      executeTarget(target);
+                    }}
+                    style={{
+                      ...placement.style,
+                      zIndex: 999999,
+                      background: '#1c1c1e',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                      borderRadius: '9999px',
+                      height: '28px',
+                      padding: '3px 4px 3px 12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                      fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
+                      whiteSpace: 'nowrap',
+                      userSelect: 'none',
+                      lineHeight: '1',
+                      cursor: 'pointer',
+                      pointerEvents: 'auto',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#ffffff',
+                        letterSpacing: '-0.01em',
+                        whiteSpace: 'nowrap',
+                        lineHeight: '1',
+                      }}
+                    >
+                      {target.label}
+                    </span>
+                    <kbd
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#3f3f42',
+                        color: '#f4f4f5',
+                        padding: '3px 8.5px',
+                        borderRadius: '9999px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                        letterSpacing: '0.02em',
+                        lineHeight: '1',
+                        border: 'none',
+                        boxShadow: 'none',
+                        whiteSpace: 'nowrap',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {target.num}
+                    </kbd>
+                    {renderPointingArrow(placement.arrowDirection)}
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
     </>

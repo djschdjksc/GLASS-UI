@@ -6,7 +6,7 @@ import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History } from 'lucide-react';
+import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History, Plus } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from './ui/shadcn';
 
@@ -1139,6 +1139,7 @@ export const LeftGrid: React.FC<Props> = ({
 
   return (
     <div 
+      data-np-zone="3"
       className="glass-panel" 
       style={{ 
         display: 'flex', 
@@ -1178,7 +1179,37 @@ export const LeftGrid: React.FC<Props> = ({
           PRODUCT TOTAL
         </span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Add Row Button */}
+          <Tooltip title="Add New Row (Insert)" side="bottom">
+            <button
+              data-np-target="3-3"
+              type="button"
+              onClick={onAddNewRow}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <Plus size={13} color="#34d399" />
+            </button>
+          </Tooltip>
+
+          {/* Delete Row Button */}
+          <Tooltip title="Delete Selected Row (Delete)" side="bottom">
+            <button
+              data-np-target="3-4"
+              type="button"
+              onClick={() => {
+                if (selectedRows.length > 0) onDeleteRows(selectedRows);
+                else if (activeCell) onDeleteRows([activeCell.r]);
+                else if (filteredItems.length > 0) onDeleteRows([filteredItems.length - 1]);
+              }}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <Trash2 size={13} color="#f87171" />
+            </button>
+          </Tooltip>
+
           {/* Copy Button */}
           <Tooltip title="Copy Table / Selected Cells (Ctrl+C)" side="bottom">
             <button
@@ -1194,6 +1225,7 @@ export const LeftGrid: React.FC<Props> = ({
           {/* Dedicated Paste Button */}
           <Tooltip title="Paste Table from Clipboard (Ctrl+V)" side="bottom">
             <button
+              data-np-target="3-5"
               type="button"
               onClick={handlePasteButtonClick}
               className="apple-box-btn"
@@ -1696,6 +1728,7 @@ export const LeftGrid: React.FC<Props> = ({
                         <div className="item-name-cell-wrap">
                           <input
                             id={'left-cell-' + rIdx + '-0'}
+                            data-np-target={rIdx === 0 ? '3-1' : (rIdx === filteredItems.length - 1 ? '3-2' : undefined)}
                             type="text"
                             className={`excel-cell-input item-name-input ${isDuplicate ? 'duplicate-item-input' : ''}`}
                             style={isDuplicate ? { color: '#ff4d4f', fontWeight: 700, textShadow: '0 0 8px rgba(255, 77, 79, 0.45)' } : undefined}
