@@ -335,7 +335,8 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
   }, [isOpen, selectedZone, executeTarget]);
 
   // Helper for arrow rendering
-  const renderPointingArrow = (direction: 'up' | 'down' | 'left' | 'right') => {
+  const renderPointingArrow = (direction: 'up' | 'down' | 'left' | 'right', arrowOffset?: string) => {
+    const horizontalOffset = arrowOffset || '50%';
     switch (direction) {
       case 'down':
         return (
@@ -343,7 +344,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
             style={{
               position: 'absolute',
               bottom: '-5px',
-              left: '50%',
+              left: horizontalOffset,
               transform: 'translateX(-50%)',
               width: 0,
               height: 0,
@@ -361,7 +362,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
             style={{
               position: 'absolute',
               top: '-5px',
-              left: '50%',
+              left: horizontalOffset,
               transform: 'translateX(-50%)',
               width: 0,
               height: 0,
@@ -412,165 +413,190 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
     }
   };
 
-  // Helper: placement for Step 1 Zone tooltips
+  // Helper: placement for Step 1 Zone tooltips (strictly inside the screen bounds)
   const getZonePlacement = (zone: NavZone, rect: ElementRect): {
     style: React.CSSProperties;
     arrowDirection: 'up' | 'down' | 'left' | 'right';
+    arrowOffset?: string;
   } => {
-    // Action Rail (Zone 2, left side docked)
-    if (zone.id === 2 || rect.left < 80) {
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+
+    // Action Rail (Zone 2, left side docked) -> inner side is to the right
+    if (zone.id === 2 || rect.left < 85) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(rect.top + 16, 12)}px`,
+          top: `${Math.max(16, Math.min(rect.top + 16, screenH - 45))}px`,
           left: `${rect.left + rect.width + 12}px`,
         },
         arrowDirection: 'left'
       };
     }
 
-    // Module Rail (Zone 6, right side docked)
-    if (zone.id === 6 || rect.left > window.innerWidth - 120) {
+    // Module Rail (Zone 6, right side docked) -> inner side is to the left
+    if (zone.id === 6 || rect.right > screenW - 85) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(rect.top + 16, 12)}px`,
-          left: `${rect.left - 12}px`,
-          transform: 'translateX(-100%)',
+          top: `${Math.max(16, Math.min(rect.top + 16, screenH - 45))}px`,
+          right: `${screenW - rect.left + 14}px`,
         },
         arrowDirection: 'right'
       };
     }
 
-    // Top header (Zone 1)
-    if (rect.top < 65) {
+    // Top header (Zone 1) -> place inside header at top-left
+    if (zone.id === 1 || rect.top < 65) {
       return {
         style: {
           position: 'absolute',
-          top: `${rect.bottom + 10}px`,
-          left: `${Math.max(rect.left + 24, 20)}px`,
+          top: `${Math.max(10, rect.top + 8)}px`,
+          left: `${Math.max(16, rect.left + 16)}px`,
         },
         arrowDirection: 'up'
       };
     }
 
-    // Default: above zone pointing down
-    return {
-      style: {
-        position: 'absolute',
-        top: `${rect.top - 36}px`,
-        left: `${Math.max(rect.left + 24, 20)}px`,
-      },
-      arrowDirection: 'down'
-    };
-  };
-
-  // Helper: placement for Step 2 Target tooltips
-  const getTargetPlacement = (rect: ElementRect, zoneId: number): {
-    style: React.CSSProperties;
-    arrowDirection: 'up' | 'down' | 'left' | 'right';
-  } => {
-    // Left docked rail (Zone 2 Action Rail)
-    if (zoneId === 2 || rect.left < 90) {
+    // Finished Moulds Grid (Zone 4) -> on the right side of the screen
+    // Keep it on the inner side (towards left of the table, never right edge)
+    if (zone.id === 4) {
       return {
         style: {
           position: 'absolute',
-          top: `${rect.top + (rect.height - 28) / 2}px`,
+          top: `${Math.max(16, rect.top + 10)}px`,
+          left: `${Math.max(16, rect.left + 16)}px`,
+        },
+        arrowDirection: 'up'
+      };
+    }
+
+    // Raw Materials Grid (Zone 3) -> inside top-left of the table
+    if (zone.id === 3) {
+      return {
+        style: {
+          position: 'absolute',
+          top: `${Math.max(16, rect.top + 10)}px`,
+          left: `${Math.max(16, rect.left + 16)}px`,
+        },
+        arrowDirection: 'up'
+      };
+    }
+
+    // Mode & Slip bar (Zone 5) -> bottom bar, place inside bottom bar
+    if (zone.id === 5 || rect.bottom > screenH - 65) {
+      return {
+        style: {
+          position: 'absolute',
+          bottom: `${Math.max(16, screenH - rect.bottom + 8)}px`,
+          left: `${Math.max(16, rect.left + 16)}px`,
+        },
+        arrowDirection: 'down'
+      };
+    }
+
+    // Default fallback (strictly inside screen)
+    return {
+      style: {
+        position: 'absolute',
+        top: `${Math.max(16, rect.top + 10)}px`,
+        left: `${Math.max(16, rect.left + 16)}px`,
+      },
+      arrowDirection: 'up'
+    };
+  };
+
+  // Helper: placement for Step 2 Target tooltips (strictly inside the screen bounds)
+  const getTargetPlacement = (rect: ElementRect, zoneId: number): {
+    style: React.CSSProperties;
+    arrowDirection: 'up' | 'down' | 'left' | 'right';
+    arrowOffset?: string;
+  } => {
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+
+    // 1. Left rail (Zone 2) -> inner side is to the right
+    if (zoneId === 2 || rect.left < 85) {
+      return {
+        style: {
+          position: 'absolute',
+          top: `${Math.max(8, Math.min(rect.top + (rect.height - 28) / 2, screenH - 40))}px`,
           left: `${rect.left + rect.width + 10}px`,
         },
         arrowDirection: 'left'
       };
     }
 
-    // Right docked rail (Zone 6 Module Nav)
-    if (zoneId === 6 || rect.left > window.innerWidth - 130) {
+    // 2. Right rail (Zone 6) -> inner side is to the left
+    if (zoneId === 6 || rect.right > screenW - 85) {
       return {
         style: {
           position: 'absolute',
-          top: `${rect.top + (rect.height - 28) / 2}px`,
-          left: `${rect.left - 10}px`,
-          transform: 'translateX(-100%)',
+          top: `${Math.max(8, Math.min(rect.top + (rect.height - 28) / 2, screenH - 40))}px`,
+          right: `${screenW - rect.left + 10}px`,
         },
         arrowDirection: 'right'
       };
     }
 
-    // Top header row (Zone 1)
-    if (zoneId === 1 || rect.top < 70) {
+    // 3. Targets near the right edge of screen (e.g. Token No, right table buttons)
+    if (rect.right > screenW - 170) {
+      return {
+        style: {
+          position: 'absolute',
+          top: `${Math.max(8, Math.min(rect.top + (rect.height - 28) / 2, screenH - 40))}px`,
+          right: `${screenW - rect.left + 8}px`,
+        },
+        arrowDirection: 'right'
+      };
+    }
+
+    // 4. Near the top of screen (Zone 1 Bill Header)
+    if (rect.top < 65) {
+      const centerX = rect.left + rect.width / 2;
+      const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
       return {
         style: {
           position: 'absolute',
           top: `${rect.bottom + 8}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)',
+          left: `${safeLeft}px`,
         },
         arrowDirection: 'up'
       };
     }
 
-    // Bottom dock (Zone 5 mode bar)
-    if (rect.top > window.innerHeight - 80) {
+    // 5. Near the bottom of screen (Zone 5 Mode bar)
+    if (rect.bottom > screenH - 65) {
+      const centerX = rect.left + rect.width / 2;
+      const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
       return {
         style: {
           position: 'absolute',
-          top: `${rect.top - 36}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)',
+          top: `${rect.top - 34}px`,
+          left: `${safeLeft}px`,
         },
         arrowDirection: 'down'
       };
     }
 
-    // If enough room above
-    if (rect.top >= 42) {
-      return {
-        style: {
-          position: 'absolute',
-          top: `${rect.top - 36}px`,
-          left: `${rect.left + rect.width / 2}px`,
-          transform: 'translateX(-50%)',
-        },
-        arrowDirection: 'down'
-      };
-    }
-
-    // Fallback below
+    // 6. Default: placed above target, strictly clamped horizontally
+    const centerX = rect.left + rect.width / 2;
+    const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
     return {
       style: {
         position: 'absolute',
-        top: `${rect.bottom + 8}px`,
-        left: `${rect.left + rect.width / 2}px`,
-        transform: 'translateX(-50%)',
+        top: `${Math.max(10, rect.top - 34)}px`,
+        left: `${safeLeft}px`,
       },
-      arrowDirection: 'up'
+      arrowDirection: 'down'
     };
   };
 
   return (
     <>
-      <style>{`
-        @keyframes numpadLightGlow {
-          0%, 100% {
-            opacity: 0.85;
-            filter: drop-shadow(0 0 8px currentColor);
-          }
-          50% {
-            opacity: 1;
-            filter: drop-shadow(0 0 16px currentColor);
-          }
-        }
-        @keyframes numpadTargetPulse {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.02);
-          }
-        }
-      `}</style>
-
       {/* ----------------------------------------------------------------- */}
-      {/* ACTIVE NUMPAD NAVIGATOR: GLOWING LIGHT BORDERS + POINTING TOOLTIPS */}
+      {/* ACTIVE NUMPAD NAVIGATOR: ONLY CLEAN FLOATING POINTING TOOLTIPS    */}
+      {/* ZERO BORDERS AROUND COMPONENTS/BUTTONS, ZERO TOP HEADER BANNERS   */}
       {/* ----------------------------------------------------------------- */}
       {isOpen && (
         <div
@@ -584,306 +610,157 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
             transition: 'all 0.15s ease'
           }}
         >
-          {/* TOP HINT BAR */}
-          <div
-            style={{
-              position: 'fixed',
-              top: '12px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 9999999,
-              background: 'rgba(28, 28, 30, 0.92)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              borderRadius: '9999px',
-              padding: '4px 14px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              color: '#ffffff',
-              fontSize: '12px',
-              fontWeight: 500,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
-              pointerEvents: 'auto',
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: selectedZone ? selectedZone.color : '#38bdf8',
-                  boxShadow: `0 0 8px ${selectedZone ? selectedZone.color : '#38bdf8'}`
-                }}
-              />
-              <span style={{ fontWeight: 600, letterSpacing: '-0.01em' }}>
-                {selectedZone ? selectedZone.name : 'NUMPAD SHORTCUT GROUPS'}
-              </span>
-            </span>
-            <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>|</span>
-            {selectedZone ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#a1a1aa' }}>
-                Press <kbd style={{ background: '#3f3f42', color: '#fff', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>1-{selectedZone.targets.length}</kbd> to act or <kbd style={{ background: '#3f3f42', color: '#fff', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>0</kbd> to go back
-              </span>
-            ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#a1a1aa' }}>
-                Press <kbd style={{ background: '#3f3f42', color: '#fff', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>1-6</kbd> to select group
-              </span>
-            )}
-            <button
-              onClick={() => {
-                macAudio.playHover();
-                setIsOpen(false);
-                setSelectedZone(null);
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                padding: '2px',
-                display: 'flex',
-                alignItems: 'center',
-                borderRadius: '50%',
-              }}
-              title="Close (Esc or .)"
-            >
-              <X size={13} />
-            </button>
-          </div>
-
-          {/* STEP 1: ZONE OVERLAYS (Glowing Light Border + Floating Pointing Tooltip) */}
-          {/* --------------------------------------------------------------------- */}
+          {/* STEP 1: ZONE FLOATING POINTING TOOLTIPS (STRICTLY INSIDE SCREEN) */}
+          {/* ---------------------------------------------------------------- */}
           {!selectedZone && zoneBadges.map(({ zone, rect }) => {
             const placement = getZonePlacement(zone, rect);
 
             return (
-              <React.Fragment key={zone.id}>
-                {/* Glowing Light Border around the Group */}
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playBeep();
-                    setSelectedZone(zone);
-                  }}
+              <div
+                key={zone.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playBeep();
+                  setSelectedZone(zone);
+                }}
+                style={{
+                  ...placement.style,
+                  zIndex: 999999,
+                  background: '#1c1c1e',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  borderRadius: '9999px',
+                  height: '28px',
+                  padding: '3px 4px 3px 12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                  fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
+                  whiteSpace: 'nowrap',
+                  userSelect: 'none',
+                  lineHeight: '1',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span
                   style={{
-                    position: 'absolute',
-                    top: `${rect.top}px`,
-                    left: `${rect.left}px`,
-                    width: `${rect.width}px`,
-                    height: `${rect.height}px`,
-                    border: `1.5px solid ${zone.color}bb`,
-                    borderRadius: '10px',
-                    background: `${zone.color}06`,
-                    boxShadow: `0 0 18px ${zone.color}45, 0 0 32px ${zone.color}20, inset 0 0 14px ${zone.color}15`,
-                    color: zone.color,
-                    animation: 'numpadLightGlow 2.5s ease-in-out infinite',
-                    pointerEvents: 'auto',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                />
-
-                {/* Floating Capsule Tooltip with Pointing Arrow & Number Badge */}
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playBeep();
-                    setSelectedZone(zone);
-                  }}
-                  style={{
-                    ...placement.style,
-                    zIndex: 999999,
-                    background: '#1c1c1e',
+                    fontSize: '12px',
+                    fontWeight: 600,
                     color: '#ffffff',
-                    border: '1px solid rgba(255, 255, 255, 0.16)',
-                    borderRadius: '9999px',
-                    height: '28px',
-                    padding: '3px 4px 3px 12px',
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    lineHeight: '1',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
-                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
-                    lineHeight: '1',
-                    cursor: 'pointer',
-                    pointerEvents: 'auto',
-                    transition: 'all 0.15s ease',
+                    gap: '6px',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      letterSpacing: '-0.01em',
-                      whiteSpace: 'nowrap',
-                      lineHeight: '1',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', lineHeight: 1 }}>{zone.icon}</span>
-                    <span>{zone.name}</span>
-                  </span>
-                  <kbd
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#3f3f42',
-                      color: '#f4f4f5',
-                      padding: '3px 8.5px',
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
-                      letterSpacing: '0.02em',
-                      lineHeight: '1',
-                      border: 'none',
-                      boxShadow: 'none',
-                      whiteSpace: 'nowrap',
-                      userSelect: 'none',
-                    }}
-                  >
-                    {zone.id}
-                  </kbd>
-                  {renderPointingArrow(placement.arrowDirection)}
-                </div>
-              </React.Fragment>
+                  <span style={{ fontSize: '13px', lineHeight: 1 }}>{zone.icon}</span>
+                  <span>{zone.name}</span>
+                </span>
+                <kbd
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#3f3f42',
+                    color: '#f4f4f5',
+                    padding: '3px 8.5px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                    letterSpacing: '0.02em',
+                    lineHeight: '1',
+                    border: 'none',
+                    boxShadow: 'none',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                  }}
+                >
+                  {zone.id}
+                </kbd>
+                {renderPointingArrow(placement.arrowDirection, placement.arrowOffset)}
+              </div>
             );
           })}
 
-          {/* --------------------------------------------------------------------- */}
-          {/* STEP 2: SIMULTANEOUS OPEN TARGET TOOLTIPS WITH NUMBERING BADGES       */}
-          {/* --------------------------------------------------------------------- */}
-          {selectedZone && (
-            <>
-              {/* Highlight surrounding selected zone container with a gentle radiant glow */}
-              {(() => {
-                const zoneEl = document.querySelector(selectedZone.selector) as HTMLElement | null;
-                if (!zoneEl) return null;
-                const r = zoneEl.getBoundingClientRect();
-                return (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: `${r.top - 4}px`,
-                      left: `${r.left - 4}px`,
-                      width: `${r.width + 8}px`,
-                      height: `${r.height + 8}px`,
-                      border: `1.5px solid ${selectedZone.color}77`,
-                      boxShadow: `0 0 20px ${selectedZone.color}30`,
-                      borderRadius: '10px',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                );
-              })()}
+          {/* ----------------------------------------------------------------- */}
+          {/* STEP 2: SIMULTANEOUS TARGET POINTING TOOLTIPS WITH NUMBERING       */}
+          {/* ----------------------------------------------------------------- */}
+          {selectedZone && targetBadges.map(({ target, rect }) => {
+            const placement = getTargetPlacement(rect, selectedZone.id);
 
-              {/* Each Target Element: Glowing Light Border + Simultaneous Pointing Tooltip with Numbering */}
-              {targetBadges.map(({ target, rect }) => {
-                const placement = getTargetPlacement(rect, selectedZone.id);
-
-                return (
-                  <React.Fragment key={target.num}>
-                    {/* Glowing Light Border around Target Button/Element */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        executeTarget(target);
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: `${rect.top - 2}px`,
-                        left: `${rect.left - 2}px`,
-                        width: `${rect.width + 4}px`,
-                        height: `${rect.height + 4}px`,
-                        border: `1.5px solid ${selectedZone.color}`,
-                        borderRadius: '6px',
-                        background: `${selectedZone.color}08`,
-                        boxShadow: `0 0 14px ${selectedZone.color}55, inset 0 0 8px ${selectedZone.color}25`,
-                        color: selectedZone.color,
-                        animation: 'numpadLightGlow 2s ease-in-out infinite',
-                        pointerEvents: 'auto',
-                        cursor: 'pointer',
-                        transition: 'all 0.12s ease',
-                      }}
-                    />
-
-                    {/* Pointing Tooltip Open for All Buttons Simultaneously with Numbering Badge */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        executeTarget(target);
-                      }}
-                      style={{
-                        ...placement.style,
-                        zIndex: 999999,
-                        background: '#1c1c1e',
-                        color: '#ffffff',
-                        border: '1px solid rgba(255, 255, 255, 0.16)',
-                        borderRadius: '9999px',
-                        height: '28px',
-                        padding: '3px 4px 3px 12px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
-                        fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
-                        whiteSpace: 'nowrap',
-                        userSelect: 'none',
-                        lineHeight: '1',
-                        cursor: 'pointer',
-                        pointerEvents: 'auto',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: '#ffffff',
-                          letterSpacing: '-0.01em',
-                          whiteSpace: 'nowrap',
-                          lineHeight: '1',
-                        }}
-                      >
-                        {target.label}
-                      </span>
-                      <kbd
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#3f3f42',
-                          color: '#f4f4f5',
-                          padding: '3px 8.5px',
-                          borderRadius: '9999px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
-                          letterSpacing: '0.02em',
-                          lineHeight: '1',
-                          border: 'none',
-                          boxShadow: 'none',
-                          whiteSpace: 'nowrap',
-                          userSelect: 'none',
-                        }}
-                      >
-                        {target.num}
-                      </kbd>
-                      {renderPointingArrow(placement.arrowDirection)}
-                    </div>
-                  </React.Fragment>
-                );
-              })}
-            </>
-          )}
+            return (
+              <div
+                key={target.num}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  executeTarget(target);
+                }}
+                style={{
+                  ...placement.style,
+                  zIndex: 999999,
+                  background: '#1c1c1e',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  borderRadius: '9999px',
+                  height: '28px',
+                  padding: '3px 4px 3px 12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                  fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
+                  whiteSpace: 'nowrap',
+                  userSelect: 'none',
+                  lineHeight: '1',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: '#ffffff',
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    lineHeight: '1',
+                  }}
+                >
+                  {target.label}
+                </span>
+                <kbd
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#3f3f42',
+                    color: '#f4f4f5',
+                    padding: '3px 8.5px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                    letterSpacing: '0.02em',
+                    lineHeight: '1',
+                    border: 'none',
+                    boxShadow: 'none',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                  }}
+                >
+                  {target.num}
+                </kbd>
+                {renderPointingArrow(placement.arrowDirection, placement.arrowOffset)}
+              </div>
+            );
+          })}
         </div>
       )}
     </>
