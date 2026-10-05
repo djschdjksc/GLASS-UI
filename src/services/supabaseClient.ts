@@ -70,6 +70,25 @@ export const billRecordToSupabase = (bill: BillRecord, userName: string) => {
   const prefix = getUserPrefix(operatorName);
   const editId = bill.editId || `${prefix}-${ver}`;
 
+  // Package dynamic cols and extra metadata (adjustments, balanceLabel, vehicleType, notes, hasPartyCodeCol, splitRowIndex)
+  // inside dynamic_cols JSONB column so all 4-5 computers receive full data without Supabase schema mismatch!
+  const cleanCols = Array.isArray(bill.dynamicCols)
+    ? bill.dynamicCols.filter((c: any) => c && !c.__meta)
+    : [];
+
+  const metaPayload: any = {
+    __meta: true,
+    vehicleType: bill.vehicleType || '',
+    adjustments: Array.isArray(bill.adjustments) ? bill.adjustments : [],
+    balanceLabel: bill.balanceLabel || 'BALANCE',
+    customItemGroups: Array.isArray(bill.customItemGroups) ? bill.customItemGroups : [],
+    notes: bill.notes || '',
+    hasPartyCodeCol: Boolean(bill.hasPartyCodeCol),
+    splitRowIndex: bill.splitRowIndex ?? null
+  };
+
+  const storedDynamicCols = [...cleanCols, metaPayload];
+
   return {
     id: bill.id,
     token: String(bill.token || ''),
@@ -82,7 +101,7 @@ export const billRecordToSupabase = (bill: BillRecord, userName: string) => {
     status: bill.status || 'PAID',
     raw_items: bill.rawItems || [],
     finished_items: bill.finishedItems || [],
-    dynamic_cols: bill.dynamicCols || [],
+    dynamic_cols: storedDynamicCols,
     last_modified_by: operatorName,
     updated_at: new Date().toISOString(),
     version: ver,
@@ -97,6 +116,23 @@ export const supabaseToBillRecord = (row: any): BillRecord => {
   const prefix = getUserPrefix(modUser);
   const editId = row.edit_id || `${prefix}-${ver}`;
 
+  const rawDyn = row.dynamic_cols;
+  let dynamicCols: any[] = [];
+  let metaObj: any = {};
+
+  if (Array.isArray(rawDyn)) {
+    const metaItem = rawDyn.find((item: any) => item && item.__meta);
+    if (metaItem) {
+      metaObj = metaItem;
+      dynamicCols = rawDyn.filter((item: any) => item && !item.__meta);
+    } else {
+      dynamicCols = rawDyn;
+    }
+  } else if (rawDyn && typeof rawDyn === 'object') {
+    dynamicCols = Array.isArray(rawDyn.cols) ? rawDyn.cols : [];
+    metaObj = rawDyn.meta || rawDyn;
+  }
+
   return {
     id: row.id,
     token: String(row.token || ''),
@@ -104,6 +140,7 @@ export const supabaseToBillRecord = (row: any): BillRecord => {
     party: row.party || 'Standard Account',
     docType: row.doc_type || 'SALE BILL',
     vehicle: row.vehicle || '',
+    vehicleType: metaObj.vehicleType || '',
     typeSelection: row.type_selection || 'WHOLESALE',
     total: Number(row.total || 0),
     status: row.status || 'PAID',
@@ -113,7 +150,8 @@ export const supabaseToBillRecord = (row: any): BillRecord => {
       qty: Number(r.qty || 0),
       uCap: Number(r.uCap || 0),
       lCap: Number(r.lCap || 0),
-      partyCode: r.partyCode
+      partyCode: r.partyCode,
+      ...r // Preserve dynamic column sizes (e.g. qty_12, col_15ft)
     })),
     finishedItems: (row.finished_items || []).map((f: any, idx: number) => ({
       id: String(f.id || idx + 1),
@@ -122,7 +160,13 @@ export const supabaseToBillRecord = (row: any): BillRecord => {
       price: Number(f.price || 0),
       total: Number(f.total || 0)
     })),
-    dynamicCols: row.dynamic_cols || [],
+    dynamicCols,
+    adjustments: Array.isArray(metaObj.adjustments) ? metaObj.adjustments : [],
+    balanceLabel: metaObj.balanceLabel || 'BALANCE',
+    customItemGroups: Array.isArray(metaObj.customItemGroups) ? metaObj.customItemGroups : [],
+    hasPartyCodeCol: Boolean(metaObj.hasPartyCodeCol),
+    notes: metaObj.notes || '',
+    splitRowIndex: metaObj.splitRowIndex ?? null,
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
     synced: true,

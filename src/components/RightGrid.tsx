@@ -5,7 +5,7 @@ import { TableSettingsDropdown } from './TableSettingsDropdown';
 import { RowContextMenu } from './RowContextMenu';
 import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History } from 'lucide-react';
+import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History, Boxes } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from './ui/shadcn';
 
@@ -54,6 +54,8 @@ interface Props {
   onLoadOldPrice?: () => void;
   onActiveRowChange?: (item: FinishedItem | null) => void;
   splitRowIndex?: number | null;
+  onOpenItemGroups?: () => void;
+  customItemGroupsCount?: number;
 }
 
 const DEFAULT_RIGHT_COLS = {
@@ -87,7 +89,9 @@ export const RightGrid: React.FC<Props> = ({
   isActiveTable = false,
   onActivateTable,
   onLoadOldPrice,
-  onActiveRowChange
+  onActiveRowChange,
+  onOpenItemGroups,
+  customItemGroupsCount = 0
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -555,6 +559,20 @@ export const RightGrid: React.FC<Props> = ({
   };
 
   const handleInputMouseDown = (r: number, c: number, e: React.MouseEvent<HTMLInputElement>) => {
+    // Right Click (button 2): Keep multi-selection intact if clicked on an already selected item!
+    if (e.button === 2) {
+      const cellKey = `${r}-${c}`;
+      if (selectedCellKeys.has(cellKey) || selectedRows.includes(r)) {
+        return;
+      }
+      setSelectedCellKeys(new Set([cellKey]));
+      setSelectedRows([r]);
+      setSelectedCol(null);
+      setActiveCell({ r, c });
+      setAnchorCell({ r, c });
+      return;
+    }
+
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       const key = `${r}-${c}`;
@@ -984,6 +1002,36 @@ export const RightGrid: React.FC<Props> = ({
               <ClipboardPaste size={13} />
             </button>
           </Tooltip>
+
+          {/* Item Groups Button (Bill-Specific Mould Groups for Ctrl+G) */}
+          {onOpenItemGroups && (
+            <Tooltip title="Item Groups / Custom Moulds (Ctrl+G)" side="bottom">
+              <button
+                type="button"
+                onClick={onOpenItemGroups}
+                className="apple-box-btn"
+                style={{ 
+                  width: customItemGroupsCount > 0 ? 'auto' : '28px', 
+                  height: '28px', 
+                  borderRadius: '6px',
+                  padding: customItemGroupsCount > 0 ? '0 8px' : 0,
+                  gap: '5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: customItemGroupsCount > 0 ? 'rgba(56, 189, 248, 0.15)' : undefined,
+                  borderColor: customItemGroupsCount > 0 ? 'rgba(56, 189, 248, 0.4)' : undefined
+                }}
+              >
+                <Boxes size={13} style={{ color: customItemGroupsCount > 0 ? '#38bdf8' : '#ffffff' }} />
+                {customItemGroupsCount > 0 && (
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#38bdf8' }}>
+                    {customItemGroupsCount}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
+          )}
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (

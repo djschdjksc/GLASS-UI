@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { BillHeader } from '../types';
 import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History, Building2 } from 'lucide-react';
@@ -58,6 +58,12 @@ const DEFAULT_VEHICLE_TYPES = [
   'BY HAND',
 ];
 
+export interface HeaderPartyOption {
+  name: string;
+  district?: string;
+  station?: string;
+}
+
 export const AppleHeader: React.FC<Props> = ({ 
   header, 
   onChange, 
@@ -76,12 +82,33 @@ export const AppleHeader: React.FC<Props> = ({
   onOpenAuditHistory
 }) => {
   const [showPartySuggestions, setShowPartySuggestions] = useState(false);
-  const [partyList, setPartyList] = useState<string[]>(() => {
-    const dbParties = localDb.getParties().map(p => p.name).filter(Boolean);
-    const sqliteParties = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
-      ? SQLITE_PARTIES.map((p: any) => p.party_name).filter(Boolean)
-      : COMMON_PARTIES;
-    return Array.from(new Set([...dbParties, ...sqliteParties]));
+  const [partyList, setPartyList] = useState<HeaderPartyOption[]>(() => {
+    const map = new Map<string, HeaderPartyOption>();
+
+    (SQLITE_PARTIES || []).forEach((p: any) => {
+      const name = (p.party_name || '').trim();
+      if (name && !map.has(name.toLowerCase())) {
+        map.set(name.toLowerCase(), {
+          name,
+          district: (p.district || '').trim(),
+          station: (p.station || '').trim()
+        });
+      }
+    });
+
+    localDb.getParties().forEach((p) => {
+      const name = (p.name || '').trim();
+      if (name) {
+        const existing = map.get(name.toLowerCase());
+        map.set(name.toLowerCase(), {
+          name,
+          district: (p.district || existing?.district || '').trim(),
+          station: (p.station || existing?.station || '').trim()
+        });
+      }
+    });
+
+    return Array.from(map.values());
   });
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [newPartyConfirm, setNewPartyConfirm] = useState<{
@@ -92,20 +119,42 @@ export const AppleHeader: React.FC<Props> = ({
   const [addVehicleTypeModal, setAddVehicleTypeModal] = useState(false);
   const [newVehicleTypeInput, setNewVehicleTypeInput] = useState('');
 
-
   // Subscribe to live Party changes across DB
   useEffect(() => {
     const unsub = localDb.subscribe('parties', (parties: PartyRecord[]) => {
-      const names = parties.map(p => p.name).filter(Boolean);
-      setPartyList(prev => Array.from(new Set([...names, ...prev])));
+      setPartyList((prev) => {
+        const map = new Map<string, HeaderPartyOption>();
+        prev.forEach((p) => map.set(p.name.toLowerCase(), p));
+        parties.forEach((p) => {
+          const name = (p.name || '').trim();
+          if (name) {
+            const existing = map.get(name.toLowerCase());
+            map.set(name.toLowerCase(), {
+              name,
+              district: (p.district || existing?.district || '').trim(),
+              station: (p.station || existing?.station || '').trim()
+            });
+          }
+        });
+        return Array.from(map.values());
+      });
     });
     return () => unsub();
   }, []);
 
   const partyNameStr = (header?.partyName || '').trim();
-  const filteredParties = partyList.filter(p => 
-    (p || '').toLowerCase().includes(partyNameStr.toLowerCase())
-  );
+  const filteredParties = useMemo(() => {
+    const q = partyNameStr.toLowerCase();
+    if (!q) return partyList.slice(0, 50);
+    return partyList
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.district && p.district.toLowerCase().includes(q)) ||
+          (p.station && p.station.toLowerCase().includes(q))
+      )
+      .slice(0, 50);
+  }, [partyList, partyNameStr]);
 
   const focusNextInput = () => {
     setTimeout(() => {
@@ -150,7 +199,7 @@ export const AppleHeader: React.FC<Props> = ({
       await localDb.saveParty(newParty);
     } catch {}
 
-    setPartyList(prev => Array.from(new Set([trimmed, ...prev])));
+    setPartyList(prev => [{ name: trimmed }, ...prev]);
     onAddNewParty(trimmed);
     onChange({ partyName: trimmed });
     macAudio.playPop();
@@ -184,9 +233,9 @@ export const AppleHeader: React.FC<Props> = ({
       partyInput?.focus();
       return;
     }
-    const exactMatch = partyList.find(p => p.trim().toLowerCase() === entered.toLowerCase());
+    const exactMatch = partyList.find(p => p.name.trim().toLowerCase() === entered.toLowerCase());
     if (exactMatch) {
-      onChange({ partyName: exactMatch });
+      onChange({ partyName: exactMatch.name });
       setShowPartySuggestions(false);
       focusNextInput();
     } else {
@@ -239,177 +288,188 @@ export const AppleHeader: React.FC<Props> = ({
           </ShadcnSelect>
         </div>
 
-        {/* Party Name Search Box with Quick Add (+) Button */}
-        <div style={{ position: 'relative', flex: 1.5, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <input
-              id="header-party-name"
-              data-np-target="1-2"
-              type="text"
-              className="apple-input"
-              placeholder="Search or Enter Party..."
-              value={header.partyName}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              data-lpignore="true"
-              data-form-type="other"
-              onFocus={() => setShowPartySuggestions(true)}
-              onBlur={() => setTimeout(() => setShowPartySuggestions(false), 240)}
-              onChange={(e) => {
-                onChange({ partyName: e.target.value });
-                setFocusedIndex(-1);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  if (!showPartySuggestions) setShowPartySuggestions(true);
-                  setFocusedIndex(prev => Math.min(prev + 1, filteredParties.length - 1));
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setFocusedIndex(prev => Math.max(prev - 1, 0));
-                } else if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const entered = (header?.partyName || '').trim();
-                  if (!entered) {
-                    focusNextInput();
-                    return;
-                  }
-
-                  // 1. If suggestion dropdown is open and user highlighted an item
-                  if (showPartySuggestions && filteredParties.length > 0 && focusedIndex >= 0 && focusedIndex < filteredParties.length) {
-                    const chosen = filteredParties[focusedIndex];
-                    onChange({ partyName: chosen });
-                    setShowPartySuggestions(false);
-                    focusNextInput();
-                    return;
-                  }
-
-                  // 2. Check if entered name has exact match in existing DB parties
-                  const exactMatch = partyList.find(p => p.trim().toLowerCase() === entered.toLowerCase());
-                  if (exactMatch) {
-                    onChange({ partyName: exactMatch });
-                    setShowPartySuggestions(false);
-                    focusNextInput();
-                    return;
-                  }
-
-                  // 3. New party NOT in DB: Trigger confirmation modal!
-                  handleTriggerAddParty(entered);
-                } else if (e.key === 'Escape' && showPartySuggestions) {
-                  e.stopPropagation();
-                  setShowPartySuggestions(false);
+        {/* Party Name Search Box (Quick + icon removed as requested) */}
+        <div style={{ position: 'relative', flex: 1.5 }}>
+          <input
+            id="header-party-name"
+            data-np-target="1-2"
+            type="text"
+            className="apple-input"
+            placeholder="Search or Enter Party..."
+            value={header.partyName}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-lpignore="true"
+            data-form-type="other"
+            onFocus={() => setShowPartySuggestions(true)}
+            onBlur={() => setTimeout(() => setShowPartySuggestions(false), 240)}
+            onChange={(e) => {
+              onChange({ partyName: e.target.value });
+              setFocusedIndex(-1);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!showPartySuggestions) setShowPartySuggestions(true);
+                setFocusedIndex(prev => Math.min(prev + 1, filteredParties.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setFocusedIndex(prev => Math.max(prev - 1, 0));
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const entered = (header?.partyName || '').trim();
+                if (!entered) {
+                  focusNextInput();
+                  return;
                 }
-              }}
-              style={{ width: '100%', fontWeight: 500 }}
-            />
 
-            {showPartySuggestions && (
-              <div 
-                className="party-suggestions-dropdown ant-dropdown-anim"
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  marginTop: '4px',
-                  borderRadius: '7px',
-                  zIndex: 99999999,
-                  maxHeight: '180px',
-                  overflowY: 'auto'
-                }}
-              >
-                {filteredParties.map((party, idx) => (
+                // 1. If suggestion dropdown is open and user highlighted an item
+                if (showPartySuggestions && filteredParties.length > 0 && focusedIndex >= 0 && focusedIndex < filteredParties.length) {
+                  const chosen = filteredParties[focusedIndex];
+                  onChange({ partyName: chosen.name });
+                  setShowPartySuggestions(false);
+                  focusNextInput();
+                  return;
+                }
+
+                // 2. Check if entered name has exact match in existing DB parties
+                const exactMatch = partyList.find(p => p.name.trim().toLowerCase() === entered.toLowerCase());
+                if (exactMatch) {
+                  onChange({ partyName: exactMatch.name });
+                  setShowPartySuggestions(false);
+                  focusNextInput();
+                  return;
+                }
+
+                // 3. New party NOT in DB: Trigger confirmation modal!
+                handleTriggerAddParty(entered);
+              } else if (e.key === 'Escape' && showPartySuggestions) {
+                e.stopPropagation();
+                setShowPartySuggestions(false);
+              }
+            }}
+            style={{ width: '100%', fontWeight: 500 }}
+          />
+
+          {showPartySuggestions && (
+            <div 
+              className="party-suggestions-dropdown ant-dropdown-anim"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: '4px',
+                borderRadius: '8px',
+                background: '#121215',
+                border: '1px solid #27272a',
+                padding: '4px',
+                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.15)',
+                zIndex: 99999999,
+                maxHeight: '240px',
+                overflowY: 'auto'
+              }}
+            >
+              {filteredParties.map((party, idx) => {
+                const isSelected = (header.partyName || '').trim().toLowerCase() === party.name.toLowerCase();
+                const isFocused = focusedIndex === idx;
+                const districtLabel = party.district || party.station || '';
+
+                return (
                   <div
-                    key={party}
+                    key={party.name}
                     className="anim-cascade"
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onChange({ partyName: party });
+                      onChange({ partyName: party.name });
                       setShowPartySuggestions(false);
+                      focusNextInput();
                     }}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onChange({ partyName: party });
+                      onChange({ partyName: party.name });
                       setShowPartySuggestions(false);
+                      focusNextInput();
                     }}
                     style={{
                       padding: '7px 10px',
-                      fontSize: '11.5px',
+                      borderRadius: '6px',
+                      fontSize: '12.5px',
+                      fontWeight: 500,
                       cursor: 'pointer',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      background: focusedIndex === idx ? 'rgba(0, 113, 227, 0.4)' : 'transparent',
-                      animationDelay: `${Math.min(idx, 10) * 0.025}s`
+                      background: isFocused ? '#27272a' : isSelected ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                      color: isFocused || isSelected ? '#ffffff' : '#f4f4f5',
+                      transition: 'background-color 0.1s ease',
+                      gap: '8px'
                     }}
                     onMouseEnter={() => setFocusedIndex(idx)}
                   >
-                    <span>{party}</span>
-                    {header.partyName === party && <Check size={12} color="#34c759" />}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                      <Building2 size={13} style={{ color: '#ffffff', flexShrink: 0 }} />
+                      <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {party.name}
+                      </span>
+                      {districtLabel && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            color: '#a1a1aa',
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            flexShrink: 0
+                          }}
+                        >
+                          {districtLabel}
+                        </span>
+                      )}
+                    </div>
+                    {isSelected && <Check size={12} color="#ffffff" />}
                   </div>
-                ))}
+                );
+              })}
 
-                {/* If Party Not Found or Typed New */}
-                {partyNameStr && !partyList.some(p => p.toLowerCase() === partyNameStr.toLowerCase()) && (
-                  <div
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleTriggerAddParty(partyNameStr);
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleTriggerAddParty(partyNameStr);
-                    }}
-                    style={{
-                      padding: '8px 10px',
-                      fontSize: '11.5px',
-                      cursor: 'pointer',
-                      background: 'rgba(0, 113, 227, 0.15)',
-                      color: '#38bdf8',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.35)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.15)'}
-                  >
-                    <Plus size={13} />
-                    <span>Add "{partyNameStr}" as New Party (Database Save)</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Dedicated Quick Add (+) Button next to search box (Shadcn UI Button) */}
-          <Tooltip title="Add New Party to Database (+)" side="bottom">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleTriggerAddParty()}
-              style={{
-                width: '32px',
-                height: '32px',
-                padding: 0,
-                borderRadius: '6px',
-                borderColor: '#27272a',
-                backgroundColor: '#18181b',
-                color: '#f4f4f5',
-                flexShrink: 0
-              }}
-            >
-              <Plus size={14} />
-            </Button>
-          </Tooltip>
+              {/* If Party Not Found or Typed New */}
+              {partyNameStr && !partyList.some(p => p.name.toLowerCase() === partyNameStr.toLowerCase()) && (
+                <div
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTriggerAddParty(partyNameStr);
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTriggerAddParty(partyNameStr);
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: '11.5px',
+                    cursor: 'pointer',
+                    background: 'rgba(0, 113, 227, 0.15)',
+                    color: '#38bdf8',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.35)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 113, 227, 0.15)'}
+                >
+                  <span>Add "{partyNameStr}" as New Party (Database Save)</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Vehicle Type Dropdown */}
@@ -423,8 +483,12 @@ export const AppleHeader: React.FC<Props> = ({
             onKeyDown={(e: any) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                e.stopPropagation();
                 const vno = document.getElementById('header-vehicle-no') as HTMLInputElement | null;
-                if (vno) { vno.focus(); vno.select(); }
+                if (vno) {
+                  vno.focus();
+                  vno.select();
+                }
               }
             }}
           >
@@ -495,18 +559,33 @@ export const AppleHeader: React.FC<Props> = ({
 
       {/* Right Controls: Token Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Red Token Badge with Hover Value Tooltip */}
         <Tooltip
-          title={`Bill Token #${header.tokenNo || '1'} | Date: ${header.date || 'Today'} | Party: ${header.partyName || 'Not Set'}`}
+          title={`Bill Token: ${header.tokenNo || '1'} | Date: ${header.date || 'Today'} | Party: ${header.partyName || 'Not Set'}`}
           placement="bottom"
         >
           <div 
             data-np-target="1-6"
             className="apple-token-badge"
             tabIndex={0}
-            style={{ cursor: 'pointer' }}
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: 'none',
+              padding: '3px 9px',
+              borderRadius: '6px',
+              color: '#ffffff',
+              fontSize: '12px',
+              fontWeight: 600,
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: '0.3px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              userSelect: 'none'
+            }}
           >
-            <span>#{header.tokenNo}</span>
+            <span>{header.tokenNo}</span>
           </div>
         </Tooltip>
       </div>

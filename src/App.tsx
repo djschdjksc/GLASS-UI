@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { BillHeader, RawItem, FinishedItem, EnterDirection, NavKey, AppThemeMode } from './types';
+import type { BillHeader, RawItem, FinishedItem, EnterDirection, NavKey, AppThemeMode, BillItemGroup } from './types';
 import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
 import { SQLITE_CONTROL_CONVERSIONS, SQLITE_CONTROL_GROUPS } from './data/sqliteControlPanel';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
@@ -8,6 +8,7 @@ import { LeftActionRail } from './components/LeftActionRail';
 import { RightNavRail } from './components/RightNavRail';
 import { LeftGrid } from './components/LeftGrid';
 import { RightGrid } from './components/RightGrid';
+import { BillItemGroupsModal } from './components/BillItemGroupsModal';
 import { SlipModal } from './components/SlipModal';
 import { GoodsDistributionModal } from './components/GoodsDistributionModal';
 import { OcrModal } from './components/OcrModal';
@@ -116,7 +117,7 @@ function loadStored<T>(key: string, defaultValue: T): T {
 }
 
 // Dirty-state Fingerprinting Helper for accurate change detection
-const getBillFingerprint = (h: BillHeader, raws: RawItem[], moulds: FinishedItem[], dynCols: any[], hasPartyCodeCol?: boolean) => {
+const getBillFingerprint = (h: BillHeader, raws: RawItem[], moulds: FinishedItem[], dynCols: any[], hasPartyCodeCol?: boolean, customItemGroups?: BillItemGroup[]) => {
   return JSON.stringify({
     h: {
       docType: h.docType,
@@ -143,7 +144,13 @@ const getBillFingerprint = (h: BillHeader, raws: RawItem[], moulds: FinishedItem
       price: Number(m.price) || 0,
       total: Number(m.total) || 0
     })).filter(m => m.mould !== '' || m.qty > 0 || m.price > 0),
-    dynCols: (dynCols || []).map(d => ({ field: d.field, label: d.label }))
+    dynCols: (dynCols || []).map(d => ({ field: d.field, label: d.label })),
+    customItemGroups: (customItemGroups || []).map(g => ({
+      id: g.id,
+      groupName: (g.groupName || '').trim(),
+      targetColumn: g.targetColumn,
+      itemNames: (g.itemNames || []).map(n => n.trim()).filter(Boolean)
+    }))
   });
 };
 
@@ -275,6 +282,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [auditTarget, setAuditTarget] = useState<{ id: string; token: string; party?: string } | null>(null);
   const loadedBillSnapshotRef = useRef<BillRecord | null>(null);
   const [deleteRowConfirm, setDeleteRowConfirm] = useState<{ table: 'raw' | 'finished'; indices: number[] } | null>(null);
+
+  // Bill-specific custom item groups (Mould Groups) for Ctrl+G calculation
+  const [customItemGroups, setCustomItemGroups] = useState<BillItemGroup[]>([]);
+  const [isItemGroupsModalOpen, setIsItemGroupsModalOpen] = useState(false);
+  const [prefilledGroupItems, setPrefilledGroupItems] = useState<string[]>([]);
 
   const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
   const [incomingCloudBill, setIncomingCloudBill] = useState<CloudNotificationData | null>(null);
@@ -535,6 +547,20 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     const tokenStr = String(header.tokenNo || '1');
     const existingId = loadedBillSnapshotRef.current?.id;
+
+    // Check localStorage cache for adjustments and balanceLabel
+    const cacheKey = `bill_adj_${tokenStr}_${cleanPartyName || 'CASH'}`;
+    let savedAdjs: any[] = [];
+    let savedBalLabel = 'BALANCE';
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed.adjustments)) savedAdjs = parsed.adjustments;
+        if (parsed.balanceLabel) savedBalLabel = parsed.balanceLabel;
+      }
+    } catch {}
+
     const billToSave: BillRecord = {
       id: existingId || (tokenStr.startsWith('B-') ? tokenStr : `B-${tokenStr}`),
       token: tokenStr,
@@ -542,12 +568,15 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       party: cleanPartyName,
       docType: normalizeDocType(header.docType),
       vehicle: header.vehicleNo || '',
+      vehicleType: header.vehicleType || 'OWN VEHICLE',
       typeSelection: header.typeSelection || 'WHOLESALE',
       total,
       status: 'PAID',
       rawItems: validRawItems,
       finishedItems: validFinishedItems,
       dynamicCols: dynamicCols.map(c => ({ ...c })),
+      adjustments: savedAdjs.length > 0 ? savedAdjs : (loadedBillSnapshotRef.current?.adjustments || []),
+      balanceLabel: savedBalLabel || loadedBillSnapshotRef.current?.balanceLabel || 'BALANCE',
       hasPartyCodeCol: Boolean(hasPartyCodeCol),
       createdAt: loadedBillSnapshotRef.current?.createdAt || Date.now(),
       updatedAt: Date.now(),
@@ -556,7 +585,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       editId: activeEditInfo.editId,
       lastModifiedBy: activeEditInfo.operator,
       notes: noteText,
-      splitRowIndex: splitRowIndex
+      splitRowIndex: splitRowIndex,
+      customItemGroups: customItemGroups
     };
 
     const previousBill = loadedBillSnapshotRef.current || localDb.getBillById(billToSave.id);
@@ -598,6 +628,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setRawItems(blankRaws);
     setFinishedItems(blankFinished);
     setDynamicCols([]);
+    setCustomItemGroups([]);
     setSplitRowIndex(null);
     setNoteText('');
     setActiveTable('left');
@@ -654,6 +685,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setRawItems(blankRaws);
     setFinishedItems(blankFinished);
     setDynamicCols([]);
+    setCustomItemGroups([]);
     setHasPartyCodeCol(false);
     setSplitRowIndex(null);
     setNoteText('');
@@ -720,13 +752,24 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         docType: normalizeDocType(target.docType),
         partyName: target.party,
         typeSelection: target.typeSelection,
-        vehicleNo: target.vehicle,
+        vehicleType: target.vehicleType || 'OWN VEHICLE',
+        vehicleNo: target.vehicle || '',
         date: target.date,
         tokenNo: target.token
       });
+      if (Array.isArray(target.adjustments) && target.adjustments.length > 0) {
+        try {
+          const cacheKey = `bill_adj_${target.token}_${target.party || 'CASH'}`;
+          localStorage.setItem(cacheKey, JSON.stringify({
+            adjustments: target.adjustments,
+            balanceLabel: target.balanceLabel || 'BALANCE'
+          }));
+        } catch {}
+      }
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
       setDynamicCols(target.dynamicCols || []);
+      setCustomItemGroups(target.customItemGroups || []);
       setSplitRowIndex(target.splitRowIndex ?? null);
       setNoteText((target as any).notes || (target as any).note || '');
       const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
@@ -743,7 +786,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         target.rawItems || [],
         target.finishedItems || [],
         target.dynamicCols || [],
-        partyCodeCol
+        partyCodeCol,
+        target.customItemGroups || []
       );
       showToast(`Loaded ${currentDoc} Bill #${target.token} (${target.party || 'No Party'})`, 'info');
       setActiveTab('F1');
@@ -796,13 +840,24 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         docType: normalizeDocType(target.docType),
         partyName: target.party,
         typeSelection: target.typeSelection,
-        vehicleNo: target.vehicle,
+        vehicleType: target.vehicleType || 'OWN VEHICLE',
+        vehicleNo: target.vehicle || '',
         date: target.date,
         tokenNo: target.token
       });
+      if (Array.isArray(target.adjustments) && target.adjustments.length > 0) {
+        try {
+          const cacheKey = `bill_adj_${target.token}_${target.party || 'CASH'}`;
+          localStorage.setItem(cacheKey, JSON.stringify({
+            adjustments: target.adjustments,
+            balanceLabel: target.balanceLabel || 'BALANCE'
+          }));
+        } catch {}
+      }
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
       setDynamicCols(target.dynamicCols || []);
+      setCustomItemGroups(target.customItemGroups || []);
       setSplitRowIndex(target.splitRowIndex ?? null);
       setNoteText((target as any).notes || (target as any).note || '');
       const partyCodeCol = Boolean(target.hasPartyCodeCol || target.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== ''));
@@ -819,7 +874,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         target.rawItems || [],
         target.finishedItems || [],
         target.dynamicCols || [],
-        partyCodeCol
+        partyCodeCol,
+        target.customItemGroups || []
       );
       showToast(`Loaded ${currentDoc} Bill #${target.token} (${target.party || 'No Party'})`, 'info');
       setActiveTab('F1');
@@ -1256,14 +1312,35 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       docType: slip.docType,
       partyName: slip.partyName,
       typeSelection: slip.typeSelection,
+      vehicleType: slip.vehicleType || foundBill?.vehicleType || 'OWN VEHICLE',
       vehicleNo: slip.vehicleNo,
       date: slip.date,
       tokenNo: slip.tokenNo
     });
+    const adjs = (slip.adjustments && slip.adjustments.length > 0)
+      ? slip.adjustments
+      : (foundBill?.adjustments || []);
+    if (adjs.length > 0) {
+      try {
+        const cacheKey = `bill_adj_${slip.tokenNo}_${slip.partyName || 'CASH'}`;
+        localStorage.setItem(cacheKey, JSON.stringify({
+          adjustments: adjs,
+          balanceLabel: slip.balanceLabel || foundBill?.balanceLabel || 'BALANCE'
+        }));
+      } catch {}
+    }
     setRawItems(slip.rawItems || []);
     setFinishedItems(slip.finishedItems || []);
     setDynamicCols(slip.dynamicCols || []);
+    setCustomItemGroups(slip.customItemGroups || foundBill?.customItemGroups || []);
     setSplitRowIndex(slip.splitRowIndex ?? (foundBill?.splitRowIndex ?? null));
+    setNoteText(slip.notes || foundBill?.notes || '');
+    const partyCodeCol = Boolean(
+      slip.hasPartyCodeCol ||
+      foundBill?.hasPartyCodeCol ||
+      slip.rawItems?.some(r => r.partyCode && r.partyCode.trim() !== '')
+    );
+    setHasPartyCodeCol(partyCodeCol);
     lastSavedSnapshotRef.current = getBillFingerprint(
       {
         docType: slip.docType,
@@ -1275,7 +1352,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       },
       slip.rawItems || [],
       slip.finishedItems || [],
-      slip.dynamicCols || []
+      slip.dynamicCols || [],
+      partyCodeCol,
+      slip.customItemGroups || foundBill?.customItemGroups || []
     );
     setActiveTab('F1');
     playTapSound();
@@ -2004,6 +2083,50 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       }
     };
 
+    // 0. Bill-Specific Custom Item Groups (Mould Groups) calculation
+    // Custom groups allow grouping specific items into a mould name based on a selected column.
+    // The grouped column values are recorded in itemSummary and tracked in consumedColRow
+    // so they are NOT counted again in skip items or normal control panel conversions!
+    const consumedColRow = new Set<string>();
+
+    if (customItemGroups && customItemGroups.length > 0) {
+      customItemGroups.forEach(grp => {
+        const gName = (grp.groupName || '').trim();
+        if (!gName) return;
+        const targetCol = grp.targetColumn || 'qty';
+        const groupItemsLower = (grp.itemNames || []).map(n => n.trim().toLowerCase()).filter(Boolean);
+        if (groupItemsLower.length === 0) return;
+
+        rawList.forEach((it, rIdx) => {
+          const itName = (it.name || '').trim().toLowerCase();
+          if (!itName) return;
+
+          const isMatch = groupItemsLower.some(gItem => 
+            itName === gItem || itName.startsWith(gItem + ' ') || itName.startsWith(gItem + '-') || itName.startsWith(gItem + '/')
+          );
+
+          if (isMatch) {
+            let val = 0;
+            if (targetCol === 'qty') {
+              val = Number(it.qty) || 0;
+            } else if (targetCol === 'uCap') {
+              val = Number(it.uCap) || 0;
+            } else if (targetCol === 'lCap') {
+              val = Number(it.lCap) || 0;
+            } else {
+              val = Number((it as any)[targetCol]) || 0;
+            }
+
+            if (val > 0) {
+              itemSummary[gName] = (itemSummary[gName] || 0) + val;
+              recordSource(gName, it.id, rIdx, targetCol, val);
+              consumedColRow.add(`${it.id}-${targetCol}`);
+            }
+          }
+        });
+      });
+    }
+
     // 1. Active conversions from Manage Conversions (localStorage or fallback SQLite control panel)
     let activeConversions: any[] = SQLITE_CONTROL_CONVERSIONS;
     try {
@@ -2043,9 +2166,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       const name = (it.name || '').trim();
       if (!name) return;
 
-      const qty10 = Number(it.qty) || 0;
-      const uCap = Number(it.uCap) || 0;
-      const lCap = Number(it.lCap) || 0;
+      const qty10 = consumedColRow.has(`${it.id}-qty`) ? 0 : (Number(it.qty) || 0);
+      const uCap = consumedColRow.has(`${it.id}-uCap`) ? 0 : (Number(it.uCap) || 0);
+      const lCap = consumedColRow.has(`${it.id}-lCap`) ? 0 : (Number(it.lCap) || 0);
       const nameLower = name.toLowerCase();
 
       // Find matching conversion (longest conversion first)
@@ -2136,6 +2259,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
             }
             if (hasMultiCols) {
               dynCols.forEach(col => {
+                if (consumedColRow.has(`${it.id}-${col.field}`)) return;
                 const colQty = Number((it as any)[col.field]) || 0;
                 if (colQty > 0) {
                   const size = extractSizeFromColLabel(col.label || col.field);
@@ -2175,6 +2299,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           }
           if (dynCols && dynCols.length > 0) {
             dynCols.forEach(col => {
+              if (consumedColRow.has(`${it.id}-${col.field}`)) return;
               const colQty = Number((it as any)[col.field]) || 0;
               if (colQty > 0) {
                 totalHardwareQty += colQty;
@@ -2199,6 +2324,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
           if (hasMultiCols) {
             dynCols.forEach(col => {
+              if (consumedColRow.has(`${it.id}-${col.field}`)) return;
               const colQty = Number((it as any)[col.field]) || 0;
               if (colQty > 0) {
                 const size = extractSizeFromColLabel(col.label || col.field);
@@ -2230,7 +2356,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     });
 
     return { itemSummary, groupSummary, sourceMap };
-  }, []);
+  }, [customItemGroups]);
 
   // Summary Mapping Cache & Highlight State
   const [summarySourceMap, setSummarySourceMap] = useState<Record<string, { rowId: string; rowIndex: number; field: string; qty: number }[]>>({});
@@ -2956,6 +3082,10 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                           showToast('No saved audit revisions yet for this new bill', 'info');
                         }
                       }}
+                      onOpenMakeGroup={(itemNames) => {
+                        setPrefilledGroupItems(itemNames);
+                        setIsItemGroupsModalOpen(true);
+                      }}
                     />
                   </div>
 
@@ -2987,6 +3117,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       onToast={showToast}
                       onJumpToLeftGrid={handleJumpToLeftGrid}
                       onLoadOldPrice={handleLoadOldPriceFromHistory}
+                      onOpenItemGroups={() => {
+                        setPrefilledGroupItems([]);
+                        setIsItemGroupsModalOpen(true);
+                      }}
+                      customItemGroupsCount={customItemGroups.length}
                       enterDirection={enterDirection}
                       onSetEnterDirection={(dir) => {
                         setEnterDirection(dir);
@@ -3053,10 +3188,22 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     docType: normalizeDocType(bill.docType),
                     partyName: bill.party,
                     typeSelection: bill.typeSelection || 'WHOLESALE',
+                    vehicleType: bill.vehicleType || 'OWN VEHICLE',
                     vehicleNo: bill.vehicle || '',
                     date: bill.date,
                     tokenNo: bill.token
                   });
+                  if (Array.isArray(bill.adjustments) && bill.adjustments.length > 0) {
+                    try {
+                      const cacheKey = `bill_adj_${bill.token}_${bill.party || 'CASH'}`;
+                      localStorage.setItem(cacheKey, JSON.stringify({
+                        adjustments: bill.adjustments,
+                        balanceLabel: bill.balanceLabel || 'BALANCE'
+                      }));
+                    } catch {}
+                  }
+                  setNoteText(bill.notes || '');
+                  setSplitRowIndex(bill.splitRowIndex ?? null);
                   const loadedRaws = (bill.rawItems || []).map((r: any) => ({ ...r }));
                   const padCount = Math.max(0, 10 - loadedRaws.length);
                   for (let i = 0; i < padCount; i++) {
@@ -3083,6 +3230,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   }
                   setFinishedItems(loadedFinished);
                   setDynamicCols(bill.dynamicCols || []);
+                  setCustomItemGroups(bill.customItemGroups || []);
                   const partyCodeCol = Boolean(bill.hasPartyCodeCol || bill.rawItems?.some((r: any) => r.partyCode && r.partyCode.trim() !== ''));
                   setHasPartyCodeCol(partyCodeCol);
                   lastSavedSnapshotRef.current = getBillFingerprint(
@@ -3090,6 +3238,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       docType: bill.docType,
                       partyName: bill.party,
                       typeSelection: bill.typeSelection || 'WHOLESALE',
+                      vehicleType: bill.vehicleType || 'OWN VEHICLE',
                       vehicleNo: bill.vehicle || '',
                       date: bill.date,
                       tokenNo: bill.token
@@ -3097,7 +3246,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     loadedRaws,
                     loadedFinished,
                     bill.dynamicCols || [],
-                    partyCodeCol
+                    partyCodeCol,
+                    bill.customItemGroups || []
                   );
                   setActiveTab('F1');
                   showToast('Loaded Invoice #' + bill.token + ' into Bill UI', 'success');
@@ -3271,15 +3421,23 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         onViewBill={(billData) => {
           if (billData) {
             handleLoadSlip({
+              id: billData.id,
               tokenNo: billData.token,
               docType: billData.docType || 'SALE BILL',
               partyName: billData.party,
               typeSelection: billData.typeSelection || 'WHOLESALE',
+              vehicleType: billData.vehicleType || 'OWN VEHICLE',
               vehicleNo: billData.vehicle || '',
               date: billData.date || getTodayLocalDateStr(),
               rawItems: billData.rawItems || [],
               finishedItems: billData.finishedItems || [],
-              dynamicCols: billData.dynamicCols || []
+              dynamicCols: billData.dynamicCols || [],
+              adjustments: billData.adjustments || [],
+              balanceLabel: billData.balanceLabel || 'BALANCE',
+              notes: billData.notes || '',
+              hasPartyCodeCol: billData.hasPartyCodeCol,
+              splitRowIndex: billData.splitRowIndex ?? null,
+              customItemGroups: billData.customItemGroups || []
             });
             setActiveTab('F1');
           }
@@ -3321,6 +3479,25 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         currentFinishedItems={finishedItems}
         rawItems={rawItems}
         onApplyRates={handleApplyHistoricalRates}
+      />
+
+      {/* Bill-Specific Custom Item Groups (Mould Groups) Modal */}
+      <BillItemGroupsModal
+        isOpen={isItemGroupsModalOpen}
+        onClose={() => {
+          setIsItemGroupsModalOpen(false);
+          setPrefilledGroupItems([]);
+        }}
+        billToken={header.tokenNo}
+        groups={customItemGroups}
+        onSaveGroups={(updated) => {
+          setCustomItemGroups(updated);
+          showToast(`Saved ${updated.length} Custom Group(s) for Bill #${header.tokenNo}`, 'success');
+        }}
+        dynamicCols={dynamicCols}
+        rawItems={rawItems}
+        prefilledItemNames={prefilledGroupItems}
+        onToast={showToast}
       />
 
       {/* Shadcn UI Native Toast (https://ui.shadcn.com/docs/components/toast) */}

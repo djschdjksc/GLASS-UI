@@ -5,18 +5,18 @@ import {
   X, 
   Check, 
   ArrowRight, 
-  TrendingUp, 
   Calendar, 
   Building2, 
   Package, 
   Sparkles,
   CheckSquare,
   Square,
-  Filter
+  Clock,
+  Tag
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
+import { SQLITE_BILLS } from '../data/sqliteData';
 import type { FinishedItem, RawItem } from '../types';
-import { parseProductAndSize, calculateProportionalPrice } from '../utils/mouldUtils';
 import { Tooltip } from './ui/shadcn';
 
 export interface RateHistoryItem {
@@ -26,7 +26,18 @@ export interface RateHistoryItem {
   latestDate: string;
   latestToken: string;
   latestParty: string;
+  timeAgo: string;
   isInCurrentBill: boolean;
+  hasBilledToParty: boolean;
+  partyLatestPrice?: number;
+  partyLatestDate?: string;
+  partyLatestToken?: string;
+  partyTimeAgo?: string;
+  overallLatestPrice: number;
+  overallLatestDate: string;
+  overallLatestToken: string;
+  overallLatestParty: string;
+  overallTimeAgo: string;
   history: {
     price: number;
     date: string;
@@ -44,6 +55,43 @@ interface Props {
   onApplyRates: (selectedItems: { mould: string; price: number }[]) => void;
 }
 
+// Calculate relative time ago for "Kab Gaya" display
+export function formatTimeAgo(dateStr: string): string {
+  if (!dateStr) return 'Recent';
+  const billDate = new Date(dateStr);
+  if (isNaN(billDate.getTime())) return dateStr;
+  const now = new Date();
+  const diffMs = now.getTime() - billDate.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'Recent';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 30) return `${diffDays}d ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return '1 mo ago';
+  if (diffMonths < 12) return `${diffMonths} mos ago`;
+  const diffYears = Math.floor(diffDays / 365);
+  return `${diffYears} yr${diffYears > 1 ? 's' : ''} ago`;
+}
+
+// Robust party matching matching variations, roots, and substrings
+export function isPartyMatch(bParty: string, currentParty: string): boolean {
+  if (!bParty || !currentParty) return false;
+  const p1 = bParty.toLowerCase().trim();
+  const p2 = currentParty.toLowerCase().trim();
+  if (p1 === p2) return true;
+  if (p1.includes(p2) || p2.includes(p1)) return true;
+  const clean1 = p1.replace(/[-–—(),.]/g, ' ').replace(/\s+/g, ' ').trim();
+  const clean2 = p2.replace(/[-–—(),.]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (clean1 === clean2 || clean1.includes(clean2) || clean2.includes(clean1)) return true;
+  const root1 = p1.split('-')[0].trim();
+  const root2 = p2.split('-')[0].trim();
+  if (root1.length >= 3 && root2.length >= 3 && (root1 === root2 || root1.includes(root2) || root2.includes(root1))) {
+    return true;
+  }
+  return false;
+}
+
 export const RateHistoryModal: React.FC<Props> = ({
   isOpen,
   onClose,
@@ -53,9 +101,22 @@ export const RateHistoryModal: React.FC<Props> = ({
   onApplyRates
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'current_bill' | 'party' | 'all'>('current_bill');
+  const [activeTab, setActiveTab] = useState<'party' | 'all' | 'current_bill'>('party');
   const [selectedMoulds, setSelectedMoulds] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Set default active tab on open:
+  // When a party name is provided, default to that party's rate history!
+  useEffect(() => {
+    if (isOpen) {
+      if (currentParty && currentParty.trim().length > 0) {
+        setActiveTab('party');
+      } else {
+        setActiveTab('all');
+      }
+      setSearchQuery('');
+    }
+  }, [isOpen, currentParty]);
 
   // Close on Escape key
   useEffect(() => {
@@ -80,7 +141,7 @@ export const RateHistoryModal: React.FC<Props> = ({
     }
   }, [isOpen]);
 
-  // Active names in current bill (from finishedItems and rawItems)
+  // Active item names currently in draft bill
   const currentBillMouldNames = useMemo(() => {
     const names = new Set<string>();
     currentFinishedItems.forEach(f => {
@@ -94,25 +155,22 @@ export const RateHistoryModal: React.FC<Props> = ({
     return names;
   }, [currentFinishedItems, rawItems]);
 
-  // Compute rate history across all saved bills
+  // Compute rate history for all unique items across all bills,
+  // tracking both party-specific recent bill & overall recent bill (kab gaya & rate)
   const rateHistoryData = useMemo(() => {
     if (!isOpen) return { all: [], party: [] };
 
     const allBills = localDb.getBills();
     const sourceBills = allBills && allBills.length > 0 ? allBills : (SQLITE_BILLS || []);
 
-    // Sort bills latest to oldest
+    // Sort bills strictly from NEWEST/MOST RECENT to OLDEST
     const sortedBills = [...sourceBills].sort((a, b) => {
-      const timeA = a.date ? new Date(a.date).getTime() : 0;
-      const timeB = b.date ? new Date(b.date).getTime() : 0;
-      if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) return timeB - timeA;
-      const tokA = parseInt(String(a.token || '0'), 10);
-      const tokB = parseInt(String(b.token || '0'), 10);
-      if (!isNaN(tokA) && !isNaN(tokB) && tokA !== tokB) return tokB - tokA;
-      return (Number(b.updatedAt || 0)) - (Number(a.updatedAt || 0));
+      const timeA = a.createdAt || (a.date ? new Date(a.date).getTime() : 0) || Number(a.token) || 0;
+      const timeB = b.createdAt || (b.date ? new Date(b.date).getTime() : 0) || Number(b.token) || 0;
+      return timeB - timeA;
     });
 
-    // --- Global map: mouldKey -> most recent entry across ALL bills ---
+    // 1. Overall Map: mouldKey -> most recent bill info across ALL bills
     const globalMap = new Map<string, {
       mould: string;
       latestPrice: number;
@@ -122,8 +180,7 @@ export const RateHistoryModal: React.FC<Props> = ({
       history: { price: number; date: string; token: string; party: string }[];
     }>();
 
-    // --- Party map: mouldKey -> most recent entry for THIS party only ---
-    // Contains ALL unique items ever sent to this party, each with its most recent rate for that party
+    // 2. Party Map: mouldKey -> most recent bill info specifically for currentParty
     const partyMap = new Map<string, {
       mould: string;
       latestPrice: number;
@@ -133,16 +190,13 @@ export const RateHistoryModal: React.FC<Props> = ({
       history: { price: number; date: string; token: string; party: string }[];
     }>();
 
-    const cleanCurrentParty = (currentParty || '').trim().toLowerCase();
-
     for (const bill of sortedBills) {
       const bParty = (bill.party || '').trim();
       const bDate = bill.date || '';
       const bToken = String(bill.token || '');
-      const items = bill.finishedItems || [];
-      const isThisPartyBill = cleanCurrentParty && bParty.toLowerCase().includes(cleanCurrentParty);
+      const isThisParty = isPartyMatch(bParty, currentParty);
 
-      for (const item of items) {
+      for (const item of bill.finishedItems || []) {
         const rawMould = (item.mould || '').trim();
         const price = Number(item.price) || 0;
         if (!rawMould || rawMould === 'Mould Name' || rawMould === '-' || price <= 0) continue;
@@ -150,7 +204,7 @@ export const RateHistoryModal: React.FC<Props> = ({
         const key = rawMould.toLowerCase();
         const entry = { price, date: bDate, token: bToken, party: bParty };
 
-        // Global map (all bills, most recent rate per item)
+        // Global entry (first encounter is most recent because sorted newest-first)
         if (!globalMap.has(key)) {
           globalMap.set(key, {
             mould: rawMould,
@@ -162,13 +216,12 @@ export const RateHistoryModal: React.FC<Props> = ({
           });
         } else {
           const g = globalMap.get(key)!;
-          if (g.history.length < 5) g.history.push(entry);
+          if (g.history.length < 8) g.history.push(entry);
         }
 
-        // Party map: collect ALL unique items for this party, most recent rate per item
-        if (isThisPartyBill) {
+        // Party entry (most recent bill specifically for currentParty)
+        if (isThisParty) {
           if (!partyMap.has(key)) {
-            // First time seeing this item for this party = most recent (bills are sorted newest first)
             partyMap.set(key, {
               mould: rawMould,
               latestPrice: price,
@@ -178,45 +231,95 @@ export const RateHistoryModal: React.FC<Props> = ({
               history: [entry]
             });
           } else {
-            // Already have the most recent rate; just keep adding history
             const p = partyMap.get(key)!;
-            if (p.history.length < 5) p.history.push(entry);
+            if (p.history.length < 8) p.history.push(entry);
           }
         }
       }
     }
 
-    const buildList = (map: typeof globalMap) => {
-      const itemsList: RateHistoryItem[] = [];
-      map.forEach((val, key) => {
-        const isInCurrent = currentBillMouldNames.has(key);
-        itemsList.push({
-          id: `rate-hist-${key}`,
-          mould: val.mould,
-          latestPrice: val.latestPrice,
-          latestDate: val.latestDate,
-          latestToken: val.latestToken,
-          latestParty: val.latestParty,
-          isInCurrentBill: isInCurrent,
-          history: val.history
-        });
+    // Build party items list (sorted by latest bill date descending)
+    const partyList: RateHistoryItem[] = [];
+    partyMap.forEach((val, key) => {
+      const isInCurrent = currentBillMouldNames.has(key);
+      const gVal = globalMap.get(key);
+      partyList.push({
+        id: `rate-party-${key}`,
+        mould: val.mould,
+        latestPrice: val.latestPrice,
+        latestDate: val.latestDate,
+        latestToken: val.latestToken,
+        latestParty: val.latestParty,
+        timeAgo: formatTimeAgo(val.latestDate),
+        hasBilledToParty: true,
+        partyLatestPrice: val.latestPrice,
+        partyLatestDate: val.latestDate,
+        partyLatestToken: val.latestToken,
+        partyTimeAgo: formatTimeAgo(val.latestDate),
+        overallLatestPrice: gVal ? gVal.latestPrice : val.latestPrice,
+        overallLatestDate: gVal ? gVal.latestDate : val.latestDate,
+        overallLatestToken: gVal ? gVal.latestToken : val.latestToken,
+        overallLatestParty: gVal ? gVal.latestParty : val.latestParty,
+        overallTimeAgo: formatTimeAgo(gVal ? gVal.latestDate : val.latestDate),
+        isInCurrentBill: isInCurrent,
+        history: val.history
       });
-      return itemsList.sort((a, b) => {
-        if (a.isInCurrentBill && !b.isInCurrentBill) return -1;
-        if (!a.isInCurrentBill && b.isInCurrentBill) return 1;
-        return a.mould.localeCompare(b.mould);
-      });
-    };
+    });
+    partyList.sort((a, b) => {
+      if (a.isInCurrentBill && !b.isInCurrentBill) return -1;
+      if (!a.isInCurrentBill && b.isInCurrentBill) return 1;
+      const tA = a.latestDate ? new Date(a.latestDate).getTime() : 0;
+      const tB = b.latestDate ? new Date(b.latestDate).getTime() : 0;
+      if (tA !== tB) return tB - tA;
+      return a.mould.localeCompare(b.mould);
+    });
 
-    return {
-      all: buildList(globalMap),
-      party: buildList(partyMap)
-    };
+    // Build all unique items list (sorted by party-billed first, then latest bill date descending)
+    const allList: RateHistoryItem[] = [];
+    globalMap.forEach((val, key) => {
+      const isInCurrent = currentBillMouldNames.has(key);
+      const pVal = partyMap.get(key);
+      const hasParty = !!pVal;
+
+      allList.push({
+        id: `rate-all-${key}`,
+        mould: val.mould,
+        latestPrice: hasParty ? pVal.latestPrice : val.latestPrice,
+        latestDate: hasParty ? pVal.latestDate : val.latestDate,
+        latestToken: hasParty ? pVal.latestToken : val.latestToken,
+        latestParty: hasParty ? pVal.latestParty : val.latestParty,
+        timeAgo: formatTimeAgo(hasParty ? pVal.latestDate : val.latestDate),
+        hasBilledToParty: hasParty,
+        partyLatestPrice: pVal?.latestPrice,
+        partyLatestDate: pVal?.latestDate,
+        partyLatestToken: pVal?.latestToken,
+        partyTimeAgo: pVal?.latestDate ? formatTimeAgo(pVal.latestDate) : undefined,
+        overallLatestPrice: val.latestPrice,
+        overallLatestDate: val.latestDate,
+        overallLatestToken: val.latestToken,
+        overallLatestParty: val.latestParty,
+        overallTimeAgo: formatTimeAgo(val.latestDate),
+        isInCurrentBill: isInCurrent,
+        history: hasParty ? pVal.history : val.history
+      });
+    });
+    allList.sort((a, b) => {
+      if (a.isInCurrentBill && !b.isInCurrentBill) return -1;
+      if (!a.isInCurrentBill && b.isInCurrentBill) return 1;
+      if (a.hasBilledToParty && !b.hasBilledToParty) return -1;
+      if (!a.hasBilledToParty && b.hasBilledToParty) return 1;
+      const tA = a.latestDate ? new Date(a.latestDate).getTime() : 0;
+      const tB = b.latestDate ? new Date(b.latestDate).getTime() : 0;
+      if (tA !== tB) return tB - tA;
+      return a.mould.localeCompare(b.mould);
+    });
+
+    return { all: allList, party: partyList };
   }, [isOpen, currentBillMouldNames, currentParty]);
 
   // Initial selection: select items in current bill by default
   useEffect(() => {
-    if (isOpen && rateHistoryData.all.length > 0) {
+    if (isOpen) {
       const initial = new Set<string>();
       rateHistoryData.all.forEach(item => {
         if (item.isInCurrentBill) {
@@ -239,13 +342,15 @@ export const RateHistoryModal: React.FC<Props> = ({
       // current_bill tab filter
       if (activeTab === 'current_bill' && !item.isInCurrentBill) return false;
 
-      // Search filter
+      // Search filter across item name, price, party, token, date
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const matchesName = item.mould.toLowerCase().includes(q);
-        const matchesParty = item.latestParty.toLowerCase().includes(q);
+        const matchesParty = (item.latestParty || '').toLowerCase().includes(q) || (item.overallLatestParty || '').toLowerCase().includes(q);
         const matchesPrice = String(item.latestPrice).includes(q);
-        if (!matchesName && !matchesParty && !matchesPrice) return false;
+        const matchesToken = String(item.latestToken).includes(q) || String(item.overallLatestToken).includes(q);
+        const matchesDate = (item.latestDate || '').toLowerCase().includes(q) || (item.timeAgo || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesParty && !matchesPrice && !matchesToken && !matchesDate) return false;
       }
 
       return true;
@@ -318,11 +423,11 @@ export const RateHistoryModal: React.FC<Props> = ({
       {/* Shadcn Card Dialog Modal */}
       <div
         style={{
-          width: '740px',
+          width: '840px',
           maxWidth: '96vw',
-          maxHeight: '90vh',
-          backgroundColor: '#09090b', // Zinc 950
-          border: '1px solid #27272a', // Zinc 800
+          maxHeight: '92vh',
+          backgroundColor: '#09090b',
+          border: '1px solid #27272a',
           borderRadius: '12px',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 1px rgba(255, 255, 255, 0.2)',
           display: 'flex',
@@ -335,43 +440,61 @@ export const RateHistoryModal: React.FC<Props> = ({
       >
         {/* Header (Shadcn DialogHeader) */}
         <div style={{
-          padding: '20px 24px 16px',
+          padding: '18px 24px 14px',
           borderBottom: '1px solid #27272a',
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          gap: '12px'
+          gap: '12px',
+          background: '#0e0e11'
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '8px',
-                backgroundColor: '#18181b', // Zinc 900
+                backgroundColor: '#18181b',
                 border: '1px solid #27272a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <History size={16} color="#fafafa" />
+                <History size={17} color="#38bdf8" />
               </div>
               <div>
-                <h2 style={{
-                  margin: 0,
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: '#fafafa', // Zinc 50
-                  letterSpacing: '-0.02em'
-                }}>
-                  Recent Rate History
-                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h2 style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#fafafa',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    Recent Rate History
+                  </h2>
+                  {currentParty && (
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '5px',
+                      backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                      border: '1px solid rgba(56, 189, 248, 0.28)',
+                      color: '#38bdf8'
+                    }}>
+                      Party: {currentParty}
+                    </span>
+                  )}
+                </div>
                 <p style={{
-                  margin: '2px 0 0',
+                  margin: '3px 0 0',
                   fontSize: '12px',
-                  color: '#a1a1aa' // Zinc 400
+                  color: '#a1a1aa'
                 }}>
-                  {currentParty ? `View and apply recent rates for "${currentParty}" or all items` : 'View and apply recent rates from bill history'}
+                  {currentParty
+                    ? `Showing rate history & last bill date (kab gaya) for "${currentParty}".`
+                    : 'Showing recent rate history of all unique items across all bills.'}
                 </p>
               </div>
             </div>
@@ -402,12 +525,12 @@ export const RateHistoryModal: React.FC<Props> = ({
 
         {/* Toolbar & Filters (Shadcn Tabs & Input) */}
         <div style={{
-          padding: '14px 24px',
+          padding: '12px 24px',
           borderBottom: '1px solid #27272a',
           backgroundColor: '#0c0a09',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px'
+          gap: '10px'
         }}>
           {/* Top Row: Search Input */}
           <div style={{ position: 'relative', width: '100%' }}>
@@ -419,7 +542,7 @@ export const RateHistoryModal: React.FC<Props> = ({
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search by item name, party or price..."
+              placeholder="Search by item name, rate, token #, date or party..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -466,24 +589,6 @@ export const RateHistoryModal: React.FC<Props> = ({
               border: '1px solid #27272a',
               gap: '2px'
             }}>
-              <button
-                type="button"
-                onClick={() => setActiveTab('current_bill')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: activeTab === 'current_bill' ? '#27272a' : 'transparent',
-                  color: activeTab === 'current_bill' ? '#fafafa' : '#a1a1aa',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                Current Bill Items ({rateHistoryData.all.filter(i => i.isInCurrentBill).length})
-              </button>
-
               {currentParty && (
                 <button
                   type="button"
@@ -493,14 +598,18 @@ export const RateHistoryModal: React.FC<Props> = ({
                     borderRadius: '6px',
                     border: 'none',
                     backgroundColor: activeTab === 'party' ? '#27272a' : 'transparent',
-                    color: activeTab === 'party' ? '#fafafa' : '#a1a1aa',
+                    color: activeTab === 'party' ? '#38bdf8' : '#a1a1aa',
                     fontSize: '12px',
-                    fontWeight: 500,
+                    fontWeight: 600,
                     cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  Party History
+                  <Building2 size={13} />
+                  <span>{currentParty} Items ({rateHistoryData.party.length})</span>
                 </button>
               )}
 
@@ -516,10 +625,36 @@ export const RateHistoryModal: React.FC<Props> = ({
                   fontSize: '12px',
                   fontWeight: 500,
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                   transition: 'all 0.15s ease'
                 }}
               >
-                All Items ({rateHistoryData.all.length})
+                <Package size={13} />
+                <span>All Unique Items ({rateHistoryData.all.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('current_bill')}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'current_bill' ? '#27272a' : 'transparent',
+                  color: activeTab === 'current_bill' ? '#fafafa' : '#a1a1aa',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sparkles size={13} />
+                <span>In Current Bill ({rateHistoryData.all.filter(i => i.isInCurrentBill).length})</span>
               </button>
             </div>
 
@@ -560,7 +695,7 @@ export const RateHistoryModal: React.FC<Props> = ({
         <div style={{
           flex: 1,
           overflowY: 'auto',
-          maxHeight: '440px',
+          maxHeight: '460px',
           backgroundColor: '#09090b'
         }}>
           {filteredData.length === 0 ? (
@@ -576,10 +711,12 @@ export const RateHistoryModal: React.FC<Props> = ({
               <div style={{ fontSize: '13px', fontWeight: 600, color: '#a1a1aa' }}>
                 No rate history found
               </div>
-              <div style={{ fontSize: '12px', color: '#71717a', maxWidth: '320px' }}>
-                {activeTab === 'current_bill'
-                  ? 'No previous sales history recorded for the items currently in this bill.'
-                  : 'Try searching with a different term or switch to "All Items".'}
+              <div style={{ fontSize: '12px', color: '#71717a', maxWidth: '340px' }}>
+                {activeTab === 'party'
+                  ? `No previous bills found with items for "${currentParty}". Switch to "All Unique Items" to view rates from all bills.`
+                  : activeTab === 'current_bill'
+                  ? 'No previous sales history recorded for the items currently in this draft bill.'
+                  : 'No items match your search filter.'}
               </div>
             </div>
           ) : (
@@ -594,11 +731,11 @@ export const RateHistoryModal: React.FC<Props> = ({
                   letterSpacing: '0.05em',
                   color: '#a1a1aa'
                 }}>
-                  <th style={{ padding: '8px 12px', width: '38px', textAlign: 'center' }}></th>
-                  <th style={{ padding: '8px 14px' }}>Item / Mould Specification</th>
-                  <th style={{ padding: '8px 14px', textAlign: 'right' }}>Recent Rate</th>
-                  <th style={{ padding: '8px 14px' }}>Last Billed Party</th>
-                  <th style={{ padding: '8px 14px' }}>Bill & Date</th>
+                  <th style={{ padding: '9px 12px', width: '38px', textAlign: 'center' }}></th>
+                  <th style={{ padding: '9px 14px' }}>Item / Mould Specification</th>
+                  <th style={{ padding: '9px 14px', textAlign: 'right' }}>Recent Rate</th>
+                  <th style={{ padding: '9px 14px' }}>Most Recent Bill (Kab Gaya)</th>
+                  <th style={{ padding: '9px 14px' }}>Billed Party Context</th>
                 </tr>
               </thead>
               <tbody>
@@ -617,7 +754,7 @@ export const RateHistoryModal: React.FC<Props> = ({
                         fontSize: '12.5px'
                       }}
                       onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = '#18181b';
+                        if (!isSelected) e.currentTarget.style.backgroundColor = '#141417';
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
@@ -642,8 +779,8 @@ export const RateHistoryModal: React.FC<Props> = ({
 
                       {/* Mould Specification */}
                       <td style={{ padding: '10px 14px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontWeight: 600, color: '#fafafa' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 600, color: '#fafafa', fontSize: '13px' }}>
                             {item.mould}
                           </span>
                           {item.isInCurrentBill && (
@@ -654,10 +791,35 @@ export const RateHistoryModal: React.FC<Props> = ({
                               borderRadius: '4px',
                               backgroundColor: 'rgba(56, 189, 248, 0.15)',
                               border: '1px solid rgba(56, 189, 248, 0.35)',
-                              color: '#38bdf8',
-                              letterSpacing: '0.02em'
+                              color: '#38bdf8'
                             }}>
-                              In Bill
+                              In Current Bill
+                            </span>
+                          )}
+                          {currentParty && item.hasBilledToParty && activeTab === 'all' && (
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: 'rgba(52, 211, 153, 0.12)',
+                              border: '1px solid rgba(52, 211, 153, 0.3)',
+                              color: '#34d399'
+                            }}>
+                              Billed to {currentParty}
+                            </span>
+                          )}
+                          {currentParty && !item.hasBilledToParty && activeTab === 'all' && (
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                              border: '1px solid rgba(251, 191, 36, 0.25)',
+                              color: '#fbbf24'
+                            }}>
+                              New for this party
                             </span>
                           )}
                         </div>
@@ -665,33 +827,71 @@ export const RateHistoryModal: React.FC<Props> = ({
 
                       {/* Recent Rate */}
                       <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                        <span style={{
-                          fontWeight: 700,
-                          fontSize: '13.5px',
-                          color: '#34d399',
-                          fontFamily: "'JetBrains Mono', monospace"
-                        }}>
-                          ₹{item.latestPrice.toLocaleString('en-IN')}
-                        </span>
-                      </td>
-
-                      {/* Last Billed Party */}
-                      <td style={{ padding: '10px 14px', color: '#d4d4d8' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                           <span style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '180px'
+                            fontWeight: 700,
+                            fontSize: '14px',
+                            color: '#34d399',
+                            fontFamily: "'JetBrains Mono', monospace"
                           }}>
-                            {item.latestParty || 'Unknown Party'}
+                            ₹{item.latestPrice.toLocaleString('en-IN')}
                           </span>
+                          {item.history.length > 1 && (
+                            <span style={{ fontSize: '10px', color: '#71717a' }}>
+                              Prev: ₹{item.history[1].price.toLocaleString('en-IN')}
+                            </span>
+                          )}
                         </div>
                       </td>
 
-                      {/* Bill & Date */}
-                      <td style={{ padding: '10px 14px', color: '#71717a', fontSize: '11.5px', fontFamily: "'JetBrains Mono', monospace" }}>
-                        <span>#{item.latestToken} • {item.latestDate || 'Recent'}</span>
+                      {/* Sabse Recent Bill Kab Gaya (Date, Token, Time Ago) */}
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                          <Calendar size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '12px' }}>
+                                #{item.latestToken || '—'}
+                              </span>
+                              <span style={{ color: '#71717a', fontSize: '11px' }}>•</span>
+                              <span style={{ color: '#e4e4e7', fontSize: '12px', fontWeight: 500 }}>
+                                {item.latestDate || '—'}
+                              </span>
+                            </div>
+                            <span style={{
+                              fontSize: '10.5px',
+                              fontWeight: 600,
+                              color: item.timeAgo.includes('Today') || item.timeAgo.includes('Yesterday') || item.timeAgo.includes('d ago') ? '#34d399' : '#a1a1aa'
+                            }}>
+                              {item.timeAgo || 'Recent'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Billed Party Context */}
+                      <td style={{ padding: '10px 14px', color: '#d4d4d8' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Building2 size={12} style={{ color: item.hasBilledToParty ? '#38bdf8' : '#71717a', flexShrink: 0 }} />
+                            <span style={{
+                              fontWeight: item.hasBilledToParty ? 600 : 400,
+                              color: item.hasBilledToParty ? '#fafafa' : '#a1a1aa',
+                              fontSize: '12px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '180px'
+                            }}>
+                              {item.latestParty || 'Standard Account'}
+                            </span>
+                          </div>
+                          {item.history.length > 1 && (
+                            <span style={{ fontSize: '10px', color: '#71717a', paddingLeft: '17px' }}>
+                              {item.history.length} bills recorded
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

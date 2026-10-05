@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Plus, Trash2, XCircle, Scissors } from 'lucide-react';
+import { Plus, Trash2, XCircle, Scissors, Boxes } from 'lucide-react';
 
 export interface RowContextMenuState {
   isOpen: boolean;
@@ -17,6 +17,7 @@ interface Props {
   onClearRow: (index: number) => void;
   splitRowIndex?: number | null;
   onToggleTableSplit?: (index: number) => void;
+  onMakeItemGroup?: (index: number) => void;
 }
 
 export const RowContextMenu: React.FC<Props> = ({
@@ -27,7 +28,8 @@ export const RowContextMenu: React.FC<Props> = ({
   onDeleteRow,
   onClearRow,
   splitRowIndex,
-  onToggleTableSplit
+  onToggleTableSplit,
+  onMakeItemGroup
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -222,6 +224,38 @@ export const RowContextMenu: React.FC<Props> = ({
                 ? '✕ Remove Table Divide'
                 : '✂️ Divide Table (Split Below #' + (contextMenu.rowIndex + 1) + ')'}
             </span>
+          </button>
+        </>
+      )}
+
+      {onMakeItemGroup && (
+        <>
+          <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '3px 0' }} />
+          <button
+            type="button"
+            onClick={() => {
+              onMakeItemGroup(contextMenu.rowIndex);
+              onClose();
+            }}
+            className="context-menu-item"
+            style={{
+              width: '100%',
+              padding: '7px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: 'transparent',
+              color: '#f4f4f5',
+              fontSize: '12px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <Boxes size={13} style={{ color: '#ffffff' }} />
+            <span>Make Item Group</span>
           </button>
         </>
       )}

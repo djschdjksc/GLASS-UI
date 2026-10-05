@@ -28,6 +28,7 @@ import {
   Label as ShadcnLabel,
   DatePicker as ShadcnDatePicker,
   Pagination as ShadcnPagination,
+  Select as ShadcnSelect,
   Tooltip,
   toast
 } from './ui/shadcn';
@@ -1938,24 +1939,17 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {/* Printer Selector */}
                 {availablePrinters.length > 0 && (
-                  <select
+                  <ShadcnSelect
                     value={selectedPrinter}
-                    onChange={(e) => setSelectedPrinter(e.target.value)}
-                    style={{
-                      height: '30px',
-                      background: '#18181b',
-                      border: '1px solid #27272a',
-                      borderRadius: '6px',
-                      color: '#f4f4f5',
-                      fontSize: '12px',
-                      padding: '0 8px',
-                      outline: 'none'
-                    }}
+                    onChange={(e: any) => setSelectedPrinter(e.target.value)}
+                    style={{ height: '32px', minWidth: '150px' }}
                   >
-                    {availablePrinters.map(p => (
-                      <option key={p} value={p}>{p}</option>
+                    {availablePrinters.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
                     ))}
-                  </select>
+                  </ShadcnSelect>
                 )}
 
                 <button

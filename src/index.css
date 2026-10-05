@@ -467,21 +467,28 @@ body {
   transform: translateY(-50%) translateX(0);
 }
 
-/* Apple Token Badge */
+/* Apple Token Badge - Simple clean white */
 .apple-token-badge {
-  background: linear-gradient(135deg, #e11d48, #be123c);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.45);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: none;
   color: #ffffff;
-  padding: 4px 12px;
-  border-radius: 8px;
+  padding: 3px 9px;
+  border-radius: 6px;
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  display: flex;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.apple-token-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
 }
 
 /* Direction Pill Selector */

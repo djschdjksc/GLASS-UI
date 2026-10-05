@@ -2382,9 +2382,12 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                                       borderBottom: '1px solid #27272a'
                                     }}
                                   >
-                                    <span style={{ color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>
-                                      {sug.name}
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <Package size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                                      <span style={{ color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>
+                                        {sug.name}
+                                      </span>
+                                    </div>
                                     <span style={{ color: '#a1a1aa', fontSize: '11px' }}>{sug.desc || ''}</span>
                                   </div>
                                 );

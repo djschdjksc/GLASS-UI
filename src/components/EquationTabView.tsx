@@ -40,7 +40,8 @@ import {
   ChevronDown,
   FileText,
   Users,
-  UserPlus
+  UserPlus,
+  Building2
 } from 'lucide-react';
 
 export interface Contributor {
@@ -112,6 +113,18 @@ export const EquationTabView: React.FC = () => {
 
     return { multMap: mult, boxMap: box, weightMap: wt };
   }, [conversions]);
+
+  // Sort bills descending by creation timestamp / date / token so newest bill is first
+  const sortedBillsDesc = useMemo(() => {
+    if (!bills || bills.length === 0) return [];
+    return [...bills].sort((a, b) => {
+      const timeA = a.createdAt || (a.date ? new Date(a.date).getTime() : 0) || Number(a.token) || 0;
+      const timeB = b.createdAt || (b.date ? new Date(b.date).getTime() : 0) || Number(b.token) || 0;
+      return timeB - timeA;
+    });
+  }, [bills]);
+
+  const mostRecentBill = sortedBillsDesc[0] || null;
 
   // Selected Bill state
   const [billSearchInput, setBillSearchInput] = useState<string>('');
@@ -185,23 +198,39 @@ export const EquationTabView: React.FC = () => {
     setTimeout(() => setStatusMsg(null), 4000);
   }, []);
 
-  // Load Bill Function
+  // Helper to update party dropdown coordinates
+  const updateDropdownPos = useCallback((el: HTMLElement) => {
+    const rect = el.getBoundingClientRect();
+    setDropdownPos({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: Math.max(rect.width, 360)
+    });
+  }, []);
+
+  // Load Bill Function (Defaults to most recent bill if no query provided)
   const loadBillData = useCallback(
     (targetIdOrToken?: string) => {
       const query = (targetIdOrToken || billSearchInput || selectedBillId).trim().toLowerCase();
-      if (!query && bills.length === 0) {
+      if (!query && sortedBillsDesc.length === 0) {
         showNotification('No bills available in database to load', 'error');
         return;
       }
 
-      // Match by exact id, token, or partial search
-      const matched = bills.find((b) => {
-        if (!query) return true;
-        const bId = String(b.id || '').toLowerCase();
-        const bToken = String(b.token || '').toLowerCase();
-        const bParty = String(b.party || '').toLowerCase();
-        return bId === query || bToken === query || bParty.includes(query);
-      }) || bills[0];
+      // Match by exact id, token, or partial search; fallback to most recent bill
+      let matched: typeof bills[0] | undefined;
+      if (query) {
+        matched = sortedBillsDesc.find((b) => {
+          const bId = String(b.id || '').toLowerCase();
+          const bToken = String(b.token || '').toLowerCase();
+          const bParty = String(b.party || '').toLowerCase();
+          return bId === query || bToken === query || bParty.includes(query);
+        });
+      }
+
+      if (!matched) {
+        matched = mostRecentBill || sortedBillsDesc[0];
+      }
 
       if (!matched) {
         showNotification(`Bill "${query}" not found in database`, 'error');
@@ -277,8 +306,17 @@ export const EquationTabView: React.FC = () => {
         }
       ]);
     },
-    [bills, billSearchInput, selectedBillId, multMap, boxMap, weightMap]
+    [sortedBillsDesc, mostRecentBill, billSearchInput, selectedBillId, multMap, boxMap, weightMap, showNotification]
   );
+
+  // Auto-load most recent bill by default on initial mount
+  const hasAutoLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!hasAutoLoadedRef.current && sortedBillsDesc.length > 0 && !selectedBillId && mostRecentBill) {
+      hasAutoLoadedRef.current = true;
+      loadBillData(mostRecentBill.id);
+    }
+  }, [sortedBillsDesc, selectedBillId, mostRecentBill, loadBillData]);
 
   // Real-time Contributor Shares & Auto-Equal Split Computation
   const contribShares = useMemo(() => {
@@ -464,9 +502,29 @@ export const EquationTabView: React.FC = () => {
     showNotification(`Added "${trimmed}" with ${formatINR(Number(modalPartyAmount) || 0)} share`, 'success');
   };
 
-  const handleAddContributor = () => {
-    handleOpenAddPartyModal();
-  };
+  // Add another party/contributor directly inline
+  const handleAddContributor = useCallback(() => {
+    macAudio.playClick();
+    const newId = 'c_' + Date.now();
+    setContributors((prev) => [
+      ...prev,
+      {
+        id: newId,
+        name: '',
+        paidAmount: '' as any
+      }
+    ]);
+    showNotification('Party added. Type name or pick from list', 'info');
+    setTimeout(() => {
+      const input = document.getElementById(`party-input-${newId}`) as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+        setPartyDropdownOpenFor(newId);
+        setPartyFilterText('');
+        updateDropdownPos(input);
+      }
+    }, 60);
+  }, [updateDropdownPos, showNotification]);
 
   const handleRemoveContributor = (id: string) => {
     macAudio.playClick();
@@ -793,16 +851,6 @@ export const EquationTabView: React.FC = () => {
       .slice(0, 40);
   }, [allPartyNames, partyFilterText]);
 
-  // Helper to update party dropdown coordinates
-  const updateDropdownPos = useCallback((el: HTMLElement) => {
-    const rect = el.getBoundingClientRect();
-    setDropdownPos({
-      top: rect.bottom + 4,
-      left: rect.left,
-      width: Math.max(rect.width, 320)
-    });
-  }, []);
-
   // Sync floating party dropdown position on window scroll or resize
   useEffect(() => {
     if (!partyDropdownOpenFor) return;
@@ -840,11 +888,11 @@ export const EquationTabView: React.FC = () => {
     };
   }, [partyDropdownOpenFor]);
 
-  // Bill search suggestions list for left panel
+  // Bill search suggestions list for left panel (sorted most recent first)
   const filteredBillSuggestions = useMemo(() => {
     const q = billSearchInput.toLowerCase().trim();
-    if (!q) return bills.slice(0, 15);
-    return bills
+    if (!q) return sortedBillsDesc.slice(0, 15);
+    return sortedBillsDesc
       .filter((b) => {
         const idMatch = String(b.id || '').toLowerCase().includes(q);
         const tokenMatch = String(b.token || '').toLowerCase().includes(q);
@@ -852,7 +900,7 @@ export const EquationTabView: React.FC = () => {
         return idMatch || tokenMatch || partyMatch;
       })
       .slice(0, 15);
-  }, [bills, billSearchInput]);
+  }, [sortedBillsDesc, billSearchInput]);
 
   // Click outside listener for bill suggestions portal
   useEffect(() => {
@@ -1079,11 +1127,11 @@ export const EquationTabView: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* ── LEFT PANEL: Bill Selector & Contributors Manager (~320px) ───── */}
+        {/* ── LEFT PANEL: Bill Selector & Contributors Manager (~340px) ───── */}
         <div
           style={{
-            flex: '0 0 320px',
-            width: '320px',
+            flex: '0 0 340px',
+            width: '340px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
@@ -1096,43 +1144,32 @@ export const EquationTabView: React.FC = () => {
             className="glass-panel"
             style={{
               borderRadius: '8px',
-              padding: '10px',
+              padding: '10px 12px',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
-              flexShrink: 0
+              flexShrink: 0,
+              background: '#121215',
+              border: '1px solid #27272a'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <FileText size={13} color="#94a3b8" />
-                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.04em' }}>
+                <FileText size={13} color="#38bdf8" />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#e4e4e7', letterSpacing: '0.02em' }}>
                   Source Bill
                 </span>
               </div>
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: '#38bdf8',
-                  background: 'rgba(56, 189, 248, 0.08)',
-                  padding: '1px 6px',
-                  borderRadius: '4px',
-                  border: '1px solid rgba(56, 189, 248, 0.2)'
-                }}
-              >
-                {bills.length} Bills
-              </span>
             </div>
 
             {/* Bill Search & Load Input */}
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
               <div style={{ flex: 1, position: 'relative' }}>
-                <Search size={12} style={{ position: 'absolute', left: '8px', top: '8px', color: '#71717a' }} />
+                <Search size={13} style={{ position: 'absolute', left: '8px', top: '7.5px', color: '#71717a' }} />
                 <input
                   ref={billInputRef}
                   type="text"
-                  placeholder="Token / Party / ID..."
+                  placeholder="Search bill token or party..."
                   value={billSearchInput}
                   autoComplete="off"
                   onFocus={(e) => {
@@ -1141,7 +1178,7 @@ export const EquationTabView: React.FC = () => {
                     setBillDropdownPos({
                       top: rect.bottom + 4,
                       left: rect.left,
-                      width: Math.max(rect.width, 300)
+                      width: Math.max(rect.width, 340)
                     });
                   }}
                   onChange={(e) => {
@@ -1151,7 +1188,7 @@ export const EquationTabView: React.FC = () => {
                     setBillDropdownPos({
                       top: rect.bottom + 4,
                       left: rect.left,
-                      width: Math.max(rect.width, 300)
+                      width: Math.max(rect.width, 340)
                     });
                   }}
                   onKeyDown={(e) => {
@@ -1166,20 +1203,20 @@ export const EquationTabView: React.FC = () => {
                   style={{
                     width: '100%',
                     height: '28px',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    border: billDropdownOpen ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                    background: '#09090b',
+                    border: billDropdownOpen ? '1px solid #38bdf8' : '1px solid #27272a',
                     borderRadius: '6px',
                     paddingLeft: '26px',
                     paddingRight: '8px',
                     color: '#f4f4f5',
-                    fontSize: '11.5px',
+                    fontSize: '12px',
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
 
-              <Tooltip title="Load Selected Bill (Ctrl+L)" side="bottom">
+              <Tooltip title="Load Selected Bill (Enter)" side="bottom">
                 <button
                   type="button"
                   className="mac-btn"
@@ -1188,14 +1225,21 @@ export const EquationTabView: React.FC = () => {
                     loadBillData();
                   }}
                   style={{
+                    width: '28px',
                     height: '28px',
-                    padding: '0 10px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap'
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '6px',
+                    background: '#27272a',
+                    border: '1px solid #3f3f46',
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    flexShrink: 0
                   }}
                 >
-                  Load
+                  <ArrowRight size={13} />
                 </button>
               </Tooltip>
             </div>
@@ -1204,31 +1248,53 @@ export const EquationTabView: React.FC = () => {
             {loadedBillParty && (
               <div
                 style={{
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  background: '#18181b',
+                  border: '1px solid #27272a',
                   borderRadius: '6px',
-                  padding: '6px 8px',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
+                  padding: '7px 9px',
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: '4px',
                   fontSize: '11px'
                 }}
               >
-                <div>
-                  <span style={{ color: '#71717a' }}>Party: </span>
-                  <span style={{ fontWeight: 600, color: '#f4f4f5' }}>{loadedBillParty}</span>
+                {/* Full Party Name on its own row so it is never truncated */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                    <Building2 size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, color: '#f4f4f5', fontSize: '11.5px', wordBreak: 'break-word', lineHeight: 1.3 }}>
+                      {loadedBillParty}
+                    </span>
+                  </div>
+                  {mostRecentBill && selectedBillId === mostRecentBill.id && (
+                    <span
+                      style={{
+                        fontSize: '9.5px',
+                        fontWeight: 600,
+                        color: '#38bdf8',
+                        background: 'rgba(56, 189, 248, 0.12)',
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                        flexShrink: 0
+                      }}
+                    >
+                      Latest
+                    </span>
+                  )}
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ color: '#71717a' }}>Gross: </span>
-                  <span style={{ fontWeight: 700, color: '#34d399' }}>{formatINR(loadedBillTotal)}</span>
-                </div>
-                <div>
-                  <span style={{ color: '#71717a' }}>Date: </span>
-                  <span style={{ color: '#94a3b8' }}>{loadedBillDate || '—'}</span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ color: '#71717a' }}>Items: </span>
-                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>{baseItems.length} Mould</span>
+                {/* Meta details row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#a1a1aa', fontSize: '10.5px', marginTop: '2px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: '#38bdf8', fontWeight: 700 }}>#{loadedBillToken || selectedBillId}</span>
+                    <span>•</span>
+                    <span>{loadedBillDate || '—'}</span>
+                    <span>•</span>
+                    <span>{baseItems.length} Mould</span>
+                  </div>
+                  <span style={{ fontWeight: 700, color: '#34d399', fontSize: '11.5px' }}>
+                    {formatINR(loadedBillTotal)}
+                  </span>
                 </div>
               </div>
             )}
@@ -1240,52 +1306,55 @@ export const EquationTabView: React.FC = () => {
             style={{
               flex: 1,
               borderRadius: '8px',
-              padding: '10px',
+              padding: '10px 12px',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
               minHeight: 0,
-              overflow: 'hidden'
+              overflow: 'hidden',
+              background: '#121215',
+              border: '1px solid #27272a'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Users size={13} color="#94a3b8" />
-                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.04em' }}>
+                <Users size={13} color="#38bdf8" />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#e4e4e7', letterSpacing: '0.02em' }}>
                   Contributors
                 </span>
                 <span
                   style={{
-                    fontSize: '10px',
+                    fontSize: '10.5px',
                     fontWeight: 600,
                     color: '#c084fc',
-                    background: 'rgba(192, 132, 252, 0.08)',
-                    padding: '1px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid rgba(192, 132, 252, 0.2)'
+                    marginLeft: '4px'
                   }}
                 >
                   Paid: {formatINR(totalPaidSum)}
                 </span>
               </div>
 
-              <Tooltip title="Add contributing party to distribution" side="bottom">
+              {/* Clean + icon button to add another party */}
+              <Tooltip title="Add Another Party ( + )" side="bottom">
                 <button
                   type="button"
                   className="mac-btn"
                   onClick={handleAddContributor}
                   style={{
+                    width: '24px',
                     height: '24px',
-                    padding: '0 8px',
-                    fontSize: '10.5px',
-                    fontWeight: 600,
-                    display: 'inline-flex',
+                    padding: 0,
+                    borderRadius: '6px',
+                    background: '#27272a',
+                    border: '1px solid #3f3f46',
+                    color: '#38bdf8',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    justifyContent: 'center',
+                    cursor: 'pointer'
                   }}
                 >
-                  <Plus size={11} color="#38bdf8" />
-                  <span>Add Party</span>
+                  <Plus size={13} />
                 </button>
               </Tooltip>
             </div>
@@ -1313,28 +1382,26 @@ export const EquationTabView: React.FC = () => {
                   <div
                     key={c.id}
                     style={{
-                      background: 'rgba(24, 24, 27, 0.7)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: '#18181b',
+                      border: '1px solid #27272a',
                       borderRadius: '8px',
                       padding: '8px 10px',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '7px',
-                      transition: 'border-color 0.15s ease, background 0.15s ease',
-                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)'
+                      transition: 'border-color 0.15s ease'
                     }}
                   >
                     {/* Top Row: Index Badge + Party Name Input + Trash */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span
                         style={{
-                          fontSize: '10px',
+                          fontSize: '10.5px',
                           fontWeight: 700,
-                          color: '#a1a1aa',
-                          background: 'rgba(255, 255, 255, 0.06)',
+                          color: '#71717a',
+                          background: '#27272a',
                           borderRadius: '4px',
-                          padding: '1px 5px',
-                          fontFamily: "'JetBrains Mono', monospace"
+                          padding: '1px 5px'
                         }}
                       >
                         #{idx + 1}
@@ -1344,8 +1411,8 @@ export const EquationTabView: React.FC = () => {
                           id={`party-input-${c.id}`}
                           data-party-input={c.id}
                           type="text"
-                          placeholder="Search or enter party name..."
                           value={c.name}
+                          placeholder="Select or enter party..."
                           autoComplete="off"
                           autoCorrect="off"
                           spellCheck={false}
@@ -1394,14 +1461,13 @@ export const EquationTabView: React.FC = () => {
                           style={{
                             width: '100%',
                             height: '26px',
-                            background: 'rgba(0, 0, 0, 0.45)',
-                            border: partyDropdownOpenFor === c.id ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: '#09090b',
+                            border: partyDropdownOpenFor === c.id ? '1px solid #38bdf8' : '1px solid #27272a',
                             borderRadius: '5px',
                             padding: '0 8px',
                             color: '#f4f4f5',
-                            fontSize: '11.5px',
+                            fontSize: '12px',
                             fontWeight: 600,
-                            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                             outline: 'none',
                             boxSizing: 'border-box'
                           }}
@@ -1421,6 +1487,7 @@ export const EquationTabView: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            borderRadius: '5px',
                             color: contributors.length <= 1 ? '#3f3f46' : '#71717a'
                           }}
                           onMouseEnter={(e) => {
@@ -1437,10 +1504,10 @@ export const EquationTabView: React.FC = () => {
 
                     {/* Middle Row: Amount in Bill + % Share */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '6px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        <span style={{ color: '#71717a', fontSize: '10.5px', fontWeight: 600 }}>Amount:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#71717a', fontSize: '10.5px', fontWeight: 500 }}>Amount:</span>
                         <div style={{ position: 'relative', flex: 1 }}>
-                          <span style={{ position: 'absolute', left: '5px', top: '4px', fontSize: '10.5px', color: '#71717a', fontWeight: 700 }}>₹</span>
+                          <span style={{ position: 'absolute', left: '5px', top: '3.5px', fontSize: '10.5px', color: '#71717a' }}>₹</span>
                           <input
                             id={`party-amount-${c.id}`}
                             type="number"
@@ -1453,27 +1520,26 @@ export const EquationTabView: React.FC = () => {
                             style={{
                               width: '100%',
                               height: '23px',
-                              background: 'rgba(0, 0, 0, 0.4)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              background: '#09090b',
+                              border: '1px solid #27272a',
                               borderRadius: '4px',
                               paddingLeft: '14px',
                               paddingRight: '4px',
-                              color: isAutoSplit ? '#94a3b8' : '#34d399',
+                              color: isAutoSplit ? '#a1a1aa' : '#34d399',
                               fontSize: '11px',
                               textAlign: 'right',
                               outline: 'none',
-                              fontWeight: 700,
-                              fontFamily: "'JetBrains Mono', monospace",
+                              fontWeight: 600,
                               boxSizing: 'border-box'
                             }}
                             onFocus={(e) => (e.currentTarget.style.borderColor = '#38bdf8')}
-                            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                            onBlur={(e) => (e.currentTarget.style.borderColor = '#27272a')}
                           />
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        <span style={{ color: '#71717a', fontSize: '10.5px', fontWeight: 600 }}>Share:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#71717a', fontSize: '10.5px', fontWeight: 500 }}>Share:</span>
                         <div style={{ position: 'relative', flex: 1 }}>
                           <input
                             type="number"
@@ -1487,8 +1553,8 @@ export const EquationTabView: React.FC = () => {
                             style={{
                               width: '100%',
                               height: '23px',
-                              background: 'rgba(0, 0, 0, 0.4)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              background: '#09090b',
+                              border: '1px solid #27272a',
                               borderRadius: '4px',
                               paddingLeft: '4px',
                               paddingRight: '14px',
@@ -1496,14 +1562,13 @@ export const EquationTabView: React.FC = () => {
                               fontSize: '11px',
                               textAlign: 'right',
                               outline: 'none',
-                              fontWeight: 700,
-                              fontFamily: "'JetBrains Mono', monospace",
+                              fontWeight: 600,
                               boxSizing: 'border-box'
                             }}
                             onFocus={(e) => (e.currentTarget.style.borderColor = '#c084fc')}
-                            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                            onBlur={(e) => (e.currentTarget.style.borderColor = '#27272a')}
                           />
-                          <span style={{ position: 'absolute', right: '4px', top: '4px', fontSize: '10.5px', color: '#71717a', fontWeight: 700 }}>%</span>
+                          <span style={{ position: 'absolute', right: '4px', top: '3.5px', fontSize: '10.5px', color: '#71717a' }}>%</span>
                         </div>
                       </div>
                     </div>
@@ -1515,19 +1580,57 @@ export const EquationTabView: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '3px 6px',
-                        background: 'rgba(0, 0, 0, 0.25)',
+                        background: '#121215',
+                        border: '1px solid rgba(255, 255, 255, 0.04)',
                         borderRadius: '4px',
                         fontSize: '10.5px'
                       }}
                     >
                       <span style={{ color: '#71717a' }}>Net (+18% GST):</span>
-                      <strong style={{ color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                      <strong style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 600 }}>
                         {formatINR(calculatedBillTotal)}
                       </strong>
                     </div>
                   </div>
                 );
               })}
+
+              {/* + Add Another Party inline button */}
+              <button
+                type="button"
+                className="mac-btn"
+                onClick={handleAddContributor}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px dashed #3f3f46',
+                  color: '#94a3b8',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  marginTop: '4px',
+                  flexShrink: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#38bdf8';
+                  e.currentTarget.style.color = '#38bdf8';
+                  e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#3f3f46';
+                  e.currentTarget.style.color = '#94a3b8';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                }}
+              >
+                <Plus size={13} />
+                <span>Add Another Party</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2386,7 +2489,10 @@ export const EquationTabView: React.FC = () => {
                             onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = '#27272a')}
                             onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.background = 'transparent')}
                           >
-                            <span>{p.name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Building2 size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                              <span>{p.name}</span>
+                            </div>
                             {p.station && (
                               <span style={{ fontSize: '10px', color: '#71717a' }}>{p.station}</span>
                             )}
@@ -2623,7 +2729,7 @@ export const EquationTabView: React.FC = () => {
             zIndex: 99999999,
             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9)',
             padding: '5px',
-            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
           }}
           onMouseDown={(e) => {
             // Prevent input blur before click event fires
@@ -2690,11 +2796,12 @@ export const EquationTabView: React.FC = () => {
                   }}
                   onMouseEnter={() => setFocusedSuggestionIndex(idx)}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                    <span style={{ fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                    <Building2 size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, wordBreak: 'break-word', lineHeight: 1.3 }}>
                       {p.name}
                     </span>
-                    {isCurrent && <Check size={12} color="#34d399" />}
+                    {isCurrent && <Check size={12} color="#34d399" style={{ flexShrink: 0 }} />}
                   </div>
                   {(p.station || p.district) && (
                     <span
@@ -2773,7 +2880,7 @@ export const EquationTabView: React.FC = () => {
             zIndex: 99999999,
             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9)',
             padding: '5px',
-            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
           }}
           onMouseDown={(e) => {
             // Prevent input blur before click event fires
@@ -2840,12 +2947,18 @@ export const EquationTabView: React.FC = () => {
                     }}
                   >
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                        <FileText size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
                         <span style={{ fontWeight: 700, color: '#38bdf8' }}>#{b.token || b.id}</span>
-                        <span style={{ fontWeight: 600 }}>{b.party || 'Standard Account'}</span>
+                        <span style={{ fontWeight: 600, wordBreak: 'break-word' }}>{b.party || 'Standard Account'}</span>
+                        {mostRecentBill && b.id === mostRecentBill.id && (
+                          <span style={{ fontSize: '9px', fontWeight: 700, background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0 4px', borderRadius: '3px' }}>
+                            Recent
+                          </span>
+                        )}
                         {isSelected && <Check size={12} color="#34d399" />}
                       </div>
-                      <div style={{ fontSize: '10.5px', color: '#71717a' }}>{b.date || '—'}</div>
+                      <div style={{ fontSize: '10.5px', color: '#71717a', paddingLeft: '20px' }}>{b.date || '—'}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#34d399' }}>

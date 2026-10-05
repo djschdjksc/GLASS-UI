@@ -1,6 +1,201 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Check } from 'lucide-react';
+import {
+  ChevronDown,
+  Check,
+  FileText,
+  Wallet,
+  BarChart3,
+  Target,
+  Calendar,
+  HelpCircle,
+  MessageSquare,
+  User,
+  Receipt,
+  Bell,
+  Shield,
+  Palette,
+  Truck,
+  Package,
+  Train,
+  Printer,
+  Settings,
+  Download,
+  Upload,
+  Trash2,
+  Tag,
+  Activity,
+  Clock,
+  Store,
+  Layers,
+  Calculator,
+  Landmark,
+  ArrowLeftRight,
+  TrendingUp,
+  Coins,
+  Building2,
+  Globe,
+  BookOpen,
+  Car,
+  Send,
+  CreditCard,
+  Boxes,
+  ShoppingBag,
+  Wrench,
+  Bus,
+  Sparkles,
+  CircleDot,
+  Undo2,
+  RotateCcw,
+  ShoppingCart,
+  FileCheck,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Scale,
+  QrCode,
+  Filter,
+  File,
+  HardDrive,
+  CheckCircle2
+} from 'lucide-react';
+
+export function getSmartOptionIcon(label: any, value?: any): React.ReactNode {
+  const text = (
+    typeof label === 'string'
+      ? label
+      : typeof value === 'string'
+      ? value
+      : ''
+  ).toLowerCase().trim();
+
+  if (!text) return <Sparkles size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // All / Everything / Filter
+  if (text === 'all' || text.includes('all types') || text.includes('all categories') || text.includes('filter'))
+    return <Filter size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Planning / Documents / Reports
+  if (text.includes('document') || text.includes('doc') || text.includes('file'))
+    return <FileText size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('budget') || text.includes('wallet') || text.includes('finance'))
+    return <Wallet size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('report') || text.includes('analytic') || text.includes('stat'))
+    return <BarChart3 size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('goal') || text.includes('target'))
+    return <Target size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('calendar') || text.includes('date') || text.includes('schedule'))
+    return <Calendar size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Support
+  if (text.includes('help') || text.includes('support'))
+    return <HelpCircle size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('contact') || text.includes('message') || text.includes('chat'))
+    return <MessageSquare size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('status') || text.includes('active') || text.includes('activity'))
+    return <Activity size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('community') || text.includes('globe') || text.includes('network'))
+    return <Globe size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Overview / Transactions / Accounts
+  if (text.includes('transaction') || text.includes('transfer'))
+    return <ArrowLeftRight size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('investment') || text.includes('growth'))
+    return <TrendingUp size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('account') || text.includes('bank') || text.includes('ledger'))
+    return <Landmark size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('spend') || text.includes('expense') || text.includes('coin'))
+    return <Coins size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Account
+  if (text.includes('profile') || text.includes('user'))
+    return <User size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('billing') || text.includes('invoice') || text.includes('tax invoice'))
+    return <Receipt size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('notification') || text.includes('alert') || text.includes('bell'))
+    return <Bell size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('security') || text.includes('lock') || text.includes('shield'))
+    return <Shield size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('appearance') || text.includes('theme') || text.includes('palette') || text.includes('dark') || text.includes('glass'))
+    return <Palette size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Inventory Flow: Inward / Outward / Balance / Barcode
+  if (text.includes('inward'))
+    return <ArrowDownLeft size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('outward'))
+    return <ArrowUpRight size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('balance'))
+    return <Scale size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('barcode') || text.includes('qr'))
+    return <QrCode size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // ERP Billing Document Types (Check Return BEFORE Sale to distinguish SALE vs SALE RETURN)
+  if (text.includes('return') || text.includes('refund'))
+    return <RotateCcw size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('retail'))
+    return <ShoppingBag size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('wholesale'))
+    return <Boxes size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('estimate') || text.includes('calc') || text.includes('equation'))
+    return <Calculator size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('challan') || text.includes('delivery'))
+    return <Truck size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('proforma'))
+    return <FileText size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('quotation') || text.includes('quote'))
+    return <FileText size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('voucher') || text.includes('stock voucher'))
+    return <FileCheck size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('purchase'))
+    return <ShoppingCart size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('sale') || text.includes('sale bill'))
+    return <Receipt size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('credit note'))
+    return <Coins size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('debit note'))
+    return <CreditCard size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('job work'))
+    return <Wrench size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Transport & Vehicles
+  if (text.includes('truck'))
+    return <Truck size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('tempo'))
+    return <Truck size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('auto') || text.includes('car') || text.includes('vehicle') || text.includes('own vehicle'))
+    return <Car size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('courier') || text.includes('parcel') || text.includes('package') || text.includes('box'))
+    return <Package size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('train'))
+    return <Train size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('bus'))
+    return <Bus size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('by hand') || text.includes('hand delivery'))
+    return <Send size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Paper Sizes & Formats
+  if (text.includes('a4') || text.includes('a5') || text.includes('letter') || text.includes('sheet') || text.includes('legal'))
+    return <FileText size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('roll') || text.includes('thermal') || text.includes('80mm') || text.includes('58mm') || text.includes('inch'))
+    return <Printer size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Printers & Hardware
+  if (text.includes('printer') || text.includes('print') || text.includes('epson') || text.includes('pos') || text.includes('tvs') || text.includes('tsp') || text.includes('pdf'))
+    return <Printer size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('default'))
+    return <CheckCircle2 size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  // Slip & Inventory
+  if (text.includes('slip') || text.includes('pending') || text.includes('order'))
+    return <Clock size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('glass') || text.includes('item') || text.includes('stock') || text.includes('mould'))
+    return <Layers size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('store') || text.includes('warehouse'))
+    return <Store size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+  if (text.includes('party') || text.includes('company') || text.includes('firm'))
+    return <Building2 size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
+
+  return <CircleDot size={13} style={{ color: '#ffffff', flexShrink: 0 }} />;
+}
 
 // =========================================================================
 // 1. BUTTON COMPONENT (ui.shadcn.com/docs/components/button)
@@ -459,6 +654,9 @@ export const Label: React.FC<React.LabelHTMLAttributes<HTMLLabelElement>> = ({ s
 export interface SelectOption {
   value: string;
   label: React.ReactNode;
+  icon?: React.ReactNode;
+  category?: string;
+  description?: string;
   disabled?: boolean;
 }
 
@@ -528,18 +726,28 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       }
     }, [controlledValue]);
 
-    // Parse options from children (<option>) or props.options
+    // Parse options from children (<option>) or props.options with smart icon deduction
     const parsedOptions: SelectOption[] = useMemo(() => {
-      if (options && options.length > 0) return options;
+      if (options && options.length > 0) {
+        return options.map((opt) => ({
+          ...opt,
+          icon: opt.icon !== undefined ? opt.icon : getSmartOptionIcon(opt.label, opt.value)
+        }));
+      }
       const list: SelectOption[] = [];
       React.Children.forEach(children, (child) => {
         if (React.isValidElement(child)) {
           const childProps = (child as React.ReactElement<any>).props;
           if (child.type === 'option') {
             const optVal = childProps.value !== undefined ? String(childProps.value) : String(childProps.children || '');
+            const optLabel = childProps.children ?? optVal;
+            const optIcon = childProps['data-icon'] !== undefined ? childProps['data-icon'] : getSmartOptionIcon(optLabel, optVal);
+            const optCategory = childProps['data-category'];
             list.push({
               value: optVal,
-              label: childProps.children ?? optVal,
+              label: optLabel,
+              icon: optIcon,
+              category: optCategory,
               disabled: Boolean(childProps.disabled)
             });
           }
@@ -556,7 +764,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     const updatePosition = useCallback(() => {
       if (!triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
-      const estimatedHeight = Math.min(260, parsedOptions.length * 34 + 10);
+      const estimatedHeight = Math.min(280, parsedOptions.length * 36 + 10);
       const spaceBelow = window.innerHeight - rect.bottom;
       const openUpward = spaceBelow < estimatedHeight && rect.top > estimatedHeight;
 
@@ -638,7 +846,13 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       if (disabled) return;
 
       if (!isOpen) {
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === ' ' || e.key === 'Enter') {
+        if (e.key === 'Enter') {
+          if (onKeyDown) {
+            onKeyDown(e);
+            return;
+          }
+        }
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === ' ') {
           e.preventDefault();
           updatePosition();
           const curIdx = parsedOptions.findIndex((o) => String(o.value) === String(internalValue));
@@ -667,6 +881,10 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
               setIsOpen(false);
               if (onChange) onChange({ target: { value: opt.value, name } });
               if (onValueChange) onValueChange(opt.value);
+              if (onKeyDown) {
+                onKeyDown(e);
+                return;
+              }
               // Move focus to next focusable element
               setTimeout(() => {
                 if (!triggerRef.current) return;
@@ -679,7 +897,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 ].join(',');
                 const allFocusable = Array.from(
                   document.querySelectorAll<HTMLElement>(focusableSelectors)
-                ).filter(el => el.offsetParent !== null); // only visible elements
+                ).filter((el) => el.offsetParent !== null);
                 const currentIdx = allFocusable.indexOf(triggerRef.current);
                 const nextEl = allFocusable[currentIdx + 1];
                 if (nextEl) {
@@ -711,6 +929,8 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       ? placeholder
       : parsedOptions[0]?.label || '';
 
+    const currentIcon = activeOption?.icon || (activeOption ? getSmartOptionIcon(activeOption.label, activeOption.value) : null);
+
     return (
       <>
         <button
@@ -724,8 +944,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           data-np-target={dataNpTarget}
           disabled={disabled}
           onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-            // Only handle genuine mouse clicks, not keyboard-synthesized clicks
-            if (e.detail === 0) return; // detail===0 means keyboard-triggered click
+            if (e.detail === 0) return;
             handleToggle();
           }}
           onKeyDown={handleTriggerKeyDown}
@@ -762,24 +981,32 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           onBlur={() => setIsFocused(false)}
           {...restProps}
         >
-          <span
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              flex: 1,
-              textAlign: 'left'
-            }}
-          >
-            {displayText}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+            {currentIcon && (
+              <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: '#94a3b8' }}>
+                {currentIcon}
+              </span>
+            )}
+            <span
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flex: 1,
+                textAlign: 'left'
+              }}
+            >
+              {displayText}
+            </span>
+          </div>
           <ChevronDown
             size={12}
             style={{
               color: '#71717a',
               transition: 'transform 0.15s ease',
               transform: isOpen ? 'rotate(180deg)' : 'none',
-              flexShrink: 0
+              flexShrink: 0,
+              marginLeft: '4px'
             }}
           />
         </button>
@@ -795,15 +1022,15 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 top: coords.openUpward ? 'auto' : `${coords.top}px`,
                 bottom: coords.openUpward ? `${Math.max(4, window.innerHeight - coords.top)}px` : 'auto',
                 left: `${coords.left}px`,
-                minWidth: `${Math.max(coords.width, 140)}px`,
-                maxWidth: '400px',
-                maxHeight: '260px',
+                minWidth: `${Math.max(coords.width, 160)}px`,
+                maxWidth: '420px',
+                maxHeight: '280px',
                 overflowY: 'auto',
-                background: '#09090b',
+                background: '#121215',
                 border: '1px solid #27272a',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 padding: '4px',
-                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.85), 0 0 1px rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.15)',
                 zIndex: 99999999,
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
                 boxSizing: 'border-box',
@@ -815,33 +1042,67 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 const isSelected = String(opt.value) === String(internalValue);
                 const isHighlighted = idx === highlightedIdx;
 
+                const prevCategory = idx > 0 ? parsedOptions[idx - 1].category : undefined;
+                const showCategoryHeader = opt.category && opt.category !== prevCategory;
+
                 return (
-                  <div
-                    key={String(opt.value) + idx}
-                    onClick={() => handleSelectOption(opt)}
-                    onMouseEnter={() => setHighlightedIdx(idx)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: isSelected ? 600 : 500,
-                      color: opt.disabled ? '#52525b' : isSelected ? '#ffffff' : '#f4f4f5',
-                      background: isHighlighted ? '#27272a' : isSelected ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-                      cursor: opt.disabled ? 'not-allowed' : 'pointer',
-                      userSelect: 'none',
-                      transition: 'background-color 0.1s ease',
-                      gap: '8px',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</span>
-                    {isSelected && (
-                      <Check size={13} style={{ color: '#f4f4f5', flexShrink: 0, marginLeft: '6px' }} />
+                  <React.Fragment key={String(opt.value) + idx}>
+                    {showCategoryHeader && (
+                      <div
+                        style={{
+                          padding: '6px 8px 3px',
+                          fontSize: '10.5px',
+                          fontWeight: 600,
+                          color: '#71717a',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase',
+                          userSelect: 'none'
+                        }}
+                      >
+                        {opt.category}
+                      </div>
                     )}
-                  </div>
+                    <div
+                      onClick={() => handleSelectOption(opt)}
+                      onMouseEnter={() => setHighlightedIdx(idx)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: isSelected ? 600 : 500,
+                        color: opt.disabled ? '#52525b' : isSelected ? '#ffffff' : '#f4f4f5',
+                        background: isHighlighted ? '#27272a' : isSelected ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                        cursor: opt.disabled ? 'not-allowed' : 'pointer',
+                        userSelect: 'none',
+                        transition: 'background-color 0.1s ease',
+                        gap: '8px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                        {opt.icon && (
+                          <span
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              color: isHighlighted ? '#ffffff' : isSelected ? '#38bdf8' : '#94a3b8',
+                              flexShrink: 0,
+                              transition: 'color 0.1s ease'
+                            }}
+                          >
+                            {opt.icon}
+                          </span>
+                        )}
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</span>
+                      </div>
+                      {isSelected && (
+                        <Check size={13} style={{ color: '#38bdf8', flexShrink: 0, marginLeft: '6px' }} />
+                      )}
+                    </div>
+                  </React.Fragment>
                 );
               })}
             </div>,
@@ -852,6 +1113,101 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
   }
 );
 Select.displayName = 'Select';
+
+// =========================================================================
+// 9.1 DROPDOWN MENU COMPONENTS (ui.shadcn.com/docs/components/dropdown-menu)
+// =========================================================================
+export interface DropdownMenuItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  icon?: React.ReactNode;
+  shortcut?: string;
+  disabled?: boolean;
+  destructive?: boolean;
+}
+
+export const DropdownMenuItem: React.FC<DropdownMenuItemProps> = ({
+  icon,
+  shortcut,
+  disabled = false,
+  destructive = false,
+  style,
+  children,
+  onClick,
+  ...props
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onClick={(e) => {
+        if (disabled) return;
+        onClick?.(e);
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '6px 10px',
+        borderRadius: '6px',
+        fontSize: '12px',
+        fontWeight: 500,
+        color: disabled ? '#52525b' : destructive ? '#ef4444' : '#f4f4f5',
+        background: isHovered && !disabled ? (destructive ? 'rgba(239, 68, 68, 0.15)' : '#27272a') : 'transparent',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        userSelect: 'none',
+        transition: 'background-color 0.12s ease',
+        gap: '8px',
+        whiteSpace: 'nowrap',
+        boxSizing: 'border-box',
+        ...style
+      }}
+      {...props}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+        {icon && (
+          <span style={{ display: 'flex', alignItems: 'center', color: destructive ? '#ef4444' : isHovered ? '#ffffff' : '#94a3b8', flexShrink: 0 }}>
+            {icon}
+          </span>
+        )}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{children}</span>
+      </div>
+      {shortcut && (
+        <kbd style={{ fontSize: '10px', color: '#71717a', background: '#18181b', padding: '1px 4px', borderRadius: '4px', border: '1px solid #27272a', marginLeft: '8px', fontFamily: 'monospace' }}>
+          {shortcut}
+        </kbd>
+      )}
+    </div>
+  );
+};
+
+export const DropdownMenuGroup: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ style, children, ...props }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', ...style }} {...props}>
+    {children}
+  </div>
+);
+
+export const DropdownMenuLabel: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ style, children, ...props }) => (
+  <div
+    style={{
+      padding: '6px 10px 3px',
+      fontSize: '10.5px',
+      fontWeight: 600,
+      color: '#71717a',
+      letterSpacing: '0.4px',
+      textTransform: 'uppercase',
+      userSelect: 'none',
+      ...style
+    }}
+    {...props}
+  >
+    {children}
+  </div>
+);
+
+export const DropdownMenuSeparator: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <div style={{ height: '1px', background: '#27272a', margin: '4px 0', ...style }} />
+);
 
 // =========================================================================
 // 10. PAGINATION COMPONENT (ui.shadcn.com/docs/components/data-table)
@@ -1310,6 +1666,65 @@ export const InputNumber: React.FC<InputNumberProps> = ({
     />
   );
 };
+
+// =========================================================================
+// 18. ALERT COMPONENT (ui.shadcn.com/docs/components/alert)
+// =========================================================================
+export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'destructive' | 'success';
+}
+
+export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ className = '', variant = 'default', style, children, ...props }, ref) => {
+    const isDestructive = variant === 'destructive';
+    const isSuccess = variant === 'success';
+    return (
+      <div
+        ref={ref}
+        role="alert"
+        style={{
+          position: 'relative',
+          width: '100%',
+          borderRadius: '8px',
+          border: isDestructive
+            ? '1px solid rgba(239, 68, 68, 0.3)'
+            : isSuccess
+            ? '1px solid rgba(16, 185, 129, 0.3)'
+            : '1px solid #27272a',
+          background: isDestructive
+            ? 'rgba(239, 68, 68, 0.08)'
+            : isSuccess
+            ? 'rgba(16, 185, 129, 0.08)'
+            : '#18181b',
+          color: isDestructive ? '#f87171' : isSuccess ? '#34d399' : '#f4f4f5',
+          padding: '12px 16px',
+          fontSize: '13px',
+          boxSizing: 'border-box',
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'flex-start',
+          ...style
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+Alert.displayName = 'Alert';
+
+export const AlertTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ style, children, ...props }) => (
+  <h5 style={{ fontWeight: 600, fontSize: '13px', margin: '0 0 2px 0', lineHeight: 1.3, ...style }} {...props}>
+    {children}
+  </h5>
+);
+
+export const AlertDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({ style, children, ...props }) => (
+  <div style={{ fontSize: '12px', opacity: 0.9, lineHeight: 1.4, margin: 0, ...style }} {...props}>
+    {children}
+  </div>
+);
 
 // =========================================================================
 // 19. SEGMENTED COMPONENT (ui.shadcn.com style segmented control / tabs)

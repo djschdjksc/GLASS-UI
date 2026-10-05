@@ -12,7 +12,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
-import type { RawItem, FinishedItem } from '../types';
+import type { RawItem, FinishedItem, BillItemGroup } from '../types';
 import { SQLITE_BILLS } from '../data/sqliteData';
 import { normalizeDocType, getBillCategory } from '../utils/billDocTypes';
 import { Tooltip } from './ui/shadcn';
@@ -20,16 +20,23 @@ import { Tooltip } from './ui/shadcn';
 export type AppMode = 'ENTRY' | 'SEARCH_LOAD' | 'SUMMARY';
 
 export interface SavedSlipData {
+  id?: string;
   tokenNo: string;
   docType: string;
   partyName: string;
   typeSelection: string;
+  vehicleType?: string;
   vehicleNo: string;
   date: string;
   rawItems: RawItem[];
   finishedItems: FinishedItem[];
   dynamicCols?: { field: string; label: string }[];
+  adjustments?: any[];
+  balanceLabel?: string;
+  notes?: string;
+  hasPartyCodeCol?: boolean;
   splitRowIndex?: number | null;
+  customItemGroups?: BillItemGroup[];
 }
 
 export const PRESET_SLIPS: SavedSlipData[] = [
@@ -222,7 +229,8 @@ export const BottomModeBar: React.FC<Props> = ({
         rawItems: (matched.rawItems || []).map((r: any) => ({ ...r })),
         finishedItems: (matched.finishedItems || []).map((f: any) => ({ ...f })),
         dynamicCols: matched.dynamicCols ? matched.dynamicCols.map((c: any) => ({ ...c })) : [],
-        splitRowIndex: matched.splitRowIndex ?? null
+        splitRowIndex: matched.splitRowIndex ?? null,
+        customItemGroups: matched.customItemGroups || []
       };
       onLoadSlipData(slipData);
       onToast(`Loaded ${currentDoc} Bill #${matched.token} — ${matched.party || 'No Party'}`, 'success');

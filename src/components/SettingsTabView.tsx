@@ -82,6 +82,7 @@ import {
   AvatarFallback as ShadcnAvatarFallback,
   Progress as ShadcnProgress,
   Tooltip,
+  Select as ShadcnSelect,
   toast
 } from './ui/shadcn';
 import { getUserProfile, setUserProfile, getUserPrefix } from '../services/supabaseClient';
@@ -991,41 +992,31 @@ export const SettingsTabView: React.FC<Props> = ({
                 <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#e4e4e7', marginBottom: '6px', display: 'block' }}>
                   Select Default Windows Printer:
                 </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <select
-                    value={defaultPrinter || systemDefaultPrinter || ''}
-                    onChange={(e) => {
-                      const selected = e.target.value;
-                      setDefaultPrinter(selected);
-                      macAudio.playClick();
-                      onShowToast?.(`Default printer set to: ${selected}`, 'success');
-                    }}
-                    style={{
-                      flex: 1,
-                      height: '36px',
-                      background: '#09090b',
-                      border: '1px solid #3f3f46',
-                      borderRadius: '6px',
-                      padding: '0 12px',
-                      color: '#f4f4f5',
-                      fontSize: '12.5px',
-                      fontWeight: 600,
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {availablePrinters.length > 0 ? (
-                      availablePrinters.map((p) => (
-                        <option key={p} value={p} style={{ background: '#18181b', color: '#f4f4f5' }}>
-                          {p} {p === systemDefaultPrinter ? '★ (Windows Default)' : ''}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ flex: 1 }}>
+                    <ShadcnSelect
+                      value={defaultPrinter || systemDefaultPrinter || ''}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        setDefaultPrinter(selected);
+                        macAudio.playClick();
+                        onShowToast?.(`Default printer set to: ${selected}`, 'success');
+                      }}
+                      style={{ width: '100%', height: '36px' }}
+                    >
+                      {availablePrinters.length > 0 ? (
+                        availablePrinters.map((p) => (
+                          <option key={p} value={p} data-category="Available Printers">
+                            {p} {p === systemDefaultPrinter ? '★ (Windows Default)' : ''}
+                          </option>
+                        ))
+                      ) : (
+                        <option value={defaultPrinter || 'Default Printer'} data-category="System Printer">
+                          {defaultPrinter || 'Default System Printer'}
                         </option>
-                      ))
-                    ) : (
-                      <option value={defaultPrinter || 'Default Printer'} style={{ background: '#18181b', color: '#f4f4f5' }}>
-                        {defaultPrinter || 'Default System Printer'}
-                      </option>
-                    )}
-                  </select>
+                      )}
+                    </ShadcnSelect>
+                  </div>
 
                   <Tooltip title="Refresh Windows Printers List" side="bottom">
                     <ShadcnButton
@@ -1168,30 +1159,19 @@ export const SettingsTabView: React.FC<Props> = ({
                 </div>
                 <div>
                   <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Standard Paper Size</label>
-                  <select
+                  <ShadcnSelect
                     value={printPaperSize}
                     onChange={(e) => {
                       setPrintPaperSize(e.target.value);
                       localStorage.setItem('modern_app_paper_size', e.target.value);
                     }}
-                    style={{
-                      width: '100%',
-                      height: '32px',
-                      background: '#09090b',
-                      border: '1px solid #27272a',
-                      borderRadius: '5px',
-                      padding: '0 8px',
-                      color: '#f4f4f5',
-                      fontSize: '11.5px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
+                    style={{ width: '100%', height: '32px' }}
                   >
-                    <option value="A4">A4 (Portrait 210 x 297 mm)</option>
-                    <option value="A4_LANDSCAPE">A4 (Landscape)</option>
-                    <option value="THERMAL_3INCH">3-Inch Thermal Roll (80mm)</option>
-                    <option value="THERMAL_4INCH">4-Inch Shipping Label (100mm)</option>
-                  </select>
+                    <option value="A4" data-category="Cut Sheet Paper">A4 (Portrait 210 x 297 mm)</option>
+                    <option value="A4_LANDSCAPE" data-category="Cut Sheet Paper">A4 (Landscape)</option>
+                    <option value="THERMAL_3INCH" data-category="Thermal Roll">3-Inch Thermal Roll (80mm)</option>
+                    <option value="THERMAL_4INCH" data-category="Shipping Label">4-Inch Shipping Label (100mm)</option>
+                  </ShadcnSelect>
                 </div>
               </div>
             </div>

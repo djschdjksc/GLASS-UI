@@ -719,6 +719,15 @@ class LocalDatabase {
       for (const b of entities.bills) {
         this.billsCache.set(b.id, b);
         await this.putToStore('bills', b);
+        if (Array.isArray(b.adjustments) && b.adjustments.length > 0) {
+          try {
+            const cacheKey = `bill_adj_${b.token}_${b.party || 'CASH'}`;
+            localStorage.setItem(cacheKey, JSON.stringify({
+              adjustments: b.adjustments,
+              balanceLabel: b.balanceLabel || 'BALANCE'
+            }));
+          } catch {}
+        }
       }
       this.notify('bills', this.getBills());
     }

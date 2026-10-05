@@ -67,6 +67,7 @@ interface Props {
   onOpenAuditHistory?: () => void;
   splitRowIndex?: number | null;
   onToggleTableSplit?: (index: number | null) => void;
+  onOpenMakeGroup?: (itemNames: string[]) => void;
 }
 
 const DEFAULT_LEFT_COLS = {
@@ -113,7 +114,8 @@ export const LeftGrid: React.FC<Props> = ({
   isModifiedBill = false,
   onOpenAuditHistory,
   splitRowIndex = null,
-  onToggleTableSplit
+  onToggleTableSplit,
+  onOpenMakeGroup
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -472,6 +474,18 @@ export const LeftGrid: React.FC<Props> = ({
   const handleRowContextMenu = (e: React.MouseEvent, rowIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Check if the right-clicked row is ALREADY part of the current selection
+    const hasCellInRow = Array.from(selectedCellKeys).some(k => k.startsWith(`${rowIndex}-`));
+    const isRowInSelection = selectedRows.includes(rowIndex);
+
+    // If it's NOT in the current selection, select ONLY this row
+    if (!hasCellInRow && !isRowInSelection) {
+      setSelectedRows([rowIndex]);
+      setSelectedCellKeys(new Set([`${rowIndex}-0`]));
+      setActiveCell({ r: rowIndex, c: 0 });
+    }
+
     setContextMenu({
       isOpen: true,
       x: e.clientX,
@@ -803,7 +817,41 @@ export const LeftGrid: React.FC<Props> = ({
     }
   };
 
+  const handleInputFocus = (r: number, c: number, defaultDraft?: string) => {
+    onActivateTable?.();
+    setActiveCell({ r, c });
+    const cellKey = `${r}-${c}`;
+    if (defaultDraft !== undefined && cellDrafts[cellKey] === undefined) {
+      setCellDrafts(prev => ({ ...prev, [cellKey]: defaultDraft }));
+    }
+    // If this cell or row is already part of a multi-selection, preserve it!
+    if (selectedCellKeys.size > 1 && selectedCellKeys.has(cellKey)) {
+      return;
+    }
+    if (selectedRows.length > 1 && selectedRows.includes(r)) {
+      return;
+    }
+    setAnchorCell({ r, c });
+    setSelectedCellKeys(new Set([cellKey]));
+    setSelectedCol(null);
+    setSelectedRows([]);
+  };
+
   const handleInputMouseDown = (r: number, c: number, e: React.MouseEvent<HTMLInputElement>) => {
+    // Right Click (button 2): Keep multi-selection intact if clicked on an already selected item!
+    if (e.button === 2) {
+      const cellKey = `${r}-${c}`;
+      if (selectedCellKeys.has(cellKey) || selectedRows.includes(r)) {
+        return;
+      }
+      setSelectedCellKeys(new Set([cellKey]));
+      setSelectedRows([r]);
+      setSelectedCol(null);
+      setActiveCell({ r, c });
+      setAnchorCell({ r, c });
+      return;
+    }
+
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       const key = `${r}-${c}`;
@@ -1742,14 +1790,8 @@ export const LeftGrid: React.FC<Props> = ({
                             onMouseDown={(e) => handleInputMouseDown(rIdx, 0, e)}
                             onMouseEnter={() => handleInputMouseEnter(rIdx, 0)}
                             onPaste={(e) => handleInputPaste(rIdx, 0, e)}
-                            onFocus={() => {
-                              onActivateTable?.();
-                              setActiveCell({ r: rIdx, c: 0 });
-                              setAnchorCell({ r: rIdx, c: 0 });
-                              setSelectedCellKeys(new Set([`${rIdx}-0`]));
-                              setSelectedCol(null);
-                              setSelectedRows([]);
-                            }}
+                            onFocus={() => handleInputFocus(rIdx, 0)}
+                            onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                             onChange={(e) => {
                               const rawVal = e.target.value;
                               setCellDrafts(prev => ({ ...prev, [`${rIdx}-0`]: rawVal }));
@@ -1787,14 +1829,8 @@ export const LeftGrid: React.FC<Props> = ({
                         onMouseDown={(e) => handleInputMouseDown(rIdx, 1, e)}
                         onMouseEnter={() => handleInputMouseEnter(rIdx, 1)}
                         onPaste={(e) => handleInputPaste(rIdx, 1, e)}
-                        onFocus={() => {
-                          onActivateTable?.();
-                          setActiveCell({ r: rIdx, c: 1 });
-                          setAnchorCell({ r: rIdx, c: 1 });
-                          setSelectedCellKeys(new Set([`${rIdx}-1`]));
-                          setSelectedCol(null);
-                          setSelectedRows([]);
-                        }}
+                        onFocus={() => handleInputFocus(rIdx, 1)}
+                        onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                         onChange={(e) => {
                           const rawVal = e.target.value;
                           setCellDrafts(prev => ({ ...prev, [`${rIdx}-1`]: rawVal }));
@@ -1844,15 +1880,8 @@ export const LeftGrid: React.FC<Props> = ({
                           onMouseDown={(e) => handleInputMouseDown(rIdx, cIdx, e)}
                           onMouseEnter={() => handleInputMouseEnter(rIdx, cIdx)}
                           onPaste={(e) => handleInputPaste(rIdx, cIdx, e)}
-                          onFocus={() => {
-                            onActivateTable?.();
-                            setActiveCell({ r: rIdx, c: cIdx });
-                            setAnchorCell({ r: rIdx, c: cIdx });
-                            setSelectedCellKeys(new Set([draftKey]));
-                            setSelectedCol(null);
-                            setSelectedRows([]);
-                            setCellDrafts(prev => ({ ...prev, [draftKey]: cellVal === 0 || !cellVal ? '' : String(cellVal) }));
-                          }}
+                          onFocus={() => handleInputFocus(rIdx, cIdx, cellVal === 0 || !cellVal ? '' : String(cellVal))}
+                          onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                           onChange={(e) => {
                             const clean = e.target.value.replace(/[^0-9+\-*/.()\s=]/g, '');
                             setCellDrafts(prev => ({ ...prev, [draftKey]: clean }));
@@ -1896,15 +1925,8 @@ export const LeftGrid: React.FC<Props> = ({
                           onMouseDown={(e) => handleInputMouseDown(rIdx, cIdx, e)}
                           onMouseEnter={() => handleInputMouseEnter(rIdx, cIdx)}
                           onPaste={(e) => handleInputPaste(rIdx, cIdx, e)}
-                          onFocus={() => {
-                            onActivateTable?.();
-                            setActiveCell({ r: rIdx, c: cIdx });
-                            setAnchorCell({ r: rIdx, c: cIdx });
-                            setSelectedCellKeys(new Set([draftKey]));
-                            setSelectedCol(null);
-                            setSelectedRows([]);
-                            setCellDrafts(prev => ({ ...prev, [draftKey]: item.uCap === 0 ? '' : String(item.uCap) }));
-                          }}
+                          onFocus={() => handleInputFocus(rIdx, cIdx, item.uCap === 0 ? '' : String(item.uCap))}
+                          onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                           onChange={(e) => {
                             const clean = e.target.value.replace(/[^0-9+\-*/.()\s=]/g, '');
                             setCellDrafts(prev => ({ ...prev, [draftKey]: clean }));
@@ -1948,15 +1970,8 @@ export const LeftGrid: React.FC<Props> = ({
                           onMouseDown={(e) => handleInputMouseDown(rIdx, cIdx, e)}
                           onMouseEnter={() => handleInputMouseEnter(rIdx, cIdx)}
                           onPaste={(e) => handleInputPaste(rIdx, cIdx, e)}
-                          onFocus={() => {
-                            onActivateTable?.();
-                            setActiveCell({ r: rIdx, c: cIdx });
-                            setAnchorCell({ r: rIdx, c: cIdx });
-                            setSelectedCellKeys(new Set([draftKey]));
-                            setSelectedCol(null);
-                            setSelectedRows([]);
-                            setCellDrafts(prev => ({ ...prev, [draftKey]: item.lCap === 0 ? '' : String(item.lCap) }));
-                          }}
+                          onFocus={() => handleInputFocus(rIdx, cIdx, item.lCap === 0 ? '' : String(item.lCap))}
+                          onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
                           onChange={(e) => {
                             const clean = e.target.value.replace(/[^0-9+\-*/.()\s=]/g, '');
                             setCellDrafts(prev => ({ ...prev, [draftKey]: clean }));
@@ -2167,6 +2182,35 @@ export const LeftGrid: React.FC<Props> = ({
             onToast(`Table divided below row #${idx + 1} (Lot 1: 1-${idx + 1}, Lot 2: ${idx + 2}-${items.length})`, 'success');
           }
         }}
+        onMakeItemGroup={onOpenMakeGroup ? (idx) => {
+          const rowIndicesSet = new Set<number>();
+          selectedCellKeys.forEach(key => {
+            const parts = key.split('-');
+            if (parts.length === 2) {
+              const r = parseInt(parts[0], 10);
+              if (!isNaN(r)) rowIndicesSet.add(r);
+            }
+          });
+          if (selectedRows && selectedRows.length > 0) {
+            selectedRows.forEach(r => rowIndicesSet.add(r));
+          }
+          if (rowIndicesSet.size === 0) {
+            rowIndicesSet.add(idx);
+          }
+          const itemNames: string[] = [];
+          rowIndicesSet.forEach(rIdx => {
+            const it = filteredItems[rIdx] || items[rIdx];
+            const name = (it?.name || '').trim();
+            if (name && !itemNames.includes(name)) {
+              itemNames.push(name);
+            }
+          });
+          if (itemNames.length === 0) {
+            onToast('No item names in selected row(s) to group', 'warning');
+            return;
+          }
+          onOpenMakeGroup(itemNames);
+        } : undefined}
       />
     </div>
   );

@@ -16,9 +16,19 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  Minus
+  Minus,
+  ArrowDownLeft,
+  ArrowUpRight,
+  RotateCcw,
+  Scale,
+  Search,
+  History
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
+import { localDb } from '../services/db/localDb';
+import type { BillRecord, PartyRecord } from '../services/db/schema';
+import { supabaseSyncService } from '../services/supabaseSync';
+import { normalizeDocType, getBillCategory } from '../utils/billDocTypes';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
 import {
   renderBillToCanvas,
@@ -68,6 +78,64 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [retryTrigger, setRetryTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Return Bill Modal State
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState<boolean>(false);
+  const [returnSearchQuery, setReturnSearchQuery] = useState<string>('');
+
+  // Old Balance Modal State
+  const [isOldBalanceModalOpen, setIsOldBalanceModalOpen] = useState<boolean>(false);
+  const [customOldBalanceInput, setCustomOldBalanceInput] = useState<string>('');
+
+  // Sale Return bills of this party for Maal Return selection (from SALE RETURN tab)
+  const partyPreviousBills = useMemo(() => {
+    if (!header.partyName) return [];
+    const partyClean = header.partyName.trim().toLowerCase();
+    try {
+      const allBills = localDb.getBills();
+      return allBills.filter(b => {
+        const bParty = (b.party || '').trim().toLowerCase();
+        const matchesParty = bParty === partyClean || bParty.includes(partyClean) || partyClean.includes(bParty);
+        const isDifferentBill = String(b.token || b.id) !== String(billNo);
+        // Strictly filter to SALE RETURN vouchers/bills
+        const category = getBillCategory(b);
+        const isSaleReturn = category === 'SALE RETURN' ||
+          (b.docType || '').toUpperCase().includes('RETURN') ||
+          (b.typeSelection || '').toUpperCase().includes('RETURN');
+        return matchesParty && isDifferentBill && isSaleReturn;
+      });
+    } catch {
+      return [];
+    }
+  }, [header.partyName, billNo, isOpen]);
+
+  // Find party record for ledger balance
+  const activePartyRecord = useMemo<PartyRecord | undefined>(() => {
+    if (!header.partyName) return undefined;
+    const partyClean = header.partyName.trim().toLowerCase();
+    try {
+      const parties = localDb.getParties();
+      return parties.find(p => {
+        const pName = (p.name || '').trim().toLowerCase();
+        return pName === partyClean || pName.includes(partyClean) || partyClean.includes(pName);
+      });
+    } catch {
+      return undefined;
+    }
+  }, [header.partyName, isOpen]);
+
+  // Filtered return bills
+  const filteredReturnBills = useMemo(() => {
+    const q = returnSearchQuery.trim().toLowerCase();
+    if (!q) return partyPreviousBills;
+    return partyPreviousBills.filter(b => {
+      const token = String(b.token || '').toLowerCase();
+      const docType = String(b.docType || '').toLowerCase();
+      const date = String(b.date || '').toLowerCase();
+      const total = String(b.total || '').toLowerCase();
+      return token.includes(q) || docType.includes(q) || date.includes(q) || total.includes(q);
+    });
+  }, [partyPreviousBills, returnSearchQuery]);
+
   // Sync initialMode when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -86,8 +154,16 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
           if (Array.isArray(parsed.adjustments)) setAdjustments(parsed.adjustments);
           if (parsed.balanceLabel) setBalanceLabel(parsed.balanceLabel);
         } else {
-          setAdjustments([]);
-          setBalanceLabel('BALANCE');
+          // Fallback to bill in localDb (synced from other machines)
+          const all = localDb.getBills();
+          const target = all.find(b => String(b.token) === String(billNo) || b.id === String(billNo));
+          if (target && Array.isArray(target.adjustments) && target.adjustments.length > 0) {
+            setAdjustments(target.adjustments);
+            setBalanceLabel(target.balanceLabel || 'BALANCE');
+          } else {
+            setAdjustments([]);
+            setBalanceLabel('BALANCE');
+          }
         }
       } catch {
         setAdjustments([]);
@@ -96,12 +172,29 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     }
   }, [isOpen, initialMode, billNo, header.partyName]);
 
-  // Save adjustments to localStorage
+  // Save adjustments to localStorage and broadcast to cloud
   const saveAdjustmentsCache = (newAdjs: PrintAdjustment[], newLabel: string) => {
     try {
       const cacheKey = `bill_adj_${billNo}_${header.partyName || 'CASH'}`;
       localStorage.setItem(cacheKey, JSON.stringify({ adjustments: newAdjs, balanceLabel: newLabel }));
     } catch { }
+
+    // Persist into localDb and push to Supabase so other counters receive updated adjustments
+    try {
+      const all = localDb.getBills();
+      const target = all.find(b => String(b.token) === String(billNo) || b.id === String(billNo));
+      if (target) {
+        const updatedBill: BillRecord = {
+          ...target,
+          adjustments: newAdjs,
+          balanceLabel: newLabel,
+          updatedAt: Date.now()
+        };
+        supabaseSyncService.saveAndSyncBill(updatedBill, target);
+      }
+    } catch (e) {
+      console.warn('Sync adjustments to cloud error:', e);
+    }
   };
 
   // Calculate Subtotal & Final Balance
@@ -280,6 +373,35 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         return;
       }
 
+      // Keyboard shortcuts: + for Receive, - for Pay (when not typing in an input/textarea)
+      const isInputFocused = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+      if (!isInputFocused && !isCtrlOrCmd && !e.altKey) {
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          try { macAudio.playClick(); } catch { }
+          handleAddAdjustment('add');
+          return;
+        }
+        if (e.key === '-' || e.key === '_') {
+          e.preventDefault();
+          try { macAudio.playClick(); } catch { }
+          handleAddAdjustment('sub');
+          return;
+        }
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          try { macAudio.playClick(); } catch { }
+          setIsReturnModalOpen(true);
+          return;
+        }
+        if (e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          try { macAudio.playClick(); } catch { }
+          setIsOldBalanceModalOpen(true);
+          return;
+        }
+      }
+
       if (e.key === 'PageDown' || (e.altKey && e.key === 'ArrowRight')) {
         e.preventDefault();
         try { macAudio.playPop(); } catch { }
@@ -315,20 +437,42 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Add adjustment row
-  const handleAddAdjustment = (type: 'add' | 'sub') => {
+  // Add adjustment row (supports optional defaultDesc and defaultVal)
+  const handleAddAdjustment = (type: 'add' | 'sub', defaultDesc: string = '', defaultVal: number = 0) => {
     try { macAudio.playClick(); } catch { }
     const newId = 'adj_' + Date.now() + Math.random().toString(36).substring(2, 6);
     const newAdj: PrintAdjustment = {
       id: newId,
       type,
-      desc: '',
-      val: 0
+      desc: defaultDesc,
+      val: defaultVal
     };
     const updated = [...adjustments, newAdj];
     setAdjustments(updated);
-    setNewlyAddedId(newId);
+    if (!defaultVal) {
+      setNewlyAddedId(newId);
+    }
     saveAdjustmentsCache(updated, balanceLabel);
+  };
+
+  // Helper when user selects a previous bill for Maal Return
+  const handleSelectReturnBill = (b: BillRecord) => {
+    try { macAudio.playSuccess(); } catch { }
+    const desc = `Return Bill #${b.token || b.id} (${b.date || ''})`;
+    const amt = Number(b.total) || 0;
+    handleAddAdjustment('sub', desc, amt);
+    setIsReturnModalOpen(false);
+    setReturnSearchQuery('');
+  };
+
+  // Helper when user applies Old Balance
+  const handleApplyOldBalance = (type: 'add' | 'sub', amt: number, labelSuffix: string = '') => {
+    if (amt <= 0) return;
+    try { macAudio.playSuccess(); } catch { }
+    const desc = labelSuffix ? `Purana Bakaya (${labelSuffix})` : 'Purana Bakaya';
+    handleAddAdjustment(type, desc, amt);
+    setIsOldBalanceModalOpen(false);
+    setCustomOldBalanceInput('');
   };
 
   const handleUpdateAdjustment = (id: string, field: 'desc' | 'val', val: any) => {
@@ -1004,59 +1148,115 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.04em' }}>
-                    ADJUSTMENTS / EXTRAS
+                    ADJUSTMENTS & BILL LINKING
                   </span>
                   <span style={{ fontSize: '9.5px', color: 'rgba(255, 255, 255, 0.45)' }}>
-                    {adjustments.length} Rows (Insert key to add)
+                    {adjustments.length} Rows (<kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '0 3px', borderRadius: '3px' }}>+</kbd> / <kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '0 3px', borderRadius: '3px' }}>-</kbd>)
                   </span>
                 </div>
 
-                {/* + ADD and - SUBTRACT Buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {/* Receive, Pay, Return Bill & Old Balance Action Buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                   <button
                     type="button"
                     onClick={() => handleAddAdjustment('add')}
+                    title="Add amount to receive (+ shortcut)"
                     style={{
                       background: 'rgba(16, 185, 129, 0.12)',
                       border: '1px solid rgba(16, 185, 129, 0.28)',
                       color: '#6ee7b7',
-                      height: '26px',
+                      height: '28px',
                       borderRadius: '6px',
                       fontSize: '10.5px',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '4px',
+                      gap: '5px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    <Plus size={11} />
-                    <span>+ Extra</span>
+                    <ArrowDownLeft size={13} />
+                    <span>Receive</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleAddAdjustment('sub')}
+                    title="Deduct amount to pay/discount (- shortcut)"
                     style={{
                       background: 'rgba(239, 68, 68, 0.12)',
                       border: '1px solid rgba(239, 68, 68, 0.28)',
                       color: '#fca5a5',
-                      height: '26px',
+                      height: '28px',
                       borderRadius: '6px',
                       fontSize: '10.5px',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '4px',
+                      gap: '5px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    <Minus size={11} />
-                    <span>- Discount</span>
+                    <ArrowUpRight size={13} />
+                    <span>Pay</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try { macAudio.playClick(); } catch { }
+                      setIsReturnModalOpen(true);
+                    }}
+                    title="Select previous bill for Maal Return deduction (R shortcut)"
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.12)',
+                      border: '1px solid rgba(245, 158, 11, 0.28)',
+                      color: '#fcd34d',
+                      height: '28px',
+                      borderRadius: '6px',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <RotateCcw size={12} />
+                    <span>Return Bill</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try { macAudio.playClick(); } catch { }
+                      setIsOldBalanceModalOpen(true);
+                    }}
+                    title="Add ledger outstanding balance / Purana Bakaya (B shortcut)"
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      border: '1px solid rgba(56, 189, 248, 0.28)',
+                      color: '#7dd3fc',
+                      height: '28px',
+                      borderRadius: '6px',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <Scale size={12} />
+                    <span>Old Balance</span>
                   </button>
                 </div>
 
@@ -1071,8 +1271,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   }}
                 >
                   {adjustments.length === 0 ? (
-                    <div style={{ fontSize: '10.5px', color: '#64748b', textAlign: 'center', padding: '8px 0' }}>
-                      No adjustments added yet. Press <kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: '4px' }}>Insert</kbd> to add.
+                    <div style={{ fontSize: '10.5px', color: '#64748b', textAlign: 'center', padding: '10px 0' }}>
+                      No adjustments added. Press <kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: '4px' }}>+</kbd> for Receive or <kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: '4px' }}>-</kbd> for Pay.
                     </div>
                   ) : (
                     adjustments.map((adj) => (
@@ -1088,20 +1288,39 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                           gap: '6px'
                         }}
                       >
-                        <span
+                        {/* Interactive Type Switcher (+ / -) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newType = adj.type === 'sub' ? 'add' : 'sub';
+                            const updated = adjustments.map(a => a.id === adj.id ? { ...a, type: newType } : a);
+                            setAdjustments(updated);
+                            saveAdjustmentsCache(updated, balanceLabel);
+                          }}
+                          title={`Click to switch between Receive (+) and Pay (-). Current: ${adj.type === 'sub' ? 'Pay (-)' : 'Receive (+)'}`}
                           style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
+                            background: adj.type === 'sub' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                            border: `1px solid ${adj.type === 'sub' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
                             color: adj.type === 'sub' ? '#f87171' : '#34d399',
-                            width: '18px'
+                            width: '22px',
+                            height: '22px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            padding: 0
                           }}
                         >
-                          {adj.type === 'sub' ? '(-)' : '(+)'}
-                        </span>
+                          {adj.type === 'sub' ? <Minus size={12} /> : <Plus size={12} />}
+                        </button>
 
+                        {/* Editable Description Input */}
                         <input
                           id={`adj_desc_${adj.id}`}
                           type="text"
+                          placeholder="Description (e.g. Receive, Freight, Return)"
                           value={adj.desc}
                           onChange={(e) => handleUpdateAdjustment(adj.id, 'desc', e.target.value)}
                           onKeyDown={(e) => {
@@ -1124,9 +1343,11 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                           }}
                         />
 
+                        {/* Editable Amount Input */}
                         <input
                           id={`adj_val_${adj.id}`}
                           type="number"
+                          placeholder="0"
                           value={adj.val || ''}
                           onChange={(e) => handleUpdateAdjustment(adj.id, 'val', parseFloat(e.target.value) || 0)}
                           onKeyDown={(e) => {
@@ -1150,9 +1371,11 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                           }}
                         />
 
+                        {/* Delete Button */}
                         <button
                           type="button"
                           onClick={() => handleDeleteAdjustment(adj.id)}
+                          title="Delete adjustment"
                           style={{
                             background: 'rgba(239, 68, 68, 0.18)',
                             border: 'none',
@@ -1163,7 +1386,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            flexShrink: 0
                           }}
                         >
                           <Trash2 size={11} />
@@ -1237,6 +1461,432 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
           </div>
         </div>
+
+        {/* ─── RETURN BILL SELECTOR MODAL OVERLAY ─── */}
+        {isReturnModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 99999999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+            onClick={() => setIsReturnModalOpen(false)}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '520px',
+                background: '#0d131f',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: '14px',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.15)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: '14px 16px',
+                  background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.03) 100%)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <RotateCcw size={16} color="#fbbf24" />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                      Select Sale Return Bill / Voucher
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      Party: <strong style={{ color: '#fbbf24' }}>{header.partyName || 'All Parties'}</strong> (From Sale Return tab)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReturnModalOpen(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: 'none',
+                    color: '#94a3b8',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div style={{ padding: '12px 16px 8px 16px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '6px 10px'
+                  }}
+                >
+                  <Search size={14} color="#94a3b8" />
+                  <input
+                    type="text"
+                    placeholder="Search sale return bill by number, date, or amount..."
+                    value={returnSearchQuery}
+                    onChange={(e) => setReturnSearchQuery(e.target.value)}
+                    autoFocus
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#ffffff',
+                      fontSize: '12px'
+                    }}
+                  />
+                  {returnSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setReturnSearchQuery('')}
+                      style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Bill List */}
+              <div
+                style={{
+                  padding: '8px 16px 16px 16px',
+                  maxHeight: '340px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}
+              >
+                {filteredReturnBills.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748b' }}>
+                    <p style={{ margin: 0, fontSize: '12px', fontWeight: 600 }}>No Sale Return bills found for this party</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#475569' }}>
+                      {returnSearchQuery ? 'Try matching a different keyword' : 'Create a return voucher under SALE RETURN tab or enter deduction using "-" (Pay)'}
+                    </p>
+                  </div>
+                ) : (
+                  filteredReturnBills.map((b) => (
+                    <div
+                      key={b.id || b.token}
+                      onClick={() => handleSelectReturnBill(b)}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.07)',
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(245, 158, 11, 0.12)';
+                        e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)';
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#f8fafc' }}>
+                            Bill #{b.token || b.id}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                              background: 'rgba(255, 255, 255, 0.08)',
+                              color: 'rgba(255, 255, 255, 0.6)'
+                            }}
+                          >
+                            {b.docType || 'SALE'}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.45)' }}>
+                          {b.date || 'No Date'} &bull; {(b.rawItems || []).length} items
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#fbbf24' }}>
+                          {formatIndianCurrency(Number(b.total) || 0)}
+                        </span>
+                        <button
+                          type="button"
+                          style={{
+                            background: 'rgba(245, 158, 11, 0.2)',
+                            border: '1px solid rgba(245, 158, 11, 0.4)',
+                            color: '#fcd34d',
+                            fontSize: '10.5px',
+                            fontWeight: 600,
+                            padding: '4px 9px',
+                            borderRadius: '5px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Select
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── OLD BALANCE (PURANA BAKAYA) MODAL OVERLAY ─── */}
+        {isOldBalanceModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 99999999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+            onClick={() => setIsOldBalanceModalOpen(false)}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '460px',
+                background: '#0d131f',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                borderRadius: '14px',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: '14px 16px',
+                  background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.03) 100%)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Scale size={16} color="#38bdf8" />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                      Party Outstanding / Purana Bakaya
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      Party: <strong style={{ color: '#38bdf8' }}>{header.partyName || 'Party'}</strong>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOldBalanceModalOpen(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: 'none',
+                    color: '#94a3b8',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Ledger Current Balance Card */}
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase' }}>
+                      Ledger Record Balance
+                    </span>
+                    <div style={{ fontSize: '17px', fontWeight: 800, color: '#f8fafc', marginTop: '2px' }}>
+                      {formatIndianCurrency(Math.abs(activePartyRecord?.balance || 0))}
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          marginLeft: '6px',
+                          color: (activePartyRecord?.balance || 0) >= 0 ? '#34d399' : '#f87171'
+                        }}
+                      >
+                        {(activePartyRecord?.balance || 0) >= 0 ? 'Lene Wala (Receivable)' : 'Dene Wala (Advance)'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quick Apply Button */}
+                  {Boolean(activePartyRecord?.balance) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const bal = activePartyRecord?.balance || 0;
+                        if (bal >= 0) {
+                          handleApplyOldBalance('add', bal, 'Lene Wala');
+                        } else {
+                          handleApplyOldBalance('sub', Math.abs(bal), 'Dene Wala');
+                        }
+                      }}
+                      style={{
+                        background: (activePartyRecord?.balance || 0) >= 0
+                          ? 'rgba(16, 185, 129, 0.2)'
+                          : 'rgba(239, 68, 68, 0.2)',
+                        border: `1px solid ${(activePartyRecord?.balance || 0) >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                        color: (activePartyRecord?.balance || 0) >= 0 ? '#6ee7b7' : '#fca5a5',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Apply Full Ledger
+                    </button>
+                  )}
+                </div>
+
+                {/* Custom Amount Form */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Or Enter Custom Purana Bakaya Amount:
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Enter amount (e.g. 5000)"
+                    value={customOldBalanceInput}
+                    onChange={(e) => setCustomOldBalanceInput(e.target.value)}
+                    style={{
+                      height: '34px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      padding: '4px 10px',
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      borderRadius: '7px',
+                      color: '#ffffff',
+                      outline: 'none'
+                    }}
+                  />
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const amt = parseFloat(customOldBalanceInput) || 0;
+                        handleApplyOldBalance('add', amt, 'Lene Wala');
+                      }}
+                      disabled={!parseFloat(customOldBalanceInput)}
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.35)',
+                        color: '#6ee7b7',
+                        height: '32px',
+                        borderRadius: '7px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: parseFloat(customOldBalanceInput) ? 'pointer' : 'not-allowed',
+                        opacity: parseFloat(customOldBalanceInput) ? 1 : 0.4
+                      }}
+                    >
+                      <Plus size={13} />
+                      <span>+ Lene Wala (Add)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const amt = parseFloat(customOldBalanceInput) || 0;
+                        handleApplyOldBalance('sub', amt, 'Dene Wala');
+                      }}
+                      disabled={!parseFloat(customOldBalanceInput)}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        color: '#fca5a5',
+                        height: '32px',
+                        borderRadius: '7px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: parseFloat(customOldBalanceInput) ? 'pointer' : 'not-allowed',
+                        opacity: parseFloat(customOldBalanceInput) ? 1 : 0.4
+                      }}
+                    >
+                      <Minus size={13} />
+                      <span>- Dene Wala (Deduct)</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

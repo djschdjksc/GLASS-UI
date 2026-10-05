@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Clock, Check, Printer, FileDiff, CheckCircle2 } from 'lucide-react';
+import { X, Clock, Check, Printer, FileDiff, CheckCircle2, Receipt } from 'lucide-react';
 import { Select } from './ui/shadcn';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
@@ -155,6 +155,8 @@ export const PendingSlipModal: React.FC<Props> = ({
     return {
       value: String(b.token),
       searchStr: `${b.token} ${b.party || ''} ${b.date || ''}`.toLowerCase(),
+      icon: <Receipt size={14} style={{ color: '#38bdf8', flexShrink: 0 }} />,
+      category: 'Saved Bills & Slips',
       label: (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

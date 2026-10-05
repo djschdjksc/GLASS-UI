@@ -1,4 +1,5 @@
-import type { RawItem, FinishedItem } from '../../types';
+import type { RawItem, FinishedItem, BillItemGroup } from '../../types';
+import type { PrintAdjustment } from '../../utils/billCanvasPainter';
 
 export interface BillRecord {
   id: string;
@@ -7,12 +8,16 @@ export interface BillRecord {
   party: string;
   docType: string;
   vehicle: string;
+  vehicleType?: string;
   typeSelection: string;
   total: number;
   status: 'PAID' | 'PENDING' | 'CANCELLED';
   rawItems: RawItem[];
   finishedItems: FinishedItem[];
   dynamicCols?: { field: string; label: string }[];
+  adjustments?: PrintAdjustment[];
+  balanceLabel?: string;
+  customItemGroups?: BillItemGroup[];
   hasPartyCodeCol?: boolean;
   createdAt: number;
   updatedAt: number;
