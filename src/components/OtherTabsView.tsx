@@ -1446,28 +1446,33 @@ export const OtherTabsView: React.FC<Props> = ({
               }}>
                 TOTAL: <strong style={{ color: '#ffffff' }}>{bills.length}</strong> INVOICES
               </span>
-              <button
-                type="button"
-                onClick={handleExportAllBillsCsv}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)',
-                  border: '1px solid rgba(16, 185, 129, 0.4)',
-                  color: '#34d399',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                title="Download all bills as CSV / Excel"
-              >
-                <FileSpreadsheet size={13} />
-                <span>Export All Bills</span>
-              </button>
+              <Tooltip title="Export All Bills to CSV (Ctrl+E)" side="bottom">
+                <button
+                  type="button"
+                  className="mac-btn"
+                  onClick={() => {
+                    macAudio.playClick();
+                    handleExportAllBillsCsv();
+                  }}
+                  onMouseEnter={() => macAudio.playHover()}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '7px',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    color: '#34d399',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <FileSpreadsheet size={14} color="#34d399" />
+                </button>
+              </Tooltip>
             </div>
           </div>
 

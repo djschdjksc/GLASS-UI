@@ -1,5 +1,6 @@
 import React from 'react';
 import { macAudio } from '../../utils/macAudio';
+import { Tooltip } from '../ui/shadcn';
 
 export interface IosTabItem<T extends string = string> {
   key: T;
@@ -93,27 +94,6 @@ export const IosSegmentedTabs = <T extends string = string>({
         }
         .cc-ios-tabs__item:hover { color: #f8fafc; }
         .cc-ios-tabs__item.active { color: #ffffff; }
-        .cc-ios-tab-shortcut {
-          position: absolute;
-          bottom: calc(100% + 8px);
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(15, 15, 20, 0.92);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #cbd5e1;
-          font-size: 10px;
-          font-weight: 600;
-          padding: 3px 8px;
-          border-radius: 6px;
-          white-space: nowrap;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.15s ease;
-          backdrop-filter: blur(8px);
-          z-index: 100;
-          letter-spacing: 0.04em;
-        }
-        .cc-ios-tabs__item:hover .cc-ios-tab-shortcut { opacity: 1; }
       `}</style>
 
       <div
@@ -142,57 +122,60 @@ export const IosSegmentedTabs = <T extends string = string>({
         {tabs.map((tab) => {
           const isActive = activeKey === tab.key;
           const Icon = tab.icon;
+          const tooltipLabel = tab.shortcut
+            ? `${String(tab.label)} (${tab.shortcut})`
+            : String(tab.label);
 
           return (
-            <div
+            <Tooltip
               key={tab.key}
-              onClick={() => {
-                macAudio.playClick();
-                onChange(tab.key);
-              }}
-              onMouseEnter={() => macAudio.playHover()}
-              className={`cc-ios-tabs__item ${isActive ? 'active' : ''}`}
-              title={tab.shortcut ? `${String(tab.label)} (${tab.shortcut})` : undefined}
-              style={{
-                height: `${itemHeight}px`,
-                fontSize: `${fontSize}px`,
-              }}
+              title={tooltipLabel}
+              side="bottom"
             >
-              {Icon && (
-                typeof Icon === 'function' ? (
-                  <Icon size={iconSize} />
-                ) : React.isValidElement(Icon) ? (
-                  Icon
-                ) : null
-              )}
+              <div
+                onClick={() => {
+                  macAudio.playClick();
+                  onChange(tab.key);
+                }}
+                onMouseEnter={() => macAudio.playHover()}
+                className={`cc-ios-tabs__item ${isActive ? 'active' : ''}`}
+                style={{
+                  height: `${itemHeight}px`,
+                  fontSize: `${fontSize}px`,
+                }}
+              >
+                {Icon && (
+                  typeof Icon === 'function' ? (
+                    <Icon size={iconSize} />
+                  ) : React.isValidElement(Icon) ? (
+                    Icon
+                  ) : null
+                )}
 
-              <span>{tab.label}</span>
+                <span>{tab.label}</span>
 
-              {tab.count !== undefined && (
-                <span
-                  style={{
-                    fontSize: `${fontSize - 2}px`,
-                    padding: '1px 5px',
-                    borderRadius: '999px',
-                    background: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.08)',
-                    color: isActive ? '#ffffff' : '#94a3b8',
-                    fontWeight: 700,
-                    marginLeft: '2px',
-                    transition: 'background 260ms ease, color 260ms ease',
-                  }}
-                >
-                  {tab.count}
-                </span>
-              )}
+                {tab.count !== undefined && (
+                  <span
+                    style={{
+                      fontSize: `${fontSize - 2}px`,
+                      padding: '1px 5px',
+                      borderRadius: '999px',
+                      background: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.08)',
+                      color: isActive ? '#ffffff' : '#94a3b8',
+                      fontWeight: 700,
+                      marginLeft: '2px',
+                      transition: 'background 260ms ease, color 260ms ease',
+                    }}
+                  >
+                    {tab.count}
+                  </span>
+                )}
 
-              {tab.badge && (
-                <span style={{ marginLeft: '2px' }}>{tab.badge}</span>
-              )}
-
-              {tab.shortcut && (
-                <span className="cc-ios-tab-shortcut">{tab.shortcut}</span>
-              )}
-            </div>
+                {tab.badge && (
+                  <span style={{ marginLeft: '2px' }}>{tab.badge}</span>
+                )}
+              </div>
+            </Tooltip>
           );
         })}
       </div>

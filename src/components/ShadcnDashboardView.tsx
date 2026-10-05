@@ -36,7 +36,7 @@ import { useDatabase } from '../context/DatabaseContext';
 import { macAudio } from '../utils/macAudio';
 import type { BillRecord } from '../services/db/schema';
 import { downloadCSV } from '../utils/exportCsv';
-import { DateRangePicker } from './ui/shadcn';
+import { DateRangePicker, Tooltip } from './ui/shadcn';
 
 interface Props {
   themeMode?: 'dark' | 'glass';
@@ -1556,25 +1556,27 @@ export const ShadcnDashboardView: React.FC<Props> = ({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 14px',
-                  borderRadius: '6px',
-                  border: `1px solid ${colors.border}`,
-                  background: 'transparent',
-                  color: colors.foreground,
-                  fontSize: '13px',
-                  cursor: 'pointer'
-                }}
-              >
-                <FileSpreadsheet size={14} color="#10b981" />
-                <span>Export Statement CSV</span>
-              </button>
+              <Tooltip title="Export Statement CSV (Ctrl+E)" side="bottom">
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '7px',
+                    border: `1px solid rgba(16, 185, 129, 0.35)`,
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#10b981',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <FileSpreadsheet size={16} color="#10b981" />
+                </button>
+              </Tooltip>
             </div>
 
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginTop: '10px' }}>

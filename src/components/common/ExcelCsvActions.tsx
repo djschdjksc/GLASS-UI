@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { downloadCSV, downloadTemplate, parseCSV } from '../../utils/exportCsv';
 import { macAudio } from '../../utils/macAudio';
+import { Tooltip } from '../ui/shadcn';
 
 export interface CsvColumnDef<T = any> {
   header: string;
@@ -208,47 +209,48 @@ export function ExcelCsvActions<T = any>({
       />
 
       {/* Trigger button - shadcn outline variant */}
-      <button
-        type="button"
-        onClick={() => { macAudio.playHover(); setIsMenuOpen(p => !p); }}
-        title={`${resolvedEntityName} - Export, Import and Template`}
-        style={{
-          display:      'inline-flex',
-          alignItems:   'center',
-          gap:          '5px',
-          padding:      compact ? '3px 8px' : '5px 10px',
-          height:       compact ? '26px' : '30px',
-          background:   isMenuOpen ? Z.surface : 'transparent',
-          color:        Z.fg,
-          border:       `1px solid ${isMenuOpen ? Z.muted : Z.border}`,
-          borderRadius: '6px',
-          fontSize:     '12px',
-          fontWeight:   500,
-          cursor:       'pointer',
-          userSelect:   'none',
-          fontFamily:   'inherit',
-          transition:   'background 0.12s, border-color 0.12s',
-          whiteSpace:   'nowrap',
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.background = Z.surface;
-          (e.currentTarget as HTMLButtonElement).style.borderColor = Z.muted;
-        }}
-        onMouseLeave={e => {
-          if (!isMenuOpen) {
-            (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            (e.currentTarget as HTMLButtonElement).style.borderColor = Z.border;
-          }
-        }}
-      >
-        <FileSpreadsheet size={13} color={Z.dim} />
-        {!compact && <span>{buttonLabel}</span>}
-        <ChevronDown
-          size={11}
-          color={Z.ghost}
-          style={{ transform: isMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
-        />
-      </button>
+      <Tooltip title={`${resolvedEntityName} (CSV / Excel Data Center)`} side="bottom">
+        <button
+          type="button"
+          onClick={() => { macAudio.playHover(); setIsMenuOpen(p => !p); }}
+          style={{
+            display:      'inline-flex',
+            alignItems:   'center',
+            gap:          '5px',
+            padding:      compact ? '3px 8px' : '5px 10px',
+            height:       compact ? '26px' : '30px',
+            background:   isMenuOpen ? Z.surface : 'transparent',
+            color:        Z.fg,
+            border:       `1px solid ${isMenuOpen ? Z.muted : Z.border}`,
+            borderRadius: '6px',
+            fontSize:     '12px',
+            fontWeight:   500,
+            cursor:       'pointer',
+            userSelect:   'none',
+            fontFamily:   'inherit',
+            transition:   'background 0.12s, border-color 0.12s',
+            whiteSpace:   'nowrap',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = Z.surface;
+            (e.currentTarget as HTMLButtonElement).style.borderColor = Z.muted;
+          }}
+          onMouseLeave={e => {
+            if (!isMenuOpen) {
+              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = Z.border;
+            }
+          }}
+        >
+          <FileSpreadsheet size={13} color={Z.dim} />
+          {!compact && <span>{buttonLabel}</span>}
+          <ChevronDown
+            size={11}
+            color={Z.ghost}
+            style={{ transform: isMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+          />
+        </button>
+      </Tooltip>
 
       {/* Dropdown menu */}
       {isMenuOpen && (
