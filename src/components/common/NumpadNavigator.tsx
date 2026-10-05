@@ -550,34 +550,33 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
       };
     }
 
-    // 4. Mode Bar targets (Zone 5) -> above each button
+    // 4. Mode Bar targets (Zone 5) -> above each button, compact number badge
     if (zoneId === 5) {
-      const centerX = rect.left + rect.width / 2;
-      const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
       return {
         style: {
           position: 'absolute',
-          top: `${rect.top - 34}px`,
-          left: `${safeLeft}px`,
+          top: `${Math.max(6, rect.top - 32)}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: 'translateX(-50%)',
         },
         arrowDirection: 'down'
       };
     }
 
-    // 5. Grid targets (Zones 3 & 4)
-    // If target is near the right edge of screen:
-    if (rect.right > screenW - 160) {
+    // 5. Grid targets (Zones 3 & 4) -> above each table button/cell, compact number badge
+    if (zoneId === 3 || zoneId === 4) {
       return {
         style: {
           position: 'absolute',
-          top: `${Math.max(6, Math.min(rect.top + (rect.height - 28) / 2, screenH - 35))}px`,
-          right: `${screenW - rect.left + 8}px`,
+          top: `${Math.max(6, rect.top - 32)}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: 'translateX(-50%)',
         },
-        arrowDirection: 'right'
+        arrowDirection: 'down'
       };
     }
 
-    // Default for table buttons/cells: placed above target
+    // Default for any other buttons/cells
     const centerX = rect.left + rect.width / 2;
     const safeLeft = Math.max(12, Math.min(centerX - 60, screenW - 170));
     return {
@@ -754,8 +753,67 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
 
               {/* Each Target Element: ONLY Floating Capsule Pointing Tooltip (NO button borders) */}
               {targetBadges.map(({ target, rect }) => {
+                const isNumberOnly = selectedZone.id === 3 || selectedZone.id === 4 || selectedZone.id === 5;
                 const placement = getTargetPlacement(rect, selectedZone.id);
 
+                // COMPACT NUMBER-ONLY BADGE (for clustered table buttons & mode buttons)
+                if (isNumberOnly) {
+                  return (
+                    <div
+                      key={target.num}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        executeTarget(target);
+                      }}
+                      title={target.label}
+                      style={{
+                        ...placement.style,
+                        zIndex: 999999,
+                        background: '#1c1c1e',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        borderRadius: '9999px',
+                        height: '26px',
+                        minWidth: '26px',
+                        padding: '0 6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                        fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                        userSelect: 'none',
+                        lineHeight: '1',
+                        cursor: 'pointer',
+                        pointerEvents: 'auto',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <kbd
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#3f3f42',
+                          color: '#f4f4f5',
+                          padding: '2px 6px',
+                          borderRadius: '9999px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                          lineHeight: '1',
+                          border: 'none',
+                          boxShadow: 'none',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {target.num}
+                      </kbd>
+                      {renderPointingArrow(placement.arrowDirection)}
+                    </div>
+                  );
+                }
+
+                // FULL NAME + NUMBER BADGE (for wide inputs & vertical rails)
                 return (
                   <div
                     key={target.num}
