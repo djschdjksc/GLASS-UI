@@ -137,6 +137,8 @@ interface ElementRect {
   left: number;
   width: number;
   height: number;
+  right: number;
+  bottom: number;
 }
 
 interface TargetBadgeInfo {
@@ -181,7 +183,9 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                 top: r.top,
                 left: r.left,
                 width: r.width,
-                height: r.height
+                height: r.height,
+                right: r.left + r.width,
+                bottom: r.top + r.height
               }
             });
           }
@@ -203,7 +207,9 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                 top: r.top,
                 left: r.left,
                 width: r.width,
-                height: r.height
+                height: r.height,
+                right: r.left + r.width,
+                bottom: r.top + r.height
               }
             });
           }
