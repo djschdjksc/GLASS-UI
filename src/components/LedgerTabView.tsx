@@ -27,7 +27,9 @@ import {
   Card as ShadcnCard,
   Label as ShadcnLabel,
   DatePicker as ShadcnDatePicker,
-  Pagination as ShadcnPagination
+  Pagination as ShadcnPagination,
+  Tooltip,
+  toast
 } from './ui/shadcn';
 import { useTableKeyboardNavigation } from '../hooks/useTableKeyboardNavigation';
 import { macAudio } from '../utils/macAudio';
@@ -409,12 +411,12 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   // Add Receipt Save
   const handleSaveReceipt = async () => {
     if (!selectedParty) {
-      alert('Pehle party select karein.');
+      toast.warning('Pehle party select karein.');
       return;
     }
     const amt = parseFloat(receiptAmount.replace(/,/g, '').trim());
     if (isNaN(amt) || amt <= 0) {
-      alert('Kripya valid amount darj karein.');
+      toast.warning('Kripya valid amount darj karein.');
       return;
     }
 
@@ -435,13 +437,14 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
         setIsAddReceiptOpen(false);
         setReceiptAmount('');
         setReceiptRemarks('Payment Received');
+        toast.success('Receipt Saved', `₹${amt.toLocaleString('en-IN')} payment added for ${selectedParty}`);
         loadLedger();
       } else {
         const err = await res.json();
-        alert(`Receipt save nahi hui: ${err.error || 'Unknown error'}`);
+        toast.error('Receipt save nahi hui', err.error || 'Unknown error');
       }
     } catch (e: any) {
-      alert(`Server error: ${e.message}`);
+      toast.error('Server Error', e.message);
     } finally {
       setIsReceiptSaving(false);
     }
@@ -458,12 +461,13 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
       if (res.ok) {
         macAudio.playTrash();
         setReceiptToDelete(null);
+        toast.success('Receipt Deleted', 'Payment receipt was removed successfully.');
         loadLedger();
       } else {
-        alert('Delete failed');
+        toast.error('Delete failed');
       }
     } catch (e: any) {
-      alert(`Delete error: ${e.message}`);
+      toast.error('Delete error', e.message);
     } finally {
       setIsDeletingReceipt(false);
     }
@@ -473,7 +477,7 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   const handleExportCSV = () => {
     macAudio.playClick();
     if (displayedEntries.length === 0) {
-      alert('Export karne ke liye koi data nahi hai.');
+      toast.warning('Export karne ke liye koi data nahi hai.');
       return;
     }
 
@@ -534,7 +538,7 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
   const handleImportLedgerReceipts = useCallback(async (imported: Partial<LedgerEntry>[]) => {
     if (!selectedParty) {
-      alert('Pehle party select karein jisme receipts import karni hai.');
+      toast.warning('Pehle party select karein jisme receipts import karni hai.');
       return;
     }
     let count = 0;
@@ -563,7 +567,7 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     if (count > 0) {
       macAudio.playSuccess();
       loadLedger();
-      alert(`${count} payment receipts successfully imported into Ledger!`);
+      toast.success('Receipts Imported', `${count} payment receipts successfully imported into Ledger!`);
     }
   }, [selectedParty, loadLedger]);
 
@@ -861,14 +865,40 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
               {/* Action Icons: Clear & Dropdown Toggle */}
               <div style={{ position: 'absolute', right: '6px', display: 'flex', alignItems: 'center', gap: '2px' }}>
                 {partySearchQuery && (
+                  <Tooltip title="Clear search" side="bottom">
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => {
+                        setPartySearchQuery('');
+                        setIsPartyDropdownOpen(true);
+                        setHighlightedPartyIndex(-1);
+                        document.getElementById('ledger-party-search')?.focus();
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#71717a',
+                        cursor: 'pointer',
+                        padding: '3px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </Tooltip>
+                )}
+                <Tooltip title="Toggle party list" side="bottom">
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => {
-                      setPartySearchQuery('');
-                      setIsPartyDropdownOpen(true);
-                      setHighlightedPartyIndex(-1);
-                      document.getElementById('ledger-party-search')?.focus();
+                      setIsPartyDropdownOpen((prev) => !prev);
+                      if (!isPartyDropdownOpen) {
+                        document.getElementById('ledger-party-search')?.focus();
+                      }
                     }}
                     style={{
                       background: 'transparent',
@@ -880,40 +910,16 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                       alignItems: 'center',
                       borderRadius: '4px'
                     }}
-                    title="Clear search"
                   >
-                    <X size={12} />
+                    <ChevronDown
+                      size={13}
+                      style={{
+                        transform: isPartyDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.15s ease'
+                      }}
+                    />
                   </button>
-                )}
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => {
-                    setIsPartyDropdownOpen((prev) => !prev);
-                    if (!isPartyDropdownOpen) {
-                      document.getElementById('ledger-party-search')?.focus();
-                    }
-                  }}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#71717a',
-                    cursor: 'pointer',
-                    padding: '3px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: '4px'
-                  }}
-                  title="Toggle party list"
-                >
-                  <ChevronDown
-                    size={13}
-                    style={{
-                      transition: 'transform 0.15s ease',
-                      transform: isPartyDropdownOpen ? 'rotate(180deg)' : 'none'
-                    }}
-                  />
-                </button>
+                </Tooltip>
               </div>
             </div>
 
@@ -1033,40 +1039,46 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
         {/* Right: Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Add Receipt */}
-          <ShadcnButton
-            variant="default"
-            size="sm"
-            onClick={() => {
-              macAudio.playClick();
-              setIsAddReceiptOpen(true);
-            }}
-            style={{ background: '#10b981', color: '#ffffff' }}
-          >
-            <Plus size={14} />
-            <span>Add Receipt</span>
-          </ShadcnButton>
+          <Tooltip title="Add Payment Receipt (+)" side="bottom">
+            <ShadcnButton
+              variant="default"
+              size="sm"
+              onClick={() => {
+                macAudio.playClick();
+                setIsAddReceiptOpen(true);
+              }}
+              style={{ background: '#10b981', color: '#ffffff' }}
+            >
+              <Plus size={14} />
+              <span>Add Receipt</span>
+            </ShadcnButton>
+          </Tooltip>
 
           {/* Delete Receipt (enabled only when receipt selected) */}
-          <ShadcnButton
-            variant="destructive"
-            size="sm"
-            disabled={!selectedRow || selectedRow.type !== 'RECEIPT'}
-            onClick={() => {
-              if (selectedRow && selectedRow.type === 'RECEIPT') {
-                macAudio.playClick();
-                setReceiptToDelete(selectedRow);
-              }
-            }}
-          >
-            <Trash2 size={13} />
-            <span>Delete Receipt</span>
-          </ShadcnButton>
+          <Tooltip title="Delete Selected Receipt (Delete)" side="bottom">
+            <ShadcnButton
+              variant="destructive"
+              size="sm"
+              disabled={!selectedRow || selectedRow.type !== 'RECEIPT'}
+              onClick={() => {
+                if (selectedRow && selectedRow.type === 'RECEIPT') {
+                  macAudio.playClick();
+                  setReceiptToDelete(selectedRow);
+                }
+              }}
+            >
+              <Trash2 size={13} />
+              <span>Delete Receipt</span>
+            </ShadcnButton>
+          </Tooltip>
 
           {/* Print */}
-          <ShadcnButton variant="outline" size="sm" onClick={handleOpenPrintModal}>
-            <Printer size={13} />
-            <span>Print</span>
-          </ShadcnButton>
+          <Tooltip title="Print Ledger Statement (Ctrl+P)" side="bottom">
+            <ShadcnButton variant="outline" size="sm" onClick={handleOpenPrintModal}>
+              <Printer size={13} />
+              <span>Print</span>
+            </ShadcnButton>
+          </Tooltip>
 
           {/* Universal Excel/CSV Export, Import & Template */}
           <ExcelCsvActions<LedgerEntry>
@@ -1567,53 +1579,55 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                       {/* Action */}
                       <td style={{ padding: '8px 14px', textAlign: 'center' }}>
                         {item.type === 'RECEIPT' ? (
-                          <button
-                            type="button"
-                            title="Delete this payment receipt"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              macAudio.playClick();
-                              setReceiptToDelete(item);
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              borderRadius: '4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          <Tooltip title="Delete this payment receipt" side="left">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                macAudio.playClick();
+                                setReceiptToDelete(item);
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#ef4444',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </Tooltip>
                         ) : !isOpening && onLoadBillToEditor && item.rawId ? (
-                          <button
-                            type="button"
-                            title="Open Bill in Editor"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              macAudio.playClick();
-                              onLoadBillToEditor(String(item.rawId));
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#71717a',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              borderRadius: '4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#38bdf8')}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
-                          >
-                            <ExternalLink size={13} />
-                          </button>
+                          <Tooltip title="Open Bill in Editor" side="left">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                macAudio.playClick();
+                                onLoadBillToEditor(String(item.rawId));
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#71717a',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = '#38bdf8')}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
+                            >
+                              <ExternalLink size={13} />
+                            </button>
+                          </Tooltip>
                         ) : null}
                       </td>
                     </tr>

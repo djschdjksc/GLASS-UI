@@ -15,9 +15,9 @@ import {
   Filter
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
-import { SQLITE_BILLS } from '../data/sqliteData';
 import type { FinishedItem, RawItem } from '../types';
 import { parseProductAndSize, calculateProportionalPrice } from '../utils/mouldUtils';
+import { Tooltip } from './ui/shadcn';
 
 export interface RateHistoryItem {
   id: string;
@@ -377,26 +377,27 @@ export const RateHistoryModal: React.FC<Props> = ({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              border: '1px solid #27272a',
-              backgroundColor: '#18181b',
-              color: '#a1a1aa',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-            title="Close (Esc)"
-          >
-            <X size={14} />
-          </button>
+          <Tooltip title="Close (Esc)" side="bottom">
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid #27272a',
+                backgroundColor: '#18181b',
+                color: '#a1a1aa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <X size={14} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Toolbar & Filters (Shadcn Tabs & Input) */}

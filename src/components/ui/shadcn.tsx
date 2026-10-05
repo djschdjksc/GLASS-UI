@@ -1139,3 +1139,301 @@ export const Progress: React.FC<ProgressProps> = ({
     </div>
   );
 };
+
+// =========================================================================
+// 16. TOOLTIP COMPONENT (ui.shadcn.com/docs/components/tooltip)
+// =========================================================================
+export {
+  Tooltip,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider
+} from './tooltip';
+export type { TooltipProps, TooltipContentProps } from './tooltip';
+
+// =========================================================================
+// 17. SLIDER COMPONENT (ui.shadcn.com/docs/components/slider)
+// =========================================================================
+export interface SliderProps {
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number;
+  defaultValue?: number;
+  onChange?: (val: number) => void;
+  tooltip?: { formatter?: (val: any) => string };
+  disabled?: boolean;
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const Slider: React.FC<SliderProps> = ({
+  min = 0,
+  max = 100,
+  step = 1,
+  value,
+  defaultValue = 0,
+  onChange,
+  disabled = false,
+  style,
+  className = ''
+}) => {
+  const isControlled = value !== undefined;
+  const [internalVal, setInternalVal] = useState<number>(isControlled ? value : defaultValue);
+
+  const currentVal = isControlled ? value : internalVal;
+  const percentage = Math.max(0, Math.min(100, ((currentVal - min) / (max - min)) * 100));
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = parseFloat(e.target.value);
+    if (!isControlled) setInternalVal(next);
+    onChange?.(next);
+  };
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        touchAction: 'none',
+        userSelect: 'none',
+        height: '20px',
+        ...style
+      }}
+      className={className}
+    >
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={currentVal}
+        disabled={disabled}
+        onChange={handleChange}
+        style={{
+          width: '100%',
+          height: '6px',
+          borderRadius: '9999px',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          background: `linear-gradient(to right, #38bdf8 0%, #38bdf8 ${percentage}%, #27272a ${percentage}%, #27272a 100%)`,
+          outline: 'none',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? 0.5 : 1,
+          margin: 0
+        }}
+      />
+    </div>
+  );
+};
+
+// =========================================================================
+// 18. INPUT NUMBER COMPONENT (shadcn/ui zinc numeric input)
+// =========================================================================
+export interface InputNumberProps {
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number | null;
+  defaultValue?: number;
+  onChange?: (val: number | null) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const InputNumber: React.FC<InputNumberProps> = ({
+  min,
+  max,
+  step = 1,
+  value,
+  defaultValue,
+  onChange,
+  disabled = false,
+  placeholder,
+  style,
+  className = ''
+}) => {
+  const isControlled = value !== undefined;
+  const [internalVal, setInternalVal] = useState<string>(
+    isControlled && value !== null && value !== undefined ? String(value) : defaultValue !== undefined ? String(defaultValue) : ''
+  );
+
+  const displayVal = isControlled ? (value !== null && value !== undefined ? String(value) : '') : internalVal;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (!isControlled) setInternalVal(raw);
+
+    if (raw === '') {
+      onChange?.(null);
+      return;
+    }
+
+    const num = parseFloat(raw);
+    if (!isNaN(num)) {
+      onChange?.(num);
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={displayVal}
+      disabled={disabled}
+      placeholder={placeholder}
+      onChange={handleChange}
+      className={className}
+      style={{
+        display: 'flex',
+        height: '32px',
+        width: '100%',
+        borderRadius: '6px',
+        border: '1px solid #27272a',
+        background: '#09090b',
+        padding: '4px 10px',
+        fontSize: '12.5px',
+        color: '#f4f4f5',
+        outline: 'none',
+        boxSizing: 'border-box',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
+        transition: 'border-color 0.15s ease',
+        ...style
+      }}
+    />
+  );
+};
+
+// =========================================================================
+// 19. SEGMENTED COMPONENT (ui.shadcn.com style segmented control / tabs)
+// =========================================================================
+export interface SegmentedOption {
+  label: React.ReactNode;
+  value: any;
+  disabled?: boolean;
+}
+
+export interface SegmentedProps {
+  value?: any;
+  defaultValue?: any;
+  onChange?: (val: any) => void;
+  options: (SegmentedOption | string | number)[];
+  block?: boolean;
+  disabled?: boolean;
+  size?: 'sm' | 'default';
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const Segmented: React.FC<SegmentedProps> = ({
+  value: controlledValue,
+  defaultValue,
+  onChange,
+  options,
+  block = false,
+  disabled = false,
+  size = 'default',
+  style,
+  className = ''
+}) => {
+  const isControlled = controlledValue !== undefined;
+  const [internalVal, setInternalVal] = useState<any>(
+    isControlled ? controlledValue : defaultValue !== undefined ? defaultValue : (options[0] as any)?.value ?? options[0]
+  );
+
+  const activeVal = isControlled ? controlledValue : internalVal;
+
+  const parsedOptions: SegmentedOption[] = options.map((opt) => {
+    if (typeof opt === 'object' && opt !== null && 'value' in opt) {
+      return opt as SegmentedOption;
+    }
+    return { label: String(opt), value: opt };
+  });
+
+  return (
+    <div
+      style={{
+        display: block ? 'flex' : 'inline-flex',
+        alignItems: 'center',
+        padding: '2px',
+        borderRadius: '7px',
+        background: '#18181b',
+        border: '1px solid #27272a',
+        gap: '2px',
+        boxSizing: 'border-box',
+        userSelect: 'none',
+        ...style
+      }}
+      className={className}
+    >
+      {parsedOptions.map((opt, i) => {
+        const isSelected = opt.value === activeVal;
+        return (
+          <button
+            key={i}
+            type="button"
+            disabled={disabled || opt.disabled}
+            onClick={() => {
+              if (disabled || opt.disabled) return;
+              if (!isControlled) setInternalVal(opt.value);
+              onChange?.(opt.value);
+            }}
+            style={{
+              flex: block ? 1 : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: size === 'sm' ? '24px' : '28px',
+              padding: size === 'sm' ? '0 8px' : '0 12px',
+              fontSize: size === 'sm' ? '11px' : '12px',
+              fontWeight: isSelected ? 600 : 500,
+              borderRadius: '5px',
+              border: isSelected ? '1px solid #3f3f46' : '1px solid transparent',
+              background: isSelected ? '#09090b' : 'transparent',
+              color: isSelected ? '#ffffff' : '#a1a1aa',
+              boxShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+              cursor: disabled || opt.disabled ? 'not-allowed' : 'pointer',
+              opacity: disabled || opt.disabled ? 0.4 : 1,
+              outline: 'none',
+              transition: 'all 0.12s ease',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+
+// =========================================================================
+// 15. TOAST COMPONENT (ui.shadcn.com/docs/components/sonner)
+// =========================================================================
+export {
+  toast,
+  useToast,
+  Toaster,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+  ToastViewport,
+  ToastProvider,
+  dismissToast
+} from './toast';
+export type {
+  ToastProps,
+  ToastOptions,
+  ToastVariant,
+  ToastActionElement,
+} from './toast';

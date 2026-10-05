@@ -7,7 +7,7 @@ import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
 import { DOC_TYPES } from '../utils/billDocTypes';
 import { getUserProfile } from '../services/supabaseClient';
-import { Select as ShadcnSelect, Button, Input } from './ui/shadcn';
+import { Select as ShadcnSelect, Button, Input, Tooltip } from './ui/shadcn';
 import { localDb } from '../services/db/localDb';
 import type { PartyRecord } from '../services/db/schema';
 
@@ -390,25 +390,26 @@ export const AppleHeader: React.FC<Props> = ({
           </div>
 
           {/* Dedicated Quick Add (+) Button next to search box (Shadcn UI Button) */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handleTriggerAddParty()}
-            style={{
-              width: '32px',
-              height: '32px',
-              padding: 0,
-              borderRadius: '6px',
-              borderColor: '#27272a',
-              backgroundColor: '#18181b',
-              color: '#f4f4f5',
-              flexShrink: 0
-            }}
-            title="Add New Party to Database (+)"
-          >
-            <Plus size={14} />
-          </Button>
+          <Tooltip title="Add New Party to Database (+)" side="bottom">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleTriggerAddParty()}
+              style={{
+                width: '32px',
+                height: '32px',
+                padding: 0,
+                borderRadius: '6px',
+                borderColor: '#27272a',
+                backgroundColor: '#18181b',
+                color: '#f4f4f5',
+                flexShrink: 0
+              }}
+            >
+              <Plus size={14} />
+            </Button>
+          </Tooltip>
         </div>
 
         {/* Vehicle Type Dropdown */}
@@ -431,25 +432,26 @@ export const AppleHeader: React.FC<Props> = ({
               <option key={vt} value={vt}>{vt}</option>
             ))}
           </ShadcnSelect>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => { setNewVehicleTypeInput(''); setAddVehicleTypeModal(true); }}
-            style={{
-              width: '32px',
-              height: '32px',
-              padding: 0,
-              borderRadius: '6px',
-              borderColor: '#27272a',
-              backgroundColor: '#18181b',
-              color: '#f4f4f5',
-              flexShrink: 0
-            }}
-            title="Add New Vehicle Type (+)"
-          >
-            <Plus size={14} />
-          </Button>
+          <Tooltip title="Add New Vehicle Type (+)" side="bottom">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => { setNewVehicleTypeInput(''); setAddVehicleTypeModal(true); }}
+              style={{
+                width: '32px',
+                height: '32px',
+                padding: 0,
+                borderRadius: '6px',
+                borderColor: '#27272a',
+                backgroundColor: '#18181b',
+                color: '#f4f4f5',
+                flexShrink: 0
+              }}
+            >
+              <Plus size={14} />
+            </Button>
+          </Tooltip>
         </div>
 
         {/* Vehicle No Input */}
@@ -493,15 +495,20 @@ export const AppleHeader: React.FC<Props> = ({
 
       {/* Right Controls: Token Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Red Token Badge */}
-        <div 
-          data-np-target="1-6"
-          className="apple-token-badge"
-          tabIndex={0}
-          title="Token Number"
+        {/* Red Token Badge with Hover Value Tooltip */}
+        <Tooltip
+          title={`Bill Token #${header.tokenNo || '1'} | Date: ${header.date || 'Today'} | Party: ${header.partyName || 'Not Set'}`}
+          placement="bottom"
         >
-          <span>#{header.tokenNo}</span>
-        </div>
+          <div 
+            data-np-target="1-6"
+            className="apple-token-badge"
+            tabIndex={0}
+            style={{ cursor: 'pointer' }}
+          >
+            <span>#{header.tokenNo}</span>
+          </div>
+        </Tooltip>
       </div>
 
       {/* New Party Confirmation Modal */}

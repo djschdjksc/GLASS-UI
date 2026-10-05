@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { History, X, User, Clock, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-react';
 import { supabaseSyncService, type BillChangeLog } from '../services/supabaseSync';
 import { macAudio } from '../utils/macAudio';
+import { Tooltip } from './ui/shadcn';
 
 interface Props {
   isOpen: boolean;
@@ -125,39 +126,42 @@ export const BillAuditHistoryModal: React.FC<Props> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button
-              type="button"
-              onClick={fetchLogs}
-              title="Refresh Logs"
-              style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '6px',
-                color: 'rgba(255, 255, 255, 0.6)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <RefreshCw size={15} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '6px',
-                color: 'rgba(255, 255, 255, 0.6)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <X size={16} />
-            </button>
+            <Tooltip title="Refresh Logs" side="bottom">
+              <button
+                type="button"
+                onClick={fetchLogs}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '6px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <RefreshCw size={15} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Close (Esc)" side="bottom">
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '6px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </Tooltip>
           </div>
         </div>
 

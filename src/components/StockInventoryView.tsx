@@ -65,7 +65,8 @@ import {
   Separator as ShadcnSeparator,
   Select as ShadcnSelect,
   Pagination as ShadcnPagination,
-  DatePicker as ShadcnDatePicker
+  DatePicker as ShadcnDatePicker,
+  Tooltip as ShadcnTooltip
 } from './ui/shadcn';
 import { useTableKeyboardNavigation } from '../hooks/useTableKeyboardNavigation';
 import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
@@ -2913,52 +2914,55 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
               {/* Left: 3 Apple-Box Mode Buttons (Matching Bill UI BottomModeBar) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {/* Button 1: AUTO CONVERT */}
-                <button
-                  type="button"
-                  onMouseEnter={() => macAudio.playHover()}
-                  onClick={() => {
-                    macAudio.playClick();
-                    handleToggle('autoConvert');
-                    showToast?.(`AUTO CONVERT: ${!autoConvert ? 'ON' : 'OFF'}`, !autoConvert ? 'success' : 'info');
-                  }}
-                  className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
-                  style={{ width: '36px', height: '36px' }}
-                >
-                  <span className="box-tooltip-top">AUTO CONVERT [Alt+A / Numpad *]</span>
-                  <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
-                </button>
+                <ShadcnTooltip title="AUTO CONVERT [Alt+A / Numpad *]" side="top">
+                  <button
+                    type="button"
+                    onMouseEnter={() => macAudio.playHover()}
+                    onClick={() => {
+                      macAudio.playClick();
+                      handleToggle('autoConvert');
+                      showToast?.(`AUTO CONVERT: ${!autoConvert ? 'ON' : 'OFF'}`, !autoConvert ? 'success' : 'info');
+                    }}
+                    className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
+                    style={{ width: '36px', height: '36px' }}
+                  >
+                    <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
+                  </button>
+                </ShadcnTooltip>
 
                 {/* Button 2: AUTO ITEM */}
-                <button
-                  type="button"
-                  onMouseEnter={() => macAudio.playHover()}
-                  onClick={() => {
-                    macAudio.playClick();
-                    handleToggle('autoItem');
-                    showToast?.(`AUTO ITEM: ${!autoItem ? 'ON' : 'OFF'}`, !autoItem ? 'success' : 'info');
-                  }}
-                  className={`apple-box-btn ${autoItem ? 'active' : ''}`}
-                  style={{ width: '36px', height: '36px' }}
-                >
-                  <span className="box-tooltip-top">AUTO ITEM [Alt+Z / Numpad *]</span>
-                  <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
-                </button>
+                <ShadcnTooltip title="AUTO ITEM [Alt+Z / Numpad *]" side="top">
+                  <button
+                    type="button"
+                    onMouseEnter={() => macAudio.playHover()}
+                    onClick={() => {
+                      macAudio.playClick();
+                      handleToggle('autoItem');
+                      showToast?.(`AUTO ITEM: ${!autoItem ? 'ON' : 'OFF'}`, !autoItem ? 'success' : 'info');
+                    }}
+                    className={`apple-box-btn ${autoItem ? 'active' : ''}`}
+                    style={{ width: '36px', height: '36px' }}
+                  >
+                    <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
+                  </button>
+                </ShadcnTooltip>
 
                 {/* Button 3: SIMPLE MODE */}
-                <button
-                  type="button"
-                  onMouseEnter={() => macAudio.playHover()}
-                  onClick={() => {
-                    macAudio.playClick();
-                    handleToggle('simpleMode');
-                    showToast?.(`SIMPLE MODE: ${!simpleMode ? 'ON' : 'OFF'}`, !simpleMode ? 'success' : 'info');
-                  }}
-                  className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
-                  style={{ width: '36px', height: '36px' }}
-                >
-                  <span className="box-tooltip-top">SIMPLE MODE [Alt+X / Numpad *]</span>
-                  <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
-                </button>
+                <ShadcnTooltip title="SIMPLE MODE [Alt+X / Numpad *]" side="top">
+                  <button
+                    type="button"
+                    onMouseEnter={() => macAudio.playHover()}
+                    onClick={() => {
+                      macAudio.playClick();
+                      handleToggle('simpleMode');
+                      showToast?.(`SIMPLE MODE: ${!simpleMode ? 'ON' : 'OFF'}`, !simpleMode ? 'success' : 'info');
+                    }}
+                    className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
+                    style={{ width: '36px', height: '36px' }}
+                  >
+                    <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
+                  </button>
+                </ShadcnTooltip>
 
                 <div style={{ width: '1px', height: '22px', background: '#27272a', margin: '0 2px' }} />
 
@@ -3178,8 +3182,12 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         <td style={{ padding: '8px 10px', textAlign: 'center' }}>
                           {item.rawVoucherId !== null ? (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                              <ShadcnButton type="button" variant="outline" size="sm" onClick={() => handleLoadVoucherForEdit(item.rawVoucherId!)} style={{ height: '26px', padding: '0 8px', fontSize: '12px', borderColor: '#27272a', color: '#f4f4f5' }} title="Edit Voucher">Edit</ShadcnButton>
-                              <ShadcnButton type="button" variant="ghost" size="sm" onClick={() => handleDeleteVoucher(item.rawVoucherId!)} style={{ height: '26px', width: '26px', padding: 0, color: '#71717a' }} title="Delete Voucher"><Trash2 size={13} /></ShadcnButton>
+                              <ShadcnTooltip title="Edit Stock Voucher" side="left">
+                                <ShadcnButton type="button" variant="outline" size="sm" onClick={() => handleLoadVoucherForEdit(item.rawVoucherId!)} style={{ height: '26px', padding: '0 8px', fontSize: '12px', borderColor: '#27272a', color: '#f4f4f5' }}>Edit</ShadcnButton>
+                              </ShadcnTooltip>
+                              <ShadcnTooltip title="Delete Voucher (Delete)" side="left">
+                                <ShadcnButton type="button" variant="ghost" size="sm" onClick={() => handleDeleteVoucher(item.rawVoucherId!)} style={{ height: '26px', width: '26px', padding: 0, color: '#71717a' }}><Trash2 size={13} /></ShadcnButton>
+                              </ShadcnTooltip>
                             </div>
                           ) : (
                             <span style={{ color: '#71717a', fontSize: '12px' }}>Bill</span>
@@ -3345,9 +3353,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.uCap}</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', color: '#f4f4f5', fontWeight: 500, fontSize: '12px' }}>{item.lCap}</td>
                         <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                          <ShadcnButton type="button" variant="ghost" size="sm" onClick={() => { if (onOpenBillDetails) { onOpenBillDetails(item.billId); } }} style={{ height: '26px', width: '26px', padding: 0, color: '#a1a1aa' }} title="View Bill">
-                            <ExternalLink size={13} />
-                          </ShadcnButton>
+                          <ShadcnTooltip title="View Bill Details (Enter)" side="left">
+                            <ShadcnButton type="button" variant="ghost" size="sm" onClick={() => { if (onOpenBillDetails) { onOpenBillDetails(item.billId); } }} style={{ height: '26px', width: '26px', padding: 0, color: '#a1a1aa' }}>
+                              <ExternalLink size={13} />
+                            </ShadcnButton>
+                          </ShadcnTooltip>
                         </td>
                       </tr>
                     );

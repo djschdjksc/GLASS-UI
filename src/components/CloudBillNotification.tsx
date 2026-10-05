@@ -41,72 +41,102 @@ export const CloudBillNotification: React.FC<Props> = ({
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         position: 'fixed',
-        top: '20px',
+        bottom: '24px',
         right: '24px',
-        zIndex: 9999999,
-        maxWidth: '380px',
+        zIndex: 99999999,
+        maxWidth: '390px',
         width: 'calc(100% - 48px)',
-        background: 'linear-gradient(135deg, rgba(20, 24, 33, 0.95), rgba(10, 14, 20, 0.98))',
-        border: '1px solid rgba(37, 211, 102, 0.45)',
-        borderRadius: '16px',
-        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.65), 0 0 25px rgba(37, 211, 102, 0.25)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        padding: '14px 16px',
-        color: '#ffffff',
-        animation: 'slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+        background: '#09090b',
+        border: '1px solid rgba(16, 185, 129, 0.45)',
+        borderRadius: '8px',
+        boxShadow: '0 10px 30px -4px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.08)',
+        padding: '12px 14px',
+        color: '#f4f4f5',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
+        boxSizing: 'border-box',
+        animation: 'shadcnToastEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        {/* Animated Green Bill Icon */}
+      {/* Accent Indicator Bar */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '3.5px',
+          background: '#10b981',
+          borderRadius: '8px 0 0 8px'
+        }}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingLeft: '4px' }}>
+        {/* Emerald Icon */}
         <div
           style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: 'rgba(37, 211, 102, 0.15)',
-            border: '1px solid rgba(37, 211, 102, 0.35)',
+            width: '28px',
+            height: '28px',
+            borderRadius: '6px',
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#25D366',
-            flexShrink: 0
+            color: '#10b981',
+            flexShrink: 0,
+            marginTop: '1px'
           }}
         >
-          <FileText size={20} />
+          <FileText size={15} />
         </div>
 
         {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#25D366', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              ⚡ Naya Bill Recieved!
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#10b981', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+              Incoming Cloud Bill
             </span>
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close"
               style={{
-                background: 'transparent',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '20px',
+                width: '20px',
+                borderRadius: '4px',
                 border: 'none',
-                color: 'rgba(255, 255, 255, 0.4)',
+                background: 'transparent',
+                color: '#71717a',
                 cursor: 'pointer',
-                padding: '2px',
-                display: 'flex',
-                alignItems: 'center'
+                padding: 0,
+                transition: 'color 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#f4f4f5';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#71717a';
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           </div>
 
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Token #{notification.token} • {notification.party}
           </div>
 
-          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', marginTop: '2px' }}>
-            Total: <strong style={{ color: '#38bdf8' }}>₹{Number(notification.total || 0).toLocaleString('en-IN')}</strong> • By <span style={{ color: '#c084fc', fontWeight: 600 }}>{notification.fromUser || 'Counter'}</span>
+          <div style={{ fontSize: '12px', color: '#a1a1aa', marginTop: '3px' }}>
+            Total: <strong style={{ color: '#38bdf8', fontWeight: 600 }}>₹{Number(notification.total || 0).toLocaleString('en-IN')}</strong> • By <span style={{ color: '#c084fc', fontWeight: 500 }}>{notification.fromUser || 'Counter'}</span>
           </div>
 
           {/* Action Button */}
@@ -120,18 +150,27 @@ export const CloudBillNotification: React.FC<Props> = ({
                   onClose();
                 }}
                 style={{
-                  background: 'rgba(37, 211, 102, 0.2)',
-                  border: '1px solid rgba(37, 211, 102, 0.4)',
-                  color: '#25D366',
-                  borderRadius: '8px',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.15s'
+                  gap: '5px',
+                  height: '26px',
+                  padding: '0 10px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: '1px solid #27272a',
+                  background: '#18181b',
+                  color: '#10b981',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#18181b';
+                  e.currentTarget.style.borderColor = '#27272a';
                 }}
               >
                 <span>View Bill</span>
@@ -143,4 +182,5 @@ export const CloudBillNotification: React.FC<Props> = ({
       </div>
     </div>
   );
+
 };

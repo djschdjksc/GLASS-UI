@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Segmented, Slider, Switch, Tag, Button, Input, InputNumber, Tooltip } from 'antd';
 import { macAudio } from '../utils/macAudio';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
@@ -56,8 +55,13 @@ import {
   Monitor
 } from 'lucide-react';
 import {
+  Button,
   Button as ShadcnButton,
+  Input,
   Input as ShadcnInput,
+  InputNumber,
+  Slider,
+  Segmented,
   Card as ShadcnCard,
   CardHeader as ShadcnCardHeader,
   CardTitle as ShadcnCardTitle,
@@ -68,13 +72,17 @@ import {
   TabsList as ShadcnTabsList,
   TabsTrigger as ShadcnTabsTrigger,
   TabsContent as ShadcnTabsContent,
+  Switch,
   Switch as ShadcnSwitch,
+  Badge,
   Badge as ShadcnBadge,
   Label as ShadcnLabel,
   Avatar as ShadcnAvatar,
   AvatarImage as ShadcnAvatarImage,
   AvatarFallback as ShadcnAvatarFallback,
-  Progress as ShadcnProgress
+  Progress as ShadcnProgress,
+  Tooltip,
+  toast
 } from './ui/shadcn';
 import { getUserProfile, setUserProfile, getUserPrefix } from '../services/supabaseClient';
 import { supabaseSyncService } from '../services/supabaseSync';
@@ -1019,27 +1027,28 @@ export const SettingsTabView: React.FC<Props> = ({
                     )}
                   </select>
 
-                  <ShadcnButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={fetchPrintersList}
-                    disabled={isPrinterChecking}
-                    title="Refresh Windows Printers List"
-                    style={{
-                      height: '36px',
-                      padding: '0 12px',
-                      background: '#27272a',
-                      color: '#f4f4f5',
-                      border: '1px solid #3f3f46',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <RefreshCw size={13} className={isPrinterChecking ? 'animate-spin' : ''} />
-                    <span>Refresh</span>
-                  </ShadcnButton>
+                  <Tooltip title="Refresh Windows Printers List" side="bottom">
+                    <ShadcnButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={fetchPrintersList}
+                      disabled={isPrinterChecking}
+                      style={{
+                        height: '36px',
+                        padding: '0 12px',
+                        background: '#27272a',
+                        color: '#f4f4f5',
+                        border: '1px solid #3f3f46',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <RefreshCw size={13} className={isPrinterChecking ? 'animate-spin' : ''} />
+                      <span>Refresh</span>
+                    </ShadcnButton>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -1074,28 +1083,29 @@ export const SettingsTabView: React.FC<Props> = ({
                 <span style={{ fontSize: '11px', color: '#71717a' }}>
                   Sends a vector calibration test page directly to this printer
                 </span>
-                <ShadcnButton
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={handleTestPrint}
-                  disabled={isTestPrinting || printerEngineStatus === 'offline'}
-                  title="Dispatch High-Resolution Test Page"
-                  style={{
-                    background: '#0284c7',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '11.5px',
-                    height: '32px',
-                    padding: '0 14px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Printer size={13} />
-                  <span>{isTestPrinting ? 'SPOOLING...' : 'Test Print Page'}</span>
-                </ShadcnButton>
+                <Tooltip title="Dispatch High-Resolution Calibration Test Page" side="bottom">
+                  <ShadcnButton
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleTestPrint}
+                    disabled={isTestPrinting || printerEngineStatus === 'offline'}
+                    style={{
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '11.5px',
+                      height: '32px',
+                      padding: '0 14px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Printer size={13} />
+                    <span>{isTestPrinting ? 'Printing...' : 'Print Test Page'}</span>
+                  </ShadcnButton>
+                </Tooltip>
               </div>
             </div>
 
@@ -1581,9 +1591,9 @@ export const SettingsTabView: React.FC<Props> = ({
                     Dual UI modes: Obsidian Dark & Liquid Glass
                   </span>
                 </div>
-                <Tag color={themeMode === 'glass' ? 'cyan' : 'purple'}>
+                <Badge variant="secondary" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {themeMode.toUpperCase()} MODE
-                </Tag>
+                </Badge>
               </div>
 
               {/* Animated Sun & Moon Phone Theme Switcher (Matching Provided Component) */}
@@ -3457,8 +3467,6 @@ export const SettingsTabView: React.FC<Props> = ({
                 </span>
               </div>
               <Button
-                type="primary"
-                icon={<Download size={14} />}
                 onClick={handleExportBackup}
                 style={{
                   height: '34px',
@@ -3466,9 +3474,11 @@ export const SettingsTabView: React.FC<Props> = ({
                   fontSize: '11.5px',
                   background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
                   border: 'none',
+                  color: '#ffffff',
                   boxShadow: '0 2px 10px rgba(56, 189, 248, 0.4)'
                 }}
               >
+                <Download size={14} />
                 Download JSON Backup
               </Button>
             </div>
@@ -3534,8 +3544,6 @@ export const SettingsTabView: React.FC<Props> = ({
                 Import Settings & Skips from old BillApp_Backup.json (Desktop)
               </span>
               <Button
-                type="primary"
-                icon={<Database size={14} />}
                 onClick={() => {
                   import('../data/BillApp_Backup.json').then(legacy => {
                     const data = legacy.default || legacy;
@@ -3583,10 +3591,10 @@ export const SettingsTabView: React.FC<Props> = ({
                     }
                     localStorage.setItem('billapp_skip_version_v5', 'true');
 
-                    alert('Legacy Backup Imported Successfully! ' + count + ' sections loaded into Control Panel and Settings.');
+                    toast.success('Backup Imported', `Legacy Backup Imported Successfully! ${count} sections loaded.`);
                   }).catch(e => {
                     console.error(e);
-                    alert('Could not load BillApp_Backup.json from src/data/');
+                    toast.error('Import Failed', 'Could not load BillApp_Backup.json from src/data/');
                   });
                 }}
                 style={{
@@ -3600,6 +3608,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   boxShadow: '0 2px 10px rgba(251, 191, 36, 0.4)'
                 }}
               >
+                <Database size={14} />
                 Load BillApp_Backup.json
               </Button>
             </div>

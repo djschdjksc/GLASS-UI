@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ConfigProvider, theme as antdTheme } from 'antd';
-import { getAntdTheme, type AppThemeMode } from './theme/glassAntdTheme';
-import './theme/antdGlassOverrides.css';
+import type { BillHeader, RawItem, FinishedItem, EnterDirection, NavKey, AppThemeMode } from './types';
 import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
 import { SQLITE_CONTROL_CONVERSIONS, SQLITE_CONTROL_GROUPS } from './data/sqliteControlPanel';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
-import type { BillHeader, RawItem, FinishedItem, EnterDirection, NavKey } from './types';
 import { AppleHeader } from './components/AppleHeader';
 import { LeftActionRail } from './components/LeftActionRail';
 import { RightNavRail } from './components/RightNavRail';
@@ -45,6 +42,7 @@ import { BillAuditHistoryModal } from './components/BillAuditHistoryModal';
 import { CloudBillNotification, type CloudNotificationData } from './components/CloudBillNotification';
 import { RateHistoryModal } from './components/RateHistoryModal';
 import { speakVoiceSummaryHindi } from './utils/hindiVoiceSummary';
+import { toast, Toaster } from './components/ui/shadcn';
 
 const playTapSound = () => {
   try {
@@ -335,10 +333,21 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   } | null>(null);
   const [dialogFocus, setDialogFocus] = useState<'save' | 'discard' | 'cancel'>('save');
 
-  // Notification toast disabled per user request
-  const showToast = (_message: string, _type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
-    // Disabled: no recurring top toast notifications
-  };
+  // Shadcn UI Toast Notifications (ui.shadcn.com/docs/components/toast)
+  const showToast = useCallback((message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
+    if (!message) return;
+    // Strip leading duplicate alert emojis/symbols so only the official notification icon displays
+    const cleanMsg = message.replace(/^[\s\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}?,!]+/u, '').trim();
+    if (type === 'success') {
+      toast.success(cleanMsg);
+    } else if (type === 'error') {
+      toast.error(cleanMsg);
+    } else if (type === 'warning') {
+      toast.warning(cleanMsg);
+    } else {
+      toast.info(cleanMsg);
+    }
+  }, []);
 
   // Multi-User Edit Versioning & Dirty Tracking
   const currentFingerprint = getBillFingerprint(header, rawItems, finishedItems, dynamicCols, hasPartyCodeCol);
@@ -3314,6 +3323,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         onApplyRates={handleApplyHistoricalRates}
       />
 
+      {/* Shadcn UI Native Toast (https://ui.shadcn.com/docs/components/toast) */}
+      <Toaster />
+
     </div>
   );
 }
@@ -3364,14 +3376,12 @@ export default function App() {
   }
 
   return (
-    <ConfigProvider theme={getAntdTheme(themeMode)}>
-      <DatabaseProvider>
-        <SettingsProvider>
-          <ItemModeProvider>
-            <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
-          </ItemModeProvider>
-        </SettingsProvider>
-      </DatabaseProvider>
-    </ConfigProvider>
+    <DatabaseProvider>
+      <SettingsProvider>
+        <ItemModeProvider>
+          <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
+        </ItemModeProvider>
+      </SettingsProvider>
+    </DatabaseProvider>
   );
 }

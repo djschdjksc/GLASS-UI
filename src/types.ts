@@ -38,3 +38,5 @@ export interface ToggleState {
 export type NavKey = 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F8' | 'F9' | 'F10';
 
 export type EnterDirection = 'right' | 'down' | 'left' | 'up';
+
+export type AppThemeMode = 'dark' | 'glass';

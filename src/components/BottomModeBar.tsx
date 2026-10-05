@@ -15,6 +15,7 @@ import { localDb } from '../services/db/localDb';
 import type { RawItem, FinishedItem } from '../types';
 import { SQLITE_BILLS } from '../data/sqliteData';
 import { normalizeDocType, getBillCategory } from '../utils/billDocTypes';
+import { Tooltip } from './ui/shadcn';
 
 export type AppMode = 'ENTRY' | 'SEARCH_LOAD' | 'SUMMARY';
 
@@ -255,55 +256,58 @@ export const BottomModeBar: React.FC<Props> = ({
       {/* LEFT: 3 Action Toggle Buttons matching Left/Right Rails */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'visible' }}>
         {/* Button 1: AUTO CONVERT */}
-        <button
-          data-np-target="5-1"
-          type="button"
-          onMouseEnter={() => macAudio.playHover()}
-          onClick={() => {
-            macAudio.playClick();
-            onToggle('autoConvert');
-            onToast(`AUTO CONVERT: ${!autoConvert ? 'ON' : 'OFF'}`, !autoConvert ? 'success' : 'info');
-          }}
-          className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
-          style={{ width: '36px', height: '36px' }}
-        >
-          <span className="box-tooltip-top">AUTO CONVERT [Alt+A / Numpad *]</span>
-          <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
-        </button>
+        <Tooltip title={`AUTO CONVERT: ${autoConvert ? 'ON' : 'OFF'} [Alt+A]`} placement="top">
+          <button
+            data-np-target="5-1"
+            type="button"
+            onMouseEnter={() => macAudio.playHover()}
+            onClick={() => {
+              macAudio.playClick();
+              onToggle('autoConvert');
+              onToast(`AUTO CONVERT: ${!autoConvert ? 'ON' : 'OFF'}`, !autoConvert ? 'success' : 'info');
+            }}
+            className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
+            style={{ width: '36px', height: '36px' }}
+          >
+            <ArrowRightLeft size={16} color={autoConvert ? '#38bdf8' : 'currentColor'} />
+          </button>
+        </Tooltip>
 
         {/* Button 2: AUTO ITEM */}
-        <button
-          data-np-target="5-2"
-          type="button"
-          onMouseEnter={() => macAudio.playHover()}
-          onClick={() => {
-            macAudio.playClick();
-            onToggle('autoItem');
-            onToast(`AUTO ITEM: ${!autoItem ? 'ON' : 'OFF'}`, !autoItem ? 'success' : 'info');
-          }}
-          className={`apple-box-btn ${autoItem ? 'active' : ''}`}
-          style={{ width: '36px', height: '36px' }}
-        >
-          <span className="box-tooltip-top">AUTO ITEM [Alt+Z / Numpad *]</span>
-          <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
-        </button>
+        <Tooltip title={`AUTO ITEM: ${autoItem ? 'ON' : 'OFF'} [Alt+Z]`} placement="top">
+          <button
+            data-np-target="5-2"
+            type="button"
+            onMouseEnter={() => macAudio.playHover()}
+            onClick={() => {
+              macAudio.playClick();
+              onToggle('autoItem');
+              onToast(`AUTO ITEM: ${!autoItem ? 'ON' : 'OFF'}`, !autoItem ? 'success' : 'info');
+            }}
+            className={`apple-box-btn ${autoItem ? 'active' : ''}`}
+            style={{ width: '36px', height: '36px' }}
+          >
+            <PackagePlus size={16} color={autoItem ? '#38bdf8' : 'currentColor'} />
+          </button>
+        </Tooltip>
 
         {/* Button 3: SIMPLE MODE */}
-        <button
-          data-np-target="5-3"
-          type="button"
-          onMouseEnter={() => macAudio.playHover()}
-          onClick={() => {
-            macAudio.playClick();
-            onToggle('simpleMode');
-            onToast(`SIMPLE MODE: ${!simpleMode ? 'ON' : 'OFF'}`, !simpleMode ? 'success' : 'info');
-          }}
-          className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
-          style={{ width: '36px', height: '36px' }}
-        >
-          <span className="box-tooltip-top">SIMPLE MODE [Alt+X / Numpad *]</span>
-          <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
-        </button>
+        <Tooltip title={`SIMPLE MODE: ${simpleMode ? 'ON' : 'OFF'} [Alt+X]`} placement="top">
+          <button
+            data-np-target="5-3"
+            type="button"
+            onMouseEnter={() => macAudio.playHover()}
+            onClick={() => {
+              macAudio.playClick();
+              onToggle('simpleMode');
+              onToast(`SIMPLE MODE: ${!simpleMode ? 'ON' : 'OFF'}`, !simpleMode ? 'success' : 'info');
+            }}
+            className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
+            style={{ width: '36px', height: '36px' }}
+          >
+            <SlidersHorizontal size={16} color={simpleMode ? '#38bdf8' : 'currentColor'} />
+          </button>
+        </Tooltip>
       </div>
 
       {/* RIGHT: Tools (Calculator, Chat, Theme Mode) + Bill Search */}
@@ -311,152 +315,153 @@ export const BottomModeBar: React.FC<Props> = ({
         
         {/* Calculator Button */}
         {onToggleCalculator && (
-          <button
-            type="button"
-            onMouseEnter={() => macAudio.playHover()}
-            onClick={() => {
-              macAudio.playClick();
-              onToggleCalculator();
-            }}
-            className={`apple-box-btn ${isCalculatorOpen ? 'active' : ''}`}
-            style={{ 
-              width: '36px', 
-              height: '36px',
-              borderRadius: '8px',
-              background: isCalculatorOpen ? 'rgba(56, 189, 248, 0.25)' : undefined,
-              borderColor: isCalculatorOpen ? '#38bdf8' : undefined
-            }}
-            title="Calculator (Numpad Ready • F9)"
-          >
-            <span className="box-tooltip-top">Calculator (F9)</span>
-            <Calculator size={16} color={isCalculatorOpen ? '#38bdf8' : 'currentColor'} />
-          </button>
+          <Tooltip title="Digital Calculator (F9 / Ctrl+K)" placement="top">
+            <button
+              type="button"
+              onMouseEnter={() => macAudio.playHover()}
+              onClick={() => {
+                macAudio.playClick();
+                onToggleCalculator();
+              }}
+              className={`apple-box-btn ${isCalculatorOpen ? 'active' : ''}`}
+              style={{ 
+                width: '36px', 
+                height: '36px',
+                borderRadius: '8px',
+                background: isCalculatorOpen ? 'rgba(56, 189, 248, 0.25)' : undefined,
+                borderColor: isCalculatorOpen ? '#38bdf8' : undefined
+              }}
+            >
+              <Calculator size={16} color={isCalculatorOpen ? '#38bdf8' : 'currentColor'} />
+            </button>
+          </Tooltip>
         )}
 
         {/* AI Chat Assistant Button */}
         {onToggleChat && (
-          <button
-            type="button"
-            onMouseEnter={() => macAudio.playHover()}
-            onClick={() => {
-              macAudio.playClick();
-              onToggleChat();
-            }}
-            className={`apple-box-btn ${isChatOpen ? 'active' : ''}`}
-            style={{ 
-              position: 'relative',
-              width: '36px', 
-              height: '36px',
-              borderRadius: '8px',
-              background: isChatOpen ? 'rgba(59, 130, 246, 0.25)' : undefined,
-              borderColor: isChatOpen ? '#3b82f6' : undefined
-            }}
-            title="Chat Assistant (Ctrl+J)"
-          >
-            <span className="box-tooltip-top">Chat Assistant (Ctrl+J)</span>
-            <MessageSquare size={16} color={isChatOpen ? '#38bdf8' : 'currentColor'} />
-            {unreadChatCount > 0 && !isChatOpen && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  fontSize: '9.5px',
-                  fontWeight: 800,
-                  minWidth: '16px',
-                  height: '16px',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 3px',
-                  boxShadow: '0 2px 6px rgba(239, 68, 68, 0.6)',
-                  border: '1.5px solid #000'
-                }}
-              >
-                {unreadChatCount}
-              </span>
-            )}
-          </button>
+          <Tooltip title="AI Chat Assistant (Ctrl+J)" placement="top">
+            <button
+              type="button"
+              onMouseEnter={() => macAudio.playHover()}
+              onClick={() => {
+                macAudio.playClick();
+                onToggleChat();
+              }}
+              className={`apple-box-btn ${isChatOpen ? 'active' : ''}`}
+              style={{ 
+                position: 'relative',
+                width: '36px', 
+                height: '36px',
+                borderRadius: '8px',
+                background: isChatOpen ? 'rgba(59, 130, 246, 0.25)' : undefined,
+                borderColor: isChatOpen ? '#3b82f6' : undefined
+              }}
+            >
+              <MessageSquare size={16} color={isChatOpen ? '#38bdf8' : 'currentColor'} />
+              {unreadChatCount > 0 && !isChatOpen && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '9.5px',
+                    fontWeight: 800,
+                    minWidth: '16px',
+                    height: '16px',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px',
+                    boxShadow: '0 2px 6px rgba(239, 68, 68, 0.6)',
+                    border: '1.5px solid #000'
+                  }}
+                >
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
+          </Tooltip>
         )}
 
         {/* Theme Mode Button (Dark / Glass) */}
         {onChangeThemeMode && (
-          <button
-            type="button"
-            onMouseEnter={() => macAudio.playHover()}
-            onClick={() => {
-              macAudio.playClick();
-              const nextMode: 'dark' | 'glass' = themeMode === 'dark' ? 'glass' : 'dark';
-              onChangeThemeMode(nextMode);
-              onToast(`Theme switched to ${nextMode.toUpperCase()}`, 'info');
-            }}
-            className="apple-box-btn"
-            style={{ 
-              width: '36px', 
-              height: '36px',
-              borderRadius: '8px'
-            }}
-            title={`Theme: ${themeMode?.toUpperCase()} (Click to toggle)`}
-          >
-            <span className="box-tooltip-top">{themeMode === 'dark' ? 'Switch to Glass' : 'Switch to Dark'}</span>
-            {themeMode === 'dark' ? (
-              <Moon size={16} color="#38bdf8" />
-            ) : (
-              <Sparkles size={16} color="#a855f7" />
-            )}
-          </button>
+          <Tooltip title={`Theme: ${themeMode?.toUpperCase()} (Toggle)`} placement="top">
+            <button
+              type="button"
+              onMouseEnter={() => macAudio.playHover()}
+              onClick={() => {
+                macAudio.playClick();
+                const nextMode: 'dark' | 'glass' = themeMode === 'dark' ? 'glass' : 'dark';
+                onChangeThemeMode(nextMode);
+                onToast(`Theme switched to ${nextMode.toUpperCase()}`, 'info');
+              }}
+              className="apple-box-btn"
+              style={{ 
+                width: '36px', 
+                height: '36px',
+                borderRadius: '8px'
+              }}
+            >
+              {themeMode === 'dark' ? (
+                <Moon size={16} color="#38bdf8" />
+              ) : (
+                <Sparkles size={16} color="#a855f7" />
+              )}
+            </button>
+          </Tooltip>
         )}
 
         {/* Subtle Separator */}
         <div style={{ width: '1px', height: '20px', background: 'rgba(255, 255, 255, 0.12)', margin: '0 2px' }} />
 
         {/* Compact Slip Search Input (sized for ~15415, press Enter to Load) */}
-        <div 
-          className="apple-search-pill" 
-          style={{ 
-            width: '135px', 
-            height: '34px',
-            padding: '0 8px 0 28px',
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: '8px',
-            position: 'relative'
-          }}
-        >
-          <Search 
-            size={13} 
+        <Tooltip title={`Search & Load Bill # in ${normalizeDocType(activeDocType)} (Enter)`} placement="top">
+          <div 
+            className="apple-search-pill" 
             style={{ 
-              position: 'absolute', 
-              left: '9px', 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              color: '#38bdf8',
-              pointerEvents: 'none'
-            }} 
-          />
-          <input
-            data-np-target="5-4"
-            type="text"
-            placeholder={`Bill # (${normalizeDocType(activeDocType)})`}
-            value={searchSlipQuery}
-            onChange={(e) => setSearchSlipQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            title={`Type Bill # in ${normalizeDocType(activeDocType)} & press Enter to load`}
-            style={{
-              width: '100%',
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: 'inherit',
-              fontSize: '12px',
-              fontWeight: 600,
-              fontFamily: 'inherit'
+              width: '135px', 
+              height: '34px',
+              padding: '0 8px 0 28px',
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: '8px',
+              position: 'relative'
             }}
-          />
-        </div>
+          >
+            <Search 
+              size={13} 
+              style={{ 
+                position: 'absolute', 
+                left: '9px', 
+                top: '50%', 
+                transform: 'translateY(-50%)', 
+                color: '#38bdf8',
+                pointerEvents: 'none'
+              }} 
+            />
+            <input
+              data-np-target="5-4"
+              type="text"
+              placeholder={`Bill # (${normalizeDocType(activeDocType)})`}
+              value={searchSlipQuery}
+              onChange={(e) => setSearchSlipQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: 'inherit',
+                fontSize: '12px',
+                fontWeight: 600,
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+        </Tooltip>
       </div>
     </div>
   );

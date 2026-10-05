@@ -7,9 +7,8 @@ import { EquationTabView } from './EquationTabView';
 
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { AnimatedCounter } from './common/AnimatedCounter';
-import { Select as ShadcnSelect, Button as ShadcnButton, Input as ShadcnInput, Pagination as ShadcnPagination } from './ui/shadcn';
+import { Select as ShadcnSelect, Button as ShadcnButton, Input as ShadcnInput, Pagination as ShadcnPagination, Tooltip } from './ui/shadcn';
 
-import { Tooltip } from 'antd';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { NavKey } from '../types';
 import { macAudio } from '../utils/macAudio';
@@ -1579,95 +1578,106 @@ export const OtherTabsView: React.FC<Props> = ({
 
               {/* Action Buttons - Clean Minimal Uniform Dark Glass Style */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    macAudio.playClick();
-                    if (onLoadBillToEditor) {
-                      onLoadBillToEditor(selectedBill);
-                    } else {
-                      onBackToBill();
-                    }
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                  className="mac-btn"
-                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Load Bill into F1"
-                >
-                  <ExternalLink size={13} color="#38bdf8" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    macAudio.playPop();
-                    setIsAuditModalOpen(true);
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                  className="mac-btn"
-                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="View Cell-Level Edit & Audit History"
-                >
-                  <History size={13} color="#c084fc" />
-                </button>
-                <button
-                  type="button"
-                  className="mac-btn"
-                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Print Bill (Ctrl+P / Ctrl+E / Ctrl+L / Alt+S)"
-                  onClick={() => {
-                    macAudio.playPop();
-                    setIsPrintModalOpen(true);
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                >
-                  <Printer size={13} color="#38bdf8" />
-                </button>
-                <button
-                  type="button"
-                  className="mac-btn"
-                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Export PDF / Print Preview"
-                  onClick={() => {
-                    macAudio.playPop();
-                    setIsPrintModalOpen(true);
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                >
-                  <Download size={13} color="#34d399" />
-                </button>
-                <button
-                  type="button"
-                  className="mac-btn"
-                  style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Download This Bill as CSV"
-                  onClick={() => {
-                    macAudio.playClick();
-                    handleExportSelectedBillCsv();
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                >
-                  <FileSpreadsheet size={13} color="#10b981" />
-                </button>
-                {/* Delete Bill Button */}
-                {selectedBill && selectedBill.id !== 'empty' && (
+                <Tooltip title="Load Bill into Editor (Enter)" side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      macAudio.playClick();
+                      if (onLoadBillToEditor) {
+                        onLoadBillToEditor(selectedBill);
+                      } else {
+                        onBackToBill();
+                      }
+                    }}
+                    onMouseEnter={() => macAudio.playHover()}
+                    className="mac-btn"
+                    style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <ExternalLink size={13} color="#38bdf8" />
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="Cell-Level Edit & Audit History (Alt+H)" side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      macAudio.playPop();
+                      setIsAuditModalOpen(true);
+                    }}
+                    onMouseEnter={() => macAudio.playHover()}
+                    className="mac-btn"
+                    style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <History size={13} color="#c084fc" />
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="Print Bill (Ctrl+P)" side="bottom">
                   <button
                     type="button"
                     className="mac-btn"
-                    style={{
-                      width: '28px', height: '28px', padding: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      borderColor: 'rgba(239,68,68,0.4)',
-                      marginLeft: '4px'
-                    }}
-                    title="Delete This Bill (Delete key)"
+                    style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => {
                       macAudio.playPop();
-                      setDeleteConfirmBillId(selectedBill.id);
+                      setIsPrintModalOpen(true);
                     }}
                     onMouseEnter={() => macAudio.playHover()}
                   >
-                    <Trash2 size={13} color="#ef4444" />
+                    <Printer size={13} color="#38bdf8" />
                   </button>
+                </Tooltip>
+
+                <Tooltip title="Export PDF / Print Preview (Alt+P)" side="bottom">
+                  <button
+                    type="button"
+                    className="mac-btn"
+                    style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => {
+                      macAudio.playPop();
+                      setIsPrintModalOpen(true);
+                    }}
+                    onMouseEnter={() => macAudio.playHover()}
+                  >
+                    <Download size={13} color="#34d399" />
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="Export This Bill to CSV (Ctrl+E)" side="bottom">
+                  <button
+                    type="button"
+                    className="mac-btn"
+                    style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => {
+                      macAudio.playClick();
+                      handleExportSelectedBillCsv();
+                    }}
+                    onMouseEnter={() => macAudio.playHover()}
+                  >
+                    <FileSpreadsheet size={13} color="#10b981" />
+                  </button>
+                </Tooltip>
+
+                {/* Delete Bill Button */}
+                {selectedBill && selectedBill.id !== 'empty' && (
+                  <Tooltip title="Delete This Bill (Delete)" side="bottom">
+                    <button
+                      type="button"
+                      className="mac-btn"
+                      style={{
+                        width: '28px', height: '28px', padding: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        borderColor: 'rgba(239,68,68,0.4)',
+                        marginLeft: '4px'
+                      }}
+                      onClick={() => {
+                        macAudio.playPop();
+                        setDeleteConfirmBillId(selectedBill.id);
+                      }}
+                      onMouseEnter={() => macAudio.playHover()}
+                    >
+                      <Trash2 size={13} color="#ef4444" />
+                    </button>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -2043,52 +2053,55 @@ export const OtherTabsView: React.FC<Props> = ({
                   gap: '2px'
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => handleTogglePartyViewMode('table')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    height: '24px',
-                    padding: '0 8px',
-                    fontSize: '11px',
-                    fontWeight: partyViewMode === 'table' ? 600 : 500,
-                    borderRadius: '4px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: partyViewMode === 'table' ? '#18181b' : 'transparent',
-                    color: partyViewMode === 'table' ? '#f4f4f5' : '#71717a',
-                    transition: 'all 0.12s ease'
-                  }}
-                  title="Standard Table View"
-                >
-                  <List size={12} />
-                  <span>Table</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTogglePartyViewMode('cards')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    height: '24px',
-                    padding: '0 8px',
-                    fontSize: '11px',
-                    fontWeight: partyViewMode === 'cards' ? 600 : 500,
-                    borderRadius: '4px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: partyViewMode === 'cards' ? '#18181b' : 'transparent',
-                    color: partyViewMode === 'cards' ? '#f4f4f5' : '#71717a',
-                    transition: 'all 0.12s ease'
-                  }}
-                  title="Cards View"
-                >
-                  <Grid size={12} />
-                  <span>Cards</span>
-                </button>
+                <Tooltip title="Standard Table View" side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => handleTogglePartyViewMode('table')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      height: '24px',
+                      padding: '0 8px',
+                      fontSize: '11px',
+                      fontWeight: partyViewMode === 'table' ? 600 : 500,
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: partyViewMode === 'table' ? '#18181b' : 'transparent',
+                      color: partyViewMode === 'table' ? '#f4f4f5' : '#71717a',
+                      transition: 'all 0.12s ease'
+                    }}
+                  >
+                    <List size={12} />
+                    <span>Table</span>
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="Cards View" side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => handleTogglePartyViewMode('cards')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      height: '24px',
+                      padding: '0 8px',
+                      fontSize: '11px',
+                      fontWeight: partyViewMode === 'cards' ? 600 : 500,
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: partyViewMode === 'cards' ? '#18181b' : 'transparent',
+                      color: partyViewMode === 'cards' ? '#f4f4f5' : '#71717a',
+                      transition: 'all 0.12s ease'
+                    }}
+                  >
+                    <Grid size={12} />
+                    <span>Cards</span>
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Universal Excel/CSV Export, Import & Template */}
@@ -2101,18 +2114,20 @@ export const OtherTabsView: React.FC<Props> = ({
               />
 
               {/* New Party Button */}
-              <ShadcnButton
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={() => {
-                  macAudio.playClick();
-                  handleStartNewParty();
-                }}
-                style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', whiteSpace: 'nowrap' }}
-              >
-                <Plus size={13} /> Add Party Row
-              </ShadcnButton>
+              <Tooltip title="Add New Party to Directory (+)" side="bottom">
+                <ShadcnButton
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    macAudio.playClick();
+                    handleStartNewParty();
+                  }}
+                  style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', whiteSpace: 'nowrap' }}
+                >
+                  <Plus size={13} /> Add Party Row
+                </ShadcnButton>
+              </Tooltip>
             </div>
           </div>
 
@@ -2277,60 +2292,62 @@ export const OtherTabsView: React.FC<Props> = ({
                           {/* Quick Actions in Card */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             {p.phone && (
-                              <a
-                                href={`https://wa.me/${p.phone.replace(/[^0-9]/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
+                              <Tooltip title="Send WhatsApp Message" side="bottom">
+                                <a
+                                  href={`https://wa.me/${p.phone.replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    macAudio.playClick();
+                                  }}
+                                  style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(52, 211, 153, 0.12)',
+                                    border: '1px solid rgba(52, 211, 153, 0.3)',
+                                    color: '#34d399',
+                                    fontSize: '10.5px',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                >
+                                  <MessageCircle size={11} />
+                                  <span>WA</span>
+                                </a>
+                              </Tooltip>
+                            )}
+                            <Tooltip title="Create Sale Bill for this Party (F1)" side="bottom">
+                              <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  macAudio.playClick();
+                                  macAudio.playSuccess();
+                                  if (onSelectPartyForBill) {
+                                    onSelectPartyForBill(p.name);
+                                  }
                                 }}
                                 style={{
-                                  padding: '4px 8px',
+                                  padding: '4px 9px',
                                   borderRadius: '6px',
-                                  background: 'rgba(52, 211, 153, 0.12)',
-                                  border: '1px solid rgba(52, 211, 153, 0.3)',
-                                  color: '#34d399',
+                                  background: 'linear-gradient(135deg, #0a84ff 0%, #0066cc 100%)',
+                                  border: '1px solid rgba(10, 132, 255, 0.5)',
+                                  color: '#ffffff',
                                   fontSize: '10.5px',
                                   fontWeight: 600,
-                                  textDecoration: 'none',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '3px'
+                                  gap: '3px',
+                                  cursor: 'pointer'
                                 }}
-                                title="WhatsApp"
                               >
-                                <MessageCircle size={11} />
-                                <span>WA</span>
-                              </a>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                macAudio.playSuccess();
-                                if (onSelectPartyForBill) {
-                                  onSelectPartyForBill(p.name);
-                                }
-                              }}
-                              style={{
-                                padding: '4px 9px',
-                                borderRadius: '6px',
-                                background: 'linear-gradient(135deg, #0a84ff 0%, #0066cc 100%)',
-                                border: '1px solid rgba(10, 132, 255, 0.5)',
-                                color: '#ffffff',
-                                fontSize: '10.5px',
-                                fontWeight: 600,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                                cursor: 'pointer'
-                              }}
-                              title="Create Sale Bill for this Party"
-                            >
-                              <FileText size={11} />
-                              <span>Bill</span>
-                            </button>
+                                <Plus size={11} />
+                                <span>Bill</span>
+                              </button>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
@@ -2549,45 +2566,47 @@ export const OtherTabsView: React.FC<Props> = ({
                             <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 {isEditing ? (
-                                  <button
-                                    type="button"
-                                    style={{
-                                      display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                      padding: '2px 10px', height: '24px', borderRadius: '4px',
-                                      background: '#f4f4f5', color: '#09090b',
-                                      border: 'none', fontSize: '11px', fontWeight: 600,
-                                      cursor: 'pointer'
-                                    }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      macAudio.playSuccess();
-                                      setEditingPartyId(null);
-                                    }}
-                                    title="Save Party"
-                                  >
-                                    <Check size={11} /> Save
-                                  </button>
+                                  <Tooltip title="Save Party (Enter)" side="bottom">
+                                    <button
+                                      type="button"
+                                      style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                        padding: '2px 10px', height: '24px', borderRadius: '4px',
+                                        background: '#f4f4f5', color: '#09090b',
+                                        border: 'none', fontSize: '11px', fontWeight: 600,
+                                        cursor: 'pointer'
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        macAudio.playSuccess();
+                                        setEditingPartyId(null);
+                                      }}
+                                    >
+                                      <Check size={11} /> Save
+                                    </button>
+                                  </Tooltip>
                                 ) : (
-                                  <button
-                                    type="button"
-                                    style={{
-                                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                      width: '24px', height: '24px', borderRadius: '4px',
-                                      background: 'transparent', color: '#a1a1aa',
-                                      border: '1px solid transparent', cursor: 'pointer',
-                                      transition: 'all 0.12s ease'
-                                    }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#f4f4f5'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      macAudio.playClick();
-                                      setEditingPartyId(p.id);
-                                    }}
-                                    title="Edit Party"
-                                  >
-                                    <Edit3 size={12} />
-                                  </button>
+                                  <Tooltip title="Edit Party Details" side="bottom">
+                                    <button
+                                      type="button"
+                                      style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '24px', height: '24px', borderRadius: '4px',
+                                        background: 'transparent', color: '#a1a1aa',
+                                        border: '1px solid transparent', cursor: 'pointer',
+                                        transition: 'all 0.12s ease'
+                                      }}
+                                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; (e.currentTarget as HTMLButtonElement).style.color = '#f4f4f5'; }}
+                                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        macAudio.playClick();
+                                        setEditingPartyId(p.id);
+                                      }}
+                                    >
+                                      <Edit3 size={12} />
+                                    </button>
+                                  </Tooltip>
                                 )}
                               </div>
                             </td>

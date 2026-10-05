@@ -5,7 +5,7 @@ import { Search, Plus, Trash2, Check, Tag, Hash, FileText, Layers, Banknote } fr
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
 import type { BillNameMap } from '../data/billMapsData';
 import UnsavedChangesModal from './UnsavedChangesModal';
-import { Pagination as ShadcnPagination } from './ui/shadcn';
+import { Pagination as ShadcnPagination, Tooltip } from './ui/shadcn';
 
 const DEFAULT_BILL_COLS = { srNo: 40, on: 45, shortCode: 150, printName: 300, rate: 90, category: 140, actions: 50 };
 
@@ -520,44 +520,46 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
                   <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                       {isEditing ? (
-                        <button
-                          type="button"
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            padding: '2px 10px', height: '24px', borderRadius: '4px',
-                            background: '#f4f4f5', color: '#09090b',
-                            border: 'none', fontSize: '11px', fontWeight: 600,
-                            cursor: 'pointer'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            macAudio.playSuccess();
-                            setEditingIdx(null);
-                          }}
-                          title="Save Row"
-                        >
-                          <Check size={11} /> Save
-                        </button>
+                        <Tooltip title="Save Row" side="left">
+                          <button
+                            type="button"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '4px',
+                              padding: '2px 10px', height: '24px', borderRadius: '4px',
+                              background: '#f4f4f5', color: '#09090b',
+                              border: 'none', fontSize: '11px', fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              macAudio.playSuccess();
+                              setEditingIdx(null);
+                            }}
+                          >
+                            <Check size={11} /> Save
+                          </button>
+                        </Tooltip>
                       ) : (
-                        <button
-                          type="button"
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            width: '24px', height: '24px', borderRadius: '4px',
-                            background: 'transparent', color: '#52525b',
-                            border: '1px solid transparent', cursor: 'pointer',
-                            transition: 'all 0.12s ease'
-                          }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            promptDeleteRow(m, originalIndex);
-                          }}
-                          title="Delete mapping"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        <Tooltip title="Delete mapping" side="left">
+                          <button
+                            type="button"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              width: '24px', height: '24px', borderRadius: '4px',
+                              background: 'transparent', color: '#52525b',
+                              border: '1px solid transparent', cursor: 'pointer',
+                              transition: 'all 0.12s ease'
+                            }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              promptDeleteRow(m, originalIndex);
+                            }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </Tooltip>
                       )}
                     </div>
                   </td>

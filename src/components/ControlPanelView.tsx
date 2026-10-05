@@ -8,6 +8,7 @@ import UnsavedChangesModal from './UnsavedChangesModal';
 import {
   Button as ShadcnButton,
   Input as ShadcnInput,
+  Tooltip
 } from './ui/shadcn';
 
 import {
@@ -915,32 +916,33 @@ export const ControlPanelView: React.FC = () => {
           ).map(({ key, label, icon: Icon }) => {
             const isActive = activeTab === key;
             return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => { macAudio.playClick(); setActiveTab(key); }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '5px 13px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? '#f4f4f5' : '#71717a',
-                  background: isActive ? '#18181b' : 'transparent',
-                  border: isActive ? '1px solid #27272a' : '1px solid transparent',
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                }}
-              >
-                <Icon size={13} />
-                {label}
-              </button>
+              <Tooltip key={key} title={`Switch to ${label}`} side="bottom">
+                <button
+                  type="button"
+                  onClick={() => { macAudio.playClick(); setActiveTab(key); }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '5px 13px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? '#f4f4f5' : '#71717a',
+                    background: isActive ? '#18181b' : 'transparent',
+                    border: isActive ? '1px solid #27272a' : '1px solid transparent',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  <Icon size={13} />
+                  {label}
+                </button>
+              </Tooltip>
             );
           })}
         </div>
@@ -959,16 +961,18 @@ export const ControlPanelView: React.FC = () => {
           </div>
 
           {/* Add Button */}
-          <ShadcnButton
-            type="button"
-            variant="default"
-            size="sm"
-            onClick={handleAddForActiveTab}
-            style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', whiteSpace: 'nowrap' }}
-          >
-            <Plus size={13} />
-            {getTabConfig(activeTab).addButtonText}
-          </ShadcnButton>
+          <Tooltip title={`Add ${getTabConfig(activeTab).addButtonText} (+)`} side="bottom">
+            <ShadcnButton
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={handleAddForActiveTab}
+              style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', whiteSpace: 'nowrap' }}
+            >
+              <Plus size={13} />
+              {getTabConfig(activeTab).addButtonText}
+            </ShadcnButton>
+          </Tooltip>
 
           {/* Universal Excel & CSV Data Center */}
           {activeTab === 'MANAGE_GROUPS' && (
@@ -1172,37 +1176,39 @@ export const ControlPanelView: React.FC = () => {
                       </td>
                       <td style={{ textAlign: 'center', padding: '2px 6px' }}>
                         {isEditing ? (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
-                            title="Save"
-                            style={{
-                              display: 'inline-flex', alignItems: 'center', gap: '4px',
-                              padding: '2px 10px', height: '24px', borderRadius: '4px',
-                              background: '#f4f4f5', color: '#09090b',
-                              border: 'none', fontSize: '11px', fontWeight: 600,
-                              cursor: 'pointer', margin: '0 auto'
-                            }}
-                          >
-                            <Check size={11} /> Save
-                          </button>
+                          <Tooltip title="Save Group" side="left">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '2px 10px', height: '24px', borderRadius: '4px',
+                                background: '#f4f4f5', color: '#09090b',
+                                border: 'none', fontSize: '11px', fontWeight: 600,
+                                cursor: 'pointer', margin: '0 auto'
+                              }}
+                            >
+                              <Check size={11} /> Save
+                            </button>
+                          </Tooltip>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleDeleteGroup(grp.id); }}
-                            title="Delete"
-                            style={{
-                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                              width: '24px', height: '24px', borderRadius: '4px',
-                              background: 'transparent', color: '#52525b',
-                              border: '1px solid transparent', cursor: 'pointer',
-                              transition: 'all 0.12s ease'
-                            }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                          <Tooltip title="Delete Group" side="left">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteGroup(grp.id); }}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '24px', height: '24px', borderRadius: '4px',
+                                background: 'transparent', color: '#52525b',
+                                border: '1px solid transparent', cursor: 'pointer',
+                                transition: 'all 0.12s ease'
+                              }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </Tooltip>
                         )}
                       </td>
                     </tr>

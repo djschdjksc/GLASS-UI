@@ -16,6 +16,7 @@ import {
   Equal
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
+import { Tooltip } from './ui/shadcn';
 
 // Segment activation maps for digits 0-9, minus and error
 const SEGMENT_MAP: Record<string, string[]> = {
@@ -610,45 +611,48 @@ export const DigitalCalculatorModal: React.FC<CalculatorProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <button
-            onClick={onClose}
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#ff5f56',
-              border: '1px solid rgba(0,0,0,0.2)',
-              cursor: 'pointer',
-              padding: 0
-            }}
-            title="Close (Esc)"
-          />
-          <button
-            onClick={() => setPosition({ x: 40, y: 80 })}
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#ffbd2e',
-              border: '1px solid rgba(0,0,0,0.2)',
-              cursor: 'pointer',
-              padding: 0
-            }}
-            title="Reset Position"
-          />
-          <button
-            onClick={() => setShowGstTools(v => !v)}
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#27c93f',
-              border: '1px solid rgba(0,0,0,0.2)',
-              cursor: 'pointer',
-              padding: 0
-            }}
-            title="Toggle GST Billing Modes"
-          />
+          <Tooltip title="Close (Esc)" side="bottom">
+            <button
+              onClick={onClose}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#ff5f56',
+                border: '1px solid rgba(0,0,0,0.2)',
+                cursor: 'pointer',
+                padding: 0
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Reset Position" side="bottom">
+            <button
+              onClick={() => setPosition({ x: 40, y: 80 })}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#ffbd2e',
+                border: '1px solid rgba(0,0,0,0.2)',
+                cursor: 'pointer',
+                padding: 0
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Toggle GST Billing Modes" side="bottom">
+            <button
+              onClick={() => setShowGstTools(v => !v)}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#27c93f',
+                border: '1px solid rgba(0,0,0,0.2)',
+                cursor: 'pointer',
+                padding: 0
+              }}
+            />
+          </Tooltip>
           <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginLeft: '6px', letterSpacing: '0.4px' }}>
             PRO CALC <span style={{ fontSize: '9px', color: '#0284c7', background: 'rgba(2,132,199,0.15)', padding: '1px 5px', borderRadius: '4px' }}>NUMPAD READY</span>
           </span>
@@ -656,40 +660,42 @@ export const DigitalCalculatorModal: React.FC<CalculatorProps> = ({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* History Tape Toggle */}
-          <button
-            onClick={() => setShowHistory(v => !v)}
-            style={{
-              background: showHistory ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
-              border: 'none',
-              color: showHistory ? '#38bdf8' : '#64748b',
-              cursor: 'pointer',
-              padding: '2px 4px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-            title="Calculation Tape History"
-          >
-            <HistoryIcon size={14} />
-          </button>
+          <Tooltip title="Calculation Tape History" side="bottom">
+            <button
+              onClick={() => setShowHistory(v => !v)}
+              style={{
+                background: showHistory ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                border: 'none',
+                color: showHistory ? '#38bdf8' : '#64748b',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <HistoryIcon size={14} />
+            </button>
+          </Tooltip>
 
           {/* Copy Result */}
-          <button
-            onClick={handleCopy}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: copied ? '#10b981' : '#64748b',
-              cursor: 'pointer',
-              padding: '2px 4px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-            title="Copy Result (Ctrl+C)"
-          >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-          </button>
+          <Tooltip title="Copy Result (Ctrl+C)" side="bottom">
+            <button
+              onClick={handleCopy}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: copied ? '#10b981' : '#64748b',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </Tooltip>
 
           {/* Sun / Theme Deco Icon from Screenshot */}
           <Sun size={13} color="#38bdf8" style={{ opacity: 0.8 }} />

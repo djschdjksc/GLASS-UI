@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Clock, Check, Printer, FileDiff, CheckCircle2 } from 'lucide-react';
-import { Select } from 'antd';
+import { Select } from './ui/shadcn';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
 import type { RawItem, BillHeader } from '../types';
@@ -362,18 +362,12 @@ export const PendingSlipModal: React.FC<Props> = ({
               </div>
 
               <Select
-                showSearch
-                allowClear
                 placeholder="Slip number ya party search karein..."
                 value={mainSlipToken || undefined}
-                onChange={(val: string | null) => setMainSlipToken(val || '')}
-                filterOption={(input: string, option: any) =>
-                  Boolean((option?.searchStr as string || '').includes(input.toLowerCase()))
-                }
-                style={{ width: '100%' }}
+                onValueChange={(val: string) => setMainSlipToken(val || '')}
+                style={{ width: '100%', height: '34px' }}
                 options={billSelectOptions}
-                dropdownStyle={{ zIndex: 1000000005, background: '#0f172a' }}
-                getPopupContainer={() => document.body}
+                dropdownStyle={{ zIndex: 1000000005, background: '#09090b', border: '1px solid #27272a' }}
               />
             </div>
 
@@ -404,18 +398,12 @@ export const PendingSlipModal: React.FC<Props> = ({
               </div>
 
               <Select
-                showSearch
-                allowClear
                 placeholder="Slip number ya party search karein..."
                 value={dispSlipToken || undefined}
-                onChange={(val: string | null) => setDispSlipToken(val || '')}
-                filterOption={(input: string, option: any) =>
-                  Boolean((option?.searchStr as string || '').includes(input.toLowerCase()))
-                }
-                style={{ width: '100%' }}
+                onValueChange={(val: string) => setDispSlipToken(val || '')}
+                style={{ width: '100%', height: '34px' }}
                 options={billSelectOptions.filter(o => o.value !== mainSlipToken)}
-                dropdownStyle={{ zIndex: 1000000005, background: '#0f172a' }}
-                getPopupContainer={() => document.body}
+                dropdownStyle={{ zIndex: 1000000005, background: '#09090b', border: '1px solid #27272a' }}
               />
             </div>
           </div>

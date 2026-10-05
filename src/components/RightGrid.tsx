@@ -7,6 +7,7 @@ import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
+import { Tooltip } from './ui/shadcn';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -930,102 +931,108 @@ export const RightGrid: React.FC<Props> = ({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Add Mould Button */}
-          <button
-            data-np-target="4-3"
-            type="button"
-            onClick={onAddNewRow}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-            title="Add New Mould (Insert)"
-          >
-            <Plus size={13} color="#34d399" />
-          </button>
+          <Tooltip title="Add New Mould (Insert)" side="bottom">
+            <button
+              data-np-target="4-3"
+              type="button"
+              onClick={onAddNewRow}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <Plus size={13} color="#34d399" />
+            </button>
+          </Tooltip>
 
           {/* Delete Moulds Button */}
-          <button
-            data-np-target="4-4"
-            type="button"
-            onClick={() => {
-              if (selectedRows.length > 0) onDeleteRows(selectedRows);
-              else if (activeCell) onDeleteRows([activeCell.r]);
-              else if (filteredItems.length > 0) onDeleteRows([filteredItems.length - 1]);
-            }}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-            title="Delete Selected Mould"
-          >
-            <Trash2 size={13} color="#f87171" />
-          </button>
+          <Tooltip title="Delete Selected Mould (Delete)" side="bottom">
+            <button
+              data-np-target="4-4"
+              type="button"
+              onClick={() => {
+                if (selectedRows.length > 0) onDeleteRows(selectedRows);
+                else if (activeCell) onDeleteRows([activeCell.r]);
+                else if (filteredItems.length > 0) onDeleteRows([filteredItems.length - 1]);
+              }}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <Trash2 size={13} color="#f87171" />
+            </button>
+          </Tooltip>
 
           {/* Copy Button */}
-          <button
-            type="button"
-            onClick={handleCopyGrid}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-            title="Copy Table / Selected Cells (Ctrl+C)"
-          >
-            <Copy size={13} />
-          </button>
+          <Tooltip title="Copy Table / Selected Cells (Ctrl+C)" side="bottom">
+            <button
+              type="button"
+              onClick={handleCopyGrid}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <Copy size={13} />
+            </button>
+          </Tooltip>
 
           {/* Dedicated Paste Button */}
-          <button
-            data-np-target="4-5"
-            type="button"
-            onClick={handlePasteButtonClick}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-            title="Paste Table from Clipboard (Ctrl+V)"
-          >
-            <ClipboardPaste size={13} />
-          </button>
-
+          <Tooltip title="Paste Table from Clipboard (Ctrl+V)" side="bottom">
+            <button
+              data-np-target="4-5"
+              type="button"
+              onClick={handlePasteButtonClick}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <ClipboardPaste size={13} />
+            </button>
+          </Tooltip>
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (
-            <button
-              type="button"
-              onClick={onLoadOldPrice}
-              className="apple-box-btn"
-              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-              title="View Recent Rate History (Alt+P)"
-            >
-              <History size={13} color="#f59e0b" />
-            </button>
+            <Tooltip title="View Recent Rate History (Alt+P)" side="bottom">
+              <button
+                type="button"
+                onClick={onLoadOldPrice}
+                className="apple-box-btn"
+                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              >
+                <History size={13} color="#f59e0b" />
+              </button>
+            </Tooltip>
           )}
 
           {/* Jump Left Button */}
           {onJumpToLeftGrid && (
-            <button
-              data-np-target="4-6"
-              type="button"
-              onClick={() => onJumpToLeftGrid(activeCell?.r || 0)}
-              className="apple-box-btn"
-              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-              title="Jump to Left Grid (←)"
-            >
-              <ArrowLeft size={13} color="#38bdf8" />
-            </button>
+            <Tooltip title="Jump to Left Grid (Left Arrow)" side="bottom">
+              <button
+                data-np-target="4-6"
+                type="button"
+                onClick={() => onJumpToLeftGrid(activeCell?.r || 0)}
+                className="apple-box-btn"
+                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              >
+                <ArrowLeft size={13} color="#38bdf8" />
+              </button>
+            </Tooltip>
           )}
 
           {/* Table Settings Button & Popover */}
           <div style={{ position: 'relative' }}>
-            <button
-              ref={settingsBtnRef}
-              type="button"
-              onClick={() => setShowSettings(prev => !prev)}
-              className="apple-box-btn"
-              style={{ 
-                width: '28px', 
-                height: '28px', 
-                borderRadius: '6px',
-                background: showSettings ? 'rgba(0, 113, 227, 0.35)' : 'rgba(255, 255, 255, 0.05)',
-                borderColor: showSettings ? '#0071e3' : 'rgba(255, 255, 255, 0.12)'
-              }}
-              title="Table Settings"
-            >
-              <Settings size={13} color={showSettings ? '#38bdf8' : '#d4d4d8'} />
-            </button>
+            <Tooltip title="Table Settings (Alt+S)" side="bottom">
+              <button
+                ref={settingsBtnRef}
+                type="button"
+                onClick={() => setShowSettings(prev => !prev)}
+                className="apple-box-btn"
+                style={{ 
+                  width: '28px', 
+                  height: '28px', 
+                  borderRadius: '6px',
+                  background: showSettings ? 'rgba(0, 113, 227, 0.35)' : 'rgba(255, 255, 255, 0.05)',
+                  borderColor: showSettings ? '#0071e3' : 'rgba(255, 255, 255, 0.12)'
+                }}
+              >
+                <Settings size={13} color={showSettings ? '#38bdf8' : '#d4d4d8'} />
+              </button>
+            </Tooltip>
 
             <TableSettingsDropdown
               isOpen={showSettings}

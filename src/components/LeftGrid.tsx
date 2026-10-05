@@ -8,7 +8,7 @@ import type { RowContextMenuState } from './RowContextMenu';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
-import { Tooltip } from 'antd';
+import { Tooltip } from './ui/shadcn';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -1180,59 +1180,62 @@ export const LeftGrid: React.FC<Props> = ({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Copy Button */}
-          <button
-            type="button"
-            onClick={handleCopyGrid}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-            title="Copy Table / Selected Cells (Ctrl+C)"
-          >
-            <Copy size={13} />
-          </button>
+          <Tooltip title="Copy Table / Selected Cells (Ctrl+C)" side="bottom">
+            <button
+              type="button"
+              onClick={handleCopyGrid}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <Copy size={13} />
+            </button>
+          </Tooltip>
 
           {/* Dedicated Paste Button */}
-          <button
-            type="button"
-            onClick={handlePasteButtonClick}
-            className="apple-box-btn"
-            style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-            title="Paste Table from Clipboard (Ctrl+V)"
-          >
-            <ClipboardPaste size={13} />
-          </button>
-
+          <Tooltip title="Paste Table from Clipboard (Ctrl+V)" side="bottom">
+            <button
+              type="button"
+              onClick={handlePasteButtonClick}
+              className="apple-box-btn"
+              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+            >
+              <ClipboardPaste size={13} />
+            </button>
+          </Tooltip>
 
           {/* Load Old Price Button */}
           {onLoadOldPrice && (
-            <button
-              type="button"
-              onClick={onLoadOldPrice}
-              className="apple-box-btn"
-              style={{ width: '28px', height: '28px', borderRadius: '6px' }}
-              title="View Recent Rate History (Alt+P)"
-            >
-              <History size={13} color="#f59e0b" />
-            </button>
+            <Tooltip title="View Recent Rate History (Alt+P)" side="bottom">
+              <button
+                type="button"
+                onClick={onLoadOldPrice}
+                className="apple-box-btn"
+                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              >
+                <History size={13} color="#f59e0b" />
+              </button>
+            </Tooltip>
           )}
 
           {/* Table Settings Button & Popover */}
           <div style={{ position: 'relative' }}>
-            <button
-              ref={settingsBtnRef}
-              type="button"
-              onClick={() => setShowSettings(prev => !prev)}
-              className="apple-box-btn"
-              style={{ 
-                width: '28px', 
-                height: '28px', 
-                borderRadius: '6px',
-                background: showSettings ? 'rgba(0, 113, 227, 0.35)' : 'rgba(255, 255, 255, 0.05)',
-                borderColor: showSettings ? '#0071e3' : 'rgba(255, 255, 255, 0.12)'
-              }}
-              title="Table Settings"
-            >
-              <Settings size={13} color={showSettings ? '#38bdf8' : '#d4d4d8'} />
-            </button>
+            <Tooltip title="Table Settings (Alt+S)" side="bottom">
+              <button
+                ref={settingsBtnRef}
+                type="button"
+                onClick={() => setShowSettings(prev => !prev)}
+                className="apple-box-btn"
+                style={{ 
+                  width: '28px', 
+                  height: '28px', 
+                  borderRadius: '6px',
+                  background: showSettings ? 'rgba(0, 113, 227, 0.35)' : 'rgba(255, 255, 255, 0.05)',
+                  borderColor: showSettings ? '#0071e3' : 'rgba(255, 255, 255, 0.12)'
+                }}
+              >
+                <Settings size={13} color={showSettings ? '#38bdf8' : '#d4d4d8'} />
+              </button>
+            </Tooltip>
 
             <TableSettingsDropdown
               isOpen={showSettings}
@@ -1336,26 +1339,27 @@ export const LeftGrid: React.FC<Props> = ({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <span>ITEM NAME {sortField === 'name' ? (sortOrder === 'asc' ? ' ↑ (A-Z)' : ' ↓ (Z-A)') : ''}</span>
                   {!hasPartyCodeCol && (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setHasPartyCodeCol(true);
-                        onToast('Added PARTY CODE column!', 'success');
-                      }}
-                      style={{ 
-                        background: 'rgba(255,255,255,0.15)', 
-                        border: '1px solid rgba(255,255,255,0.3)', 
-                        color: 'white', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer', 
-                        padding: '0 5px', 
-                        fontSize: '11px',
-                        lineHeight: '16px'
-                      }}
-                      title="Add PARTY CODE column"
-                    >
-                      +
-                    </button>
+                    <Tooltip title="Add PARTY CODE Column (+)" side="bottom">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHasPartyCodeCol(true);
+                          onToast('Added PARTY CODE column!', 'success');
+                        }}
+                        style={{ 
+                          background: 'rgba(255,255,255,0.15)', 
+                          border: '1px solid rgba(255,255,255,0.3)', 
+                          color: 'white', 
+                          borderRadius: '4px', 
+                          cursor: 'pointer', 
+                          padding: '0 5px', 
+                          fontSize: '11px',
+                          lineHeight: '16px'
+                        }}
+                      >
+                        +
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
                 <div className="th-resizer" onMouseDown={(e) => startResizeCol('name', e)} />
@@ -1388,17 +1392,18 @@ export const LeftGrid: React.FC<Props> = ({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                     <span>PARTY CODE {sortField === 'partyCode' ? (sortOrder === 'asc' ? ' ↑ (A-Z)' : ' ↓ (Z-A)') : ''}</span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setHasPartyCodeCol(false);
-                        onToast('Removed PARTY CODE column', 'info');
-                      }}
-                      style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }}
-                      title="Remove PARTY CODE column"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    <Tooltip title="Remove PARTY CODE Column (Delete)" side="bottom">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHasPartyCodeCol(false);
+                          onToast('Removed PARTY CODE column', 'info');
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </Tooltip>
                   </div>
                   <div className="th-resizer" onMouseDown={(e) => startResizeCol('partyCode', e)} />
                 </th>
@@ -1435,35 +1440,37 @@ export const LeftGrid: React.FC<Props> = ({
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                       <span>{sc.label} {sortField === sc.field ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ''}</span>
                       {sc.isBase && (
-                        <button 
-                          onClick={handleAddSizeColumn}
-                          style={{ 
-                            background: 'rgba(255,255,255,0.15)', 
-                            border: '1px solid rgba(255,255,255,0.3)', 
-                            color: 'white', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer', 
-                            padding: '0 5px', 
-                            fontSize: '11px',
-                            lineHeight: '16px'
-                          }}
-                          title="Add new size/feet column"
-                        >
-                          +
-                        </button>
+                        <Tooltip title="Add New Size Column (+)" side="bottom">
+                          <button 
+                            onClick={handleAddSizeColumn}
+                            style={{ 
+                              background: 'rgba(255,255,255,0.15)', 
+                              border: '1px solid rgba(255,255,255,0.3)', 
+                              color: 'white', 
+                              borderRadius: '4px', 
+                              cursor: 'pointer', 
+                              padding: '0 5px', 
+                              fontSize: '11px',
+                              lineHeight: '16px'
+                            }}
+                          >
+                            +
+                          </button>
+                        </Tooltip>
                       )}
                       {!sc.isBase && (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDynamicCols(prev => prev.filter(c => c.field !== sc.field));
-                            onToast(`Removed ${sc.label} column`, 'info');
-                          }}
-                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }}
-                          title={`Remove ${sc.label} column`}
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        <Tooltip title={`Remove ${sc.label} Column (Delete)`} side="bottom">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDynamicCols(prev => prev.filter(c => c.field !== sc.field));
+                              onToast(`Removed ${sc.label} column`, 'info');
+                            }}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </Tooltip>
                       )}
                     </div>
                     <div className="th-resizer" onMouseDown={(e) => startResizeCol(sc.field, e)} />

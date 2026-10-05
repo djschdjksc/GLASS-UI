@@ -15,7 +15,8 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  Pagination as ShadcnPagination
+  Pagination as ShadcnPagination,
+  Tooltip
 } from './ui/shadcn';
 import {
   Calculator,
@@ -999,115 +1000,120 @@ export const EquationTabView: React.FC = () => {
                 }}
               />
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setBillDropdownOpen(false);
-                loadBillData();
-              }}
-              title="Load Bill (Ctrl+L)"
+              <Tooltip title="Load Bill (Ctrl+L)" side="bottom">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBillDropdownOpen(false);
+                    loadBillData();
+                  }}
+                  style={{
+                    height: '32px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    background: '#27272a',
+                    color: '#f4f4f5',
+                    border: '1px solid #3f3f46',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  LOAD BILL
+                </Button>
+              </Tooltip>
+            </div>
+
+            {/* Loaded Bill Summary Box */}
+            <div
               style={{
-                height: '32px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                background: '#27272a',
-                color: '#f4f4f5',
-                border: '1px solid #3f3f46',
-                whiteSpace: 'nowrap'
+                background: '#09090b',
+                border: '1px solid #27272a',
+                borderRadius: '6px',
+                padding: '8px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
               }}
             >
-              LOAD BILL
-            </Button>
-          </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Loaded Bill:</span>
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#38bdf8' }}>
+                  #{loadedBillToken || selectedBillId || 'None'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Party:</span>
+                <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                  {loadedBillParty || '—'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Bill Gross:</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
+                  {formatINR(loadedBillTotal)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Items Count:</span>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#a1a1aa' }}>
+                  {baseItems.length} Mould Items
+                </span>
+              </div>
+            </div>
 
-          {/* Loaded Bill Summary Box */}
-          <div
-            style={{
-              background: '#09090b',
-              border: '1px solid #27272a',
-              borderRadius: '6px',
-              padding: '8px 10px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: '#71717a' }}>Loaded Bill:</span>
-              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#38bdf8' }}>
-                #{loadedBillToken || selectedBillId || 'None'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: '#71717a' }}>Party:</span>
-              <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                {loadedBillParty || '—'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: '#71717a' }}>Bill Gross:</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
-                {formatINR(loadedBillTotal)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: '#71717a' }}>Items Count:</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#a1a1aa' }}>
-                {baseItems.length} Mould Items
-              </span>
-            </div>
-          </div>
+            {/* Action Buttons: Print, Excel Copy, CSV */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              <Tooltip title="Direct Native Print Report (Ctrl+P)" side="bottom">
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={() => setIsPrintModalOpen(true)}
+                  style={{
+                    background: '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    height: '32px',
+                    width: '100%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <Printer size={13} />
+                  <span>🖨 PRINT</span>
+                </Button>
+              </Tooltip>
 
-          {/* Action Buttons: Print, Excel Copy, CSV */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={() => setIsPrintModalOpen(true)}
-              title="Direct Native Print Report (Ctrl+P)"
-              style={{
-                background: '#dc2626',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '11px',
-                height: '32px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '5px'
-              }}
-            >
-              <Printer size={13} />
-              <span>🖨 PRINT</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCopyTableForExcel}
-              title="Copy Table for Excel (Ctrl+E)"
-              style={{
-                background: copiedExcel ? 'rgba(16, 185, 129, 0.2)' : '#27272a',
-                color: copiedExcel ? '#34d399' : '#f4f4f5',
-                borderColor: copiedExcel ? '#059669' : '#3f3f46',
-                fontWeight: 600,
-                fontSize: '11px',
-                height: '32px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '5px'
-              }}
-            >
-              {copiedExcel ? <Check size={13} /> : <Copy size={13} />}
-              <span>{copiedExcel ? 'COPIED!' : 'EXCEL'}</span>
-            </Button>
-          </div>
+              <Tooltip title="Copy Table for Excel (Ctrl+E)" side="bottom">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyTableForExcel}
+                  style={{
+                    background: copiedExcel ? 'rgba(16, 185, 129, 0.2)' : '#27272a',
+                    color: copiedExcel ? '#34d399' : '#f4f4f5',
+                    borderColor: copiedExcel ? '#059669' : '#3f3f46',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                    height: '32px',
+                    width: '100%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  {copiedExcel ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiedExcel ? 'COPIED!' : 'EXCEL'}</span>
+                </Button>
+              </Tooltip>
+            </div>
         </div>
 
         {/* RIGHT PANEL: Contributors / Split Table */}
@@ -1133,27 +1139,28 @@ export const EquationTabView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddContributor}
-                title="Add contributing party to distribution"
-                style={{
-                  height: '28px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#34d399',
-                  borderColor: 'rgba(16, 185, 129, 0.35)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <Plus size={13} />
-                Add Party
-              </Button>
+              <Tooltip title="Add contributing party to distribution" side="bottom">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddContributor}
+                  style={{
+                    height: '28px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    color: '#34d399',
+                    borderColor: 'rgba(16, 185, 129, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Plus size={13} />
+                  Add Party
+                </Button>
+              </Tooltip>
             </div>
           </div>
 

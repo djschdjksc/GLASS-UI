@@ -29,6 +29,7 @@ import type { BillRecord, PartyRecord } from '../services/db/schema';
 import { macAudio } from '../utils/macAudio';
 import type { BillHeader, RawItem, FinishedItem } from '../types';
 import { supabase, getUserProfile } from '../services/supabaseClient';
+import { Tooltip } from './ui/shadcn';
 
 export interface ChatMessage {
   id: string;
@@ -668,69 +669,72 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
       >
         {/* Left: macOS Traffic Light Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={() => {
-              try { macAudio.playClick(); } catch {}
-              onClose();
-            }}
-            title="Close (Ctrl+J)"
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#ff5f56',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              boxShadow: '0 1px 3px rgba(255, 95, 86, 0.5)'
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              try { macAudio.playClick(); } catch {}
-              setIsMinimized(!isMinimized);
-            }}
-            title="Minimize"
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#ffbd2e',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              boxShadow: '0 1px 3px rgba(255, 189, 46, 0.5)'
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              try { macAudio.playClick(); } catch {}
-              setIsExpanded(!isExpanded);
-            }}
-            title="Expand / Contract"
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#27c93f',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              boxShadow: '0 1px 3px rgba(39, 201, 63, 0.5)'
-            }}
-          />
+          <Tooltip title="Close (Ctrl+J)" side="bottom">
+            <button
+              type="button"
+              onClick={() => {
+                try { macAudio.playClick(); } catch {}
+                onClose();
+              }}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#ff5f56',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                boxShadow: '0 1px 3px rgba(255, 95, 86, 0.5)'
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Minimize" side="bottom">
+            <button
+              type="button"
+              onClick={() => {
+                try { macAudio.playClick(); } catch {}
+                setIsMinimized(!isMinimized);
+              }}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#ffbd2e',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                boxShadow: '0 1px 3px rgba(255, 189, 46, 0.5)'
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Expand / Contract" side="bottom">
+            <button
+              type="button"
+              onClick={() => {
+                try { macAudio.playClick(); } catch {}
+                setIsExpanded(!isExpanded);
+              }}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#27c93f',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                boxShadow: '0 1px 3px rgba(39, 201, 63, 0.5)'
+              }}
+            />
+          </Tooltip>
         </div>
 
         {/* Center: Apple Segmented Pill Slider */}
@@ -848,26 +852,27 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
             />
           </div>
 
-          <button
-            type="button"
-            onClick={handleClearHistory}
-            title="Clear Chat History"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(255, 255, 255, 0.4)',
-              cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'color 0.15s ease'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#ff453a')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)')}
-          >
-            <Trash2 size={13} />
-          </button>
+          <Tooltip title="Clear Chat History" side="bottom">
+            <button
+              type="button"
+              onClick={handleClearHistory}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.4)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'color 0.15s ease'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ff453a')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)')}
+            >
+              <Trash2 size={13} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

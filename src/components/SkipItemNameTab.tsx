@@ -4,7 +4,7 @@ import { Plus, Check, RotateCcw, Layers, Tag, FolderPlus, Folder, Trash2, Edit2,
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
 import UnsavedChangesModal from './UnsavedChangesModal';
-import { Select as ShadcnSelect } from './ui/shadcn';
+import { Select as ShadcnSelect, Tooltip, toast } from './ui/shadcn';
 import { useItemMode } from '../context/ItemModeContext';
 import { resolveItemNameWithMode } from '../utils/itemExpansion';
 
@@ -140,7 +140,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     if (!trimmed) return null;
     if (mainGroups.some(m => m.name.toLowerCase() === trimmed.toLowerCase())) {
       macAudio.playPop();
-      alert(`Main Group "${trimmed}" already exists!`);
+      toast.warning('Duplicate Group', `Main Group "${trimmed}" already exists!`);
       return null;
     }
     const newId = 'mg-' + Date.now();
@@ -707,49 +707,54 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
             Sub Groups Configuration ({subGroups.length})
           </span>
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              type="button"
-              onClick={() => setIsMainGroupModalOpen(true)}
-              title="Add or Manage Main Groups"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                height: '28px', padding: '0 9px', borderRadius: '5px',
-                background: 'transparent', border: '1px solid #27272a',
-                color: '#f4f4f5', fontSize: '11.5px', fontWeight: 500,
-                cursor: 'pointer'
-              }}
-            >
-              <FolderPlus size={13} color="#a1a1aa" />
-              <span>Main Groups ({mainGroups.length})</span>
-            </button>
-            <button
-              type="button"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                height: '28px', padding: '0 8px', borderRadius: '5px',
-                background: 'transparent', border: '1px solid #27272a',
-                color: '#ef4444', fontSize: '11px', fontWeight: 500,
-                cursor: 'pointer'
-              }}
-              onClick={purgeAndLoadPristineBackup}
-              title="Reset to backup"
-            >
-              <RotateCcw size={12} /> Reset
-            </button>
-            <button
-              type="button"
-              onClick={handleAddSubGroup}
-              title="Add Group (or press Insert)"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                height: '28px', padding: '0 10px', borderRadius: '5px',
-                background: '#f4f4f5', border: 'none',
-                color: '#09090b', fontSize: '11.5px', fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              <Plus size={13} /> Add Group
-            </button>
+            <Tooltip title="Add or Manage Main Groups" side="bottom">
+              <button
+                type="button"
+                onClick={() => setIsMainGroupModalOpen(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  height: '28px', padding: '0 9px', borderRadius: '5px',
+                  background: 'transparent', border: '1px solid #27272a',
+                  color: '#f4f4f5', fontSize: '11.5px', fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                <FolderPlus size={13} color="#a1a1aa" />
+                <span>Main Groups ({mainGroups.length})</span>
+              </button>
+            </Tooltip>
+
+            <Tooltip title="Reset to Backup Data" side="bottom">
+              <button
+                type="button"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  height: '28px', padding: '0 8px', borderRadius: '5px',
+                  background: 'transparent', border: '1px solid #27272a',
+                  color: '#ef4444', fontSize: '11px', fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+                onClick={purgeAndLoadPristineBackup}
+              >
+                <RotateCcw size={12} /> Reset
+              </button>
+            </Tooltip>
+
+            <Tooltip title="Add New Group (Insert)" side="bottom">
+              <button
+                type="button"
+                onClick={handleAddSubGroup}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  height: '28px', padding: '0 10px', borderRadius: '5px',
+                  background: '#f4f4f5', border: 'none',
+                  color: '#09090b', fontSize: '11.5px', fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <Plus size={13} /> Add Group
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -965,82 +970,85 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           {curSub && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {/* Button 1: AUTO CONVERT */}
-              <button
-                type="button"
-                onMouseEnter={() => macAudio.playHover()}
-                onClick={() => {
-                  macAudio.playClick();
-                  handleToggle('autoConvert');
-                }}
-                className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '5px',
-                  background: autoConvert ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
-                  border: autoConvert ? '1px solid #38bdf8' : '1px solid #3f3f46',
-                  color: autoConvert ? '#38bdf8' : '#a1a1aa',
-                  cursor: 'pointer'
-                }}
-                title="AUTO CONVERT [Alt+A / Numpad *]"
-              >
-                <ArrowRightLeft size={13} />
-              </button>
+              <Tooltip title="AUTO CONVERT [Alt+A / Numpad *]" side="bottom">
+                <button
+                  type="button"
+                  onMouseEnter={() => macAudio.playHover()}
+                  onClick={() => {
+                    macAudio.playClick();
+                    handleToggle('autoConvert');
+                  }}
+                  className={`apple-box-btn ${autoConvert ? 'active' : ''}`}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '5px',
+                    background: autoConvert ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
+                    border: autoConvert ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                    color: autoConvert ? '#38bdf8' : '#a1a1aa',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ArrowRightLeft size={13} />
+                </button>
+              </Tooltip>
 
               {/* Button 2: AUTO ITEM */}
-              <button
-                type="button"
-                onMouseEnter={() => macAudio.playHover()}
-                onClick={() => {
-                  macAudio.playClick();
-                  handleToggle('autoItem');
-                }}
-                className={`apple-box-btn ${autoItem ? 'active' : ''}`}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '5px',
-                  background: autoItem ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
-                  border: autoItem ? '1px solid #38bdf8' : '1px solid #3f3f46',
-                  color: autoItem ? '#38bdf8' : '#a1a1aa',
-                  cursor: 'pointer'
-                }}
-                title="AUTO ITEM [Alt+Z / Numpad *]"
-              >
-                <PackagePlus size={13} />
-              </button>
+              <Tooltip title="AUTO ITEM [Alt+Z / Numpad *]" side="bottom">
+                <button
+                  type="button"
+                  onMouseEnter={() => macAudio.playHover()}
+                  onClick={() => {
+                    macAudio.playClick();
+                    handleToggle('autoItem');
+                  }}
+                  className={`apple-box-btn ${autoItem ? 'active' : ''}`}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '5px',
+                    background: autoItem ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
+                    border: autoItem ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                    color: autoItem ? '#38bdf8' : '#a1a1aa',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <PackagePlus size={13} />
+                </button>
+              </Tooltip>
 
               {/* Button 3: SIMPLE MODE */}
-              <button
-                type="button"
-                onMouseEnter={() => macAudio.playHover()}
-                onClick={() => {
-                  macAudio.playClick();
-                  handleToggle('simpleMode');
-                }}
-                className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '5px',
-                  background: simpleMode ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
-                  border: simpleMode ? '1px solid #38bdf8' : '1px solid #3f3f46',
-                  color: simpleMode ? '#38bdf8' : '#a1a1aa',
-                  cursor: 'pointer'
-                }}
-                title="SIMPLE MODE [Alt+X / Numpad *]"
-              >
-                <SlidersHorizontal size={13} />
-              </button>
+              <Tooltip title="SIMPLE MODE [Alt+X / Numpad *]" side="bottom">
+                <button
+                  type="button"
+                  onMouseEnter={() => macAudio.playHover()}
+                  onClick={() => {
+                    macAudio.playClick();
+                    handleToggle('simpleMode');
+                  }}
+                  className={`apple-box-btn ${simpleMode ? 'active' : ''}`}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '5px',
+                    background: simpleMode ? 'rgba(56, 189, 248, 0.2)' : '#27272a',
+                    border: simpleMode ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                    color: simpleMode ? '#38bdf8' : '#a1a1aa',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <SlidersHorizontal size={13} />
+                </button>
+              </Tooltip>
 
               <button
                 type="button"

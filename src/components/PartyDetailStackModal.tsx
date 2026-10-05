@@ -17,6 +17,7 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
+import { Tooltip } from './ui/shadcn';
 import './PartyDetailStackModal.css';
 
 interface Props {
@@ -316,29 +317,33 @@ export const PartyDetailStackModal: React.FC<Props> = ({
       <div className="party-stack-modal" onClick={e => e.stopPropagation()}>
         {/* TOP STATUS BAR */}
         <div className="party-stack-topbar">
-          <button type="button" className="ios-circle-btn" onClick={onClose} title="Close (Esc)">
-            <X size={16} />
-          </button>
+          <Tooltip title="Close (Esc)" side="bottom">
+            <button type="button" className="ios-circle-btn" onClick={onClose}>
+              <X size={16} />
+            </button>
+          </Tooltip>
           <div className="party-stack-title">PARTY DETAIL • iOS STACK</div>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              type="button"
-              className="ios-circle-btn"
-              onClick={() => tryAdvance(-1)}
-              disabled={activeIndex <= 0}
-              title="Previous Card (ArrowUp)"
-            >
-              <ChevronUp size={16} />
-            </button>
-            <button
-              type="button"
-              className="ios-circle-btn"
-              onClick={() => tryAdvance(1)}
-              disabled={activeIndex >= cards.length - 1}
-              title="Next Card (ArrowDown)"
-            >
-              <ChevronDown size={16} />
-            </button>
+            <Tooltip title="Previous Card (ArrowUp)" side="bottom">
+              <button
+                type="button"
+                className="ios-circle-btn"
+                onClick={() => tryAdvance(-1)}
+                disabled={activeIndex <= 0}
+              >
+                <ChevronUp size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Next Card (ArrowDown)" side="bottom">
+              <button
+                type="button"
+                className="ios-circle-btn"
+                onClick={() => tryAdvance(1)}
+                disabled={activeIndex >= cards.length - 1}
+              >
+                <ChevronDown size={16} />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
