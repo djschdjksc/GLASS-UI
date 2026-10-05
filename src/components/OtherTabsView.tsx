@@ -1379,20 +1379,18 @@ export const OtherTabsView: React.FC<Props> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'center',
               padding: '6px 10px',
               borderRadius: '8px',
               flexShrink: 0,
               minWidth: 0,
-              flexWrap: 'wrap',
-              gap: '8px'
             }}
           >
             <IosSegmentedTabs<'SALE' | 'SALE_RETURN' | 'ORDER' | 'PURCHASE'>
               activeKey={historySubTab}
               onChange={setHistorySubTab}
               width="100%"
-              style={{ maxWidth: '680px', flex: '1 1 320px', minWidth: '260px' }}
+              style={{ maxWidth: '680px' }}
               tabs={[
                 {
                   key: 'SALE',
@@ -1432,48 +1430,6 @@ export const OtherTabsView: React.FC<Props> = ({
                 }
               ]}
             />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                color: '#94a3b8',
-                fontWeight: 600,
-                letterSpacing: '0.04em'
-              }}>
-                TOTAL: <strong style={{ color: '#ffffff' }}>{bills.length}</strong> INVOICES
-              </span>
-              <Tooltip title="Export All Bills to CSV (Ctrl+E)" side="bottom">
-                <button
-                  type="button"
-                  className="mac-btn"
-                  onClick={() => {
-                    macAudio.playClick();
-                    handleExportAllBillsCsv();
-                  }}
-                  onMouseEnter={() => macAudio.playHover()}
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    padding: 0,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '7px',
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
-                    color: '#34d399',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <FileSpreadsheet size={14} color="#34d399" />
-                </button>
-              </Tooltip>
-            </div>
           </div>
 
           {/* 3-Panel Layout Container */}
