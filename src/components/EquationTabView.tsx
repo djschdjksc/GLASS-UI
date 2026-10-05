@@ -38,7 +38,8 @@ import {
   Percent,
   SlidersHorizontal,
   ChevronDown,
-  FileText
+  FileText,
+  Users
 } from 'lucide-react';
 
 export interface Contributor {
@@ -854,16 +855,15 @@ export const EquationTabView: React.FC = () => {
       }}
     >
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. TOP HEADER & SHORTCUTS BADGE BAR                                 */}
+      {/* 1. TOP HEADER & QUICK ACTIONS BAR (MAC-GLASS / SHADCN STYLE)        */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div
+        className="glass-panel"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 12px',
-          background: '#18181b',
-          border: '1px solid #27272a',
+          padding: '6px 12px',
           borderRadius: '8px',
           flexShrink: 0,
           gap: '12px'
@@ -872,331 +872,414 @@ export const EquationTabView: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '6px',
-              background: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
+              width: '28px',
+              height: '28px',
+              borderRadius: '7px',
+              background: 'rgba(56, 189, 248, 0.12)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fbbf24'
+              color: '#38bdf8'
             }}
           >
-            <Calculator size={18} />
+            <Calculator size={15} />
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#f4f4f5', letterSpacing: '-0.2px' }}>
-                EQUATION & MULTI-PARTY GOODS DISTRIBUTION
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5', letterSpacing: '-0.2px' }}>
+              Equation & Multi-Party Distribution
+            </span>
+            <span
+              style={{
+                background: '#27272a',
+                color: '#94a3b8',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '4px'
+              }}
+            >
+              F3
+            </span>
+          </div>
+
+          {loadedBillParty && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '6px' }}>
+              <span style={{ height: '14px', width: '1px', background: 'rgba(255, 255, 255, 0.12)' }} />
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#38bdf8',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(56, 189, 248, 0.2)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>#{loadedBillToken || selectedBillId}</span>
+                <span style={{ color: '#64748b' }}>•</span>
+                <span>{loadedBillParty}</span>
+                <span style={{ color: '#64748b' }}>•</span>
+                <span style={{ color: '#34d399' }}>{formatINR(loadedBillTotal)}</span>
               </span>
-              <Badge variant="outline" title="Tab Shortcut: F3" style={{ background: '#27272a', color: '#fbbf24', border: '1px solid #3f3f46', fontSize: '10px', padding: '1px 6px' }}>
-                F3
-              </Badge>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Right Status Indicator */}
+        {/* Right Status & Action Toolbar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {statusMsg && (
             <div
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                padding: '4px 10px',
+                padding: '3px 9px',
                 borderRadius: '6px',
-                background: statusMsg.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : statusMsg.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                background: statusMsg.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : statusMsg.type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.15)',
                 color: statusMsg.type === 'success' ? '#34d399' : statusMsg.type === 'error' ? '#f87171' : '#38bdf8',
-                border: `1px solid ${statusMsg.type === 'success' ? '#059669' : statusMsg.type === 'error' ? '#dc2626' : '#0284c7'}`
+                border: `1px solid ${statusMsg.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : statusMsg.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.3)'}`
               }}
             >
               {statusMsg.text}
             </div>
           )}
+
+          {/* Print Button (Mac-glass style with Tooltip) */}
+          <Tooltip title="Print Distribution Report (Ctrl+P)" side="bottom">
+            <button
+              type="button"
+              className="mac-btn"
+              onClick={() => {
+                macAudio.playPop();
+                setIsPrintModalOpen(true);
+              }}
+              onMouseEnter={() => macAudio.playHover()}
+              style={{
+                height: '28px',
+                padding: '0 10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '11.5px',
+                fontWeight: 500
+              }}
+            >
+              <Printer size={13} color="#38bdf8" />
+              <span>Print</span>
+            </button>
+          </Tooltip>
+
+          {/* Copy Table for Excel */}
+          <Tooltip title="Copy Table for Excel (Ctrl+E)" side="bottom">
+            <button
+              type="button"
+              className="mac-btn"
+              onClick={handleCopyTableForExcel}
+              onMouseEnter={() => macAudio.playHover()}
+              style={{
+                height: '28px',
+                padding: '0 10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '11.5px',
+                fontWeight: 500,
+                borderColor: copiedExcel ? 'rgba(16, 185, 129, 0.4)' : undefined,
+                color: copiedExcel ? '#34d399' : undefined
+              }}
+            >
+              {copiedExcel ? <Check size={13} color="#34d399" /> : <Copy size={13} />}
+              <span>{copiedExcel ? 'Copied!' : 'Copy Excel'}</span>
+            </button>
+          </Tooltip>
+
+          {/* Excel / CSV Data Center */}
+          <ExcelCsvActions<EquationResultRow>
+            entityName="Equation Distribution"
+            filenamePrefix={`Equation_Distribution_${(loadedBillParty || 'Report').replace(/[^a-zA-Z0-9_-]/g, '_')}`}
+            columns={equationCsvColumns}
+            data={results}
+            compact={true}
+          />
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. DUAL CONTROL PANELS (SIDE BY SIDE: BILL & CONTRIBUTORS)          */}
+      {/* 2. MAIN 2-PANEL SPLIT (STRUCTURED MANNER LIKE BILL UI / HISTORY)    */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '320px 1fr',
-          gap: '10px',
-          flexShrink: 0
+          flex: 1,
+          display: 'flex',
+          gap: '8px',
+          minHeight: 0,
+          overflow: 'hidden'
         }}
       >
-        {/* LEFT PANEL: Bill Selection & Summary */}
+        {/* ── LEFT PANEL: Bill Selector & Contributors Manager (~320px) ───── */}
         <div
           style={{
-            background: '#18181b',
-            border: '1px solid #27272a',
-            borderRadius: '8px',
-            padding: '12px',
+            flex: '0 0 320px',
+            width: '320px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '8px',
+            minHeight: 0,
+            overflow: 'hidden'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', color: '#a1a1aa' }}>
-              1. Select & Load Bill
-            </span>
-            <Badge variant="outline" style={{ fontSize: '10px', color: '#38bdf8', borderColor: '#0284c7' }}>
-              {bills.length} Bills
-            </Badge>
-          </div>
-
-          {/* Bill ID / Token Input */}
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <input
-                ref={billInputRef}
-                type="text"
-                placeholder="Bill Token / ID / Party..."
-                value={billSearchInput}
-                autoComplete="off"
-                onFocus={(e) => {
-                  setBillDropdownOpen(true);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setBillDropdownPos({
-                    top: rect.bottom + 4,
-                    left: rect.left,
-                    width: Math.max(rect.width, 300)
-                  });
-                }}
-                onChange={(e) => {
-                  setBillSearchInput(e.target.value);
-                  setBillDropdownOpen(true);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setBillDropdownPos({
-                    top: rect.bottom + 4,
-                    left: rect.left,
-                    width: Math.max(rect.width, 300)
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    setBillDropdownOpen(false);
-                    loadBillData();
-                  } else if (e.key === 'Escape') {
-                    setBillDropdownOpen(false);
-                  }
-                }}
+          {/* Card 1: Bill Selection */}
+          <div
+            className="glass-panel"
+            style={{
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              flexShrink: 0
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FileText size={13} color="#94a3b8" />
+                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.04em' }}>
+                  Source Bill
+                </span>
+              </div>
+              <span
                 style={{
-                  width: '100%',
-                  height: '32px',
-                  background: '#09090b',
-                  border: billDropdownOpen ? '1px solid #3b82f6' : '1px solid #27272a',
-                  borderRadius: '6px',
-                  padding: '0 8px',
-                  color: '#f4f4f5',
-                  fontSize: '12px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: '#38bdf8',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(56, 189, 248, 0.2)'
                 }}
-              />
+              >
+                {bills.length} Bills
+              </span>
             </div>
-              <Tooltip title="Load Bill (Ctrl+L)" side="bottom">
-                <Button
+
+            {/* Bill Search & Load Input */}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <Search size={12} style={{ position: 'absolute', left: '8px', top: '8px', color: '#71717a' }} />
+                <input
+                  ref={billInputRef}
+                  type="text"
+                  placeholder="Token / Party / ID..."
+                  value={billSearchInput}
+                  autoComplete="off"
+                  onFocus={(e) => {
+                    setBillDropdownOpen(true);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setBillDropdownPos({
+                      top: rect.bottom + 4,
+                      left: rect.left,
+                      width: Math.max(rect.width, 300)
+                    });
+                  }}
+                  onChange={(e) => {
+                    setBillSearchInput(e.target.value);
+                    setBillDropdownOpen(true);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setBillDropdownPos({
+                      top: rect.bottom + 4,
+                      left: rect.left,
+                      width: Math.max(rect.width, 300)
+                    });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      setBillDropdownOpen(false);
+                      loadBillData();
+                    } else if (e.key === 'Escape') {
+                      setBillDropdownOpen(false);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '28px',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: billDropdownOpen ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '6px',
+                    paddingLeft: '26px',
+                    paddingRight: '8px',
+                    color: '#f4f4f5',
+                    fontSize: '11.5px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <Tooltip title="Load Selected Bill (Ctrl+L)" side="bottom">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
+                  className="mac-btn"
                   onClick={() => {
                     setBillDropdownOpen(false);
                     loadBillData();
                   }}
                   style={{
-                    height: '32px',
-                    fontSize: '11.5px',
+                    height: '28px',
+                    padding: '0 10px',
+                    fontSize: '11px',
                     fontWeight: 600,
-                    background: '#27272a',
-                    color: '#f4f4f5',
-                    border: '1px solid #3f3f46',
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  LOAD BILL
-                </Button>
+                  Load
+                </button>
               </Tooltip>
             </div>
 
-            {/* Loaded Bill Summary Box */}
-            <div
-              style={{
-                background: '#09090b',
-                border: '1px solid #27272a',
-                borderRadius: '6px',
-                padding: '8px 10px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#71717a' }}>Loaded Bill:</span>
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#38bdf8' }}>
-                  #{loadedBillToken || selectedBillId || 'None'}
-                </span>
+            {/* Loaded Bill Summary Strip */}
+            {loadedBillParty && (
+              <div
+                style={{
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  borderRadius: '6px',
+                  padding: '6px 8px',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '4px',
+                  fontSize: '11px'
+                }}
+              >
+                <div>
+                  <span style={{ color: '#71717a' }}>Party: </span>
+                  <span style={{ fontWeight: 600, color: '#f4f4f5' }}>{loadedBillParty}</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ color: '#71717a' }}>Gross: </span>
+                  <span style={{ fontWeight: 700, color: '#34d399' }}>{formatINR(loadedBillTotal)}</span>
+                </div>
+                <div>
+                  <span style={{ color: '#71717a' }}>Date: </span>
+                  <span style={{ color: '#94a3b8' }}>{loadedBillDate || '—'}</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ color: '#71717a' }}>Items: </span>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>{baseItems.length} Mould</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#71717a' }}>Party:</span>
-                <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                  {loadedBillParty || '—'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#71717a' }}>Bill Gross:</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>
-                  {formatINR(loadedBillTotal)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#71717a' }}>Items Count:</span>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#a1a1aa' }}>
-                  {baseItems.length} Mould Items
-                </span>
-              </div>
-            </div>
+            )}
+          </div>
 
-            {/* Action Buttons: Print, Excel Copy, CSV */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-              <Tooltip title="Direct Native Print Report (Ctrl+P)" side="bottom">
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => setIsPrintModalOpen(true)}
+          {/* Card 2: Contributor Parties & Allocation (Flex 1) */}
+          <div
+            className="glass-panel"
+            style={{
+              flex: 1,
+              borderRadius: '8px',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              minHeight: 0,
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Users size={13} color="#94a3b8" />
+                <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.04em' }}>
+                  Contributors
+                </span>
+                <span
                   style={{
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    border: 'none',
-                    fontWeight: 700,
-                    fontSize: '11px',
-                    height: '32px',
-                    width: '100%',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  <Printer size={13} />
-                  <span>🖨 PRINT</span>
-                </Button>
-              </Tooltip>
-
-              <Tooltip title="Copy Table for Excel (Ctrl+E)" side="bottom">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyTableForExcel}
-                  style={{
-                    background: copiedExcel ? 'rgba(16, 185, 129, 0.2)' : '#27272a',
-                    color: copiedExcel ? '#34d399' : '#f4f4f5',
-                    borderColor: copiedExcel ? '#059669' : '#3f3f46',
+                    fontSize: '10px',
                     fontWeight: 600,
-                    fontSize: '11px',
-                    height: '32px',
-                    width: '100%',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '5px'
+                    color: '#c084fc',
+                    background: 'rgba(192, 132, 252, 0.08)',
+                    padding: '1px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(192, 132, 252, 0.2)'
                   }}
                 >
-                  {copiedExcel ? <Check size={13} /> : <Copy size={13} />}
-                  <span>{copiedExcel ? 'COPIED!' : 'EXCEL'}</span>
-                </Button>
-              </Tooltip>
-            </div>
-        </div>
+                  Paid: {formatINR(totalPaidSum)}
+                </span>
+              </div>
 
-        {/* RIGHT PANEL: Contributors / Split Table */}
-        <div
-          style={{
-            background: '#18181b',
-            border: '1px solid #27272a',
-            borderRadius: '8px',
-            padding: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', color: '#a1a1aa' }}>
-                2. Contributor Parties & Allocation
-              </span>
-              <Badge variant="outline" style={{ fontSize: '10.5px', background: '#09090b', color: '#c084fc', border: '1px solid #7c3aed' }}>
-                Total Paid: {formatINR(totalPaidSum)}
-              </Badge>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Tooltip title="Add contributing party to distribution" side="bottom">
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
+                  className="mac-btn"
                   onClick={handleAddContributor}
                   style={{
-                    height: '28px',
-                    fontSize: '11px',
+                    height: '24px',
+                    padding: '0 8px',
+                    fontSize: '10.5px',
                     fontWeight: 600,
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    color: '#34d399',
-                    borderColor: 'rgba(16, 185, 129, 0.35)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px'
                   }}
                 >
-                  <Plus size={13} />
-                  Add Party
-                </Button>
+                  <Plus size={11} color="#38bdf8" />
+                  <span>Add Party</span>
+                </button>
               </Tooltip>
             </div>
-          </div>
 
-          {/* Contributors Editable Table */}
-          <div
-            style={{
-              maxHeight: '140px',
-              overflowY: 'auto',
-              border: '1px solid #27272a',
-              borderRadius: '6px',
-              background: '#09090b'
-            }}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: '#18181b', borderBottom: '1px solid #27272a' }}>
-                <tr>
-                  <th style={{ padding: '6px 8px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>#</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PARTY NAME</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>AMT PAID (₹)</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>% SHARE</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>BILL TOTAL (+18% GST)</th>
-                  <th style={{ width: '40px', padding: '6px', textAlign: 'center', color: '#a1a1aa' }}>ACT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contributors.map((c, idx) => {
-                  const shareInfo = contribShares.find((cs) => cs.id === c.id);
-                  const sharePct = shareInfo ? shareInfo.sharePct * 100 : 0;
-                  const effectiveAmt = shareInfo ? shareInfo.effectivePaid : 0;
-                  const isAutoSplit = shareInfo ? shareInfo.isAuto : true;
-                  const calculatedBillTotal = partyBillTotals[c.name] || 0;
+            {/* Scrollable Contributor Cards List */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                paddingRight: '2px'
+              }}
+            >
+              {contributors.map((c, idx) => {
+                const shareInfo = contribShares.find((cs) => cs.id === c.id);
+                const sharePct = shareInfo ? shareInfo.sharePct * 100 : 0;
+                const effectiveAmt = shareInfo ? shareInfo.effectivePaid : 0;
+                const isAutoSplit = shareInfo ? shareInfo.isAuto : true;
+                const calculatedBillTotal = partyBillTotals[c.name] || 0;
 
-                  return (
-                    <tr key={c.id} style={{ borderBottom: '1px solid #18181b' }}>
-                      <td style={{ padding: '4px 8px', color: '#52525b', textAlign: 'center' }}>{idx + 1}</td>
-                      <td style={{ padding: '4px 8px' }}>
+                return (
+                  <div
+                    key={c.id}
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '6px',
+                      padding: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      transition: 'border-color 0.15s ease'
+                    }}
+                  >
+                    {/* Top Row: Party Name Input + Delete Button */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          color: '#71717a',
+                          width: '16px',
+                          textAlign: 'center'
+                        }}
+                      >
+                        {idx + 1}
+                      </span>
+                      <div style={{ flex: 1, position: 'relative' }}>
                         <input
                           id={`party-input-${c.id}`}
                           data-party-input={c.id}
@@ -1248,69 +1331,21 @@ export const EquationTabView: React.FC = () => {
                           }}
                           style={{
                             width: '100%',
-                            background: '#18181b',
-                            border: partyDropdownOpenFor === c.id ? '1px solid #3b82f6' : '1px solid #27272a',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
+                            height: '26px',
+                            background: 'rgba(0, 0, 0, 0.4)',
+                            border: partyDropdownOpenFor === c.id ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '5px',
+                            padding: '0 8px',
                             color: '#f4f4f5',
-                            fontSize: '12px',
-                            outline: 'none',
+                            fontSize: '11.5px',
                             fontWeight: 600,
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </td>
-
-                      {/* Amt Paid */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right' }}>
-                        <input
-                          type="number"
-                          value={c.paidAmount !== undefined && c.paidAmount !== null && c.paidAmount !== 0 ? c.paidAmount : ''}
-                          placeholder={effectiveAmt > 0 ? `₹${Math.round(effectiveAmt).toLocaleString('en-IN')}` : 'Enter ₹'}
-                          onChange={(e) => {
-                            const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
-                            handleUpdateContributor(c.id, 'paidAmount', val);
-                          }}
-                          style={{
-                            width: '130px',
-                            background: '#18181b',
-                            border: '1px solid #27272a',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            color: isAutoSplit ? '#a1a1aa' : '#34d399',
-                            fontSize: '12px',
-                            textAlign: 'right',
                             outline: 'none',
-                            fontWeight: 700,
                             boxSizing: 'border-box'
                           }}
                         />
-                      </td>
+                      </div>
 
-                      {/* % Share */}
-                      <td style={{ padding: '4px 8px', textAlign: 'center' }}>
-                        <Badge
-                          variant="outline"
-                          style={{
-                            background: isAutoSplit ? 'rgba(56, 189, 248, 0.12)' : 'rgba(124, 58, 237, 0.15)',
-                            color: isAutoSplit ? '#38bdf8' : '#c084fc',
-                            border: `1px solid ${isAutoSplit ? 'rgba(56, 189, 248, 0.3)' : 'rgba(124, 58, 237, 0.3)'}`,
-                            fontSize: '10.5px',
-                            fontWeight: 700,
-                            padding: '2px 6px'
-                          }}
-                        >
-                          {sharePct.toFixed(1)}%
-                        </Badge>
-                      </td>
-
-                      {/* Calculated Bill Total */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, color: '#f4f4f5' }}>
-                        {formatINR(calculatedBillTotal)}
-                      </td>
-
-                      {/* Delete */}
-                      <td style={{ padding: '4px', textAlign: 'center' }}>
+                      <Tooltip title={contributors.length <= 1 ? 'At least 1 party required' : 'Remove Contributor'} side="bottom">
                         <button
                           type="button"
                           onClick={() => handleRemoveContributor(c.id)}
@@ -1320,68 +1355,130 @@ export const EquationTabView: React.FC = () => {
                             border: 'none',
                             color: contributors.length <= 1 ? '#3f3f46' : '#71717a',
                             cursor: contributors.length <= 1 ? 'not-allowed' : 'pointer',
-                            padding: '3px'
+                            padding: '3px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                           }}
                           onMouseEnter={(e) => {
-                            if (contributors.length > 1) (e.currentTarget as HTMLButtonElement).style.color = '#ef4444';
+                            if (contributors.length > 1) (e.currentTarget as HTMLButtonElement).style.color = '#f87171';
                           }}
                           onMouseLeave={(e) => {
                             if (contributors.length > 1) (e.currentTarget as HTMLButtonElement).style.color = '#71717a';
                           }}
-                          title={contributors.length <= 1 ? 'At least 1 party required' : 'Delete Contributor'}
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={12} />
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </Tooltip>
+                    </div>
+
+                    {/* Bottom Row: Amount Paid + % Share + GST Total */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '11px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#71717a', fontSize: '10.5px' }}>Paid:</span>
+                        <input
+                          type="number"
+                          value={c.paidAmount !== undefined && c.paidAmount !== null && c.paidAmount !== 0 ? c.paidAmount : ''}
+                          placeholder={effectiveAmt > 0 ? `₹${Math.round(effectiveAmt).toLocaleString('en-IN')}` : '₹ Auto'}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                            handleUpdateContributor(c.id, 'paidAmount', val);
+                          }}
+                          style={{
+                            width: '80px',
+                            height: '24px',
+                            background: 'rgba(0, 0, 0, 0.4)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '4px',
+                            padding: '0 6px',
+                            color: isAutoSplit ? '#94a3b8' : '#34d399',
+                            fontSize: '11px',
+                            textAlign: 'right',
+                            outline: 'none',
+                            fontWeight: 700,
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          background: isAutoSplit ? 'rgba(56, 189, 248, 0.1)' : 'rgba(192, 132, 252, 0.12)',
+                          color: isAutoSplit ? '#38bdf8' : '#c084fc',
+                          border: `1px solid ${isAutoSplit ? 'rgba(56, 189, 248, 0.25)' : 'rgba(192, 132, 252, 0.25)'}`
+                        }}
+                      >
+                        {sharePct.toFixed(1)}%
+                      </span>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#f4f4f5' }}>
+                          {formatINR(calculatedBillTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 3. UNIFIED GOODS DISTRIBUTION & GST CALCULATION RESULTS TABLE       */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          background: '#18181b',
-          border: '1px solid #27272a',
-          borderRadius: '8px',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Table Filter & Toolbar */}
+        {/* ── RIGHT PANEL: Unified Goods Distribution Grid (Flex 1) ─────── */}
         <div
+          className="glass-panel"
           style={{
+            flex: 1,
+            minWidth: 0,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '7px 12px',
-            borderBottom: '1px solid #27272a',
-            background: '#18181b',
-            flexShrink: 0,
-            gap: '10px'
+            flexDirection: 'column',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            minHeight: 0
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5' }}>
-              UNIFIED DISTRIBUTION & GST TABLE
-            </span>
-            <Badge variant="outline" style={{ fontSize: '10.5px', background: '#09090b', color: '#a1a1aa', border: '1px solid #27272a' }}>
-              {filteredResults.length} Distributed Rows
-            </Badge>
-          </div>
+          {/* Table Filter & Toolbar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '7px 12px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'rgba(24, 24, 27, 0.6)',
+              flexShrink: 0,
+              gap: '10px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#f4f4f5' }}>
+                Distribution & GST Calculation Grid
+              </span>
+              <span
+                style={{
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: '#94a3b8',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  padding: '2px 7px',
+                  borderRadius: '4px'
+                }}
+              >
+                {filteredResults.length} Distributed Rows
+              </span>
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ position: 'relative' }}>
-              <Search size={13} style={{ position: 'absolute', left: '8px', top: '7px', color: '#71717a' }} />
+              <Search size={12} style={{ position: 'absolute', left: '8px', top: '7px', color: '#71717a' }} />
               <input
                 type="text"
                 placeholder="Filter party, item or amount..."
@@ -1391,30 +1488,20 @@ export const EquationTabView: React.FC = () => {
                   setCurrentPage(1);
                 }}
                 style={{
-                  height: '28px',
-                  width: '240px',
-                  background: '#09090b',
-                  border: '1px solid #27272a',
+                  height: '26px',
+                  width: '220px',
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '5px',
-                  paddingLeft: '26px',
+                  paddingLeft: '24px',
                   paddingRight: '8px',
-                  fontSize: '11.5px',
+                  fontSize: '11px',
                   color: '#f4f4f5',
                   outline: 'none'
                 }}
               />
             </div>
-
-            {/* Universal Excel & CSV Data Center */}
-            <ExcelCsvActions<EquationResultRow>
-              entityName="Equation Distribution"
-              filenamePrefix={`Equation_Distribution_${(loadedBillParty || 'Report').replace(/[^a-zA-Z0-9_-]/g, '_')}`}
-              columns={equationCsvColumns}
-              data={results}
-              compact={true}
-            />
           </div>
-        </div>
 
         {/* The Scrollable Table */}
         <div
@@ -1429,29 +1516,34 @@ export const EquationTabView: React.FC = () => {
             outline: 'none'
           }}
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-              <tr style={{ borderBottom: '1px solid #27272a' }}>
-                <th style={{ width: '38px', padding: '8px 6px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>#</th>
-                <th style={{ width: '170px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PARTY NAME</th>
-                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>% SHARE</th>
-                <th style={{ minWidth: '180px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>ITEM NAME</th>
-                <th style={{ width: '85px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PCS QTY</th>
-                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>BOXES</th>
-                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>SQM/MULT</th>
-                <th style={{ width: '110px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>BILL QTY (SHARE)</th>
-                <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>WEIGHT (KG)</th>
-                <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PRICE (₹)</th>
-                <th style={{ width: '130px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>TOTAL (+18% GST)</th>
+              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <th style={{ width: '36px', padding: '8px 6px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>#</th>
+                <th style={{ width: '170px', padding: '8px 10px', textAlign: 'left', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PARTY NAME</th>
+                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>% SHARE</th>
+                <th style={{ minWidth: '180px', padding: '8px 10px', textAlign: 'left', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>ITEM NAME</th>
+                <th style={{ width: '85px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PCS QTY</th>
+                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>BOXES</th>
+                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>SQM/MULT</th>
+                <th style={{ width: '110px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>BILL QTY (SHARE)</th>
+                <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>WEIGHT (KG)</th>
+                <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PRICE (₹)</th>
+                <th style={{ width: '130px', padding: '8px 10px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>TOTAL (+18% GST)</th>
               </tr>
             </thead>
             <tbody>
               {paginatedResults.length === 0 ? (
                 <tr>
-                  <td colSpan={11} style={{ textAlign: 'center', padding: '40px 10px', color: '#71717a', fontSize: '13px' }}>
-                    {results.length === 0
-                      ? 'No equation distribution to display. Load a bill and add parties above to auto-calculate.'
-                      : `No rows match "${tableSearchQuery}".`}
+                  <td colSpan={11} style={{ textAlign: 'center', padding: '48px 10px', color: '#71717a', fontSize: '12.5px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <Layers size={28} style={{ color: '#3f3f46' }} />
+                      <span>
+                        {results.length === 0
+                          ? 'No equation distribution to display. Load a bill and add parties to auto-calculate.'
+                          : `No rows match "${tableSearchQuery}".`}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -1468,56 +1560,71 @@ export const EquationTabView: React.FC = () => {
                         macAudio.playClick();
                       }}
                       style={{
-                        height: '30px',
-                        borderBottom: '1px solid #18181b',
-                        background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent',
-                        outline: isSelected ? '1px solid #3f3f46' : 'none',
+                        height: '31px',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                        background: isSelected
+                          ? 'rgba(56, 189, 248, 0.08)'
+                          : idx % 2 === 0
+                          ? 'rgba(255, 255, 255, 0.015)'
+                          : 'transparent',
+                        outline: isSelected ? '1px solid rgba(56, 189, 248, 0.25)' : 'none',
                         outlineOffset: '-1px',
                         cursor: 'pointer',
-                        transition: 'background 0.1s ease'
+                        transition: 'background 0.12s ease'
                       }}
                     >
                       <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px' }}>{globalIdx}</td>
 
                       {/* Party Name */}
-                      <td style={{ padding: '4px 10px', fontWeight: 700, color: '#f4f4f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <td style={{ padding: '4px 10px', fontWeight: 600, color: '#f4f4f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {r.partyName}
                       </td>
 
                       {/* % Share */}
                       <td style={{ padding: '4px 8px', textAlign: 'center' }}>
-                        <span style={{ color: '#c084fc', fontWeight: 700, fontSize: '11px' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            background: 'rgba(192, 132, 252, 0.1)',
+                            border: '1px solid rgba(192, 132, 252, 0.25)',
+                            color: '#c084fc',
+                            fontWeight: 700,
+                            fontSize: '10.5px'
+                          }}
+                        >
                           {(r.sharePct * 100).toFixed(1)}%
                         </span>
                       </td>
 
                       {/* Item Name */}
-                      <td style={{ padding: '4px 10px', color: '#f4f4f5', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <td style={{ padding: '4px 10px', color: '#e4e4e7', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {r.itemName}
                       </td>
 
                       {/* PCS Qty */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, color: '#f4f4f5' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#f4f4f5', fontVariantNumeric: 'tabular-nums' }}>
                         {r.pcsQty.toLocaleString('en-IN')}
                       </td>
 
                       {/* Boxes */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', color: '#38bdf8', fontWeight: 600 }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', color: '#38bdf8', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                         {r.boxes.toLocaleString('en-IN')}
                       </td>
 
                       {/* SQM / Mult */}
-                      <td style={{ padding: '4px 8px', textAlign: 'center', color: '#a1a1aa' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'center', color: '#a1a1aa', fontVariantNumeric: 'tabular-nums' }}>
                         {r.mult}
                       </td>
 
                       {/* Bill Qty Share */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700, color: '#34d399' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#34d399', fontVariantNumeric: 'tabular-nums' }}>
                         {Math.round(r.billQtyShare).toLocaleString('en-IN')}
                       </td>
 
                       {/* Weight KG */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#2dd4bf' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#2dd4bf', fontVariantNumeric: 'tabular-nums' }}>
                         {r.weightKg.toFixed(2)}
                       </td>
 
@@ -1530,22 +1637,31 @@ export const EquationTabView: React.FC = () => {
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => handleUpdatePrice(r.id, parseFloat(e.target.value) || 0)}
                           style={{
-                            width: '80px',
-                            background: '#18181b',
-                            border: '1px solid #27272a',
+                            width: '76px',
+                            height: '23px',
+                            background: 'rgba(0, 0, 0, 0.45)',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
                             borderRadius: '4px',
-                            padding: '2px 6px',
+                            padding: '0 6px',
                             color: '#38bdf8',
-                            fontSize: '11.5px',
+                            fontSize: '11px',
                             textAlign: 'right',
                             outline: 'none',
-                            fontWeight: 700
+                            fontWeight: 700,
+                            fontVariantNumeric: 'tabular-nums'
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = '#38bdf8';
+                            e.currentTarget.select();
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
                           }}
                         />
                       </td>
 
                       {/* Total (+18% GST) */}
-                      <td style={{ padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: '#f87171' }}>
+                      <td style={{ padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: '#f4f4f5', fontVariantNumeric: 'tabular-nums' }}>
                         {formatINR(r.totalGst)}
                       </td>
                     </tr>
@@ -1565,37 +1681,39 @@ export const EquationTabView: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '7px 12px',
-            background: '#18181b',
-            borderTop: '1px solid #27272a',
+            background: 'rgba(24, 24, 27, 0.8)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             flexShrink: 0,
             gap: '12px'
           }}
         >
           {/* Quick Metrics */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '11px', color: '#a1a1aa' }}>
-            <div>
-              <span>Total PCS: </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <div className="stat-pill">
+              <span style={{ color: '#71717a' }}>PCS:</span>
               <strong style={{ color: '#f4f4f5' }}>{grandSummary.totalPcs.toLocaleString('en-IN')}</strong>
             </div>
-            <span style={{ color: '#3f3f46' }}>•</span>
-            <div>
-              <span>Total Boxes: </span>
+            <div className="stat-pill">
+              <span style={{ color: '#71717a' }}>Boxes:</span>
               <strong style={{ color: '#38bdf8' }}>{grandSummary.totalBoxes.toLocaleString('en-IN')}</strong>
             </div>
-            <span style={{ color: '#3f3f46' }}>•</span>
-            <div>
-              <span>Total Bill Qty: </span>
+            <div className="stat-pill">
+              <span style={{ color: '#71717a' }}>Bill Qty:</span>
               <strong style={{ color: '#34d399' }}>{grandSummary.totalBillQty.toLocaleString('en-IN')}</strong>
             </div>
-            <span style={{ color: '#3f3f46' }}>•</span>
-            <div>
-              <span>Total Weight: </span>
+            <div className="stat-pill">
+              <span style={{ color: '#71717a' }}>Weight:</span>
               <strong style={{ color: '#2dd4bf' }}>{grandSummary.totalWeight.toLocaleString('en-IN')} KG</strong>
             </div>
-            <span style={{ color: '#3f3f46' }}>•</span>
-            <div>
-              <span>Grand Total (+18% GST): </span>
-              <strong style={{ color: '#f87171', fontSize: '12px' }}>{formatINR(grandSummary.totalGstVal)}</strong>
+            <div
+              className="stat-pill"
+              style={{
+                background: 'rgba(56, 189, 248, 0.1)',
+                borderColor: 'rgba(56, 189, 248, 0.25)'
+              }}
+            >
+              <span style={{ color: '#94a3b8' }}>Net (+18% GST):</span>
+              <strong style={{ color: '#38bdf8', fontSize: '12px' }}>{formatINR(grandSummary.totalGstVal)}</strong>
             </div>
           </div>
 
@@ -1623,6 +1741,7 @@ export const EquationTabView: React.FC = () => {
           )}
         </div>
       </div>
+    </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 5. PROFESSIONAL PRINT / EXPORT MODAL (INDUSTRIAL EQUATION REPORT)   */}
@@ -1679,38 +1798,50 @@ export const EquationTabView: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={handleTriggerPrint}
-                  disabled={isDirectPrinting}
-                  style={{
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Printer size={14} />
-                  <span>{isDirectPrinting ? 'SPOOLING...' : 'PRINT NOW'}</span>
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setIsPrintModalOpen(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#a1a1aa',
-                    cursor: 'pointer',
-                    padding: '4px'
-                  }}
-                >
-                  <X size={18} />
-                </button>
+                <Tooltip content="Send document to PyQt6 native print engine / dialog" side="bottom">
+                  <button
+                    type="button"
+                    className="mac-btn"
+                    onClick={handleTriggerPrint}
+                    disabled={isDirectPrinting}
+                    style={{
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '11.5px',
+                      height: '28px',
+                      padding: '0 12px',
+                      borderRadius: '5px',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: isDirectPrinting ? 'wait' : 'pointer'
+                    }}
+                  >
+                    <Printer size={13} />
+                    <span>{isDirectPrinting ? 'Spooling...' : 'Print Report'}</span>
+                  </button>
+                </Tooltip>
+
+                <Tooltip content="Close print preview" side="bottom">
+                  <button
+                    type="button"
+                    className="mac-btn"
+                    onClick={() => setIsPrintModalOpen(false)}
+                    style={{
+                      height: '28px',
+                      width: '28px',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#a1a1aa'
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
+                </Tooltip>
               </div>
             </div>
 
