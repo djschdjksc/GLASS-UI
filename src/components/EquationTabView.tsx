@@ -39,7 +39,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
   FileText,
-  Users
+  Users,
+  UserPlus
 } from 'lucide-react';
 
 export interface Contributor {
@@ -154,6 +155,13 @@ export const EquationTabView: React.FC = () => {
   // Print Dialog State
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
   const [isDirectPrinting, setIsDirectPrinting] = useState<boolean>(false);
+
+  // Add Party Modal State
+  const [isAddPartyModalOpen, setIsAddPartyModalOpen] = useState<boolean>(false);
+  const [modalPartyName, setModalPartyName] = useState<string>('');
+  const [modalPartyAmount, setModalPartyAmount] = useState<number | ''>('');
+  const [modalPartyPercent, setModalPartyPercent] = useState<number | ''>('');
+  const [modalPartySuggestionsOpen, setModalPartySuggestionsOpen] = useState<boolean>(false);
 
   const billInputRef = useRef<HTMLInputElement>(null);
   const tableWrapperRef = useRef<HTMLDivElement>(null);
@@ -407,19 +415,57 @@ export const EquationTabView: React.FC = () => {
     return totals;
   }, [results]);
 
+  // Sum of explicitly assigned paid amounts
+  const explicitPaidSum = useMemo(() => {
+    return contributors
+      .filter((c) => Number(c.paidAmount) > 0)
+      .reduce((sum, c) => sum + Number(c.paidAmount), 0);
+  }, [contributors]);
+
+  // Unallocated remaining bill balance
+  const unallocatedAmount = useMemo(() => {
+    if (loadedBillTotal <= 0) return 0;
+    return Math.max(0, loadedBillTotal - explicitPaidSum);
+  }, [loadedBillTotal, explicitPaidSum]);
+
   // Contributor CRUD handlers
-  const handleAddContributor = () => {
+  const handleOpenAddPartyModal = () => {
     macAudio.playClick();
+    setModalPartyName('');
+    const remaining = unallocatedAmount > 0 ? unallocatedAmount : (loadedBillTotal > 0 ? loadedBillTotal : '');
+    setModalPartyAmount(remaining);
+    if (loadedBillTotal > 0 && typeof remaining === 'number' && remaining > 0) {
+      setModalPartyPercent(Math.round(((remaining / loadedBillTotal) * 100) * 10) / 10);
+    } else {
+      setModalPartyPercent('');
+    }
+    setModalPartySuggestionsOpen(false);
+    setIsAddPartyModalOpen(true);
+  };
+
+  const handleConfirmAddPartyModal = () => {
+    const trimmed = modalPartyName.trim();
+    if (!trimmed) {
+      showNotification('Please enter or select a party name', 'error');
+      return;
+    }
+    macAudio.playSuccess();
     const newId = 'c_' + Date.now();
-    // Do NOT auto-fill party name or auto-fill amount!
-    const next: Contributor[] = [...contributors, { id: newId, name: '', paidAmount: '' as any }];
-    setContributors(next);
-    setTimeout(() => {
-      const inputEl = document.getElementById(`party-input-${newId}`) as HTMLInputElement | null;
-      if (inputEl) {
-        inputEl.focus();
+    const next: Contributor[] = [
+      ...contributors,
+      {
+        id: newId,
+        name: trimmed,
+        paidAmount: modalPartyAmount !== '' ? Number(modalPartyAmount) : ('' as any)
       }
-    }, 60);
+    ];
+    setContributors(next);
+    setIsAddPartyModalOpen(false);
+    showNotification(`Added "${trimmed}" with ${formatINR(Number(modalPartyAmount) || 0)} share`, 'success');
+  };
+
+  const handleAddContributor = () => {
+    handleOpenAddPartyModal();
   };
 
   const handleRemoveContributor = (id: string) => {
@@ -435,6 +481,17 @@ export const EquationTabView: React.FC = () => {
   const handleUpdateContributor = (id: string, field: 'name' | 'paidAmount', val: any) => {
     const next = contributors.map((c) => (c.id === id ? { ...c, [field]: val } : c));
     setContributors(next);
+  };
+
+  const handleUpdateContributorPercent = (id: string, pctVal: number | '') => {
+    if (pctVal === '' || isNaN(Number(pctVal))) {
+      handleUpdateContributor(id, 'paidAmount', '');
+      return;
+    }
+    const pct = Math.max(0, Math.min(100, Number(pctVal)));
+    const totalBill = loadedBillTotal > 0 ? loadedBillTotal : totalPaidSum || 100000;
+    const calcAmt = Math.round(((pct / 100) * totalBill) * 100) / 100;
+    handleUpdateContributor(id, 'paidAmount', calcAmt);
   };
 
   // Filtered results by search query
@@ -851,7 +908,7 @@ export const EquationTabView: React.FC = () => {
         overflow: 'hidden',
         background: '#09090b',
         color: '#f4f4f5',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif'
+        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif"
       }}
     >
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -1256,28 +1313,31 @@ export const EquationTabView: React.FC = () => {
                   <div
                     key={c.id}
                     style={{
-                      background: 'rgba(0, 0, 0, 0.35)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
-                      borderRadius: '6px',
-                      padding: '8px',
+                      background: 'rgba(24, 24, 27, 0.7)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '6px',
-                      transition: 'border-color 0.15s ease'
+                      gap: '7px',
+                      transition: 'border-color 0.15s ease, background 0.15s ease',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)'
                     }}
                   >
-                    {/* Top Row: Party Name Input + Delete Button */}
+                    {/* Top Row: Index Badge + Party Name Input + Trash */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span
                         style={{
                           fontSize: '10px',
                           fontWeight: 700,
-                          color: '#71717a',
-                          width: '16px',
-                          textAlign: 'center'
+                          color: '#a1a1aa',
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          borderRadius: '4px',
+                          padding: '1px 5px',
+                          fontFamily: "'JetBrains Mono', monospace"
                         }}
                       >
-                        {idx + 1}
+                        #{idx + 1}
                       </span>
                       <div style={{ flex: 1, position: 'relative' }}>
                         <input
@@ -1324,6 +1384,8 @@ export const EquationTabView: React.FC = () => {
                                 handleUpdateContributor(c.id, 'name', partyFilterText.trim());
                                 setPartyDropdownOpenFor(null);
                               }
+                              const amtInput = document.getElementById(`party-amount-${c.id}`);
+                              if (amtInput) amtInput.focus();
                             } else if (e.key === 'Escape') {
                               e.preventDefault();
                               setPartyDropdownOpenFor(null);
@@ -1332,13 +1394,14 @@ export const EquationTabView: React.FC = () => {
                           style={{
                             width: '100%',
                             height: '26px',
-                            background: 'rgba(0, 0, 0, 0.4)',
+                            background: 'rgba(0, 0, 0, 0.45)',
                             border: partyDropdownOpenFor === c.id ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '5px',
                             padding: '0 8px',
                             color: '#f4f4f5',
                             fontSize: '11.5px',
                             fontWeight: 600,
+                            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                             outline: 'none',
                             boxSizing: 'border-box'
                           }}
@@ -1348,18 +1411,17 @@ export const EquationTabView: React.FC = () => {
                       <Tooltip title={contributors.length <= 1 ? 'At least 1 party required' : 'Remove Contributor'} side="bottom">
                         <button
                           type="button"
+                          className="mac-btn"
                           onClick={() => handleRemoveContributor(c.id)}
                           disabled={contributors.length <= 1}
                           style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: contributors.length <= 1 ? '#3f3f46' : '#71717a',
-                            cursor: contributors.length <= 1 ? 'not-allowed' : 'pointer',
-                            padding: '3px',
-                            borderRadius: '4px',
+                            width: '24px',
+                            height: '24px',
+                            padding: 0,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            color: contributors.length <= 1 ? '#3f3f46' : '#71717a'
                           }}
                           onMouseEnter={(e) => {
                             if (contributors.length > 1) (e.currentTarget as HTMLButtonElement).style.color = '#f87171';
@@ -1373,54 +1435,95 @@ export const EquationTabView: React.FC = () => {
                       </Tooltip>
                     </div>
 
-                    {/* Bottom Row: Amount Paid + % Share + GST Total */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '11px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#71717a', fontSize: '10.5px' }}>Paid:</span>
-                        <input
-                          type="number"
-                          value={c.paidAmount !== undefined && c.paidAmount !== null && c.paidAmount !== 0 ? c.paidAmount : ''}
-                          placeholder={effectiveAmt > 0 ? `₹${Math.round(effectiveAmt).toLocaleString('en-IN')}` : '₹ Auto'}
-                          onChange={(e) => {
-                            const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
-                            handleUpdateContributor(c.id, 'paidAmount', val);
-                          }}
-                          style={{
-                            width: '80px',
-                            height: '24px',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '4px',
-                            padding: '0 6px',
-                            color: isAutoSplit ? '#94a3b8' : '#34d399',
-                            fontSize: '11px',
-                            textAlign: 'right',
-                            outline: 'none',
-                            fontWeight: 700,
-                            boxSizing: 'border-box'
-                          }}
-                        />
+                    {/* Middle Row: Amount in Bill + % Share */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ color: '#71717a', fontSize: '10.5px', fontWeight: 600 }}>Amount:</span>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                          <span style={{ position: 'absolute', left: '5px', top: '4px', fontSize: '10.5px', color: '#71717a', fontWeight: 700 }}>₹</span>
+                          <input
+                            id={`party-amount-${c.id}`}
+                            type="number"
+                            value={c.paidAmount !== undefined && c.paidAmount !== null && c.paidAmount !== 0 ? c.paidAmount : ''}
+                            placeholder={effectiveAmt > 0 ? `${Math.round(effectiveAmt)}` : 'Auto'}
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                              handleUpdateContributor(c.id, 'paidAmount', val);
+                            }}
+                            style={{
+                              width: '100%',
+                              height: '23px',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '4px',
+                              paddingLeft: '14px',
+                              paddingRight: '4px',
+                              color: isAutoSplit ? '#94a3b8' : '#34d399',
+                              fontSize: '11px',
+                              textAlign: 'right',
+                              outline: 'none',
+                              fontWeight: 700,
+                              fontFamily: "'JetBrains Mono', monospace",
+                              boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => (e.currentTarget.style.borderColor = '#38bdf8')}
+                            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                          />
+                        </div>
                       </div>
 
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          background: isAutoSplit ? 'rgba(56, 189, 248, 0.1)' : 'rgba(192, 132, 252, 0.12)',
-                          color: isAutoSplit ? '#38bdf8' : '#c084fc',
-                          border: `1px solid ${isAutoSplit ? 'rgba(56, 189, 248, 0.25)' : 'rgba(192, 132, 252, 0.25)'}`
-                        }}
-                      >
-                        {sharePct.toFixed(1)}%
-                      </span>
-
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#f4f4f5' }}>
-                          {formatINR(calculatedBillTotal)}
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ color: '#71717a', fontSize: '10.5px', fontWeight: 600 }}>Share:</span>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={Number(sharePct.toFixed(1)) || ''}
+                            placeholder="0.0"
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                              handleUpdateContributorPercent(c.id, val);
+                            }}
+                            style={{
+                              width: '100%',
+                              height: '23px',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '4px',
+                              paddingLeft: '4px',
+                              paddingRight: '14px',
+                              color: isAutoSplit ? '#38bdf8' : '#c084fc',
+                              fontSize: '11px',
+                              textAlign: 'right',
+                              outline: 'none',
+                              fontWeight: 700,
+                              fontFamily: "'JetBrains Mono', monospace",
+                              boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => (e.currentTarget.style.borderColor = '#c084fc')}
+                            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                          />
+                          <span style={{ position: 'absolute', right: '4px', top: '4px', fontSize: '10.5px', color: '#71717a', fontWeight: 700 }}>%</span>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Bottom Row: Net GST Share preview */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '3px 6px',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        borderRadius: '4px',
+                        fontSize: '10.5px'
+                      }}
+                    >
+                      <span style={{ color: '#71717a' }}>Net (+18% GST):</span>
+                      <strong style={{ color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
+                        {formatINR(calculatedBillTotal)}
+                      </strong>
                     </div>
                   </div>
                 );
@@ -1573,7 +1676,7 @@ export const EquationTabView: React.FC = () => {
                         transition: 'background 0.12s ease'
                       }}
                     >
-                      <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px' }}>{globalIdx}</td>
+                      <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace" }}>{globalIdx}</td>
 
                       {/* Party Name */}
                       <td style={{ padding: '4px 10px', fontWeight: 600, color: '#f4f4f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1591,7 +1694,8 @@ export const EquationTabView: React.FC = () => {
                             border: '1px solid rgba(192, 132, 252, 0.25)',
                             color: '#c084fc',
                             fontWeight: 700,
-                            fontSize: '10.5px'
+                            fontSize: '10.5px',
+                            fontFamily: "'JetBrains Mono', monospace"
                           }}
                         >
                           {(r.sharePct * 100).toFixed(1)}%
@@ -1604,27 +1708,27 @@ export const EquationTabView: React.FC = () => {
                       </td>
 
                       {/* PCS Qty */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#f4f4f5', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#f4f4f5', fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {r.pcsQty.toLocaleString('en-IN')}
                       </td>
 
                       {/* Boxes */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', color: '#38bdf8', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', color: '#38bdf8', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {r.boxes.toLocaleString('en-IN')}
                       </td>
 
                       {/* SQM / Mult */}
-                      <td style={{ padding: '4px 8px', textAlign: 'center', color: '#a1a1aa', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'center', color: '#a1a1aa', fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {r.mult}
                       </td>
 
                       {/* Bill Qty Share */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#34d399', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#34d399', fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {Math.round(r.billQtyShare).toLocaleString('en-IN')}
                       </td>
 
                       {/* Weight KG */}
-                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#2dd4bf', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#2dd4bf', fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {r.weightKg.toFixed(2)}
                       </td>
 
@@ -1648,6 +1752,7 @@ export const EquationTabView: React.FC = () => {
                             textAlign: 'right',
                             outline: 'none',
                             fontWeight: 700,
+                            fontFamily: "'JetBrains Mono', monospace",
                             fontVariantNumeric: 'tabular-nums'
                           }}
                           onFocus={(e) => {
@@ -1661,7 +1766,7 @@ export const EquationTabView: React.FC = () => {
                       </td>
 
                       {/* Total (+18% GST) */}
-                      <td style={{ padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: '#f4f4f5', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: '#f4f4f5', fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {formatINR(r.totalGst)}
                       </td>
                     </tr>
@@ -1669,11 +1774,145 @@ export const EquationTabView: React.FC = () => {
                 })
               )}
             </tbody>
+
+            {/* ── STICKY TFOOT: Column-Aligned Totals Directly Under Each Column (Matching Enter Stock) ── */}
+            <tfoot
+              style={{
+                position: 'sticky',
+                bottom: 0,
+                zIndex: 10,
+                background: '#141417',
+                borderTop: '2px solid rgba(56, 189, 248, 0.4)',
+                boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.8)'
+              }}
+            >
+              <tr style={{ height: '34px', background: '#141417' }}>
+                {/* 1. # Index */}
+                <td style={{ textAlign: 'center', color: '#71717a', fontSize: '11px', fontWeight: 800 }}>Σ</td>
+
+                {/* 2. Party Name + 3. % Share + 4. Item Name -> Span 3 columns */}
+                <td
+                  colSpan={3}
+                  style={{
+                    padding: '4px 10px',
+                    textAlign: 'left',
+                    color: '#38bdf8',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.05em',
+                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                  }}
+                >
+                  TOTAL SUMMARY ({filteredResults.length} ROWS)
+                </td>
+
+                {/* 5. PCS Qty Column Total */}
+                <td
+                  style={{
+                    padding: '4px 8px',
+                    textAlign: 'right',
+                    color: '#f4f4f5',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  {grandSummary.totalPcs.toLocaleString('en-IN')}
+                </td>
+
+                {/* 6. Boxes Column Total */}
+                <td
+                  style={{
+                    padding: '4px 8px',
+                    textAlign: 'right',
+                    color: '#38bdf8',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  {grandSummary.totalBoxes.toLocaleString('en-IN')}
+                </td>
+
+                {/* 7. SQM / Mult */}
+                <td
+                  style={{
+                    padding: '4px 8px',
+                    textAlign: 'center',
+                    color: '#71717a',
+                    fontSize: '11px',
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  —
+                </td>
+
+                {/* 8. Bill Qty Share Column Total */}
+                <td
+                  style={{
+                    padding: '4px 8px',
+                    textAlign: 'right',
+                    color: '#34d399',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  {grandSummary.totalBillQty.toLocaleString('en-IN')}
+                </td>
+
+                {/* 9. Weight KG Column Total */}
+                <td
+                  style={{
+                    padding: '4px 8px',
+                    textAlign: 'right',
+                    color: '#2dd4bf',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  {grandSummary.totalWeight.toFixed(2)} KG
+                </td>
+
+                {/* 10. Price Column */}
+                <td
+                  style={{
+                    padding: '4px 8px',
+                    textAlign: 'center',
+                    color: '#71717a',
+                    fontSize: '11px',
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  —
+                </td>
+
+                {/* 11. Total (+18% GST) Column Total */}
+                <td
+                  style={{
+                    padding: '4px 10px',
+                    textAlign: 'right',
+                    color: '#38bdf8',
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    borderLeft: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}
+                >
+                  {formatINR(grandSummary.totalGstVal)}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────── */}
-        {/* 4. TOTALS SUMMARY & PAGINATION FOOTER                               */}
+        {/* 4. PAGINATION FOOTER TOOLBAR                                        */}
         {/* ─────────────────────────────────────────────────────────────────── */}
         <div
           style={{
@@ -1687,34 +1926,25 @@ export const EquationTabView: React.FC = () => {
             gap: '12px'
           }}
         >
-          {/* Quick Metrics */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <div className="stat-pill">
-              <span style={{ color: '#71717a' }}>PCS:</span>
-              <strong style={{ color: '#f4f4f5' }}>{grandSummary.totalPcs.toLocaleString('en-IN')}</strong>
-            </div>
-            <div className="stat-pill">
-              <span style={{ color: '#71717a' }}>Boxes:</span>
-              <strong style={{ color: '#38bdf8' }}>{grandSummary.totalBoxes.toLocaleString('en-IN')}</strong>
-            </div>
-            <div className="stat-pill">
-              <span style={{ color: '#71717a' }}>Bill Qty:</span>
-              <strong style={{ color: '#34d399' }}>{grandSummary.totalBillQty.toLocaleString('en-IN')}</strong>
-            </div>
-            <div className="stat-pill">
-              <span style={{ color: '#71717a' }}>Weight:</span>
-              <strong style={{ color: '#2dd4bf' }}>{grandSummary.totalWeight.toLocaleString('en-IN')} KG</strong>
-            </div>
-            <div
-              className="stat-pill"
+          {/* Status info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+              Showing <strong style={{ color: '#f4f4f5', fontFamily: "'JetBrains Mono', monospace" }}>{paginatedResults.length}</strong> of{' '}
+              <strong style={{ color: '#f4f4f5', fontFamily: "'JetBrains Mono', monospace" }}>{filteredResults.length}</strong> distributed rows
+            </span>
+            <span
               style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                borderColor: 'rgba(56, 189, 248, 0.25)'
+                fontSize: '10px',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                color: '#38bdf8',
+                border: '1px solid rgba(56, 189, 248, 0.2)',
+                fontWeight: 600
               }}
             >
-              <span style={{ color: '#94a3b8' }}>Net (+18% GST):</span>
-              <strong style={{ color: '#38bdf8', fontSize: '12px' }}>{formatINR(grandSummary.totalGstVal)}</strong>
-            </div>
+              {contributors.length} Parties Active
+            </span>
           </div>
 
           {/* Standard Shadcn Pagination */}
@@ -1854,7 +2084,7 @@ export const EquationTabView: React.FC = () => {
                 padding: '24px',
                 background: '#ffffff',
                 color: '#000000',
-                fontFamily: 'Arial, sans-serif'
+                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
               }}
             >
               {/* Report Header */}
@@ -1966,6 +2196,413 @@ export const EquationTabView: React.FC = () => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 6. APPLE-STYLE ADD CONTRIBUTING PARTY MODAL                         */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {isAddPartyModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddPartyModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: '460px',
+              maxWidth: '94vw',
+              background: 'rgba(24, 24, 27, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '12px',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(39, 39, 42, 0.5)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '8px',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#38bdf8'
+                  }}
+                >
+                  <UserPlus size={16} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#f4f4f5' }}>
+                    Add Contributing Party
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    Bill #{loadedBillToken || selectedBillId} • Gross Total: {formatINR(loadedBillTotal)}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="mac-btn"
+                onClick={() => setIsAddPartyModalOpen(false)}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#a1a1aa'
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Unallocated Balance Banner */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.2)',
+                  borderRadius: '7px',
+                  fontSize: '11.5px'
+                }}
+              >
+                <span style={{ color: '#94a3b8' }}>Unallocated Bill Balance:</span>
+                <strong style={{ color: '#38bdf8', fontFamily: "'JetBrains Mono', monospace", fontSize: '12.5px' }}>
+                  {formatINR(unallocatedAmount)}
+                </strong>
+              </div>
+
+              {/* Field 1: Party Name */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>
+                  PARTY NAME *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Enter or select party name..."
+                    value={modalPartyName}
+                    onChange={(e) => {
+                      setModalPartyName(e.target.value);
+                      setModalPartySuggestionsOpen(true);
+                    }}
+                    onFocus={() => setModalPartySuggestionsOpen(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const amountInput = document.getElementById('modal-party-amount-input');
+                        if (amountInput) amountInput.focus();
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '32px',
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '6px',
+                      padding: '0 10px',
+                      color: '#f4f4f5',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+
+                  {/* Autocomplete Dropdown */}
+                  {modalPartySuggestionsOpen && modalPartyName.trim() && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '36px',
+                        left: 0,
+                        right: 0,
+                        maxHeight: '140px',
+                        overflowY: 'auto',
+                        background: '#18181b',
+                        border: '1px solid #3f3f46',
+                        borderRadius: '6px',
+                        zIndex: 100,
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.8)',
+                        padding: '4px'
+                      }}
+                    >
+                      {parties
+                        .filter((p) => p.name.toLowerCase().includes(modalPartyName.toLowerCase()))
+                        .slice(0, 8)
+                        .map((p) => (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              setModalPartyName(p.name);
+                              setModalPartySuggestionsOpen(false);
+                              const amountInput = document.getElementById('modal-party-amount-input');
+                              if (amountInput) amountInput.focus();
+                            }}
+                            style={{
+                              padding: '6px 10px',
+                              fontSize: '12px',
+                              color: '#f4f4f5',
+                              cursor: 'pointer',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                            onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = '#27272a')}
+                            onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.background = 'transparent')}
+                          >
+                            <span>{p.name}</span>
+                            {p.station && (
+                              <span style={{ fontSize: '10px', color: '#71717a' }}>{p.station}</span>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Field 2 & 3: Amount in Bill (₹) and Share Percentage (%) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>
+                    AMOUNT IN THIS BILL (₹)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        left: '9px',
+                        top: '7px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#71717a'
+                      }}
+                    >
+                      ₹
+                    </span>
+                    <input
+                      id="modal-party-amount-input"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={modalPartyAmount !== '' ? modalPartyAmount : ''}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                        setModalPartyAmount(val);
+                        if (loadedBillTotal > 0 && typeof val === 'number') {
+                          setModalPartyPercent(Math.round(((val / loadedBillTotal) * 100) * 10) / 10);
+                        } else {
+                          setModalPartyPercent('');
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleConfirmAddPartyModal();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '32px',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '6px',
+                        paddingLeft: '22px',
+                        paddingRight: '8px',
+                        color: '#34d399',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        fontFamily: "'JetBrains Mono', monospace",
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>
+                    SHARE (%)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={modalPartyPercent !== '' ? modalPartyPercent : ''}
+                      onChange={(e) => {
+                        const pct = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                        setModalPartyPercent(pct);
+                        if (loadedBillTotal > 0 && typeof pct === 'number') {
+                          setModalPartyAmount(Math.round(((pct / 100) * loadedBillTotal) * 100) / 100);
+                        } else {
+                          setModalPartyAmount('');
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleConfirmAddPartyModal();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '32px',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '6px',
+                        paddingLeft: '10px',
+                        paddingRight: '22px',
+                        color: '#c084fc',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        fontFamily: "'JetBrains Mono', monospace",
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: '9px',
+                        top: '7px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#71717a'
+                      }}
+                    >
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '10.5px', color: '#71717a' }}>Presets:</span>
+                {[10, 25, 33.33, 50].map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className="mac-btn"
+                    onClick={() => {
+                      setModalPartyPercent(p);
+                      if (loadedBillTotal > 0) {
+                        setModalPartyAmount(Math.round(((p / 100) * loadedBillTotal) * 100) / 100);
+                      }
+                    }}
+                    style={{ height: '22px', padding: '0 7px', fontSize: '10.5px', fontWeight: 600 }}
+                  >
+                    {p}%
+                  </button>
+                ))}
+                {unallocatedAmount > 0 && (
+                  <button
+                    type="button"
+                    className="mac-btn"
+                    onClick={() => {
+                      setModalPartyAmount(unallocatedAmount);
+                      if (loadedBillTotal > 0) {
+                        setModalPartyPercent(Math.round(((unallocatedAmount / loadedBillTotal) * 100) * 10) / 10);
+                      }
+                    }}
+                    style={{
+                      height: '22px',
+                      padding: '0 8px',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      color: '#38bdf8',
+                      borderColor: 'rgba(56, 189, 248, 0.3)'
+                    }}
+                  >
+                    Remaining ({formatINR(unallocatedAmount)})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                padding: '12px 16px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(24, 24, 27, 0.6)',
+                gap: '8px'
+              }}
+            >
+              <button
+                type="button"
+                className="mac-btn"
+                onClick={() => setIsAddPartyModalOpen(false)}
+                style={{ height: '28px', padding: '0 12px', fontSize: '11.5px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="mac-btn"
+                onClick={handleConfirmAddPartyModal}
+                style={{
+                  height: '28px',
+                  padding: '0 14px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                <Plus size={13} />
+                <span>Add to Distribution</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
       {/* FLOATING BILL UI STYLE PARTY SEARCH DROPDOWN (PORTAL TO BODY)       */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {partyDropdownOpenFor && dropdownPos && createPortal(
@@ -1986,7 +2623,7 @@ export const EquationTabView: React.FC = () => {
             zIndex: 99999999,
             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9)',
             padding: '5px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }}
           onMouseDown={(e) => {
             // Prevent input blur before click event fires
@@ -2136,7 +2773,7 @@ export const EquationTabView: React.FC = () => {
             zIndex: 99999999,
             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9)',
             padding: '5px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }}
           onMouseDown={(e) => {
             // Prevent input blur before click event fires
