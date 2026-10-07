@@ -22,13 +22,18 @@ import {
   RotateCcw,
   Scale,
   Search,
-  History
+  History,
+  Settings,
+  Copy,
+  FolderOpen,
+  FileCheck
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord, PartyRecord } from '../services/db/schema';
 import { supabaseSyncService } from '../services/supabaseSync';
-import { normalizeDocType, getBillCategory } from '../utils/billDocTypes';
+import { getCachedSkipItems, getParties } from '../services/db/sqliteDb';
+import { normalizeDocType, getBillCategory, formatBillNumber } from '../utils/billDocTypes';
 import type { BillPrintPayload, PrintAdjustment } from '../utils/billCanvasPainter';
 import {
   renderBillToCanvas,
@@ -50,6 +55,26 @@ export interface BillPrintModalProps {
   editId?: string;
 }
 
+export interface PrintSettings {
+  printerName: string;
+  estimateRowsPerPage: number;
+  loadingSlipRowsPerPage: number;
+  copies: number;
+  showDialog: boolean;
+  paperSize: 'A4' | 'Letter';
+  pdfSaveDirectory: string;
+}
+
+export const DEFAULT_PRINT_SETTINGS: PrintSettings = {
+  printerName: '',
+  estimateRowsPerPage: 27,
+  loadingSlipRowsPerPage: 27,
+  copies: 1,
+  showDialog: false,
+  paperSize: 'A4',
+  pdfSaveDirectory: ''
+};
+
 export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   isOpen,
   onClose,
@@ -70,13 +95,52 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
   const [adjustments, setAdjustments] = useState<PrintAdjustment[]>([]);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
-  const [nativeImage, setNativeImage] = useState<string | null>(null);
   const [isNativeServiceActive, setIsNativeServiceActive] = useState<boolean>(false);
   const [detectedPrinter, setDetectedPrinter] = useState<string | null>(null);
+  const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
+  const [defaultDesktopPath, setDefaultDesktopPath] = useState<string>('');
+  const [defaultDownloadsPath, setDefaultDownloadsPath] = useState<string>('');
   const [isPrintingNative, setIsPrintingNative] = useState<boolean>(false);
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
   const [retryTrigger, setRetryTrigger] = useState(0);
+  const [printStatusToast, setPrintStatusToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [lastSavedPdfPath, setLastSavedPdfPath] = useState<string | null>(null);
+  const [isPathCopied, setIsPathCopied] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Print & Page Settings Modal State
+  const [isPrintSettingsOpen, setIsPrintSettingsOpen] = useState<boolean>(false);
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(() => {
+    try {
+      const saved = localStorage.getItem('modern_print_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_PRINT_SETTINGS,
+          ...parsed,
+          estimateRowsPerPage: parsed.estimateRowsPerPage && parsed.estimateRowsPerPage !== 20 ? parsed.estimateRowsPerPage : 27,
+          loadingSlipRowsPerPage: parsed.loadingSlipRowsPerPage || 27,
+          pdfSaveDirectory: parsed.pdfSaveDirectory || '',
+          showDialog: false
+        };
+      }
+    } catch {}
+    return { ...DEFAULT_PRINT_SETTINGS, showDialog: false };
+  });
+
+  const updatePrintSettings = (newSettings: Partial<PrintSettings>) => {
+    setPrintSettings(prev => {
+      const next = { ...prev, ...newSettings };
+      try {
+        localStorage.setItem('modern_print_settings', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const currentRowsPerPage = printMode === 'loading_slip'
+    ? (Number(printSettings.loadingSlipRowsPerPage) || 27)
+    : (Number(printSettings.estimateRowsPerPage) || 27);
 
   // Return Bill Modal State
   const [isReturnModalOpen, setIsReturnModalOpen] = useState<boolean>(false);
@@ -108,20 +172,110 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     }
   }, [header.partyName, billNo, isOpen]);
 
-  // Find party record for ledger balance
+  // Find party record for ledger balance (Exact match only)
   const activePartyRecord = useMemo<PartyRecord | undefined>(() => {
     if (!header.partyName) return undefined;
     const partyClean = header.partyName.trim().toLowerCase();
+    const cleanAlpha = partyClean.replace(/[^a-z0-9]/g, '');
     try {
       const parties = localDb.getParties();
       return parties.find(p => {
         const pName = (p.name || '').trim().toLowerCase();
-        return pName === partyClean || pName.includes(partyClean) || partyClean.includes(pName);
+        return pName === partyClean || (cleanAlpha && pName.replace(/[^a-z0-9]/g, '') === cleanAlpha);
       });
     } catch {
       return undefined;
     }
   }, [header.partyName, isOpen]);
+
+  // Lookup District for Party strictly by exact name match & non-empty district only
+  const [partyDistrict, setPartyDistrict] = useState<string>('');
+
+  useEffect(() => {
+    if (!header.partyName) {
+      setPartyDistrict('');
+      return;
+    }
+    const clean = header.partyName.trim().toLowerCase();
+    const cleanAlpha = clean.replace(/[^a-z0-9]/g, '');
+
+    const isMatch = (name?: string) => {
+      if (!name) return false;
+      const pn = name.trim().toLowerCase();
+      return pn === clean || (cleanAlpha.length > 2 && pn.replace(/[^a-z0-9]/g, '') === cleanAlpha);
+    };
+
+    // 1. Try activePartyRecord strictly
+    if (activePartyRecord && isMatch(activePartyRecord.name)) {
+      const d = (activePartyRecord.district || '').trim();
+      if (d) {
+        setPartyDistrict(d);
+        return;
+      }
+    }
+
+    // 2. Try localDb exact match
+    try {
+      const p = localDb.getParties().find(p => isMatch(p.name));
+      if (p) {
+        const d = (p.district || '').trim();
+        if (d) {
+          setPartyDistrict(d);
+          return;
+        } else {
+          // Party found but has NO district -> do NOT print district
+          setPartyDistrict('');
+          return;
+        }
+      }
+    } catch {}
+
+    // 3. Fallback to SQLite DB (exact match only, strictly non-empty district)
+    getParties().then(parties => {
+      if (Array.isArray(parties)) {
+        const found = parties.find((p: any) => isMatch(p.name));
+        if (found) {
+          const d = (found.district || '').trim();
+          if (d) {
+            setPartyDistrict(d);
+            return;
+          }
+        }
+      }
+      setPartyDistrict('');
+    }).catch(() => {
+      setPartyDistrict('');
+    });
+  }, [header.partyName, activePartyRecord, isOpen]);
+
+  const displayPartyWithDistrict = useMemo(() => {
+    const rawParty = (header.partyName || 'CASH SALE').trim();
+    const cleanDist = (partyDistrict || '').trim();
+    if (!cleanDist || rawParty.toLowerCase() === 'cash sale') return rawParty;
+    const lowerParty = rawParty.toLowerCase();
+    const lowerDist = cleanDist.toLowerCase();
+    if (lowerParty.includes(lowerDist)) {
+      return rawParty;
+    }
+    return `${rawParty} (${cleanDist})`;
+  }, [header.partyName, partyDistrict]);
+
+  const fullVehicleDisplay = useMemo(() => {
+    const vType = (header.vehicleType || '').trim();
+    const vNo = (header.vehicleNo || '').trim();
+    if (vType && vNo) {
+      if (vType.toLowerCase().includes(vNo.toLowerCase())) return vType;
+      if (vNo.toLowerCase().includes(vType.toLowerCase())) return vNo;
+      return `${vType} - ${vNo}`;
+    }
+    if (vType) return vType;
+    if (vNo) return vNo;
+    return '';
+  }, [header.vehicleType, header.vehicleNo]);
+
+  const formattedBillNo = useMemo(() => {
+    return formatBillNumber(billNo);
+  }, [billNo]);
 
   // Filtered return bills
   const filteredReturnBills = useMemo(() => {
@@ -145,7 +299,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       setIsFitPage(true);
       setZoomScale(100);
       setCopiedSuccess(false);
-      setNativeImage(null);
       try {
         const cacheKey = `bill_adj_${billNo}_${header.partyName || 'CASH'}`;
         const saved = localStorage.getItem(cacheKey);
@@ -220,18 +373,22 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
     let skipGroupEntries: Array<{ prefix: string; group: string }> = [];
     try {
-      const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
+      const raw: any[] = getCachedSkipItems();
       skipGroupEntries = raw
-        .filter((it: any) => it.itemPrefix && it.mainGroup)
-        .map((it: any) => ({ prefix: it.itemPrefix.trim().toLowerCase(), group: it.mainGroup.trim() }));
+        .filter((it: any) => (it.itemPrefix || it.item_prefix) && (it.mainGroup || it.main_group))
+        .map((it: any) => ({
+          prefix: (it.itemPrefix || it.item_prefix).trim().toLowerCase(),
+          group: (it.mainGroup || it.main_group).trim()
+        }));
     } catch { }
 
     return {
       docType: header.docType || 'Bill',
-      billNo: billNo,
+      billNo: formattedBillNo,
       date: header.date || new Date().toISOString().split('T')[0],
-      partyName: header.partyName || 'CASH SALE',
-      vehicleNo: header.vehicleNo,
+      partyName: displayPartyWithDistrict,
+      vehicleNo: (header.vehicleNo || '').trim(),
+      vehicleType: (header.vehicleType || '').trim(),
       showPartyCode,
       mode: printMode,
       dynamicCols,
@@ -255,16 +412,22 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       adjustments,
       balanceLabel,
       subTotal,
-      finalBalance
+      finalBalance,
+      isColorful: true,
+      rowsPerPage: currentRowsPerPage,
+      printerName: printSettings.printerName || detectedPrinter || undefined,
+      copies: printSettings.copies || 1,
+      showDialog: printSettings.showDialog,
+      paperSize: printSettings.paperSize || 'A4'
     };
-  }, [header, rawItems, finishedItems, printMode, billNo, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol, editId, currentPage]);
+  }, [header, rawItems, finishedItems, printMode, formattedBillNo, displayPartyWithDistrict, fullVehicleDisplay, adjustments, balanceLabel, subTotal, finalBalance, dynamicCols, hasPartyCodeCol, editId, currentPage, currentRowsPerPage, printSettings, detectedPrinter]);
 
   // Live Canvas Rendering & Native PyQt6 Engine fetch
   useEffect(() => {
     if (!isOpen) return;
 
     const validRawCount = rawItems.filter(r => (r.name || '').trim().length > 0 || Number(r.qty) > 0).length;
-    const calcPages = printMode === 'summary_only' ? 1 : Math.max(1, Math.ceil(validRawCount / (printMode === 'loading_slip' ? 27 : 20)));
+    const calcPages = printMode === 'summary_only' ? 1 : Math.max(1, Math.ceil(validRawCount / currentRowsPerPage));
     setTotalPages(calcPages);
 
     if (canvasRef.current) {
@@ -282,34 +445,15 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         if (active && statusData.status === 'ok') {
           setIsNativeServiceActive(true);
           if (statusData.printer) setDetectedPrinter(statusData.printer);
+          if (Array.isArray(statusData.availablePrinters)) setAvailablePrinters(statusData.availablePrinters);
+          if (statusData.defaultDesktopPath) setDefaultDesktopPath(statusData.defaultDesktopPath);
+          if (statusData.defaultDownloadsPath) setDefaultDownloadsPath(statusData.defaultDownloadsPath);
         }
       })
       .catch(() => {
         if (active) {
           setIsNativeServiceActive(false);
           setDetectedPrinter(null);
-        }
-      });
-
-    fetch('http://127.0.0.1:5005/api/print/render-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(printPayload)
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (active && data.success && data.dataUrl) {
-          setNativeImage(data.dataUrl);
-          setIsNativeServiceActive(true);
-          if (typeof data.totalPages === 'number') {
-            setTotalPages(Math.max(1, data.totalPages));
-          }
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setIsNativeServiceActive(false);
-          setNativeImage(null);
         }
       });
 
@@ -332,7 +476,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (isCtrlOrCmd && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
-        handleDirectPrint(true);
+        window.print();
         return;
       }
 
@@ -502,54 +646,76 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     try { macAudio.playSuccess(); } catch { }
 
     setIsPrintingNative(true);
+    setPrintStatusToast(null);
     try {
       const res = await fetch('http://127.0.0.1:5005/api/print/direct-print', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...printPayload, showDialog })
+        body: JSON.stringify({
+          ...printPayload,
+          printerName: printSettings.printerName || detectedPrinter || undefined,
+          copies: printSettings.copies || 1,
+          rowsPerPage: currentRowsPerPage,
+          paperSize: printSettings.paperSize || 'A4',
+          pdfSaveDirectory: printSettings.pdfSaveDirectory || undefined,
+          showDialog: showDialog,
+          isImageMode: false,
+          isColorful: false
+        })
       });
       const data = await res.json();
       if (data.success) {
         setIsNativeServiceActive(true);
+        if (data.filePath) {
+          setLastSavedPdfPath(data.filePath);
+          try {
+            navigator.clipboard.writeText(data.filePath);
+            setIsPathCopied(true);
+            setTimeout(() => setIsPathCopied(false), 3000);
+          } catch {}
+        }
+        setPrintStatusToast({ type: 'success', msg: data.message || 'Printed in 0.05s!' });
+        setTimeout(() => setPrintStatusToast(null), 5000);
         return;
       } else if (data.message && data.message.includes('cancelled')) {
         return;
       } else {
         console.warn('Native direct-print returned error:', data.error);
+        setPrintStatusToast({ type: 'error', msg: 'Print error: ' + (data.error || 'Check printer') });
+        setTimeout(() => setPrintStatusToast(null), 4000);
       }
     } catch (err) {
       console.warn('Native direct-print network error:', err);
+      // Fast fallback to browser print
+      window.print();
     } finally {
       setIsPrintingNative(false);
     }
   };
 
+  const handleCopyPdfPath = async () => {
+    if (!lastSavedPdfPath) return;
+    try {
+      await navigator.clipboard.writeText(lastSavedPdfPath);
+      setIsPathCopied(true);
+      try { macAudio.playSuccess(); } catch {}
+      setTimeout(() => setIsPathCopied(false), 3000);
+    } catch {}
+  };
+
+  const handleOpenFolder = async () => {
+    if (!lastSavedPdfPath) return;
+    try {
+      await fetch('http://127.0.0.1:5005/api/print/open-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: lastSavedPdfPath })
+      });
+    } catch {}
+  };
+
   const handleCopyAsImage = async () => {
     try { macAudio.playClick(); } catch { }
-    try {
-      let blob: Blob | null = null;
-      if (nativeImage) {
-        const res = await fetch(nativeImage);
-        blob = await res.blob();
-      } else if (canvasRef.current) {
-        blob = await new Promise<Blob | null>((resolve) =>
-          canvasRef.current!.toBlob(resolve, 'image/png')
-        );
-      }
-
-      if (blob) {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]);
-        try { macAudio.playSuccess(); } catch { }
-        setCopiedSuccess(true);
-        setTimeout(() => setCopiedSuccess(false), 2500);
-        return;
-      }
-    } catch (err) {
-      console.warn('Direct browser clipboard write failed, trying canvas fallback:', err);
-    }
-
     if (canvasRef.current) {
       const success = await copyBillCanvasToClipboard(canvasRef.current);
       if (success) {
@@ -564,16 +730,6 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     try { macAudio.playClick(); } catch { }
     const cleanParty = (header.partyName || 'SALE').replace(/[^a-zA-Z0-9_-]/g, '_');
     const filename = `${printMode.toUpperCase()}_${billNo}_${cleanParty}.png`;
-
-    if (nativeImage) {
-      const link = document.createElement('a');
-      link.download = filename;
-      link.href = nativeImage;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      return;
-    }
 
     if (canvasRef.current) {
       downloadBillCanvasAsImage(canvasRef.current, filename);
@@ -769,37 +925,71 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
             </button>
           </div>
 
-          {/* Right: Close Action */}
-          <button
-            type="button"
-            onClick={() => {
-              try { macAudio.playClick(); } catch { }
-              onClose();
-            }}
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '28px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'rgba(255, 255, 255, 0.65)',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
-              e.currentTarget.style.color = '#ffffff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
-            }}
-          >
-            <X size={15} />
-          </button>
+          {/* Right: Settings & Close Action */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              title="Print & Page Settings"
+              onClick={() => {
+                try { macAudio.playClick(); } catch { }
+                setIsPrintSettingsOpen(true);
+              }}
+              style={{
+                background: isPrintSettingsOpen ? 'rgba(0, 122, 255, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                border: isPrintSettingsOpen ? '1px solid #007AFF' : '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: isPrintSettingsOpen ? '#38bdf8' : 'rgba(255, 255, 255, 0.75)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = isPrintSettingsOpen ? 'rgba(0, 122, 255, 0.35)' : 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.color = isPrintSettingsOpen ? '#38bdf8' : 'rgba(255, 255, 255, 0.75)';
+              }}
+            >
+              <Settings size={14} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                try { macAudio.playClick(); } catch { }
+                onClose();
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'rgba(255, 255, 255, 0.65)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
+              }}
+            >
+              <X size={15} />
+            </button>
+          </div>
         </div>
 
         {/* ─── Main Content Split Stage ─── */}
@@ -973,6 +1163,32 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 >
                   Fit Page
                 </button>
+
+                <button
+                  type="button"
+                  title="Print & Page Settings"
+                  onClick={() => {
+                    try { macAudio.playClick(); } catch {}
+                    setIsPrintSettingsOpen(true);
+                  }}
+                  style={{
+                    background: isPrintSettingsOpen ? 'rgba(0, 122, 255, 0.35)' : 'transparent',
+                    border: isPrintSettingsOpen ? '1px solid #007AFF' : 'none',
+                    borderRadius: '9999px',
+                    padding: '2px 8px',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    color: isPrintSettingsOpen ? '#38bdf8' : 'rgba(255, 255, 255, 0.75)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginLeft: '3px'
+                  }}
+                >
+                  <Settings size={11} />
+                  <span>Settings</span>
+                </button>
               </div>
             </div>
 
@@ -1000,34 +1216,18 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   display: 'inline-block'
                 }}
               >
-                {nativeImage ? (
-                  <img
-                    src={nativeImage}
-                    alt="Native Qt Print Preview"
-                    style={{
-                      display: 'block',
-                      maxHeight: isFitPage ? 'calc(90vh - 145px)' : 'none',
-                      maxWidth: '100%',
-                      width: isFitPage ? 'auto' : '100%',
-                      height: isFitPage ? 'auto' : 'auto',
-                      objectFit: 'contain',
-                      filter: 'contrast(1.02)'
-                    }}
-                  />
-                ) : (
-                  <canvas
-                    ref={canvasRef}
-                    style={{
-                      display: 'block',
-                      maxHeight: isFitPage ? 'calc(90vh - 145px)' : 'none',
-                      maxWidth: '100%',
-                      width: isFitPage ? 'auto' : '100%',
-                      height: isFitPage ? 'auto' : 'auto',
-                      objectFit: 'contain',
-                      filter: 'contrast(1.02)'
-                    }}
-                  />
-                )}
+                <canvas
+                  ref={canvasRef}
+                  style={{
+                    display: 'block',
+                    maxHeight: isFitPage ? 'calc(90vh - 145px)' : 'none',
+                    maxWidth: '100%',
+                    width: isFitPage ? 'auto' : '100%',
+                    height: isFitPage ? 'auto' : 'auto',
+                    objectFit: 'contain',
+                    filter: 'contrast(1.02)'
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -1046,6 +1246,193 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               scrollbarWidth: 'thin'
             }}
           >
+            {/* Quick Printer Selector Bar */}
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.09)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Printer size={13} />
+                  Target Printer
+                </span>
+                <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  ⚡ High-Speed Vector
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <select
+                  value={printSettings.printerName}
+                  onChange={(e) => updatePrintSettings({ printerName: e.target.value })}
+                  style={{
+                    flex: 1,
+                    height: '32px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    borderRadius: '6px',
+                    color: '#ffffff',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="" style={{ background: '#1e293b' }}>
+                    Default ({detectedPrinter || 'Windows Default'})
+                  </option>
+                  {availablePrinters.map(p => (
+                    <option key={p} value={p} style={{ background: '#1e293b' }}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '10.5px', color: 'rgba(255, 255, 255, 0.6)' }}>Qty:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={printSettings.copies}
+                    onChange={(e) => updatePrintSettings({ copies: Math.max(1, parseInt(e.target.value) || 1) })}
+                    style={{
+                      width: '42px',
+                      height: '32px',
+                      textAlign: 'center',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      background: 'rgba(0, 0, 0, 0.45)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Print Status Feedback Toast */}
+            {printStatusToast && (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '7px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: printStatusToast.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: `1px solid ${printStatusToast.type === 'success' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                  color: printStatusToast.type === 'success' ? '#6ee7b7' : '#fca5a5',
+                  animation: 'fadeIn 0.15s ease-out'
+                }}
+              >
+                <span>{printStatusToast.type === 'success' ? '✓' : '⚠'}</span>
+                <span>{printStatusToast.msg}</span>
+              </div>
+            )}
+
+            {/* Last Saved PDF Path Card with Copy & Open Folder buttons */}
+            {lastSavedPdfPath && (
+              <div
+                style={{
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  animation: 'fadeIn 0.2s ease-out'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FileCheck size={13} />
+                    Saved PDF File
+                  </span>
+                  {isPathCopied && (
+                    <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 700 }}>
+                      ✓ Path Copied!
+                    </span>
+                  )}
+                </div>
+
+                <div
+                  title={lastSavedPdfPath}
+                  style={{
+                    fontSize: '10.5px',
+                    fontFamily: 'monospace',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    padding: '6px 8px',
+                    borderRadius: '5px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {lastSavedPdfPath}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={handleCopyPdfPath}
+                    style={{
+                      height: '28px',
+                      background: isPathCopied ? 'rgba(16, 185, 129, 0.25)' : 'rgba(56, 189, 248, 0.15)',
+                      border: `1px solid ${isPathCopied ? 'rgba(16, 185, 129, 0.5)' : 'rgba(56, 189, 248, 0.35)'}`,
+                      color: isPathCopied ? '#6ee7b7' : '#38bdf8',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Copy size={12} />
+                    <span>{isPathCopied ? 'Copied!' : 'Copy Path'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenFolder}
+                    style={{
+                      height: '28px',
+                      background: 'rgba(255, 255, 255, 0.07)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#e2e8f0',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FolderOpen size={12} />
+                    <span>Show Folder</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ─── Hero Primary Action: Animated Print Button ─── */}
             <button
               type="button"
@@ -1077,8 +1464,34 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   <span className="printer-page" />
                 </span>
               </span>
-              <span>{isPrintingNative ? 'Printing...' : 'Print'}</span>
+              <span>{isPrintingNative ? 'Printing in 0.05s...' : 'Print (Ctrl+P)'}</span>
             </button>
+
+            {/* Direct PDF / Dialog quick triggers */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-4px' }}>
+              <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)' }}>
+                Hardware Spool (0.05s)
+              </span>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#38bdf8',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 0'
+                }}
+                title="Open standard system print dialog"
+              >
+                <span>Print Dialog (Ctrl+Shift+P)</span>
+              </button>
+            </div>
 
             {/* Actions: Copy & Save */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -1881,6 +2294,445 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       <span>- Dene Wala (Deduct)</span>
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Print Settings Modal */}
+        {isPrintSettingsOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(5px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 999999,
+              padding: '16px'
+            }}
+            onClick={() => setIsPrintSettingsOpen(false)}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '480px',
+                background: '#13161c',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15)',
+                overflow: 'hidden',
+                animation: 'fadeIn 0.15s ease-out'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: '14px 16px',
+                  background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.03) 100%)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Settings size={16} color="#38bdf8" />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                      Print &amp; Page Settings
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      Printer, rows limit, paper size &amp; print copies
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPrintSettingsOpen(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: 'none',
+                    color: '#94a3b8',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '70vh', overflowY: 'auto' }}>
+                {/* Section 1: Printer Selection */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Printer size={13} color="#38bdf8" />
+                      Target Printer
+                    </label>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: isNativeServiceActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        color: isNativeServiceActive ? '#34d399' : '#f87171',
+                        border: `1px solid ${isNativeServiceActive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                      }}
+                    >
+                      {isNativeServiceActive ? 'Service Ready (Port 5005)' : 'Service Offline'}
+                    </span>
+                  </div>
+                  <select
+                    value={printSettings.printerName}
+                    onChange={(e) => updatePrintSettings({ printerName: e.target.value })}
+                    style={{
+                      height: '34px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      padding: '4px 10px',
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      borderRadius: '7px',
+                      color: '#ffffff',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="" style={{ background: '#1e293b' }}>
+                      Default Printer {detectedPrinter ? `(${detectedPrinter})` : ''}
+                    </option>
+                    {availablePrinters.map(p => (
+                      <option key={p} value={p} style={{ background: '#1e293b' }}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Section 2: Rows Per Page */}
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}
+                >
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Rows Per Page (Page Cutoff Settings)
+                  </span>
+
+                  {/* Estimate Rows */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.85)' }}>
+                        Full Estimate Rows:
+                      </label>
+                      <input
+                        type="number"
+                        min={5}
+                        max={50}
+                        value={printSettings.estimateRowsPerPage}
+                        onChange={(e) => {
+                          const val = Math.max(5, Math.min(50, parseInt(e.target.value) || 27));
+                          updatePrintSettings({ estimateRowsPerPage: val });
+                        }}
+                        style={{
+                          width: '64px',
+                          height: '28px',
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          background: 'rgba(0, 0, 0, 0.4)',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          borderRadius: '6px',
+                          color: '#38bdf8',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.3 }}>
+                      Default: <strong>27 rows</strong>. (Standard A4 Page Height)
+                    </span>
+                  </div>
+
+                  {/* Loading Slip Rows */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.85)' }}>
+                        Loading Slip Rows:
+                      </label>
+                      <input
+                        type="number"
+                        min={5}
+                        max={50}
+                        value={printSettings.loadingSlipRowsPerPage}
+                        onChange={(e) => {
+                          const val = Math.max(5, Math.min(50, parseInt(e.target.value) || 27));
+                          updatePrintSettings({ loadingSlipRowsPerPage: val });
+                        }}
+                        style={{
+                          width: '64px',
+                          height: '28px',
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          background: 'rgba(0, 0, 0, 0.4)',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          borderRadius: '6px',
+                          color: '#38bdf8',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.3 }}>
+                      Default: <strong>27 rows</strong>. (Standard A4 Page Height)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Section 3: Paper Size & Copies */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.8)' }}>
+                      Paper Size
+                    </label>
+                    <select
+                      value={printSettings.paperSize}
+                      onChange={(e) => updatePrintSettings({ paperSize: e.target.value as 'A4' | 'Letter' })}
+                      style={{
+                        height: '32px',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        padding: '4px 8px',
+                        background: 'rgba(0, 0, 0, 0.35)',
+                        border: '1px solid rgba(255, 255, 255, 0.14)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="A4" style={{ background: '#1e293b' }}>A4 (Standard)</option>
+                      <option value="Letter" style={{ background: '#1e293b' }}>Letter</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.8)' }}>
+                      Print Copies
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={printSettings.copies}
+                      onChange={(e) => {
+                        const val = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
+                        updatePrintSettings({ copies: val });
+                      }}
+                      style={{
+                        height: '32px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        padding: '4px 8px',
+                        textAlign: 'center',
+                        background: 'rgba(0, 0, 0, 0.35)',
+                        border: '1px solid rgba(255, 255, 255, 0.14)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Section 4: PDF Save Location / Output Folder */}
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <FolderOpen size={13} />
+                      PDF Save Directory (Output Folder)
+                    </span>
+                    <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      Custom or Default
+                    </span>
+                  </div>
+
+                  {/* Quick Preset Buttons */}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => updatePrintSettings({ pdfSaveDirectory: defaultDesktopPath || '' })}
+                      style={{
+                        padding: '4px 9px',
+                        borderRadius: '5px',
+                        fontSize: '10.5px',
+                        fontWeight: 600,
+                        background: (printSettings.pdfSaveDirectory === defaultDesktopPath || !printSettings.pdfSaveDirectory) ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                        border: `1px solid ${(printSettings.pdfSaveDirectory === defaultDesktopPath || !printSettings.pdfSaveDirectory) ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        color: (printSettings.pdfSaveDirectory === defaultDesktopPath || !printSettings.pdfSaveDirectory) ? '#38bdf8' : '#cbd5e1',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      🖥️ Desktop (Default)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => updatePrintSettings({ pdfSaveDirectory: defaultDownloadsPath || '' })}
+                      style={{
+                        padding: '4px 9px',
+                        borderRadius: '5px',
+                        fontSize: '10.5px',
+                        fontWeight: 600,
+                        background: printSettings.pdfSaveDirectory === defaultDownloadsPath ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                        border: `1px solid ${printSettings.pdfSaveDirectory === defaultDownloadsPath ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        color: printSettings.pdfSaveDirectory === defaultDownloadsPath ? '#38bdf8' : '#cbd5e1',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📥 Downloads
+                    </button>
+
+                    {printSettings.pdfSaveDirectory && (
+                      <button
+                        type="button"
+                        onClick={() => updatePrintSettings({ pdfSaveDirectory: '' })}
+                        style={{
+                          padding: '4px 9px',
+                          borderRadius: '5px',
+                          fontSize: '10.5px',
+                          fontWeight: 600,
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#94a3b8',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ↺ Reset
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Custom Directory Input */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <input
+                      type="text"
+                      placeholder={defaultDesktopPath ? `Default Desktop (${defaultDesktopPath})` : "Enter custom folder path (e.g. D:\\Bills)"}
+                      value={printSettings.pdfSaveDirectory}
+                      onChange={(e) => updatePrintSettings({ pdfSaveDirectory: e.target.value })}
+                      style={{
+                        height: '32px',
+                        fontSize: '11.5px',
+                        fontFamily: 'monospace',
+                        fontWeight: 600,
+                        padding: '4px 10px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.14)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        outline: 'none'
+                      }}
+                    />
+                    <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.3 }}>
+                      Type or paste any custom folder path. If the folder does not exist, it will be automatically created on save.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Section 4: Print Dialog Checkbox */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={printSettings.showDialog}
+                    onChange={(e) => updatePrintSettings({ showDialog: e.target.checked })}
+                    style={{ cursor: 'pointer', accentColor: '#38bdf8' }}
+                  />
+                  <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)', userSelect: 'none' }}>
+                    Always show Windows Print Dialog (Prompt printer selection)
+                  </span>
+                </label>
+
+                {/* Section 5: Action Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => updatePrintSettings(DEFAULT_PRINT_SETTINGS)}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#94a3b8',
+                      borderRadius: '7px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '7px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <RotateCcw size={12} />
+                    <span>Reset Defaults</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsPrintSettingsOpen(false)}
+                    style={{
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      borderRadius: '7px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      padding: '7px 18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)'
+                    }}
+                  >
+                    <Check size={13} />
+                    <span>Done</span>
+                  </button>
                 </div>
               </div>
             </div>

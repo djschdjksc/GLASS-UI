@@ -115,18 +115,43 @@ export async function deleteSkipSubGroup(id: string): Promise<void> {
   await dbDelete(`/api/db/skip-sub-groups/${id}`);
 }
 
+import { SQLITE_SKIP_ITEMS } from '../../data/sqliteSkipData';
+
+let _cachedSkipItems: any[] = Array.isArray(SQLITE_SKIP_ITEMS) ? [...SQLITE_SKIP_ITEMS] : [];
+
+export function getCachedSkipItems(): any[] {
+  return _cachedSkipItems;
+}
+
+export function setCachedSkipItems(items: any[]): void {
+  if (Array.isArray(items)) {
+    _cachedSkipItems = items;
+  }
+}
+
 // ─── Skip Items ───────────────────────────────────────────────────────────────
 
 export async function getSkipItems(): Promise<any[]> {
-  return dbGet('/api/db/skip-items');
+  try {
+    const res = await dbGet<any[]>('/api/db/skip-items');
+    if (Array.isArray(res)) {
+      _cachedSkipItems = res;
+      return res;
+    }
+  } catch (err) {
+    console.warn('[sqliteDb] getSkipItems failed, falling back to cached items:', err);
+  }
+  return _cachedSkipItems;
 }
 
 export async function saveSkipItem(item: any): Promise<void> {
   await dbPost('/api/db/skip-items', item);
+  getSkipItems().catch(() => {});
 }
 
 export async function deleteSkipItem(id: string): Promise<void> {
   await dbDelete(`/api/db/skip-items/${id}`);
+  _cachedSkipItems = _cachedSkipItems.filter(i => i.id !== id && i.itemPrefix !== id);
 }
 
 // ─── Conversions ──────────────────────────────────────────────────────────────
@@ -139,8 +164,74 @@ export async function saveConversion(conv: any): Promise<void> {
   await dbPost('/api/db/conversions', conv);
 }
 
+export async function saveConversionsBulk(conversions: any[], mode: 'replace' | 'append' = 'replace'): Promise<void> {
+  await dbPost('/api/db/conversions/bulk', { mode, conversions });
+}
+
 export async function deleteConversion(id: string): Promise<void> {
-  await dbDelete(`/api/db/conversions/${id}`);
+  await dbDelete(`/api/db/conversions/${encodeURIComponent(id)}`);
+}
+
+// ─── Skip Bulk Helpers ───────────────────────────────────────────────────────
+
+export async function saveSkipItemsBulk(
+  items: any[],
+  mode: 'replace' | 'append' = 'replace',
+  replaceGroups?: string[]
+): Promise<void> {
+  await dbPost('/api/db/skip-items/bulk', { mode, items, replace_groups: replaceGroups });
+  getSkipItems().catch(() => {});
+}
+
+export async function saveSkipSubGroupsBulk(groups: any[], mode: 'replace' | 'append' = 'replace'): Promise<void> {
+  await dbPost('/api/db/skip-sub-groups/bulk', { mode, groups });
+}
+
+export async function saveSkipMainGroupsBulk(groups: any[], mode: 'replace' | 'append' = 'replace'): Promise<void> {
+  await dbPost('/api/db/skip-main-groups/bulk', { mode, groups });
+}
+
+// ─── Bill Item Names (Reference Master) ──────────────────────────────────────
+
+export async function getBillItemNames(): Promise<any[]> {
+  return dbGet('/api/db/bill-item-names');
+}
+
+export async function saveBillItemName(item: any): Promise<void> {
+  await dbPost('/api/db/bill-item-names', item);
+}
+
+export async function deleteBillItemName(id: string): Promise<void> {
+  await dbDelete(`/api/db/bill-item-names/${encodeURIComponent(id)}`);
+}
+
+export async function saveBillItemNamesBulk(items: any[], mode: 'replace' | 'append' = 'replace'): Promise<void> {
+  await dbPost('/api/db/bill-item-names/bulk', { mode, items });
+}
+
+// ─── Mould Prices ────────────────────────────────────────────────────────────
+
+export async function getMouldPrices(): Promise<any[]> {
+  return dbGet('/api/db/mould-prices');
+}
+
+export async function saveMouldPrice(mouldName: string, price: number): Promise<void> {
+  await dbPost('/api/db/mould-prices', { mouldName, price });
+}
+
+// ─── Bill Adjustments ────────────────────────────────────────────────────────
+
+export async function getBillAdjustments(party?: string): Promise<any[]> {
+  const path = party ? `/api/db/bill-adjustments?party=${encodeURIComponent(party)}` : '/api/db/bill-adjustments';
+  return dbGet(path);
+}
+
+export async function saveBillAdjustment(adj: any): Promise<void> {
+  await dbPost('/api/db/bill-adjustments', adj);
+}
+
+export async function deleteBillAdjustment(id: string): Promise<void> {
+  await dbDelete(`/api/db/bill-adjustments/${encodeURIComponent(id)}`);
 }
 
 // ─── Control Groups (Manage Groups) ──────────────────────────────────────────

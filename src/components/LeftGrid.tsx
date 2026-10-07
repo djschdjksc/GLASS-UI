@@ -9,6 +9,8 @@ import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Trash2, History, Plus } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from './ui/shadcn';
+import { getSkipItems, getCachedSkipItems } from '../services/db/sqliteDb';
+import { macAudio } from '../utils/macAudio';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').trim();
@@ -36,6 +38,7 @@ interface Props {
   autoItem?: boolean;
   simpleMode?: boolean;
   items: RawItem[];
+  skipItems?: any[];
   onUpdateItem: (id: string, field: any, value: any) => void;
   onBulkPaste: (pastedRows: any[], startRow?: number, startCol?: number) => void;
   onAddNewRow: () => void;
@@ -84,6 +87,7 @@ export const LeftGrid: React.FC<Props> = ({
   autoItem = false,
   simpleMode = false,
   items,
+  skipItems: propsSkipItems,
   onUpdateItem,
   onBulkPaste,
   onAddNewRow,
@@ -195,27 +199,41 @@ export const LeftGrid: React.FC<Props> = ({
   }, [items]);
 
   // Skip Item → Main Group lookup map (itemPrefix lowercase → mainGroup name)
-  const buildSkipMap = (): Map<string, string> => {
-    try {
-      const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
-      const map = new Map<string, string>();
-      raw.forEach((it: any) => {
-        if (it.itemPrefix && it.mainGroup) {
-          map.set(it.itemPrefix.trim().toLowerCase(), it.mainGroup.trim());
-        }
-      });
-      return map;
-    } catch {
-      return new Map();
-    }
+  const buildSkipMapFromList = (list: any[]): Map<string, string> => {
+    const map = new Map<string, string>();
+    if (!Array.isArray(list)) return map;
+    list.forEach((it: any) => {
+      const pfx = (it.itemPrefix || it.item_prefix || '').trim().toLowerCase();
+      const mg = (it.mainGroup || it.main_group || '').trim();
+      if (pfx && mg) {
+        map.set(pfx, mg);
+      }
+    });
+    return map;
   };
 
-  const [skipGroupMap, setSkipGroupMap] = useState<Map<string, string>>(buildSkipMap);
+  const [skipGroupMap, setSkipGroupMap] = useState<Map<string, string>>(() => {
+    const initial = propsSkipItems && propsSkipItems.length > 0 ? propsSkipItems : getCachedSkipItems();
+    return buildSkipMapFromList(initial);
+  });
 
   useEffect(() => {
-    const onStorage = () => setSkipGroupMap(buildSkipMap());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    if (propsSkipItems && propsSkipItems.length > 0) {
+      setSkipGroupMap(buildSkipMapFromList(propsSkipItems));
+    }
+  }, [propsSkipItems]);
+
+  useEffect(() => {
+    const refresh = () => {
+      getSkipItems().then((items) => {
+        if (Array.isArray(items) && items.length > 0) {
+          setSkipGroupMap(buildSkipMapFromList(items));
+        }
+      }).catch(() => {});
+    };
+    refresh();
+    window.addEventListener('billapp_skip_items_updated', refresh);
+    return () => window.removeEventListener('billapp_skip_items_updated', refresh);
   }, []);
 
   // Get main group label for a given item name (exact match first, then longest-prefix match)
@@ -227,7 +245,7 @@ export const LeftGrid: React.FC<Props> = ({
     let bestMatch: string | null = null;
     let bestLen = 0;
     skipGroupMap.forEach((group, prefix) => {
-      if (lower.startsWith(prefix) && prefix.length > bestLen) {
+      if ((lower === prefix || lower.startsWith(prefix + ' ') || lower.startsWith(prefix + '-') || lower.startsWith(prefix + '/') || lower.startsWith(prefix)) && prefix.length > bestLen) {
         bestLen = prefix.length;
         bestMatch = group;
       }
@@ -518,12 +536,93 @@ export const LeftGrid: React.FC<Props> = ({
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  const ensureCellVisible = (element: HTMLElement | null) => {
+    if (!element || !tableContainerRef.current) return;
+    const container = tableContainerRef.current;
+    
+    requestAnimationFrame(() => {
+      const elRect = element.getBoundingClientRect();
+      const contRect = container.getBoundingClientRect();
+
+      const footerEl = container.querySelector('tfoot');
+      const footerHeight = footerEl ? footerEl.getBoundingClientRect().height : 50;
+      const theadEl = container.querySelector('thead');
+      const theadHeight = theadEl ? theadEl.getBoundingClientRect().height : 36;
+
+      // Bottom clearance: sticky footer height + 30px buffer
+      const bottomBuffer = footerHeight + 30;
+      // Top clearance: sticky header height + 10px buffer
+      const topBuffer = theadHeight + 10;
+
+      if (elRect.bottom > contRect.bottom - bottomBuffer) {
+        const delta = elRect.bottom - (contRect.bottom - bottomBuffer);
+        container.scrollTop += Math.ceil(delta);
+      } else if (elRect.top < contRect.top + topBuffer) {
+        const delta = (contRect.top + topBuffer) - elRect.top;
+        container.scrollTop -= Math.ceil(delta);
+      }
+
+      // Horizontal visibility check
+      const leftBuffer = (colWidths.index || 40) + 10;
+      const rightBuffer = 20;
+      if (elRect.left < contRect.left + leftBuffer) {
+        const deltaX = (contRect.left + leftBuffer) - elRect.left;
+        container.scrollLeft -= Math.ceil(deltaX);
+      } else if (elRect.right > contRect.right - rightBuffer) {
+        const deltaX = elRect.right - (contRect.right - rightBuffer);
+        container.scrollLeft += Math.ceil(deltaX);
+      }
+    });
+  };
+
   const focusCell = (row: number, col: number) => {
+    const doFocus = (input: HTMLInputElement) => {
+      try {
+        input.focus({ preventScroll: true });
+        input.select();
+      } catch {
+        input.focus();
+      }
+      ensureCellVisible(input);
+    };
+
     const input = document.getElementById('left-cell-' + row + '-' + col) as HTMLInputElement;
     if (input) {
-      input.focus();
-      input.select();
+      doFocus(input);
+    } else {
+      setTimeout(() => {
+        const retryInput = document.getElementById('left-cell-' + row + '-' + col) as HTMLInputElement;
+        if (retryInput) {
+          doFocus(retryInput);
+        } else {
+          setTimeout(() => {
+            const finalRetry = document.getElementById('left-cell-' + row + '-' + col) as HTMLInputElement;
+            if (finalRetry) {
+              doFocus(finalRetry);
+            }
+          }, 80);
+        }
+      }, 40);
     }
+  };
+
+  const getColDescriptor = (cIdx: number): { field: string; isPartyCode: boolean } | null => {
+    if (cIdx <= 0) return null;
+    if (hasPartyCodeCol && cIdx === 1) {
+      return { field: 'partyCode', isPartyCode: true };
+    }
+    const sizeOffset = hasPartyCodeCol ? 2 : 1;
+    const sIdx = cIdx - sizeOffset;
+    if (sIdx >= 0 && sIdx < allSizeCols.length) {
+      return { field: allSizeCols[sIdx].field, isPartyCode: false };
+    }
+    if (cIdx === sizeOffset + allSizeCols.length) {
+      return { field: 'uCap', isPartyCode: false };
+    }
+    if (cIdx === sizeOffset + allSizeCols.length + 1) {
+      return { field: 'lCap', isPartyCode: false };
+    }
+    return null;
   };
 
   const getCellValue = (r: number, c: number): string => {
@@ -824,6 +923,10 @@ export const LeftGrid: React.FC<Props> = ({
     if (defaultDraft !== undefined && cellDrafts[cellKey] === undefined) {
       setCellDrafts(prev => ({ ...prev, [cellKey]: defaultDraft }));
     }
+    const input = document.getElementById(`left-cell-${r}-${c}`) as HTMLInputElement;
+    if (input) {
+      ensureCellVisible(input);
+    }
     // If this cell or row is already part of a multi-selection, preserve it!
     if (selectedCellKeys.size > 1 && selectedCellKeys.has(cellKey)) {
       return;
@@ -836,6 +939,14 @@ export const LeftGrid: React.FC<Props> = ({
     setSelectedCol(null);
     setSelectedRows([]);
   };
+
+  useEffect(() => {
+    if (!activeCell) return;
+    const input = document.getElementById(`left-cell-${activeCell.r}-${activeCell.c}`) as HTMLInputElement;
+    if (input) {
+      ensureCellVisible(input);
+    }
+  }, [activeCell?.r, activeCell?.c]);
 
   const handleInputMouseDown = (r: number, c: number, e: React.MouseEvent<HTMLInputElement>) => {
     // Right Click (button 2): Keep multi-selection intact if clicked on an already selected item!
@@ -924,6 +1035,96 @@ export const LeftGrid: React.FC<Props> = ({
   ) => {
     const maxCol = (hasPartyCodeCol ? 3 : 2) + allSizeCols.length;
 
+    // FAST ENTRY CLONE SHORTCUT:
+    // Press '0' or 'Numpad0' in any column EXCEPT Item Name (colIndex > 0).
+    // Automatically copies upper row's values from the active column onwards to the rightmost column,
+    // and immediately focuses the NEXT ROW's Item Name column!
+    if (
+      (e.key === '0' || e.code === 'Numpad0') &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
+      colIndex > 0 &&
+      rowIndex > 0
+    ) {
+      const target = e.target as HTMLInputElement;
+      const isCellEmptyOrSelected = (
+        !target.value || 
+        target.value.trim() === '' || 
+        target.value === '0' || 
+        (target.selectionStart === 0 && target.selectionEnd === target.value.length)
+      );
+
+      if (isCellEmptyOrSelected) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // 1. Identify previous row with data (or row immediately above)
+        let sourceRowIdx = rowIndex - 1;
+        while (sourceRowIdx >= 0) {
+          const r = filteredItems[sourceRowIdx];
+          const hasAnyData = r && (
+            (Number(r.qty) || 0) > 0 || 
+            (Number(r.uCap) || 0) > 0 || 
+            (Number(r.lCap) || 0) > 0 ||
+            allSizeCols.some(sc => (Number((r as any)[sc.field]) || 0) > 0) ||
+            (hasPartyCodeCol && (r.partyCode || '').trim().length > 0)
+          );
+          if (hasAnyData || sourceRowIdx === rowIndex - 1) {
+            break;
+          }
+          sourceRowIdx--;
+        }
+        if (sourceRowIdx < 0) sourceRowIdx = rowIndex - 1;
+
+        const prevItem = filteredItems[sourceRowIdx];
+        const currentItem = filteredItems[rowIndex];
+
+        if (prevItem && currentItem) {
+          // 2. Collect field updates from active colIndex to maxCol
+          const updates: Record<string, any> = {};
+          for (let c = colIndex; c <= maxCol; c++) {
+            const desc = getColDescriptor(c);
+            if (!desc) continue;
+            const upperVal = (prevItem as any)[desc.field];
+            updates[desc.field] = upperVal !== undefined ? upperVal : (desc.isPartyCode ? '' : 0);
+          }
+
+          // 3. Clear cell drafts for these columns so draft state doesn't obscure the new values
+          setCellDrafts(prev => {
+            const next = { ...prev };
+            for (let c = colIndex; c <= maxCol; c++) {
+              delete next[`${rowIndex}-${c}`];
+            }
+            return next;
+          });
+
+          // 4. Update the item atomically
+          onUpdateItem(currentItem.id, updates, undefined);
+
+          // 5. Play friendly sound
+          macAudio.playPop();
+
+          // 6. Automatically add row if nextRow exceeds table length
+          const nextRow = rowIndex + 1;
+          if (nextRow >= filteredItems.length) {
+            onAddNewRow();
+          }
+
+          // 7. Jump focus immediately to the NEXT ROW's Item Name column (col 0)
+          setTimeout(() => {
+            focusCell(nextRow, 0);
+            setActiveCell({ r: nextRow, c: 0 });
+            setAnchorCell({ r: nextRow, c: 0 });
+            setSelectedCellKeys(new Set([`${nextRow}-0`]));
+            setSelectedCol(null);
+            setSelectedRows([]);
+          }, nextRow >= filteredItems.length ? 70 : 25);
+        }
+        return;
+      }
+    }
+
     // 1. CTRL + A: Select All Grid Cells
     if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
       e.preventDefault();
@@ -975,7 +1176,8 @@ export const LeftGrid: React.FC<Props> = ({
         nextRow = Math.max(0, rowIndex - 1);
       }
 
-      if (nextRow >= filteredItems.length) {
+      const isNewRow = nextRow >= filteredItems.length;
+      if (isNewRow) {
         onAddNewRow();
       }
 
@@ -986,7 +1188,7 @@ export const LeftGrid: React.FC<Props> = ({
         setSelectedCellKeys(new Set([`${nextRow}-${nextCol}`]));
         setSelectedCol(null);
         setSelectedRows([]);
-      }, 10);
+      }, isNewRow ? 50 : 10);
       return;
     }
 
@@ -1106,7 +1308,7 @@ export const LeftGrid: React.FC<Props> = ({
           setActiveCell({ r: rowIndex + 1, c: colIndex });
           setAnchorCell({ r: rowIndex + 1, c: colIndex });
           setSelectedCellKeys(new Set([(rowIndex + 1) + '-' + colIndex]));
-        }, 20);
+        }, 50);
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -1153,13 +1355,14 @@ export const LeftGrid: React.FC<Props> = ({
             onJumpToRightGrid(rowIndex);
           } else {
             const nxtR = rowIndex + 1;
-            if (nxtR >= filteredItems.length) onAddNewRow();
+            const isNewRow = nxtR >= filteredItems.length;
+            if (isNewRow) onAddNewRow();
             setTimeout(() => {
               focusCell(nxtR, 0);
               setActiveCell({ r: nxtR, c: 0 });
               setAnchorCell({ r: nxtR, c: 0 });
               setSelectedCellKeys(new Set([`${nxtR}-0`]));
-            }, 20);
+            }, isNewRow ? 50 : 15);
           }
         }
       } else {
@@ -1344,6 +1547,7 @@ export const LeftGrid: React.FC<Props> = ({
       {/* Excel Data Table */}
       <div 
         ref={tableContainerRef}
+        className="apple-table-container"
         onWheel={handleTableWheel}
         onPaste={(e) => {
           const text = e.clipboardData.getData('text');
@@ -1358,7 +1562,9 @@ export const LeftGrid: React.FC<Props> = ({
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: '8px',
           background: 'rgba(0, 0, 0, 0.22)',
-          position: 'relative'
+          position: 'relative',
+          scrollPaddingTop: '46px',
+          scrollPaddingBottom: '120px'
         }}
       >
         <table className="apple-table">
@@ -1691,6 +1897,7 @@ export const LeftGrid: React.FC<Props> = ({
                   <tr 
                     key={item.id} 
                     className={
+                      (isRowActive ? 'row-active-highlight ' : '') +
                       (isRowSelected ? 'row-selected ' : '') + 
                       (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')
                     }
@@ -1760,8 +1967,7 @@ export const LeftGrid: React.FC<Props> = ({
                     const currentVal = rawName.trim().toLowerCase();
                     const isDuplicate = Boolean(currentVal && duplicateItemNames.has(currentVal));
                     const groupLabel = getSkipGroupLabel(rawName);
-                    const isFocused = activeCell?.r === rIdx && activeCell?.c === 0;
-                    const showBadge = Boolean(groupLabel && !isFocused && rawName.trim());
+                    const showBadge = Boolean(groupLabel && rawName.trim());
 
                     return (
                       <td 
@@ -1800,7 +2006,7 @@ export const LeftGrid: React.FC<Props> = ({
                             onKeyDown={(e) => handleCellKeyDown(e, rIdx, 0, 'name')}
                           />
                           {showBadge && (
-                            <span className="skip-group-chip" aria-hidden>
+                            <span className="skip-group-chip" title={`Main Group: ${groupLabel}`} aria-hidden>
                               {groupLabel}
                             </span>
                           )}
@@ -1986,6 +2192,13 @@ export const LeftGrid: React.FC<Props> = ({
               </React.Fragment>
             );
           })}
+            {/* Bottom scroll cushion so bottom rows never get hidden behind sticky totals footer */}
+            <tr key="__bottom_scroll_spacer__" style={{ height: '70px', pointerEvents: 'none' }} aria-hidden>
+              <td 
+                colSpan={4 + (hasPartyCodeCol ? 1 : 0) + allSizeCols.length} 
+                style={{ border: 'none', background: 'transparent', padding: 0 }} 
+              />
+            </tr>
         </tbody>
 
           {/* Table Footer Rows */}

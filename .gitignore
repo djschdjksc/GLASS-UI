@@ -41,3 +41,7 @@ src-tauri/target/
 *.avi
 *.mkv
 
+# Backups and generated test files
+*.bak*
+*.pdf
+

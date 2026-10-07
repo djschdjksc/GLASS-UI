@@ -39,6 +39,9 @@ export interface ExcelCsvActionsProps<T = any> {
   compact?: boolean;
   buttonLabel?: string;
   style?: React.CSSProperties;
+  replaceModeTitle?: string;
+  replaceModeDescription?: string;
+  appendModeDescription?: string;
 }
 
 /* Shadcn/ui zinc design tokens */
@@ -67,6 +70,9 @@ export function ExcelCsvActions<T = any>({
   compact = false,
   buttonLabel = 'Excel / CSV',
   style,
+  replaceModeTitle,
+  replaceModeDescription,
+  appendModeDescription,
 }: ExcelCsvActionsProps<T>) {
   const resolvedEntityName = entityName || title || 'Records';
   const [isMenuOpen, setIsMenuOpen]           = useState(false);
@@ -401,14 +407,14 @@ export function ExcelCsvActions<T = any>({
                     onClick={() => setImportMode('append')}
                     icon={<Layers size={14} />}
                     title="Append"
-                    description={`Add ${parsedImportRows.length} rows to existing ${data.length} records`}
+                    description={appendModeDescription || `Add ${parsedImportRows.length} rows to existing ${data.length} records`}
                   />
                   <ModeCard
                     active={importMode === 'replace'}
                     onClick={() => setImportMode('replace')}
                     icon={<AlertTriangle size={14} />}
-                    title="Replace all"
-                    description={`Remove existing ${data.length} records, load only from file`}
+                    title={replaceModeTitle || "Replace all"}
+                    description={replaceModeDescription || `Remove existing ${data.length} records, load only from file`}
                     danger
                   />
                 </div>

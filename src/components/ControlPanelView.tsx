@@ -8,7 +8,8 @@ import UnsavedChangesModal from './UnsavedChangesModal';
 import {
   Button as ShadcnButton,
   Input as ShadcnInput,
-  Tooltip
+  Tooltip,
+  toast
 } from './ui/shadcn';
 
 import {
@@ -34,12 +35,22 @@ import {
 import { downloadCSV } from '../utils/exportCsv';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
-import { SQLITE_SKIP_ITEMS, SQLITE_SKIP_SUB_GROUPS } from '../data/sqliteSkipData';
+import { SQLITE_SKIP_ITEMS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_MAIN_GROUPS } from '../data/sqliteSkipData';
 import {
   getControlGroups,
   saveControlGroup,
   deleteControlGroup,
-  saveControlGroupsBulk
+  saveControlGroupsBulk,
+  saveConversionsBulk,
+  getConversions,
+  saveSkipItemsBulk,
+  getSkipSubGroups,
+  saveSkipSubGroupsBulk,
+  getSkipMainGroups,
+  saveSkipMainGroupsBulk,
+  getSkipItems,
+  getBillItemNames,
+  saveBillItemNamesBulk
 } from '../services/db/sqliteDb';
 import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 
@@ -176,37 +187,48 @@ export const ControlPanelView: React.FC = () => {
     }
   };
 
-  // Groups Data directly from SQLite Database with offline fallback
-  const [groups, setGroups] = useState<GroupRule[]>(() => {
-    try {
-      const saved = localStorage.getItem('modern_control_groups_data') || localStorage.getItem('control_group_rules');
-      return saved ? JSON.parse(saved) : DEFAULT_GROUPS;
-    } catch {
-      return DEFAULT_GROUPS;
-    }
-  });
+  // Table state directly from SQLite Database (NO Cache)
+  const [groups, setGroups] = useState<GroupRule[]>(DEFAULT_GROUPS);
+  const [skipItemsList, setSkipItemsList] = useState<any[]>([]);
+  const [billItemsList, setBillItemsList] = useState<any[]>([]);
+  const [conversionsList, setConversionsList] = useState<any[]>([]);
 
-  // Fetch true database state on mount from SQLite backend (Port 5006)
+  // Fetch true database state on mount and keep synced from SQLite backend (Port 5006)
   useEffect(() => {
     let isMounted = true;
-    getControlGroups()
-      .then(dbGroups => {
+    const loadAllDirectFromDb = () => {
+      getControlGroups().then(dbGroups => {
         if (!isMounted) return;
         if (Array.isArray(dbGroups) && dbGroups.length > 0) {
           setGroups(dbGroups);
-          try {
-            localStorage.setItem('modern_control_groups_data', JSON.stringify(dbGroups));
-            localStorage.setItem('control_group_rules', JSON.stringify(dbGroups));
-          } catch {}
-          if (!selectedGroupId) {
-            setSelectedGroupId(dbGroups[0]?.id || null);
-          }
+          if (!selectedGroupId) setSelectedGroupId(dbGroups[0]?.id || null);
         }
-      })
-      .catch(err => {
-        console.warn('Could not fetch control groups from SQLite backend:', err);
-      });
-    return () => { isMounted = false; };
+      }).catch(console.warn);
+
+      getSkipItems().then(items => {
+        if (isMounted && Array.isArray(items)) setSkipItemsList(items);
+      }).catch(console.warn);
+
+      getBillItemNames().then(items => {
+        if (isMounted && Array.isArray(items)) setBillItemsList(items);
+      }).catch(console.warn);
+
+      getConversions().then(items => {
+        if (isMounted && Array.isArray(items)) setConversionsList(items);
+      }).catch(console.warn);
+    };
+
+    loadAllDirectFromDb();
+    window.addEventListener('billapp_skip_items_updated', loadAllDirectFromDb);
+    window.addEventListener('billapp_bill_maps_updated', loadAllDirectFromDb);
+    window.addEventListener('billapp_conversions_updated', loadAllDirectFromDb);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('billapp_skip_items_updated', loadAllDirectFromDb);
+      window.removeEventListener('billapp_bill_maps_updated', loadAllDirectFromDb);
+      window.removeEventListener('billapp_conversions_updated', loadAllDirectFromDb);
+    };
   }, []);
 
   // Selected Row & Row Refs for Auto-scrolling
@@ -296,10 +318,6 @@ export const ControlPanelView: React.FC = () => {
         }
         return g;
       });
-      try {
-        localStorage.setItem('modern_control_groups_data', JSON.stringify(next));
-        localStorage.setItem('control_group_rules', JSON.stringify(next));
-      } catch {}
       return next;
     });
   };
@@ -317,14 +335,7 @@ export const ControlPanelView: React.FC = () => {
       skipEq: false,
       chainParent: 'NONE'
     };
-    setGroups(prev => {
-      const next = [newGroup, ...prev];
-      try {
-        localStorage.setItem('modern_control_groups_data', JSON.stringify(next));
-        localStorage.setItem('control_group_rules', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    setGroups(prev => [newGroup, ...prev]);
     // Direct SQLite persistence
     saveControlGroup(newGroup).catch(console.error);
     setSelectedGroupId(newGroup.id);
@@ -364,10 +375,6 @@ export const ControlPanelView: React.FC = () => {
     if (parsedRows.length > 0) {
       setGroups(prev => {
         const next = [...parsedRows, ...prev];
-        try {
-          localStorage.setItem('modern_control_groups_data', JSON.stringify(next));
-          localStorage.setItem('control_group_rules', JSON.stringify(next));
-        } catch {}
         // Direct SQLite bulk persistence
         saveControlGroupsBulk(next).catch(console.error);
         return next;
@@ -650,7 +657,7 @@ export const ControlPanelView: React.FC = () => {
     };
   }, [activeTab, filteredGroups, selectedGroupId]);
 
-  const handleExportActiveTabCsv = () => {
+  const handleExportActiveTabCsv = async () => {
     macAudio.playPop();
     const today = new Date().toISOString().split('T')[0];
     if (activeTab === 'MANAGE_GROUPS') {
@@ -669,16 +676,31 @@ export const ControlPanelView: React.FC = () => {
       downloadCSV(`control_panel_groups_${today}.csv`, headers, rows);
     } else if (activeTab === 'SKIP_ITEM_NAME') {
       try {
-        const savedItems = localStorage.getItem('billapp_skip_items');
-        const items = savedItems ? JSON.parse(savedItems) : SQLITE_SKIP_ITEMS;
-        const savedSubs = localStorage.getItem('billapp_skip_sub_groups');
-        const subs = savedSubs ? JSON.parse(savedSubs) : SQLITE_SKIP_SUB_GROUPS;
-        const subMap = new Map(subs.map((s: any) => [s.id, s.name]));
-        const headers = ['SR NO', 'SUB GROUP', 'ITEM NAME'];
+        let items: any[] = [];
+        try {
+          items = await getSkipItems();
+        } catch {}
+        if (!items || !items.length) {
+          const savedItems = localStorage.getItem('billapp_skip_items');
+          items = savedItems ? JSON.parse(savedItems) : SQLITE_SKIP_ITEMS;
+        }
+
+        let subs: any[] = [];
+        try {
+          subs = await getSkipSubGroups();
+        } catch {}
+        if (!subs || !subs.length) {
+          const savedSubs = localStorage.getItem('billapp_skip_sub_groups');
+          subs = savedSubs ? JSON.parse(savedSubs) : SQLITE_SKIP_SUB_GROUPS;
+        }
+        const subMap = new Map(subs.map((s: any) => [s.id, s.groupName || s.name || s.id]));
+
+        const headers = ['SR NO', 'MAIN GROUP', 'GROUP NAME', 'ITEM NAME / PREFIX'];
         const rows = items.map((it: any, idx: number) => [
           idx + 1,
-          subMap.get(it.subGroupId) || it.subGroupId || '',
-          it.name || ''
+          it.mainGroup || 'General',
+          it.groupName || subMap.get(it.subGroupId) || it.subGroupId || '',
+          it.itemPrefix || it.name || ''
         ]);
         downloadCSV(`control_panel_skip_items_${today}.csv`, headers, rows);
       } catch (e) {
@@ -758,33 +780,243 @@ export const ControlPanelView: React.FC = () => {
 
     const nextGroups = mode === 'replace' ? formatted : [...formatted, ...groups];
     setGroups(nextGroups);
-    try {
-      localStorage.setItem('modern_control_groups_data', JSON.stringify(nextGroups));
-      localStorage.setItem('control_group_rules', JSON.stringify(nextGroups));
-    } catch {}
     await saveControlGroupsBulk(nextGroups);
   };
 
   // Skip Items CSV Columns & Import
   const skipItemColumns: CsvColumnDef<any>[] = [
-    { header: 'Sub Group', key: 'subGroupId', sampleValue: 'HARDWARE' },
-    { header: 'Item Name', key: 'name', sampleValue: 'Silicon Sealant Clear', required: true }
+    {
+      header: 'Main Group',
+      key: 'mainGroup',
+      sampleValue: 'Digital',
+      required: false,
+      transformImport: (val, raw) => {
+        const rawMg = val || raw['Main Group'] || raw['MAIN GROUP'] || raw['mainGroup'] || raw['main_group'] || '';
+        return String(rawMg).trim();
+      }
+    },
+    {
+      header: 'Group Name',
+      key: 'groupName',
+      sampleValue: 'B.F.P-(A)-(Digital)',
+      required: true,
+      transformImport: (val, raw) => {
+        const rawGn = val || raw['Group Name'] || raw['GROUP NAME'] || raw['Sub Group'] || raw['SUB GROUP'] || raw['groupName'] || raw['subGroupId'] || '';
+        return String(rawGn).trim();
+      }
+    },
+    {
+      header: 'Item Name / Prefix',
+      key: 'itemPrefix',
+      sampleValue: 'B.F.P-(A) 773',
+      required: true,
+      transformImport: (val, raw) => {
+        const rawIn = val || raw['Item Name / Prefix'] || raw['ITEM NAME / PREFIX'] || raw['Item Name'] || raw['ITEM NAME'] || raw['itemPrefix'] || raw['Prefix'] || raw['name'] || '';
+        return String(rawIn).trim();
+      }
+    },
+    {
+      header: 'Sum Col',
+      key: 'sumColumn',
+      sampleValue: 'QTY',
+      required: false,
+      transformImport: (val, raw) => {
+        const rawSc = val || raw['Sum Col'] || raw['SUM COL'] || raw['Sum Column'] || raw['SUM COLUMN'] || raw['sumCol'] || raw['sumColumn'] || '';
+        const sc = String(rawSc).trim().toUpperCase();
+        if (sc === 'U CAP' || sc === 'UCAP') return 'U CAP';
+        if (sc === 'L CAP' || sc === 'LCAP') return 'L CAP';
+        return 'QTY';
+      }
+    }
   ];
 
-  const handleImportSkipItems = (imported: any[], mode: 'append' | 'replace') => {
+  const handleImportSkipItems = async (imported: any[], mode: 'append' | 'replace') => {
     try {
-      const current = mode === 'replace' ? [] : JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
-      const newItems = imported.filter(x => x.name && String(x.name).trim()).map((x, i) => ({
-        id: `skip-${Date.now()}-${i}`,
-        name: String(x.name).trim(),
-        subGroupId: x.subGroupId || x['Sub Group'] || 'GENERAL'
-      }));
-      const merged = [...current, ...newItems];
-      localStorage.setItem('billapp_skip_items', JSON.stringify(merged));
+      // 1. Fetch current subgroups, main groups, and skip items from DB
+      let subGroups: any[] = [];
+      let mainGroups: any[] = [];
+      let existingItems: any[] = [];
+
+      try {
+        const [sgRes, mgRes, siRes] = await Promise.all([
+          getSkipSubGroups(),
+          getSkipMainGroups(),
+          getSkipItems()
+        ]);
+        if (Array.isArray(sgRes)) subGroups = sgRes;
+        if (Array.isArray(mgRes)) mainGroups = mgRes;
+        if (Array.isArray(siRes)) existingItems = siRes;
+      } catch (err) {
+        console.warn('Error fetching skip data from sqlite:', err);
+      }
+
+      if (!subGroups.length) subGroups = SQLITE_SKIP_SUB_GROUPS;
+      if (!mainGroups.length) mainGroups = SQLITE_SKIP_MAIN_GROUPS;
+      if (!existingItems.length) existingItems = skipItemsList || [];
+
+      // Maps for fast case-insensitive lookup
+      const mainGroupMap = new Map<string, any>();
+      mainGroups.forEach(mg => {
+        if (mg.name) mainGroupMap.set(String(mg.name).trim().toLowerCase(), mg);
+      });
+
+      const subGroupMap = new Map<string, any>();
+      subGroups.forEach(sg => {
+        if (sg.groupName) subGroupMap.set(String(sg.groupName).trim().toLowerCase(), sg);
+        if (sg.id) subGroupMap.set(String(sg.id).trim().toLowerCase(), sg);
+      });
+
+      const updatedMainGroups = [...mainGroups];
+      const updatedSubGroups = [...subGroups];
+      let newMainGroupsAdded = false;
+      let newSubGroupsAdded = false;
+
+      // 2. Process imported rows
+      const newItems: any[] = [];
+      const seenInImport = new Set<string>();
+
+      imported.forEach((row, i) => {
+        const rawPrefix = row.itemPrefix || row['Item Name / Prefix'] || row['ITEM NAME / PREFIX'] || row['Item Name'] || row['ITEM NAME'] || row.name || row['Prefix'] || row['item_prefix'] || '';
+        const itemPrefix = String(rawPrefix).trim();
+        if (!itemPrefix) return;
+
+        const rawGroupName = row.groupName || row['Group Name'] || row['GROUP NAME'] || row['Sub Group'] || row['SUB GROUP'] || row.subGroup || row.subGroupId || '';
+        const groupName = String(rawGroupName).trim() || 'General';
+        const gnKey = groupName.toLowerCase();
+
+        // Sum column resolution (default 'QTY')
+        const rawSumCol = row.sumColumn || row.sumCol || row['Sum Col'] || row['SUM COL'] || row['Sum Column'] || row['SUM COLUMN'] || '';
+        let sumColVal: 'QTY' | 'U CAP' | 'L CAP' = 'QTY';
+        if (rawSumCol) {
+          const scUpper = String(rawSumCol).trim().toUpperCase();
+          if (scUpper === 'U CAP' || scUpper === 'UCAP') sumColVal = 'U CAP';
+          else if (scUpper === 'L CAP' || scUpper === 'LCAP') sumColVal = 'L CAP';
+          else sumColVal = 'QTY';
+        }
+
+        // Main group resolution
+        const rawUserMg = row.mainGroup || row['Main Group'] || row['MAIN GROUP'] || row.mainGroup || row.main_group || '';
+        const userMainGroup = String(rawUserMg).trim();
+
+        let targetMgName = '';
+        if (userMainGroup) {
+          targetMgName = userMainGroup;
+        } else if (subGroupMap.has(gnKey) && subGroupMap.get(gnKey).mainGroup) {
+          targetMgName = subGroupMap.get(gnKey).mainGroup;
+        } else if (gnKey.includes('digital-or-golden') || gnKey.includes('digital or golden')) {
+          targetMgName = 'Digital or Golden';
+        } else if (gnKey.includes('digital')) {
+          targetMgName = 'Digital';
+        } else if (gnKey.includes('7d uv sheet') || gnKey.includes('7d')) {
+          targetMgName = '7D UV SHEET';
+        } else {
+          targetMgName = 'General';
+        }
+
+        // Auto-create Main Group if not existing
+        let targetMg = mainGroupMap.get(targetMgName.toLowerCase());
+        if (!targetMg) {
+          targetMg = {
+            id: `mg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            name: targetMgName
+          };
+          mainGroupMap.set(targetMgName.toLowerCase(), targetMg);
+          updatedMainGroups.push(targetMg);
+          newMainGroupsAdded = true;
+        }
+
+        // Auto-create Sub Group if not existing
+        let targetSg = subGroupMap.get(gnKey);
+        if (!targetSg) {
+          const newSgId = `sg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+          targetSg = {
+            id: newSgId,
+            mainGroupId: targetMg.id,
+            mainGroup: targetMg.name,
+            groupName: groupName,
+            sumColumn: sumColVal
+          };
+          subGroupMap.set(gnKey, targetSg);
+          subGroupMap.set(newSgId.toLowerCase(), targetSg);
+          updatedSubGroups.push(targetSg);
+          newSubGroupsAdded = true;
+        } else if (rawSumCol && targetSg.sumColumn !== sumColVal) {
+          targetSg.sumColumn = sumColVal;
+          newSubGroupsAdded = true;
+        }
+
+        const finalGroupName = targetSg.groupName || groupName;
+        const dedupKey = `${finalGroupName.toLowerCase()}:::${itemPrefix.toLowerCase()}`;
+        if (seenInImport.has(dedupKey)) return;
+        seenInImport.add(dedupKey);
+
+        newItems.push({
+          id: row.id || `si_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
+          subGroupId: targetSg.id,
+          mainGroup: targetMg.name,
+          groupName: finalGroupName,
+          itemPrefix
+        });
+      });
+
+      if (!newItems.length) {
+        toast.error('No valid items found in import file. Please check column headers.');
+        return;
+      }
+
+      // Persist newly discovered main groups or subgroups
+      if (newMainGroupsAdded) {
+        await saveSkipMainGroupsBulk(updatedMainGroups, 'replace');
+      }
+      if (newSubGroupsAdded) {
+        await saveSkipSubGroupsBulk(updatedSubGroups, 'replace');
+      }
+
+      // Gather distinct groups present in this import file
+      const importedGroupNames = new Set<string>();
+      const importedSubGroupIds = new Set<string>();
+      newItems.forEach(it => {
+        if (it.groupName) importedGroupNames.add(it.groupName.trim().toLowerCase());
+        if (it.subGroupId) importedSubGroupIds.add(it.subGroupId);
+      });
+
+      let finalItems: any[];
+      if (mode === 'replace') {
+        // REPLACE ONLY the groups present in the Excel file!
+        // All other groups' items remain completely preserved!
+        const preservedItems = existingItems.filter(it => {
+          const itGrp = (it.groupName || '').trim().toLowerCase();
+          const itSgId = it.subGroupId || '';
+          const isReplaced = importedGroupNames.has(itGrp) || (itSgId && importedSubGroupIds.has(itSgId));
+          return !isReplaced;
+        });
+        finalItems = [...preservedItems, ...newItems];
+      } else {
+        // APPEND: Add to existing items without adding duplicates to the same group
+        const existingSet = new Set(
+          existingItems.map(it => `${(it.groupName || '').trim().toLowerCase()}:::${(it.itemPrefix || it.name || '').trim().toLowerCase()}`)
+        );
+        const filteredNew = newItems.filter(it => !existingSet.has(`${it.groupName.toLowerCase()}:::${it.itemPrefix.toLowerCase()}`));
+        finalItems = [...existingItems, ...filteredNew];
+      }
+
+      // 4. Save to SQLite DB bulk endpoint
+      await saveSkipItemsBulk(finalItems, 'replace', Array.from(importedGroupNames));
+
+      // 5. Update direct state
+      setSkipItemsList(finalItems);
+
+      // 6. Notify active tabs (SkipItemNameTab)
       window.dispatchEvent(new CustomEvent('billapp_skip_items_updated'));
       macAudio.playSuccess();
-    } catch (e) {
+      if (mode === 'replace') {
+        toast.success(`Successfully replaced items for ${importedGroupNames.size} group(s) with ${newItems.length} items (other groups preserved)!`);
+      } else {
+        toast.success(`Successfully appended ${newItems.length} items to ${importedGroupNames.size} group(s)!`);
+      }
+    } catch (e: any) {
       console.error('Import skip items error:', e);
+      toast.error('Failed to import skip items: ' + (e?.message || String(e)));
     }
   };
 
@@ -796,22 +1028,29 @@ export const ControlPanelView: React.FC = () => {
     { header: 'Category', key: 'category', sampleValue: 'ALUMINIUM' }
   ];
 
-  const handleImportBillItems = (imported: any[], mode: 'append' | 'replace') => {
+  const handleImportBillItems = async (imported: any[], mode: 'append' | 'replace') => {
     try {
-      const current = mode === 'replace' ? [] : JSON.parse(localStorage.getItem('billapp_bill_maps') || '[]');
-      const newItems = imported.filter(x => x.shortCode && String(x.shortCode).trim()).map((x, i) => ({
-        id: `map-${Date.now()}-${i}`,
-        shortCode: String(x.shortCode).trim(),
-        printName: x.printName ? String(x.printName).trim() : String(x.shortCode).trim(),
-        defaultRate: Number(x.defaultRate) || 0,
-        category: x.category ? String(x.category).trim() : 'GENERAL'
-      }));
+      const current = mode === 'replace' ? [] : billItemsList;
+      const newItems = imported.filter(x => (x.shortCode || x['Short Code'] || x.printName || x['Print Name'])).map((x, i) => {
+        const code = String(x.shortCode || x['Short Code'] || x.printName || '').trim();
+        const name = String(x.printName || x['Print Name'] || x.shortCode || '').trim();
+        return {
+          id: `map-${Date.now()}-${i}`,
+          shortCode: code,
+          printName: name,
+          defaultRate: Number(x.defaultRate || x['Default Rate'] || 0) || 0,
+          category: String(x.category || x['Category'] || 'GENERAL').trim()
+        };
+      });
       const merged = [...current, ...newItems];
-      localStorage.setItem('billapp_bill_maps', JSON.stringify(merged));
+      setBillItemsList(merged);
+      await saveBillItemNamesBulk(merged, 'replace');
       window.dispatchEvent(new CustomEvent('billapp_bill_maps_updated'));
       macAudio.playSuccess();
-    } catch (e) {
+      toast.success(`Successfully imported ${newItems.length} bill items!`);
+    } catch (e: any) {
       console.error('Import bill items error:', e);
+      toast.error('Failed to import bill items: ' + (e?.message || String(e)));
     }
   };
 
@@ -832,7 +1071,7 @@ export const ControlPanelView: React.FC = () => {
 
   const handleImportConversions = (imported: any[], mode: 'append' | 'replace') => {
     try {
-      const current = mode === 'replace' ? [] : JSON.parse(localStorage.getItem('billapp_conversions') || '[]');
+      const current = mode === 'replace' ? [] : conversionsList;
       const newItems = imported.filter(x => (x.shortcut && String(x.shortcut).trim()) || (x.conversion && String(x.conversion).trim())).map(x => ({
         shortcut: x.shortcut ? String(x.shortcut).trim() : '',
         conversion: x.conversion ? String(x.conversion).trim() : '',
@@ -847,9 +1086,9 @@ export const ControlPanelView: React.FC = () => {
         group_name: x.group_name || x['group name'] || ''
       }));
       const merged = [...current, ...newItems];
-      localStorage.setItem('billapp_conversions', JSON.stringify(merged));
-      localStorage.setItem('ctrl_conv_rules_v3', JSON.stringify(merged));
+      setConversionsList(merged);
       window.dispatchEvent(new CustomEvent('billapp_conversions_updated'));
+      saveConversionsBulk(merged, mode).catch(err => console.error('Failed to sync imported conversions to SQLite:', err));
       macAudio.playSuccess();
     } catch (e) {
       console.error('Import conversions error:', e);
@@ -857,21 +1096,18 @@ export const ControlPanelView: React.FC = () => {
   };
 
   const getActiveTabData = () => {
-    try {
-      if (activeTab === 'MANAGE_GROUPS') return groups;
-      if (activeTab === 'SKIP_ITEM_NAME') {
-        const saved = localStorage.getItem('billapp_skip_items');
-        return saved ? JSON.parse(saved) : SQLITE_SKIP_ITEMS;
-      }
-      if (activeTab === 'BILL_ITEM_NAME') {
-        const saved = localStorage.getItem('billapp_bill_maps');
-        return saved ? JSON.parse(saved) : PREFILLED_BILL_MAPS;
-      }
-      if (activeTab === 'MANAGE_CONVERSIONS') {
-        const saved = localStorage.getItem('billapp_conversions');
-        return saved ? JSON.parse(saved) : SQLITE_CONTROL_CONVERSIONS;
-      }
-    } catch {}
+    if (activeTab === 'MANAGE_GROUPS') return groups;
+    if (activeTab === 'SKIP_ITEM_NAME') {
+      return (skipItemsList || []).map((it: any) => ({
+        ...it,
+        mainGroup: it.mainGroup || 'General',
+        groupName: it.groupName || it.subGroupId || '',
+        itemPrefix: it.itemPrefix || it.name || '',
+        sumColumn: it.sumColumn || 'QTY'
+      }));
+    }
+    if (activeTab === 'BILL_ITEM_NAME') return billItemsList || [];
+    if (activeTab === 'MANAGE_CONVERSIONS') return conversionsList || [];
     return [];
   };
 
@@ -991,6 +1227,15 @@ export const ControlPanelView: React.FC = () => {
               columns={skipItemColumns}
               data={getActiveTabData()}
               onImport={handleImportSkipItems}
+              replaceModeTitle="Replace (Imported Groups Only)"
+              replaceModeDescription="Excel me jo Group Names hain, sirf unke items replace honge; baaki sabhi groups safe rahenge."
+              appendModeDescription="Existing groups aur items ke sath naye items add honge."
+              sampleRows={[
+                { mainGroup: 'Digital', groupName: 'B.F.P-(A)-(Digital)', itemPrefix: 'B.F.P-(A) 773', sumColumn: 'QTY' },
+                { mainGroup: 'Digital', groupName: 'B.F.P-(A)-(Digital)', itemPrefix: 'B.F.P-(A) 774', sumColumn: 'QTY' },
+                { mainGroup: 'Digital or Golden', groupName: 'B.F.P-(A)-(Digital-or-Golden)', itemPrefix: 'B.F.P-(A) 101', sumColumn: 'QTY' },
+                { mainGroup: 'General', groupName: 'HARDWARE', itemPrefix: 'Silicon Sealant Clear', sumColumn: 'QTY' }
+              ]}
             />
           )}
           {activeTab === 'BILL_ITEM_NAME' && (
@@ -1262,10 +1507,6 @@ export const ControlPanelView: React.FC = () => {
             const targetId = groupToDelete.id;
             setGroups(prev => {
               const next = prev.filter(g => g.id !== targetId);
-              try {
-                localStorage.setItem('modern_control_groups_data', JSON.stringify(next));
-                localStorage.setItem('control_group_rules', JSON.stringify(next));
-              } catch {}
               return next;
             });
             if (selectedGroupId === targetId) {

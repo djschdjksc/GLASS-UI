@@ -749,7 +749,7 @@ body {
   border-radius: 6px;
   padding: 2px 8px;
   line-height: 1.35;
-  max-width: 80px;
+  max-width: 120px;
   text-overflow: ellipsis;
   box-shadow: 0 1px 4px rgba(0, 100, 200, 0.3);
 }
@@ -763,15 +763,32 @@ body {
   box-shadow: 0 1px 5px rgba(0, 80, 180, 0.35);
 }
 
+/* Active Row Highlighting for currently focused cell row */
+.apple-table tr.row-active-highlight td {
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.apple-table-container {
+  scroll-padding-top: 48px;
+  scroll-padding-bottom: 120px;
+}
+
+.excel-cell-input {
+  scroll-margin-bottom: 110px;
+  scroll-margin-top: 48px;
+}
+
 /* Table Footer Row */
 .apple-table tfoot td {
-  background: rgba(14, 18, 24, 0.92);
+  background: rgba(14, 18, 24, 0.95);
+  backdrop-filter: blur(8px);
   padding: 9px 10px;
   font-weight: 700;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   position: sticky;
   bottom: 0;
   z-index: 10;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Completely Hide All Scrollbars Everywhere (No Vertical or Horizontal Dandi) */

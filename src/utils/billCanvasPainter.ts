@@ -1,6 +1,8 @@
 // Ultra-High-Speed Canvas Painter matching F:\SUMMARY\BillApp\main.py BillPainter 1:1
 // Reproduces exact pixel-perfect layout of native Qt QPainter
 
+import { formatBillNumber } from './billDocTypes';
+
 export interface PrintAdjustment {
   id: string;
   type: 'add' | 'sub';
@@ -38,8 +40,10 @@ export interface BillPrintPayload {
   subTotal: number;
   finalBalance: number;
   pageNum?: number;
+  rowsPerPage?: number;
   /** Skip group lookup — passed to Python native print server for inline group labels */
   skipGroupEntries?: Array<{ prefix: string; group: string }>;
+  isColorful?: boolean;
 }
 
 export function formatIndianCurrency(num: number): string {
@@ -105,7 +109,7 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   const validGroups = (data.groups || []).filter(g => (g.mould || '').trim() || Number(g.qty) > 0 || Number(g.total) > 0);
 
   const pageNum = data.pageNum ?? 0;
-  const rowsPerPage = isLoadingSlip ? 27 : 20;
+  const rowsPerPage = Number(data.rowsPerPage) || 27;
   const totalPages = isSummaryOnly ? 1 : Math.max(1, Math.ceil(validItems.length / rowsPerPage));
   const startIdx = pageNum * rowsPerPage;
   const itemsToDraw = isSummaryOnly ? [] : validItems.slice(startIdx, startIdx + rowsPerPage);
@@ -159,26 +163,313 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   ctx.textBaseline = 'top';
   ctx.fillText(title, W / 2, 30);
 
-  // 2. Info Block (y = 130)
-  ctx.font = 'normal 35px "Segoe UI", Arial, sans-serif';
-  ctx.textAlign = 'left';
-  let y = 130;
+// Crisp Canvas Vector Icon Helpers (Circle badge removed, 100% Vector, Colorful in Image Mode, Black in Direct Print)
+function drawSlipIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
+  ctx.save();
+  const strokeColor = isColorful ? '#2563eb' : '#000000';
+  const fillColor = isColorful ? '#eff6ff' : '#ffffff';
+  const foldColor = isColorful ? '#1d4ed8' : '#000000';
+  const lineCol = isColorful ? '#3b82f6' : '#000000';
 
-  const billLabel = isLoadingSlip ? `${pfx}SLIP NO:` : (pfx ? `${pfx}NO:` : 'BILL NO:');
-  const editIdTag = data.editId ? ` [${data.editId}]` : '';
-  ctx.fillText(`${billLabel} ${data.billNo || 'N/A'}${editIdTag}`, margin, y);
+  const w = size * 0.72;
+  const h = size * 0.88;
+  const startX = x + (size - w) / 2;
+  const startY = y + (size - h) / 2;
+  const fold = 7;
 
-  ctx.textAlign = 'right';
-  ctx.fillText(`DATE: ${formatDisplayDate(data.date)}`, W - 400, y);
+  // Paper body
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(startX + w - fold, startY);
+  ctx.lineTo(startX + w, startY + fold);
+  ctx.lineTo(startX + w, startY + h);
+  ctx.lineTo(startX, startY + h);
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
 
-  y += 50;
-  ctx.textAlign = 'left';
-  ctx.fillText(`PARTY: ${data.partyName || 'N/A'}`, margin, y);
+  // Paper folded corner
+  ctx.beginPath();
+  ctx.moveTo(startX + w - fold, startY);
+  ctx.lineTo(startX + w - fold, startY + fold);
+  ctx.lineTo(startX + w, startY + fold);
+  ctx.strokeStyle = foldColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-  if (data.vehicleNo && data.vehicleNo.trim()) {
-    ctx.textAlign = 'right';
-    ctx.fillText(`VEHICLE: ${data.vehicleNo.trim()}`, W - 400, y);
+  // Content lines
+  ctx.strokeStyle = lineCol;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(startX + 5, startY + 12);
+  ctx.lineTo(startX + w - 5, startY + 12);
+  ctx.moveTo(startX + 5, startY + 19);
+  ctx.lineTo(startX + w - 5, startY + 19);
+  ctx.moveTo(startX + 5, startY + 26);
+  ctx.lineTo(startX + w - 9, startY + 26);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawVehicleTypeIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
+  ctx.save();
+  const truckColor = isColorful ? '#ea580c' : '#000000';
+  const cabFill = isColorful ? '#fff7ed' : '#ffffff';
+  const windowColor = isColorful ? '#0284c7' : '#000000';
+  const wheelColor = isColorful ? '#1f2937' : '#000000';
+
+  const w = size * 0.9;
+  const startX = x + (size - w) / 2;
+  const topY = y + 8;
+
+  // Truck outline
+  ctx.beginPath();
+  ctx.moveTo(startX, topY);
+  ctx.lineTo(startX + w * 0.62, topY);
+  ctx.lineTo(startX + w * 0.85, topY + 7);
+  ctx.lineTo(startX + w, topY + 7);
+  ctx.lineTo(startX + w, topY + 19);
+  ctx.lineTo(startX, topY + 19);
+  ctx.closePath();
+  ctx.fillStyle = cabFill;
+  ctx.fill();
+  ctx.strokeStyle = truckColor;
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Window divider / window
+  ctx.beginPath();
+  ctx.moveTo(startX + w * 0.62, topY);
+  ctx.lineTo(startX + w * 0.62, topY + 9);
+  ctx.lineTo(startX + w * 0.82, topY + 9);
+  ctx.strokeStyle = windowColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Wheels
+  ctx.fillStyle = wheelColor;
+  ctx.beginPath();
+  ctx.arc(startX + w * 0.25, topY + 20, 3.6, 0, Math.PI * 2);
+  ctx.arc(startX + w * 0.75, topY + 20, 3.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (isColorful) {
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.arc(startX + w * 0.25, topY + 20, 1.2, 0, Math.PI * 2);
+    ctx.arc(startX + w * 0.75, topY + 20, 1.2, 0, Math.PI * 2);
+    ctx.fill();
   }
+
+  ctx.restore();
+}
+
+function drawVehicleNoIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
+  ctx.save();
+  const plateColor = isColorful ? '#0284c7' : '#000000';
+  const plateFill = isColorful ? '#f0f9ff' : '#ffffff';
+  const boltColor = isColorful ? '#0369a1' : '#000000';
+
+  const w = size * 0.9;
+  const h = size * 0.58;
+  const startX = x + (size - w) / 2;
+  const startY = y + (size - h) / 2;
+
+  // Number plate border
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(startX, startY, w, h, 4);
+  } else {
+    ctx.rect(startX, startY, w, h);
+  }
+  ctx.fillStyle = plateFill;
+  ctx.fill();
+  ctx.strokeStyle = plateColor;
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+
+  // Corner bolts
+  ctx.fillStyle = boltColor;
+  ctx.beginPath();
+  ctx.arc(startX + 4, startY + h / 2, 1.6, 0, Math.PI * 2);
+  ctx.arc(startX + w - 4, startY + h / 2, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plate center bar
+  ctx.beginPath();
+  ctx.moveTo(startX + 9, startY + h / 2);
+  ctx.lineTo(startX + w - 9, startY + h / 2);
+  ctx.strokeStyle = plateColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawPartyIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
+  ctx.save();
+  const dpBorder = isColorful ? '#7c3aed' : '#000000';
+  const dpBg = isColorful ? '#ede9fe' : '#ffffff';
+  const silhouetteCol = isColorful ? '#7c3aed' : '#000000';
+
+  const w = size * 0.88;
+  const h = size * 0.88;
+  const startX = x + (size - w) / 2;
+  const startY = y + (size - h) / 2;
+  const rad = 8;
+
+  // 1. Draw DP Squircle Frame
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(startX, startY, w, h, rad);
+  } else {
+    ctx.rect(startX, startY, w, h);
+  }
+  ctx.fillStyle = dpBg;
+  ctx.fill();
+  ctx.strokeStyle = dpBorder;
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+
+  // 2. Clip inside DP to draw clean head & shoulders silhouette
+  ctx.save();
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(startX, startY, w, h, rad);
+  } else {
+    ctx.rect(startX, startY, w, h);
+  }
+  ctx.clip();
+
+  const cx = startX + w / 2;
+
+  // Head Circle
+  ctx.fillStyle = silhouetteCol;
+  ctx.beginPath();
+  ctx.arc(cx, startY + h * 0.38, w * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Torso / Shoulders
+  ctx.beginPath();
+  ctx.arc(cx, startY + h + 2, w * 0.44, Math.PI, 0, false);
+  ctx.fill();
+
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
+  ctx.save();
+  const mainColor = isColorful ? '#dc2626' : '#000000';
+  const headerFill = isColorful ? '#dc2626' : '#000000';
+  const bodyFill = isColorful ? '#fef2f2' : '#ffffff';
+  const ringColor = isColorful ? '#991b1b' : '#000000';
+
+  const w = size * 0.78;
+  const h = size * 0.78;
+  const startX = x + (size - w) / 2;
+  const startY = y + (size - h) / 2 + 1;
+
+  // Calendar body
+  ctx.fillStyle = bodyFill;
+  ctx.fillRect(startX, startY, w, h);
+  ctx.strokeStyle = mainColor;
+  ctx.lineWidth = 2.4;
+  ctx.strokeRect(startX, startY, w, h);
+
+  // Top header bar
+  ctx.fillStyle = headerFill;
+  ctx.fillRect(startX, startY, w, 7);
+
+  // Binder rings
+  ctx.strokeStyle = ringColor;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(startX + 6, startY - 3);
+  ctx.lineTo(startX + 6, startY + 3);
+  ctx.moveTo(startX + w - 6, startY - 3);
+  ctx.lineTo(startX + w - 6, startY + 3);
+  ctx.stroke();
+
+  // Calendar grid dots / marks
+  ctx.fillStyle = mainColor;
+  ctx.beginPath();
+  ctx.arc(startX + w * 0.35, startY + 14, 1.8, 0, Math.PI * 2);
+  ctx.arc(startX + w * 0.65, startY + 14, 1.8, 0, Math.PI * 2);
+  ctx.arc(startX + w * 0.35, startY + 21, 1.8, 0, Math.PI * 2);
+  ctx.arc(startX + w * 0.65, startY + 21, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+  const isColorful = data.isColorful !== false;
+
+  // 2. Info Block (y = 130)
+  ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+  let y = 130;
+  const iconSize = 40;
+  const iconGap = 12;
+  const rightX = margin + 1290; // Exactly matches right edge of 1290px table (1320)
+
+  // Locked X position for right column: Upper Vehicle Icon & Lower Date Icon in exact same vertical line
+  const rightIconX = rightX - 280;
+  const rightTextX = rightIconX + iconSize + iconGap;
+  const maxRightTextW = rightX - rightTextX;
+
+  // ROW 1 (Upper 3: Slip No | Vehicle Type | Vehicle No)
+  // 1. Slip No (Left)
+  drawSlipIcon(ctx, margin, y - 2, iconSize, isColorful);
+  ctx.textAlign = 'left';
+  const formattedBillNo = formatBillNumber(data.billNo);
+  ctx.fillText(formattedBillNo || '0001', margin + iconSize + iconGap, y);
+
+  const rawVType = (data.vehicleType || '').trim();
+  const vType = (rawVType.toUpperCase() === 'OWN VEHICLE') ? 'SELF' : rawVType;
+  const vNo = (data.vehicleNo || '').trim();
+
+  // 2 & 3. Vehicle Type & Vehicle No
+  if (vType && vNo) {
+    // Both present: Vehicle Type in center, Vehicle No locked on right
+    const vTypeX = 520;
+    drawVehicleTypeIcon(ctx, vTypeX, y - 2, iconSize, isColorful);
+    ctx.textAlign = 'left';
+    ctx.fillText(vType, vTypeX + iconSize + iconGap, y);
+
+    drawVehicleNoIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+    ctx.textAlign = 'left';
+    ctx.fillText(vNo, rightTextX, y, maxRightTextW);
+  } else if (vType) {
+    drawVehicleTypeIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+    ctx.textAlign = 'left';
+    ctx.fillText(vType, rightTextX, y, maxRightTextW);
+  } else if (vNo) {
+    drawVehicleNoIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+    ctx.textAlign = 'left';
+    ctx.fillText(vNo, rightTextX, y, maxRightTextW);
+  }
+
+  // ROW 2 (Lower 2: Party Name | Date)
+  y += 50;
+  // 1. Party Name (Left)
+  drawPartyIcon(ctx, margin, y - 2, iconSize, isColorful);
+  ctx.textAlign = 'left';
+  ctx.fillText(data.partyName || 'CASH SALE', margin + iconSize + iconGap, y, rightIconX - (margin + iconSize + iconGap) - 20);
+
+  // 2. Date (Right - EXACT same column position as Upper Vehicle Icon)
+  const dateStr = formatDisplayDate(data.date);
+  drawCalendarIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+  ctx.textAlign = 'left';
+  ctx.fillText(dateStr, rightTextX, y, maxRightTextW);
 
   let curY = y + 70;
 
@@ -273,6 +564,23 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     const colSums: Record<string, number> = { uCap: 0, lCap: 0 };
     sizeCols.forEach(sc => { colSums[sc.field] = 0; });
 
+    // Build skip group lookup helper
+    const skipEntries = data.skipGroupEntries || [];
+    const getGroupLabel = (name: string): string | null => {
+      if (!name || !skipEntries.length) return null;
+      const lower = name.trim().toLowerCase();
+      if (!lower) return null;
+      const cleanLower = lower.replace(/[^a-z0-9]/g, '');
+      for (const entry of skipEntries) {
+        const pfx = (entry.prefix || '').trim().toLowerCase();
+        const cleanPfx = pfx.replace(/[^a-z0-9]/g, '');
+        if (pfx && (lower === pfx || lower.startsWith(pfx + ' ') || lower.startsWith(pfx + '-') || lower.startsWith(pfx + '/') || lower.startsWith(pfx) || (cleanPfx && cleanLower.startsWith(cleanPfx)))) {
+          return entry.group;
+        }
+      }
+      return null;
+    };
+
     itemsToDraw.forEach((it, idx) => {
       const uVal = parseFloat(String(it.uCap)) || 0;
       const lVal = parseFloat(String(it.lCap)) || 0;
@@ -281,8 +589,14 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
 
       const rawDesc = String(it.name || '');
       const cleanDesc = rawDesc.replace(/\./g, '').replace(/-/g, ' ');
+      const grp = getGroupLabel(rawDesc) || getGroupLabel(cleanDesc);
 
-      const rowData: string[] = [String(startIdx + idx + 1), cleanDesc];
+      let descWithGroup = cleanDesc;
+      if (grp && !cleanDesc.toLowerCase().includes(grp.toLowerCase())) {
+        descWithGroup = `${cleanDesc} (${grp})`;
+      }
+
+      const rowData: string[] = [String(startIdx + idx + 1), descWithGroup];
       if (showPCode) {
         rowData.push(String(it.partyCode || ''));
       }
@@ -297,6 +611,11 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       rowData.push(lVal !== 0 ? String(lVal) : '');
 
       let xRow = margin;
+      const rowFullW = cols.reduce((acc, c) => acc + c.w, 0);
+      if (isColorful) {
+        ctx.fillStyle = '#96b6d7';
+        ctx.fillRect(margin, curY, rowFullW, rowH);
+      }
       rowData.forEach((val, i) => {
         const w = cols[i].w;
 
@@ -340,17 +659,24 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       curY += rowH;
     });
 
-    // Loading Slip Footer (Pure Numbers under Columns matching main.py)
-    if (isLoadingSlip && !isEstimate) {
+    // Items Table Footer (Column Totals & Edit No under ITEM NAME column)
+    if (!isSummaryOnly) {
       curY += 25;
       ctx.font = 'bold 30px "Segoe UI", Arial, sans-serif';
       ctx.fillStyle = '#000000';
-      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
       let xFooter = margin;
       cols.forEach((col, i) => {
-        if (col.field && colSums[col.field] !== undefined) {
+        if (i === 0) {
+          // 'TOTAL' text removed as requested
+        } else if (i === 1) {
+          if (data.editId) {
+            ctx.textAlign = 'left';
+            ctx.fillText(data.editId, xFooter + 15, curY + 20);
+          }
+        } else if (col.field && colSums[col.field] !== undefined) {
+          ctx.textAlign = 'center';
           const sumVal = colSums[col.field];
           ctx.fillText(sumVal !== 0 ? String(sumVal) : '', xFooter + col.w / 2, curY + 20);
         }
@@ -397,6 +723,11 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
     // Group Rows
     validGroups.forEach(g => {
       let xGRow = margin;
+      const groupFullW = groupCols.reduce((acc, c) => acc + c.w, 0);
+      if (isColorful) {
+        ctx.fillStyle = '#96b6d7';
+        ctx.fillRect(margin, curY, groupFullW, rowH);
+      }
       const qVal = parseFloat(String(g.qty)) || 0;
       const pVal = parseFloat(String(g.price)) || 0;
       const tVal = parseFloat(String(g.total)) || (qVal * pVal);
@@ -468,10 +799,14 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
       curY += 45;
       ctx.font = 'italic 30px "Segoe UI", Arial, sans-serif';
       ctx.textAlign = 'left';
+      ctx.fillStyle = '#000000';
       ctx.fillText(`${isSub ? '(-)' : '(+)'} ${adj.desc || 'Adjustment'}`, xLabel, curY + 25);
 
       ctx.textAlign = 'right';
+      ctx.font = 'bold 34px "Segoe UI", Arial, sans-serif';
+      ctx.fillStyle = isColorful ? (isSub ? '#dc2626' : '#16a34a') : '#000000';
       ctx.fillText(formatIndianCurrency(v), xValue + valW, curY + 25);
+      ctx.fillStyle = '#000000';
     });
 
     // Final Balance

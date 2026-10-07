@@ -129,6 +129,7 @@ export const RightGrid: React.FC<Props> = ({
   const [resizingCol, setResizingCol] = useState<string | null>(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const startResizeCol = (colKey: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -297,13 +298,80 @@ export const RightGrid: React.FC<Props> = ({
     return '₹' + amount.toLocaleString('en-IN');
   };
 
+  const ensureCellVisible = (element: HTMLElement | null) => {
+    if (!element || !tableContainerRef.current) return;
+    const container = tableContainerRef.current;
+    
+    requestAnimationFrame(() => {
+      const elRect = element.getBoundingClientRect();
+      const contRect = container.getBoundingClientRect();
+
+      const footerEl = container.querySelector('tfoot');
+      const footerHeight = footerEl ? footerEl.getBoundingClientRect().height : 50;
+      const theadEl = container.querySelector('thead');
+      const theadHeight = theadEl ? theadEl.getBoundingClientRect().height : 36;
+
+      const bottomBuffer = footerHeight + 30;
+      const topBuffer = theadHeight + 10;
+
+      if (elRect.bottom > contRect.bottom - bottomBuffer) {
+        const delta = elRect.bottom - (contRect.bottom - bottomBuffer);
+        container.scrollTop += Math.ceil(delta);
+      } else if (elRect.top < contRect.top + topBuffer) {
+        const delta = (contRect.top + topBuffer) - elRect.top;
+        container.scrollTop -= Math.ceil(delta);
+      }
+
+      const leftBuffer = (colWidths.index || 40) + 10;
+      const rightBuffer = 20;
+      if (elRect.left < contRect.left + leftBuffer) {
+        const deltaX = (contRect.left + leftBuffer) - elRect.left;
+        container.scrollLeft -= Math.ceil(deltaX);
+      } else if (elRect.right > contRect.right - rightBuffer) {
+        const deltaX = elRect.right - (contRect.right - rightBuffer);
+        container.scrollLeft += Math.ceil(deltaX);
+      }
+    });
+  };
+
   const focusCell = (row: number, col: number) => {
+    const doFocus = (input: HTMLInputElement) => {
+      try {
+        input.focus({ preventScroll: true });
+        input.select();
+      } catch {
+        input.focus();
+      }
+      ensureCellVisible(input);
+    };
+
     const input = document.getElementById('right-cell-' + row + '-' + col) as HTMLInputElement;
     if (input) {
-      input.focus();
-      input.select();
+      doFocus(input);
+    } else {
+      setTimeout(() => {
+        const retryInput = document.getElementById('right-cell-' + row + '-' + col) as HTMLInputElement;
+        if (retryInput) {
+          doFocus(retryInput);
+        } else {
+          setTimeout(() => {
+            const finalRetry = document.getElementById('right-cell-' + row + '-' + col) as HTMLInputElement;
+            if (finalRetry) {
+              doFocus(finalRetry);
+            }
+          }, 80);
+        }
+      }, 40);
     }
   };
+
+  useEffect(() => {
+    if (!activeCell) return;
+    const input = document.getElementById(`right-cell-${activeCell.r}-${activeCell.c}`) as HTMLInputElement;
+    if (input) {
+      ensureCellVisible(input);
+    }
+  }, [activeCell?.r, activeCell?.c]);
 
   const getCellValue = (r: number, c: number): string => {
     const it = filteredItems[r];
@@ -694,7 +762,8 @@ export const RightGrid: React.FC<Props> = ({
         nextRow = Math.max(0, rowIndex - 1);
       }
 
-      if (nextRow >= filteredItems.length) {
+      const isNewRow = nextRow >= filteredItems.length;
+      if (isNewRow) {
         onAddNewRow();
       }
 
@@ -705,7 +774,7 @@ export const RightGrid: React.FC<Props> = ({
         setSelectedCellKeys(new Set([`${nextRow}-${nextCol}`]));
         setSelectedCol(null);
         setSelectedRows([]);
-      }, 10);
+      }, isNewRow ? 50 : 10);
       return;
     }
 
@@ -826,7 +895,7 @@ export const RightGrid: React.FC<Props> = ({
           setActiveCell({ r: rowIndex + 1, c: colIndex });
           setAnchorCell({ r: rowIndex + 1, c: colIndex });
           setSelectedCellKeys(new Set([(rowIndex + 1) + '-' + colIndex]));
-        }, 20);
+        }, 50);
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -870,13 +939,14 @@ export const RightGrid: React.FC<Props> = ({
           setSelectedCellKeys(new Set([`${rowIndex}-${colIndex + 1}`]));
         } else {
           const nxtR = rowIndex + 1;
-          if (nxtR >= filteredItems.length) onAddNewRow();
+          const isNewRow = nxtR >= filteredItems.length;
+          if (isNewRow) onAddNewRow();
           setTimeout(() => {
             focusCell(nxtR, 0);
             setActiveCell({ r: nxtR, c: 0 });
             setAnchorCell({ r: nxtR, c: 0 });
             setSelectedCellKeys(new Set([`${nxtR}-0`]));
-          }, 20);
+          }, isNewRow ? 50 : 15);
         }
       } else {
         if (colIndex > 0) {
@@ -1108,6 +1178,8 @@ export const RightGrid: React.FC<Props> = ({
 
       {/* Excel Data Table */}
       <div 
+        ref={tableContainerRef}
+        className="apple-table-container"
         onWheel={handleTableWheel}
         onPaste={(e) => {
           const text = e.clipboardData.getData('text');
@@ -1122,7 +1194,9 @@ export const RightGrid: React.FC<Props> = ({
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: '8px',
           background: 'rgba(0, 0, 0, 0.22)',
-          position: 'relative'
+          position: 'relative',
+          scrollPaddingTop: '46px',
+          scrollPaddingBottom: '120px'
         }}
       >
         <table className="apple-table">
@@ -1263,59 +1337,56 @@ export const RightGrid: React.FC<Props> = ({
               const isRowSelected = isActiveTable && selectedRows.includes(rIdx);
               const isRowActive = isActiveTable && activeCell?.r === rIdx;
 
-              const handleTableWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const container = e.currentTarget;
-    const direction = e.deltaY > 0 ? 1 : -1;
-    container.scrollTop += direction * rowHeight;
-  };
-
-  return (
-    <React.Fragment key={item.id}>
-      {hasLots && firstLot2Idx !== -1 && rIdx === firstLot2Idx && (
-        <tr key="__right_grid_lot_divider__" style={{ background: '#090d16' }}>
-          <td
-            colSpan={5}
-            style={{
-              padding: '6px 12px',
-              background: 'linear-gradient(90deg, rgba(30, 27, 75, 0.96) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(67, 20, 7, 0.96) 100%)',
-              borderTop: '2px dashed #f59e0b',
-              borderBottom: '2px solid rgba(245, 158, 11, 0.5)',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 3px 12px rgba(0, 0, 0, 0.6)',
-              userSelect: 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: 'rgba(245, 158, 11, 0.22)',
-                color: '#fbbf24',
-                border: '1px solid rgba(245, 158, 11, 0.55)',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase'
-              }}>
-                ✂️ SECTION 2 / LOT 2 ITEMS (NEW RATE)
-              </span>
-              <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>
-                Lot 1: <strong style={{ color: '#38bdf8' }}>₹{lot1Total.toLocaleString('en-IN')}</strong> ({lot1Qty} pcs)
-                &nbsp;•&nbsp;
-                Lot 2: <strong style={{ color: '#fb923c' }}>₹{lot2Total.toLocaleString('en-IN')}</strong> ({lot2Qty} pcs)
-              </span>
-            </div>
-          </td>
-        </tr>
-      )}
-      <tr 
-        key={item.id} 
-        className={(isRowSelected ? 'row-selected ' : '') + (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')}
-        onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
-      >
+              return (
+                <React.Fragment key={item.id}>
+                  {hasLots && firstLot2Idx !== -1 && rIdx === firstLot2Idx && (
+                    <tr key="__right_grid_lot_divider__" style={{ background: '#090d16' }}>
+                      <td
+                        colSpan={5}
+                        style={{
+                          padding: '6px 12px',
+                          background: 'linear-gradient(90deg, rgba(30, 27, 75, 0.96) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(67, 20, 7, 0.96) 100%)',
+                          borderTop: '2px dashed #f59e0b',
+                          borderBottom: '2px solid rgba(245, 158, 11, 0.5)',
+                          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 3px 12px rgba(0, 0, 0, 0.6)',
+                          userSelect: 'none'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            background: 'rgba(245, 158, 11, 0.22)',
+                            color: '#fbbf24',
+                            border: '1px solid rgba(245, 158, 11, 0.55)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase'
+                          }}>
+                            ✂️ SECTION 2 / LOT 2 ITEMS (NEW RATE)
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>
+                            Lot 1: <strong style={{ color: '#38bdf8' }}>₹{lot1Total.toLocaleString('en-IN')}</strong> ({lot1Qty} pcs)
+                            &nbsp;•&nbsp;
+                            Lot 2: <strong style={{ color: '#fb923c' }}>₹{lot2Total.toLocaleString('en-IN')}</strong> ({lot2Qty} pcs)
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  <tr 
+                    key={item.id} 
+                    className={
+                      (isRowActive ? 'row-active-highlight ' : '') +
+                      (isRowSelected ? 'row-selected ' : '') + 
+                      (dragOverRowIndex === rIdx ? 'drag-over-active ' : '')
+                    }
+                    onContextMenu={(e) => handleRowContextMenu(e, rIdx)}
+                  >
                   <td 
                     style={{ 
                       width: `${colWidths.index}px`, 
@@ -1503,6 +1574,10 @@ export const RightGrid: React.FC<Props> = ({
               </React.Fragment>
             );
           })}
+          {/* Bottom scroll cushion so bottom rows never get hidden behind sticky totals footer */}
+          <tr key="__bottom_scroll_spacer__" style={{ height: '70px', pointerEvents: 'none' }} aria-hidden>
+            <td colSpan={5} style={{ border: 'none', background: 'transparent', padding: 0 }} />
+          </tr>
         </tbody>
 
         {/* Table Footer Rows with Grand Total and Optional Lot Subtotals */}

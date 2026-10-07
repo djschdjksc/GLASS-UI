@@ -227,6 +227,86 @@ class LocalDatabase {
     }
   }
 
+  // Fetch real, latest state directly from SQLite Server (billapp.db)
+  public async syncFromBackend(): Promise<void> {
+    try {
+      const [billsRes, partiesRes] = await Promise.all([
+        fetch('http://127.0.0.1:5006/api/db/bills').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('http://127.0.0.1:5006/api/db/parties').then(r => r.ok ? r.json() : null).catch(() => null)
+      ]);
+
+      if (Array.isArray(billsRes) && billsRes.length > 0) {
+        let deletedBillIds = new Set<string>();
+        try {
+          const dbIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_bill_ids') || '[]');
+          deletedBillIds = new Set(dbIds);
+        } catch {}
+
+        for (const b of billsRes) {
+          if (deletedBillIds.has(b.id) || deletedBillIds.has(String(b.token))) continue;
+          const rec: BillRecord = {
+            id: b.id,
+            token: String(b.token),
+            date: b.date || '',
+            party: b.party || '',
+            docType: b.docType || 'SALE BILL',
+            vehicle: b.vehicle || '',
+            typeSelection: b.typeSelection || 'WHOLESALE',
+            total: Number(b.total || 0),
+            status: (b.status as any) || 'PAID',
+            rawItems: b.rawItems || [],
+            finishedItems: b.finishedItems || [],
+            createdAt: b.createdAt || Date.now(),
+            updatedAt: b.updatedAt || Date.now(),
+            saveIndex: b.saveIndex || 0,
+            synced: true,
+            version: 1
+          };
+          this.billsCache.set(rec.id, rec);
+          if (this.db) {
+            await this.putToStore('bills', rec);
+          }
+        }
+        this.notify('bills', Array.from(this.billsCache.values()));
+      }
+
+      if (Array.isArray(partiesRes) && partiesRes.length > 0) {
+        let deletedPartyIds = new Set<string>();
+        try {
+          const dpIds: string[] = JSON.parse(localStorage.getItem('modern_deleted_party_ids') || '[]');
+          deletedPartyIds = new Set(dpIds);
+        } catch {}
+
+        for (const p of partiesRes) {
+          const partyId = p.id || `P-${p.name}`;
+          if (deletedPartyIds.has(partyId) || deletedPartyIds.has(p.name?.toLowerCase())) continue;
+          const pRec: PartyRecord = {
+            id: partyId,
+            name: p.name || p.party_name || '',
+            phone: p.phone || p.contacts || '',
+            station: p.station || '',
+            district: p.district || '',
+            state: p.state || p.state_name || '',
+            gstin: p.gstin || '',
+            balance: Number(p.balance || 0),
+            city: p.station || p.district || '',
+            contact: p.station || '',
+            limit: 500000,
+            updatedAt: Date.now(),
+            synced: true
+          };
+          this.partiesCache.set(pRec.id, pRec);
+          if (this.db) {
+            await this.putToStore('parties', pRec);
+          }
+        }
+        this.notify('parties', Array.from(this.partiesCache.values()));
+      }
+    } catch (e) {
+      console.warn('syncFromBackend error:', e);
+    }
+  }
+
   // Seed default data if empty
   private async ensureSeedData() {
     const existingStoreBills = await this.getAllFromStore<BillRecord>('bills');

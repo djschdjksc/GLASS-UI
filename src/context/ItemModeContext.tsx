@@ -142,6 +142,23 @@ export const ItemModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const isF8 = e.key === 'F8';
 
       if (isNumpadMultiply || isF8) {
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isInput = Boolean(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA'));
+
+        if (isInput && isNumpadMultiply) {
+          const isItemNameInput = Boolean(
+            activeEl?.classList?.contains('item-name-input') ||
+            (activeEl?.id && /^left-cell-\d+-0$/.test(activeEl.id)) ||
+            activeEl?.getAttribute('data-field') === 'name'
+          );
+
+          if (!isItemNameInput) {
+            // User is in a numeric/formula cell or another column (Qty, U Cap, L Cap, size cols, price, etc.)
+            // Allow typing '*' so auto-solve math expressions like '4*4' can be entered freely!
+            return;
+          }
+        }
+
         e.preventDefault();
         e.stopPropagation();
         cycleMode();

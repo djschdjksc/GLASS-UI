@@ -25,9 +25,9 @@ export interface ItemResolveResult {
 export function getActiveShortcuts(): ShortcutRule[] {
   try {
     const customRules = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
-    if (customRules) {
+    if (customRules !== null) {
       const parsed = JSON.parse(customRules);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }

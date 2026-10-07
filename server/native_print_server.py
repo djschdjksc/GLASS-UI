@@ -25,6 +25,24 @@ def render_ledger_qimage(ledger_data, page_num=0):
     return img, lp
 
 
+def get_real_desktop_dir():
+    try:
+        import winreg
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders")
+        val, _ = winreg.QueryValueEx(key, "Desktop")
+        winreg.CloseKey(key)
+        resolved = os.path.expandvars(val)
+        if os.path.exists(resolved):
+            return resolved
+    except Exception:
+        pass
+    for env_var in ('OneDrive', 'OneDriveConsumer', 'OneDriveCommercial'):
+        onedrive = os.environ.get(env_var)
+        if onedrive and os.path.exists(os.path.join(onedrive, 'Desktop')):
+            return os.path.join(onedrive, 'Desktop')
+    return os.path.join(os.path.expanduser('~'), 'Desktop')
+
+
 def map_payload_to_bill_data(payload):
     mode = payload.get('mode', 'estimate')
     is_loading_slip = (mode == 'loading_slip')
@@ -115,13 +133,16 @@ def map_payload_to_bill_data(payload):
         'groups': groups_data,
         'adjustments': adjustments,
         'balance_label': str(payload.get('balanceLabel', 'BALANCE')).upper(),
-        'edit_id': str(payload.get('editId', ''))
+        'edit_id': str(payload.get('editId', '')),
+        'rows_per_page': int(payload.get('rowsPerPage', 0)) if payload.get('rowsPerPage') else None
     }
     return bill_data
 
 def render_qimage(bill_data, page_num=0):
+    if page_num == -1 or bill_data.get('is_image_mode'):
+        bill_data['is_image_mode'] = True
     bp = BillPainter(bill_data)
-    target_h = bp.H
+    target_h = bp.full_h if (page_num == -1 or bill_data.get('is_image_mode')) else bp.H
     img = QImage(bp.W, target_h, QImage.Format.Format_ARGB32)
     img.fill(QColor('#FFFFFF'))
     p = QPainter(img)
@@ -148,11 +169,15 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             default_printer = QPrinterInfo.defaultPrinterName()
             available = [p.printerName() for p in QPrinterInfo.availablePrinters()]
+            desktop_dir = get_real_desktop_dir()
+            downloads_dir = os.path.join(os.path.expanduser('~'), 'Downloads')
             self.wfile.write(json.dumps({
                 'status': 'ok',
                 'engine': 'PyQt6 BillPainter Native',
                 'printer': default_printer,
-                'availablePrinters': available
+                'availablePrinters': available,
+                'defaultDesktopPath': desktop_dir,
+                'defaultDownloadsPath': downloads_dir
             }).encode('utf-8'))
         else:
             self.send_response(404)
@@ -208,6 +233,9 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                     printer.setPrinterName(target_printer)
                 printer.setPageOrientation(QPageLayout.Orientation.Portrait)
                 printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+                copies = int(payload.get('copies', 1) or 1)
+                if copies > 1:
+                    printer.setCopyCount(copies)
 
                 printer_name = printer.printerName() or 'Default Printer'
                 is_pdf_virtual = 'PDF' in printer_name.upper() or 'XPS' in printer_name.upper() or 'ONENOTE' in printer_name.upper() or 'PORTPROMPT' in printer_name.upper()
@@ -215,8 +243,12 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 show_dialog = bool(payload.get('showDialog', False))
                 if show_dialog:
                     from PyQt6.QtPrintSupport import QPrintDialog
+                    from PyQt6.QtCore import Qt
                     dialog = QPrintDialog(printer)
                     dialog.setWindowTitle(f"Print - {bill_data.get('party', 'Bill')}")
+                    dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+                    dialog.raise_()
+                    dialog.activateWindow()
                     if dialog.exec() != QPrintDialog.DialogCode.Accepted:
                         self.send_response(200)
                         self._send_cors_headers()
@@ -229,10 +261,19 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
 
                 output_pdf_path = None
                 if is_pdf_virtual and not show_dialog:
-                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    custom_dir = str(payload.get('pdfSaveDirectory', '')).strip()
+                    if custom_dir:
+                        try:
+                            os.makedirs(custom_dir, exist_ok=True)
+                            save_dir = custom_dir
+                        except Exception:
+                            save_dir = get_real_desktop_dir()
+                    else:
+                        save_dir = get_real_desktop_dir()
+
                     party_clean = "".join(c for c in str(bill_data.get('party', 'SALE')) if c.isalnum() or c in (' ', '_', '-')).strip() or 'BILL'
                     bill_no = str(bill_data.get('billNo', '0001')).replace('/', '_')
-                    output_pdf_path = os.path.join(desktop_dir, f"BILL_{bill_no}_{party_clean}.pdf")
+                    output_pdf_path = os.path.join(save_dir, f"BILL_{bill_no}_{party_clean}.pdf")
                     printer.setOutputFileName(output_pdf_path)
 
                 p = QPainter(printer)
@@ -255,13 +296,32 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
+                msg = f"PDF saved on Desktop ({os.path.basename(output_pdf_path)}) & opened in 0.05s!" if output_pdf_path else f"Sent directly to {printer_name} ({total_p} page{'s' if total_p > 1 else ''}) in 0.05s!"
                 self.wfile.write(json.dumps({
                     'success': True,
-                    'message': f"Sent to {printer_name} ({total_p} page{'s' if total_p > 1 else ''}) in High-Resolution Vector mode!",
+                    'message': msg,
                     'printer': printer_name,
                     'totalPages': total_p,
                     'filePath': output_pdf_path
                 }).encode('utf-8'))
+            except Exception as ex:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(ex)}).encode('utf-8'))
+
+        elif self.path == '/api/print/open-path':
+            try:
+                target_path = payload.get('path', '')
+                if target_path and os.path.exists(target_path):
+                    import subprocess
+                    subprocess.Popen(f'explorer /select,"{os.path.normpath(target_path)}"')
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': True}).encode('utf-8'))
             except Exception as ex:
                 self.send_response(500)
                 self._send_cors_headers()
@@ -372,9 +432,18 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
 
                 output_pdf_path = None
                 if is_pdf_virtual and not show_dialog:
-                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    custom_dir = str(payload.get('pdfSaveDirectory', '')).strip()
+                    if custom_dir:
+                        try:
+                            os.makedirs(custom_dir, exist_ok=True)
+                            save_dir = custom_dir
+                        except Exception:
+                            save_dir = get_real_desktop_dir()
+                    else:
+                        save_dir = get_real_desktop_dir()
+
                     party_clean = "".join(c for c in str(payload.get('party', 'Party')) if c.isalnum() or c in (' ', '_', '-')).strip() or 'LEDGER'
-                    output_pdf_path = os.path.join(desktop_dir, f"LEDGER_{party_clean}.pdf")
+                    output_pdf_path = os.path.join(save_dir, f"LEDGER_{party_clean}.pdf")
                     printer.setOutputFileName(output_pdf_path)
 
                 p = QPainter(printer)
@@ -440,9 +509,18 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
 
                 output_pdf_path = None
                 if is_pdf_virtual and not show_dialog:
-                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    custom_dir = str(payload.get('pdfSaveDirectory', '')).strip()
+                    if custom_dir:
+                        try:
+                            os.makedirs(custom_dir, exist_ok=True)
+                            save_dir = custom_dir
+                        except Exception:
+                            save_dir = get_real_desktop_dir()
+                    else:
+                        save_dir = get_real_desktop_dir()
+
                     bill_token = str(payload.get('billToken') or payload.get('billNo') or 'REPORT').replace('/', '_')
-                    output_pdf_path = os.path.join(desktop_dir, f"EQUATION_REPORT_{bill_token}.pdf")
+                    output_pdf_path = os.path.join(save_dir, f"EQUATION_REPORT_{bill_token}.pdf")
                     printer.setOutputFileName(output_pdf_path)
 
                 # Format items for BillPainter equation mode
@@ -523,7 +601,7 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
                 is_pdf_virtual = any(k in printer_name.upper() for k in ('PDF', 'XPS', 'ONENOTE', 'PORTPROMPT'))
                 output_pdf_path = None
                 if is_pdf_virtual:
-                    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+                    desktop_dir = get_real_desktop_dir()
                     output_pdf_path = os.path.join(desktop_dir, "PRINTER_TEST_PAGE.pdf")
                     printer.setOutputFileName(output_pdf_path)
 

@@ -161,7 +161,7 @@ export function getSmartOptionIcon(label: any, value?: any): React.ReactNode {
     return <Truck size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
   if (text.includes('tempo'))
     return <Truck size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
-  if (text.includes('auto') || text.includes('car') || text.includes('vehicle') || text.includes('own vehicle'))
+  if (text.includes('auto') || text.includes('car') || text.includes('vehicle') || text.includes('own vehicle') || text.includes('self'))
     return <Car size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
   if (text.includes('courier') || text.includes('parcel') || text.includes('package') || text.includes('box'))
     return <Package size={14} style={{ color: '#ffffff', flexShrink: 0 }} />;
@@ -511,18 +511,31 @@ export const TabsContent: React.FC<TabsContentProps> = ({ value, style, children
 // =========================================================================
 export interface ShadcnSwitchProps {
   checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
+  onCheckedChange?: (checked: boolean) => void;
+  onChange?: (checked: boolean) => void;
   disabled?: boolean;
 }
 
-export const Switch: React.FC<ShadcnSwitchProps> = ({ checked, onCheckedChange, disabled }) => {
+export const Switch: React.FC<ShadcnSwitchProps> = ({ checked, onCheckedChange, onChange, disabled }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (disabled) return;
+    const nextVal = !checked;
+    if (typeof onCheckedChange === 'function') {
+      onCheckedChange(nextVal);
+    }
+    if (typeof onChange === 'function') {
+      onChange(nextVal);
+    }
+  };
+
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       disabled={disabled}
-      onClick={() => !disabled && onCheckedChange(!checked)}
+      onClick={handleClick}
       style={{
         display: 'inline-flex',
         height: '22px',
@@ -551,6 +564,55 @@ export const Switch: React.FC<ShadcnSwitchProps> = ({ checked, onCheckedChange, 
           transform: checked ? 'translateX(18px)' : 'translateX(0px)'
         }}
       />
+    </button>
+  );
+};
+
+export interface ShadcnCheckboxProps {
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  onChange?: (checked: boolean) => void;
+  disabled?: boolean;
+  style?: React.CSSProperties;
+}
+
+export const Checkbox: React.FC<ShadcnCheckboxProps> = ({ checked = false, onCheckedChange, onChange, disabled = false, style }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (disabled) return;
+    const nextVal = !checked;
+    if (typeof onCheckedChange === 'function') onCheckedChange(nextVal);
+    if (typeof onChange === 'function') onChange(nextVal);
+  };
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={handleClick}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '16px',
+        height: '16px',
+        borderRadius: '4px',
+        border: checked ? '1px solid #f4f4f5' : '1px solid #3f3f46',
+        backgroundColor: checked ? '#f4f4f5' : 'transparent',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'all 0.15s ease',
+        outline: 'none',
+        ...style
+      }}
+    >
+      {checked && (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#09090b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      )}
     </button>
   );
 };

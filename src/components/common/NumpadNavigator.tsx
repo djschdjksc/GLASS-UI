@@ -233,6 +233,8 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
 
   // Execute element action
   const executeTarget = useCallback((target: NavTarget) => {
+    previousActiveElementRef.current = null;
+    previousActiveElementIdRef.current = null;
     const el = document.querySelector(target.selector) as HTMLElement | null;
     playBeep();
     setIsOpen(false);
@@ -259,45 +261,92 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
     }
   }, [onToast]);
 
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const previousActiveElementIdRef = useRef<string | null>(null);
+  const previousSelectionRef = useRef<{ start: number | null; end: number | null }>({ start: null, end: null });
+
+  const restorePreviousFocus = useCallback(() => {
+    setTimeout(() => {
+      const prevEl = previousActiveElementRef.current;
+      const prevId = previousActiveElementIdRef.current;
+      const targetEl = (prevEl && document.contains(prevEl)) ? prevEl : (prevId ? document.getElementById(prevId) : null);
+      if (targetEl) {
+        targetEl.focus();
+        if ('setSelectionRange' in targetEl && previousSelectionRef.current.start !== null && previousSelectionRef.current.end !== null) {
+          try {
+            (targetEl as HTMLInputElement).setSelectionRange(previousSelectionRef.current.start, previousSelectionRef.current.end);
+          } catch {}
+        }
+      }
+      previousActiveElementRef.current = null;
+      previousActiveElementIdRef.current = null;
+      previousSelectionRef.current = { start: null, end: null };
+    }, 30);
+  }, []);
+
   // Global Keyboard listener for NumPad Del (".") and Navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
-      // Only intercept the PHYSICAL NumPad Del key (NumpadDecimal), NOT the regular keyboard "." dot key
-      // This allows users to type "." freely in any input field
-      const isNumpadDel = e.code === 'NumpadDecimal';
+      // Do not intercept if calculator modal is actively open
+      const calcEl = document.getElementById('digital-calc-modal');
+      if (calcEl && calcEl.offsetParent !== null) {
+        return;
+      }
 
-      // TOGGLE OPEN / CLOSE VIA ".":
+      // Intercept the PHYSICAL NumPad Del/Decimal key (NumpadDecimal), NOT the regular keyboard "." dot key.
+      // User rule: Pressing NumPad '.' must ALWAYS toggle / trigger this group-wise shortcut navigator,
+      // EVEN WHEN ACTIVE INSIDE ANY INPUT CELL OR TEXTBOX!
+      // (When users want to type '.' as a decimal point, they use the main keyboard '.' key next to '/').
+      const isNumpadDel = e.code === 'NumpadDecimal' || (e.key === '.' && e.location === 3) || e.key === 'Decimal';
+
+      // TOGGLE OPEN / CLOSE VIA NumPad ".":
       if (isNumpadDel) {
+        e.preventDefault();
+        e.stopPropagation();
+
         if (isOpen) {
-          // If open, pressing "." ALWAYS closes immediately!
-          e.preventDefault();
-          e.stopPropagation();
+          // If open, pressing "." closes immediately and RESTORES focus to previously active cell!
           macAudio.playHover();
           setIsOpen(false);
           setSelectedZone(null);
-          return;
-        } else if (!isInput || e.altKey || e.ctrlKey) {
-          // If closed and not typing text, open it!
-          e.preventDefault();
-          e.stopPropagation();
+          restorePreviousFocus();
+        } else {
+          // Store previously active element/cell to restore focus when closed or canceled!
+          const activeEl = document.activeElement as HTMLElement | null;
+          previousActiveElementRef.current = activeEl;
+          previousActiveElementIdRef.current = activeEl?.id || null;
+          if (activeEl && 'selectionStart' in activeEl) {
+            try {
+              const inp = activeEl as HTMLInputElement;
+              previousSelectionRef.current = { start: inp.selectionStart, end: inp.selectionEnd };
+            } catch {
+              previousSelectionRef.current = { start: null, end: null };
+            }
+          } else {
+            previousSelectionRef.current = { start: null, end: null };
+          }
+
+          if (activeEl && typeof activeEl.blur === 'function') {
+            activeEl.blur();
+          }
           playBeep();
           setIsOpen(true);
           setSelectedZone(null);
-          return;
         }
+        return;
       }
 
       // If Navigator is NOT OPEN, do nothing
       if (!isOpen) return;
 
-      // Handle Escape to exit
+      // Handle Escape to exit and restore previous focus
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         macAudio.playHover();
         setIsOpen(false);
         setSelectedZone(null);
+        restorePreviousFocus();
         return;
       }
 

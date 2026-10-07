@@ -71,13 +71,9 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   const partyDropdownRef = useRef<HTMLDivElement>(null);
   const partyListDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Date filters
-  const [dateFrom, setDateFrom] = useState<string>(() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 1);
-    return d.toISOString().split('T')[0];
-  });
-  const [dateTo, setDateTo] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  // Date filters (empty by default so entire account history is visible)
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
 
   // Ledger entries and state
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
@@ -93,7 +89,7 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
   // In-table search & quick type filter
   const [tableSearchQuery, setTableSearchQuery] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'SALE BILL' | 'RECEIPT' | 'SALE RETURN'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'SALE BILL' | 'RECEIPT' | 'SALE RETURN' | 'ADJUSTMENT'>('ALL');
 
   // Pagination state
   const [ledgerPage, setLedgerPage] = useState<number>(1);
@@ -170,6 +166,21 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   useEffect(() => {
     const fetchParties = async () => {
       try {
+        const ledgerPartiesRes = await fetch(`${DB_API_URL}/api/db/ledger/parties`);
+        if (ledgerPartiesRes.ok) {
+          const names: string[] = await ledgerPartiesRes.json();
+          if (Array.isArray(names) && names.length > 0) {
+            setPartiesList(names);
+            if (!selectedParty) {
+              setSelectedParty(names[0]);
+              setPartySearchQuery(names[0]);
+            }
+            return;
+          }
+        }
+      } catch {}
+
+      try {
         const res = await fetch(`${DB_API_URL}/api/db/parties`);
         if (res.ok) {
           const data = await res.json();
@@ -181,7 +192,6 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
             setPartySearchQuery(names[0]);
           }
         } else {
-          // fallback to context
           const names = Array.from(new Set(contextParties.map(p => p.name))).filter(Boolean);
           names.sort((a, b) => a.localeCompare(b));
           setPartiesList(names);
@@ -380,12 +390,12 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
     if (list.length > 0) setSelectedRowId(list[0].id);
   };
 
-  // Auto load when party changes
+  // Auto load when party or date filter changes
   useEffect(() => {
     if (selectedParty) {
       loadLedger(selectedParty);
     }
-  }, [selectedParty]);
+  }, [selectedParty, dateFrom, dateTo]);
 
   // Robust party selection handler with immediate execution
   const handleSelectParty = useCallback((partyName: string) => {
@@ -402,10 +412,8 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
   // Clear date filters
   const handleClearFilter = () => {
     macAudio.playClick();
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 1);
-    setDateFrom(d.toISOString().split('T')[0]);
-    setDateTo(new Date().toISOString().split('T')[0]);
+    setDateFrom('');
+    setDateTo('');
     setTimeout(() => loadLedger(), 50);
   };
 
@@ -1339,9 +1347,9 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
 
         {/* Center: Type Filter Pills */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#18181b', padding: '3px', borderRadius: '6px', border: '1px solid #27272a' }}>
-          {(['ALL', 'SALE BILL', 'RECEIPT', 'SALE RETURN'] as const).map(f => {
+          {(['ALL', 'SALE BILL', 'RECEIPT', 'SALE RETURN', 'ADJUSTMENT'] as const).map(f => {
             const isActive = typeFilter === f;
-            const label = f === 'ALL' ? 'All' : (f === 'SALE BILL' ? 'Sale Bills' : (f === 'RECEIPT' ? 'Receipts' : 'Returns'));
+            const label = f === 'ALL' ? 'All' : (f === 'SALE BILL' ? 'Sale Bills' : (f === 'RECEIPT' ? 'Receipts' : (f === 'SALE RETURN' ? 'Returns' : 'Adjustments')));
             return (
               <button
                 key={f}
@@ -1492,6 +1500,8 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                                 ? 'rgba(251, 146, 60, 0.12)'
                                 : item.type === 'RECEIPT'
                                 ? 'rgba(52, 211, 153, 0.12)'
+                                : item.type === 'ADJUSTMENT'
+                                ? 'rgba(250, 204, 21, 0.12)'
                                 : 'rgba(161, 161, 170, 0.12)',
                             color:
                               isOpening
@@ -1504,6 +1514,8 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                                 ? '#fb923c'
                                 : item.type === 'RECEIPT'
                                 ? '#34d399'
+                                : item.type === 'ADJUSTMENT'
+                                ? '#facc15'
                                 : '#a1a1aa',
                             border: `1px solid ${
                               isOpening
@@ -1516,6 +1528,8 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                                 ? 'rgba(251, 146, 60, 0.25)'
                                 : item.type === 'RECEIPT'
                                 ? 'rgba(52, 211, 153, 0.25)'
+                                : item.type === 'ADJUSTMENT'
+                                ? 'rgba(250, 204, 21, 0.25)'
                                 : 'rgba(161, 161, 170, 0.25)'
                             }`
                           }}

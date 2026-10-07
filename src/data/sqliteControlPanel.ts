@@ -18,96 +18,96 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "conversion": "B.F.P-(G)",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.915,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "B1",
     "conversion": "B.F.P-(B)",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.915,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783701271710",
     "conversion": "B.F.P-(G)-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783701291910",
     "conversion": "B.F.P-(A)-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "A1",
     "conversion": "B.F.P-(A)",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.915,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700664286",
     "conversion": "B.F.P-(A)-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700669046",
     "conversion": "B.F.P-(B)-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700673198",
     "conversion": "B.F.P-(B)-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "G",
@@ -118,8 +118,8 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "E",
@@ -130,8 +130,8 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "C",
@@ -142,8 +142,8 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "B",
@@ -154,8 +154,8 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "S",
@@ -166,8 +166,8 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "R",
@@ -178,32 +178,32 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "T",
     "conversion": "BATTEN",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
     "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "O",
     "conversion": "SILICON",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
     "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "0",
@@ -214,8 +214,8 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL (SHEET)",
-    "group_name": "UV"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": ".",
@@ -226,481 +226,467 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL (SHEET)",
-    "group_name": "UV"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "J",
     "conversion": "Jointer",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 3.05,
-    "color": "#000000",
-    "box_size": 1.0,
-    "weight_per_pcs": 0.0,
-    "real_item_name": "PVC JOINTER 39259090",
-    "group_name": "JOINTER"
-  },
-  {
-    "shortcut": "F",
-    "conversion": "Fluted Jointer",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 3.05,
-    "color": "#000000",
-    "box_size": 1.0,
-    "weight_per_pcs": 0.0,
-    "real_item_name": "PVC JOINTER 39259090",
-    "group_name": "JOINTER"
-  },
-  {
-    "shortcut": "BS",
-    "conversion": "BLACK-SCREW",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
     "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
+  },
+  {
+    "shortcut": "F",
+    "conversion": "Fluted Jointer",
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
+    "color": "#000000",
+    "box_size": 1.0,
+    "weight_per_pcs": 0.0,
+    "real_item_name": "",
+    "group_name": "General"
+  },
+  {
+    "shortcut": "BS",
+    "conversion": "BLACK-SCREW",
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
+    "color": "#000000",
+    "box_size": 1.0,
+    "weight_per_pcs": 0.0,
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "P",
     "conversion": "PERAMETER",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "CEILING SECTION",
-    "group_name": "PERAMETER"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "BG1",
     "conversion": "B.F.P-B-(G)",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.915,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "A2",
     "conversion": "(A)-CM",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 120",
-    "group_name": "CM"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "2",
     "conversion": "C.M",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 120",
-    "group_name": "CM"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700689142",
     "conversion": "C.M-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 120",
-    "group_name": "CM"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700693878",
     "conversion": "C.M-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 120",
-    "group_name": "CM"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "1",
     "conversion": "B.F.P",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.915,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "I",
     "conversion": "GOLDEN-PATTI",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
     "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "A",
     "conversion": "GOLDEN-TAPE",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
     "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "HARWARE",
-    "group_name": "HARWARE"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "8",
     "conversion": "L.U",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 2.9,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL (L)",
-    "group_name": "LOUWER"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "9",
     "conversion": "L.A",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 2.9,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL (L)",
-    "group_name": "LOUWER"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "`",
     "conversion": "CP",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 2.9,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL (L)",
-    "group_name": "LOUWER"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783701280062",
     "conversion": "B.F.P-(G)-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "3",
     "conversion": "S.L",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "4",
     "conversion": "T.G",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "A4",
     "conversion": "T.G-(A)",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "6",
     "conversion": "H.O",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700739862",
     "conversion": "T.G-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700736526",
     "conversion": "T.G-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700721638",
     "conversion": "S.L-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700725566",
     "conversion": "S.L-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL 39259090 - 110 MEDIUM LIGHT SHEETS",
-    "group_name": "SL-TG-HO"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "C5",
     "conversion": "F.P.C",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "CG5",
     "conversion": "F.P.C.G",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "G5",
     "conversion": "F.P.G",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "5",
     "conversion": "F.P",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "CGA5",
     "conversion": "F.P.C.G-(A)",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700697870",
     "conversion": "F.P-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700702101",
     "conversion": "F.P-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700706654",
     "conversion": "F.P.C.G-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700710686",
     "conversion": "F.P.C.G-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700714598",
     "conversion": "F.P.G-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700718246",
     "conversion": "F.P.G-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "7",
     "conversion": "S.P",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
-    "multiplication": 0.7625,
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700728973",
     "conversion": "S.P-(Digital)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
+    "real_item_name": "",
+    "group_name": "General"
   },
   {
     "shortcut": "__auto_1783700732781",
     "conversion": "S.P-(Digital-or-Golden)",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.7625,
+    "u_cap": "0.0",
+    "l_cap": "0.0",
+    "multiplication": 1.0,
     "color": "#000000",
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 130",
-    "group_name": "SP-FP"
-  },
-  {
-    "shortcut": "__auto_1786708333031",
-    "conversion": "B.F.P-(G)-(Digital)-Lower-Film",
-    "u_cap": 0.0,
-    "l_cap": 0.0,
-    "multiplication": 0.915,
-    "color": "#000000",
-    "box_size": 1.0,
-    "weight_per_pcs": 0.0,
-    "real_item_name": "PVC PANEL - 39259090 - 135",
-    "group_name": "BFP"
+    "real_item_name": "",
+    "group_name": "General"
   }
 ];
 
-// Exported from SQLite: control_groups table
-// Columns: group_name, group_index, weight, box_size, multiplication, real_item_name, skip_equation, chain_parent
 export interface SqliteControlGroup {
   group_name: string;
   group_index: number;

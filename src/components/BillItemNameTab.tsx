@@ -4,6 +4,12 @@ import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Tag, Hash, FileText, Layers, Banknote } from 'lucide-react';
 import { PREFILLED_BILL_MAPS } from '../data/billMapsData';
 import type { BillNameMap } from '../data/billMapsData';
+import {
+  getBillItemNames,
+  saveBillItemName,
+  deleteBillItemName,
+  saveBillItemNamesBulk
+} from '../services/db/sqliteDb';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { Pagination as ShadcnPagination, Tooltip } from './ui/shadcn';
 
@@ -37,48 +43,73 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
   });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('billapp_bill_maps');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.length < 10) {
-          setMaps(PREFILLED_BILL_MAPS);
-          localStorage.setItem('billapp_bill_maps', JSON.stringify(PREFILLED_BILL_MAPS));
-        } else {
-          setMaps(parsed);
+    const fetchFromSqlite = async () => {
+      try {
+        const rows = await getBillItemNames();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const mapped: BillNameMap[] = rows.map((r: any) => ({
+            id: String(r.id),
+            isActive: r.isActive !== false,
+            shortCode: r.shortCode || r.itemName || '',
+            printName: r.printName || r.itemName || '',
+            rate: typeof r.rate === 'number' ? r.rate : (parseFloat(r.value || '0') || 0),
+            category: r.category || r.groupName || 'General'
+          }));
+          setMaps(mapped);
+          return;
         }
-      } else {
-        setMaps(PREFILLED_BILL_MAPS);
-        localStorage.setItem('billapp_bill_maps', JSON.stringify(PREFILLED_BILL_MAPS));
+      } catch (err) {
+        console.warn('Could not fetch bill items directly from SQLite server:', err);
       }
-    } catch {
-      setMaps(PREFILLED_BILL_MAPS);
-    }
+    };
+
+    fetchFromSqlite();
+    window.addEventListener('billapp_bill_maps_updated', fetchFromSqlite);
+    return () => window.removeEventListener('billapp_bill_maps_updated', fetchFromSqlite);
   }, []);
 
-  const saveMaps = (data: BillNameMap[]) => {
+  const saveMaps = (data: BillNameMap[], syncToServer = true) => {
     setMaps(data);
-    localStorage.setItem('billapp_bill_maps', JSON.stringify(data));
+    if (syncToServer) {
+      saveBillItemNamesBulk(data, 'replace').catch(e => console.error('Failed to sync bill items to SQLite:', e));
+    }
   };
 
   const handleCellChange = (index: number, field: keyof BillNameMap, value: any) => {
     const next = [...maps];
-    next[index] = { ...next[index], [field]: value };
+    const updated = { ...next[index], [field]: value };
+    next[index] = updated;
     saveMaps(next);
+    saveBillItemName({
+      id: updated.id,
+      category: updated.category,
+      printName: updated.printName,
+      shortCode: updated.shortCode,
+      rate: updated.rate,
+      isActive: updated.isActive
+    }).catch(console.error);
   };
 
   const handleAddNewRow = () => {
     macAudio.playClick();
     const newRow: BillNameMap = {
-      id: 'bm' + Date.now(),
+      id: 'bin_' + Date.now(),
       isActive: true,
       shortCode: '',
       printName: '',
       rate: 0,
-      category: ''
+      category: 'General'
     };
     const next = [newRow, ...maps];
     saveMaps(next);
+    saveBillItemName({
+      id: newRow.id,
+      category: newRow.category,
+      printName: newRow.printName,
+      shortCode: newRow.shortCode,
+      rate: newRow.rate,
+      isActive: newRow.isActive
+    }).catch(console.error);
     setSelectedIdx(0);
     setEditingIdx(0);
   };
@@ -90,10 +121,11 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
 
   const confirmDeleteRow = () => {
     if (!rowToDelete) return;
-    const index = rowToDelete.index;
+    const { item, index } = rowToDelete;
     macAudio.playSuccess();
     const next = maps.filter((_, i) => i !== index);
     saveMaps(next);
+    deleteBillItemName(item.id).catch(console.error);
     if (selectedIdx === index) {
       if (index < next.length) {
         setSelectedIdx(index);
@@ -117,7 +149,7 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
     const parsedRows: BillNameMap[] = lines.map((line, idx) => {
       const cols = line.split('\t').map(c => c.trim());
       return {
-        id: 'bm' + (Date.now() + idx),
+        id: 'bin_' + (Date.now() + idx),
         isActive: true,
         shortCode: cols[0] || '',
         printName: cols[1] || cols[0] || '',
@@ -129,6 +161,7 @@ export const BillItemNameTab: React.FC<BillItemNameTabProps> = ({
     if (parsedRows.length > 0) {
       const next = [...parsedRows, ...maps];
       saveMaps(next);
+      saveBillItemNamesBulk(next, 'replace').catch(console.error);
     }
   };
 

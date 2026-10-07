@@ -5,6 +5,7 @@ import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import type { SqliteControlRow } from '../data/sqliteControlPanel';
+import { getConversions } from '../services/db/sqliteDb';
 import { downloadCSV } from '../utils/exportCsv';
 import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
 import {
@@ -81,13 +82,33 @@ export const EquationTabView: React.FC = () => {
   const { bills, parties } = useDatabase();
   const { defaultPrinter } = useSettings();
 
-  // Load conversions lookup
-  const conversions = useMemo<SqliteControlRow[]>(() => {
+  // Load conversions lookup from SQLite backend and local cache
+  const [conversions, setConversions] = useState<SqliteControlRow[]>(() => {
     try {
       const saved = localStorage.getItem('billapp_conversions');
       if (saved) return JSON.parse(saved);
     } catch {}
     return SQLITE_CONTROL_CONVERSIONS;
+  });
+
+  useEffect(() => {
+    const refreshConvs = async () => {
+      try {
+        const rows = await getConversions();
+        if (Array.isArray(rows) && rows.length > 0) {
+          setConversions(rows);
+          return;
+        }
+      } catch {}
+      try {
+        const saved = localStorage.getItem('billapp_conversions');
+        if (saved) setConversions(JSON.parse(saved));
+      } catch {}
+    };
+
+    refreshConvs();
+    window.addEventListener('billapp_conversions_updated', refreshConvs);
+    return () => window.removeEventListener('billapp_conversions_updated', refreshConvs);
   }, []);
 
   // Conversion maps

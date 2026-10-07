@@ -4,6 +4,7 @@ import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, Plus, Trash2, Check, Layers, Tag, Hash, Percent, FileText, Scale, Package, ClipboardPaste } from 'lucide-react';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import type { SqliteControlRow } from '../data/sqliteControlPanel';
+import { getConversions, saveConversionsBulk, deleteConversion } from '../services/db/sqliteDb';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { Pagination as ShadcnPagination } from './ui/shadcn';
 
@@ -51,25 +52,32 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
   });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('billapp_conversions');
-      if (saved) {
-        setConversions(JSON.parse(saved));
-      } else {
-        setConversions(SQLITE_CONTROL_CONVERSIONS);
-        localStorage.setItem('billapp_conversions', JSON.stringify(SQLITE_CONTROL_CONVERSIONS));
+    const fetchFromSqlite = async () => {
+      try {
+        const rows = await getConversions();
+        if (Array.isArray(rows)) {
+          setConversions(rows);
+          return;
+        }
+      } catch (err) {
+        console.warn('Could not fetch conversions directly from SQLite server:', err);
       }
-    } catch {
-      setConversions(SQLITE_CONTROL_CONVERSIONS);
-    }
+    };
+
+    fetchFromSqlite();
+    window.addEventListener('billapp_conversions_updated', fetchFromSqlite);
+    return () => window.removeEventListener('billapp_conversions_updated', fetchFromSqlite);
   }, []);
 
-  const saveToStorage = (data: SqliteControlRow[]) => {
+  const saveToStorage = (data: SqliteControlRow[], syncToServer = true) => {
     setConversions(data);
-    try {
-      localStorage.setItem('billapp_conversions', JSON.stringify(data));
-      localStorage.setItem('ctrl_conv_rules_v3', JSON.stringify(data));
-    } catch {}
+    window.dispatchEvent(new CustomEvent('billapp_conversions_updated'));
+
+    if (syncToServer) {
+      saveConversionsBulk(data, 'replace').catch(err => {
+        console.error('Failed to sync conversions to SQLite DB:', err);
+      });
+    }
   };
 
   const handleCellChange = (index: number, field: keyof SqliteControlRow, value: any) => {
@@ -104,12 +112,22 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     setRowToDelete({ item, index });
   };
 
-  const confirmDeleteRow = () => {
+  const confirmDeleteRow = async () => {
     if (!rowToDelete) return;
-    const index = rowToDelete.index;
+    const { item, index } = rowToDelete;
     macAudio.playSuccess();
     const next = conversions.filter((_, i) => i !== index);
     saveToStorage(next);
+
+    const targetKey = item.shortcut || (item as any).id;
+    if (targetKey) {
+      try {
+        await deleteConversion(targetKey);
+      } catch (err) {
+        console.error('Failed to delete conversion in SQLite:', err);
+      }
+    }
+
     if (selectedIdx === index) {
       if (index < next.length) {
         setSelectedIdx(index);

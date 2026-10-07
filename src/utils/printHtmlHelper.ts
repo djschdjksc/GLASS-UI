@@ -1,14 +1,18 @@
 import type { BillPrintPayload } from './billCanvasPainter';
 import { formatIndianCurrency, formatDisplayDate } from './billCanvasPainter';
+import { getCachedSkipItems } from '../services/db/sqliteDb';
+import { formatBillNumber } from './billDocTypes';
 
-// Build itemPrefix → mainGroup map from localStorage (same logic as LeftGrid)
+// Build itemPrefix → mainGroup map from SQLite cache (same logic as LeftGrid)
 function buildPrintSkipMap(): Map<string, string> {
   try {
-    const raw: any[] = JSON.parse(localStorage.getItem('billapp_skip_items') || '[]');
+    const raw: any[] = getCachedSkipItems();
     const map = new Map<string, string>();
     raw.forEach((it: any) => {
-      if (it.itemPrefix && it.mainGroup) {
-        map.set(it.itemPrefix.trim().toLowerCase(), it.mainGroup.trim());
+      const pfx = (it.itemPrefix || it.item_prefix || '').trim().toLowerCase();
+      const mg = (it.mainGroup || it.main_group || '').trim();
+      if (pfx && mg) {
+        map.set(pfx, mg);
       }
     });
     return map;
@@ -22,11 +26,14 @@ function getPrintGroupLabel(name: string, map: Map<string, string>): string | nu
   const lower = name.trim().toLowerCase();
   if (!lower) return null;
   if (map.has(lower)) return map.get(lower)!;
+  const cleanLower = lower.replace(/[^a-z0-9]/g, '');
   let bestMatch: string | null = null;
   let bestLen = 0;
   map.forEach((group, prefix) => {
-    if (lower.startsWith(prefix) && prefix.length > bestLen) {
-      bestLen = prefix.length;
+    const p = prefix.trim().toLowerCase();
+    const cleanP = p.replace(/[^a-z0-9]/g, '');
+    if ((lower === p || lower.startsWith(p + ' ') || lower.startsWith(p + '-') || lower.startsWith(p + '/') || lower.startsWith(p) || (cleanP && cleanLower.startsWith(cleanP))) && p.length > bestLen) {
+      bestLen = p.length;
       bestMatch = group;
     }
   });
@@ -97,7 +104,7 @@ export function directPrintBill(data: BillPrintPayload): void {
     const l = isActual ? (Number(it.lCap) || 0) : 0;
     const cleanName = isActual ? (it.name || '').replace(/\./g, '').replace(/-/g, ' ') : '';
     const pCode = isActual ? (it.partyCode || '') : '';
-    const groupLabel = isActual ? getPrintGroupLabel(cleanName, skipMap) : null;
+    const groupLabel = isActual ? (getPrintGroupLabel(it.name, skipMap) || getPrintGroupLabel(cleanName, skipMap)) : null;
 
     // Group badge HTML for print — simple inline pill, print-safe solid colors
     const groupBadgeHtml = groupLabel
@@ -152,14 +159,33 @@ export function directPrintBill(data: BillPrintPayload): void {
 
   const adjustmentsHtml = (data.adjustments || []).map(adj => {
     const prefix = adj.type === 'sub' ? '(-) ' : '(+) ';
-    const color = adj.type === 'sub' ? '#b91c1c' : '#047857';
+    const valColor = adj.type === 'sub' ? '#dc2626' : '#16a34a';
     return `
-      <div style="display: flex; justify-content: space-between; font-style: italic; font-size: 15px; font-weight: 700; color: ${color}; margin-bottom: 4px;">
-        <span>${prefix}${adj.desc || 'Adjustment'}</span>
-        <span>${formatIndianCurrency(adj.val || 0)}</span>
+      <div style="display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 4px;">
+        <span style="color: #000000; font-style: italic; font-weight: 600;">${prefix}${adj.desc || 'Adjustment'}</span>
+        <span style="color: ${valColor}; font-weight: 800; font-size: 16px;">${formatIndianCurrency(adj.val || 0)}</span>
       </div>
     `;
   }).join('');
+
+  const formattedBillNo = formatBillNumber(data.billNo);
+  const rawVType = (data.vehicleType || '').trim();
+  const vType = (rawVType.toUpperCase() === 'OWN VEHICLE') ? 'SELF' : rawVType;
+  const vNo = (data.vehicleNo || '').trim();
+  let vehicleStr = '';
+  if (vType && vNo) {
+    if (vType.toLowerCase().includes(vNo.toLowerCase())) {
+      vehicleStr = vType;
+    } else if (vNo.toLowerCase().includes(vType.toLowerCase())) {
+      vehicleStr = vNo;
+    } else {
+      vehicleStr = `${vType} - ${vNo}`;
+    }
+  } else if (vType) {
+    vehicleStr = vType;
+  } else if (vNo) {
+    vehicleStr = vNo;
+  }
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -210,10 +236,56 @@ export function directPrintBill(data: BillPrintPayload): void {
           .meta-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            gap: 15px;
             font-size: 15px;
             font-weight: 800;
             margin-bottom: 6px;
             color: #000000;
+          }
+          .meta-item-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1 1 auto;
+            min-width: 0;
+            word-break: break-word;
+          }
+          .meta-item-center {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 0 auto;
+            margin: 0 auto;
+            white-space: nowrap;
+          }
+          .meta-item-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 0 auto;
+            margin-left: auto;
+            white-space: nowrap;
+            text-align: right;
+          }
+          .meta-icon-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 1.5px solid #000000;
+            background: #eaf3fc;
+            flex-shrink: 0;
+            margin-right: 6px;
+          }
+          .meta-icon {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            stroke: #000000;
+            display: inline-block;
           }
           .divider {
             border-bottom: 2.5px solid #000000;
@@ -272,13 +344,91 @@ export function directPrintBill(data: BillPrintPayload): void {
         <div class="title-header">${title}</div>
 
         <div class="meta-row">
-          <span>${slipPrefix} ${data.billNo || '0001'}${data.editId ? ` [${data.editId}]` : ''}</span>
-          <span>DATE: ${formatDisplayDate(data.date)}</span>
+          <div class="meta-item-left">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <line x1="10" y1="9" x2="8" y2="9"></line>
+              </svg>
+            </span>
+            <span>${formattedBillNo || '0001'}</span>
+          </div>
+
+          ${vType && vNo ? `
+          <div class="meta-item-center">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+            </span>
+            <span>${vType}</span>
+          </div>
+          <div class="meta-item-right">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                <circle cx="5" cy="12" r="1"></circle>
+                <circle cx="19" cy="12" r="1"></circle>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+            </span>
+            <span>${vNo}</span>
+          </div>
+          ` : vType ? `
+          <div class="meta-item-right">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+            </span>
+            <span>${vType}</span>
+          </div>
+          ` : vNo ? `
+          <div class="meta-item-right">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                <circle cx="5" cy="12" r="1"></circle>
+                <circle cx="19" cy="12" r="1"></circle>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+            </span>
+            <span>${vNo}</span>
+          </div>
+          ` : ''}
         </div>
 
         <div class="meta-row" style="font-size: 16px;">
-          <span>PARTY: ${data.partyName || 'CASH SALE'}</span>
-          ${data.vehicleNo ? `<span>VEHICLE: ${data.vehicleNo}</span>` : ''}
+          <div class="meta-item-left">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="10" r="3.2"></circle>
+                <path d="M6.5 19.5c0-2.8 2.5-4.5 5.5-4.5s5.5 1.7 5.5 4.5"></path>
+              </svg>
+            </span>
+            <span>${data.partyName || 'CASH SALE'}</span>
+          </div>
+          <div class="meta-item-right">
+            <span class="meta-icon-badge">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </span>
+            <span>${formatDisplayDate(data.date)}</span>
+          </div>
         </div>
 
         <div class="divider"></div>
@@ -297,9 +447,11 @@ export function directPrintBill(data: BillPrintPayload): void {
             </thead>
             <tbody>
               ${rawRowsHtml}
-              ${isLoadingSlip ? `
+              ${!isSummaryOnly ? `
                 <tr class="total-row" style="height: 36px;">
-                  <td colspan="${showPCode ? 3 : 2}" style="text-align: right; font-size: 15px; font-weight: 900; padding-right: 14px; letter-spacing: 0.5px;">TOTAL</td>
+                  <td style="text-align: center; font-weight: 800; font-size: 13px;">TOTAL</td>
+                  <td style="text-align: left; font-weight: 800; font-size: 14px; padding-left: 10px;">${data.editId || ''}</td>
+                  ${showPCode ? '<td></td>' : ''}
                   ${sizeCols.map(sc => {
                     const sum = colSums[sc.field] || 0;
                     return `<td style="text-align: center; font-size: 16px; font-weight: 900; color: #1d4ed8;">${sum > 0 ? sum : ''}</td>`;

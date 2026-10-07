@@ -75,11 +75,55 @@ def init_db():
                 group_name TEXT NOT NULL,
                 item_prefix TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS control_panel (
+                id TEXT PRIMARY KEY,
+                shortcut TEXT NOT NULL,
+                conversion TEXT NOT NULL,
+                u_cap TEXT DEFAULT '0',
+                l_cap TEXT DEFAULT '0',
+                multiplication REAL DEFAULT 1.0,
+                color TEXT DEFAULT '#000000',
+                box_size REAL DEFAULT 1.0,
+                weight_per_pcs REAL DEFAULT 0.0,
+                real_item_name TEXT DEFAULT '',
+                group_name TEXT DEFAULT '',
+                updated_at INTEGER NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS conversions (
                 id TEXT PRIMARY KEY,
-                rule TEXT NOT NULL,
-                value REAL DEFAULT 0,
-                description TEXT DEFAULT ''
+                shortcut TEXT NOT NULL,
+                conversion TEXT NOT NULL,
+                u_cap TEXT DEFAULT '0',
+                l_cap TEXT DEFAULT '0',
+                multiplication REAL DEFAULT 1.0,
+                color TEXT DEFAULT '#000000',
+                box_size REAL DEFAULT 1.0,
+                weight_per_pcs REAL DEFAULT 0.0,
+                real_item_name TEXT DEFAULT '',
+                group_name TEXT DEFAULT '',
+                updated_at INTEGER NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS bill_item_names (
+                id TEXT PRIMARY KEY,
+                group_name TEXT NOT NULL,
+                item_name TEXT NOT NULL,
+                value TEXT DEFAULT '',
+                updated_at INTEGER NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS mould_prices (
+                mould_name TEXT PRIMARY KEY,
+                price REAL DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS bill_adjustments (
+                id TEXT PRIMARY KEY,
+                bill_db_id INTEGER,
+                party TEXT,
+                bill_date TEXT,
+                adj_type TEXT,
+                description TEXT,
+                amount REAL,
+                updated_at INTEGER NOT NULL
             );
             CREATE TABLE IF NOT EXISTS stock_items (
                 id TEXT PRIMARY KEY,
@@ -297,13 +341,50 @@ class DBHandler(BaseHTTPRequestHandler):
                 elif path == '/api/db/parties':
                     rows = conn.execute("SELECT * FROM parties ORDER BY name").fetchall()
                     parties = []
+                    known_names = set()
                     for r in rows:
                         p = dict(r)
                         p['state'] = p.pop('state_name', '')
                         p['limit'] = p.pop('party_limit', 500000)
                         p['updatedAt'] = p.pop('updated_at', 0)
                         parties.append(p)
+                        known_names.add(p['name'].strip().lower())
+
+                    # Merge distinct parties from bills so autocomplete has both base & suffixed names
+                    bill_parties = conn.execute("SELECT DISTINCT party FROM bills WHERE party IS NOT NULL AND TRIM(party) != ''").fetchall()
+                    for bp in bill_parties:
+                        name = bp['party'].strip()
+                        if name.lower() not in known_names:
+                            known_names.add(name.lower())
+                            station = name.split(' - ')[-1].strip() if ' - ' in name else ''
+                            parties.append({
+                                'id': f"P_bill_{len(parties)+1}",
+                                'name': name,
+                                'phone': '',
+                                'station': station,
+                                'district': station,
+                                'state': '',
+                                'pincode': '',
+                                'balance': 0,
+                                'limit': 500000,
+                                'gstin': '',
+                                'updatedAt': 0
+                            })
+                    parties.sort(key=lambda x: x['name'].lower())
                     self.send_json(parties)
+
+                elif path == '/api/db/ledger/parties':
+                    known = set()
+                    for r in conn.execute("SELECT DISTINCT name FROM parties WHERE name IS NOT NULL AND TRIM(name) != ''").fetchall():
+                        known.add(r[0].strip())
+                    for r in conn.execute("SELECT DISTINCT party FROM bills WHERE party IS NOT NULL AND TRIM(party) != ''").fetchall():
+                        known.add(r[0].strip())
+                    for r in conn.execute("SELECT DISTINCT party FROM party_receipts WHERE party IS NOT NULL AND TRIM(party) != ''").fetchall():
+                        known.add(r[0].strip())
+                    for r in conn.execute("SELECT DISTINCT party FROM bill_adjustments WHERE party IS NOT NULL AND TRIM(party) != ''").fetchall():
+                        known.add(r[0].strip())
+                    all_parties = sorted(known, key=lambda x: x.lower())
+                    self.send_json(all_parties)
 
                 # ── Skip ──
                 elif path == '/api/db/skip-main-groups':
@@ -336,8 +417,70 @@ class DBHandler(BaseHTTPRequestHandler):
 
                 # ── Conversions ──
                 elif path == '/api/db/conversions':
-                    rows = conn.execute("SELECT * FROM conversions").fetchall()
-                    self.send_json(rows_to_list(rows))
+                    rows = conn.execute("SELECT * FROM control_panel ORDER BY id").fetchall()
+                    convs = []
+                    for r in rows:
+                        d = dict(r)
+                        d['uCap'] = d.get('u_cap', '')
+                        d['lCap'] = d.get('l_cap', '')
+                        d['boxSize'] = d.get('box_size', 1.0)
+                        d['weightPerPcs'] = d.get('weight_per_pcs', 0.0)
+                        d['realItemName'] = d.get('real_item_name', '')
+                        d['groupName'] = d.get('group_name', '')
+                        convs.append(d)
+                    self.send_json(convs)
+
+                # ── Bill Item Names ──
+                elif path == '/api/db/bill-item-names':
+                    rows = conn.execute("SELECT * FROM bill_item_names ORDER BY group_name, item_name").fetchall()
+                    items = []
+                    for r in rows:
+                        d = dict(r)
+                        g = d.pop('group_name', '')
+                        it = d.pop('item_name', '')
+                        val = d.get('value', '')
+                        try:
+                            rate_val = float(val or 0)
+                        except Exception:
+                            rate_val = 0.0
+                        d['groupName'] = g
+                        d['itemName'] = it
+                        d['category'] = d.get('category') or g
+                        d['printName'] = d.get('print_name') or it
+                        d['shortCode'] = d.get('short_code') or it
+                        d['rate'] = rate_val
+                        d['isActive'] = bool(d.get('is_active', 1))
+                        d['updatedAt'] = d.pop('updated_at', 0)
+                        items.append(d)
+                    self.send_json(items)
+
+                # ── Mould Prices ──
+                elif path == '/api/db/mould-prices':
+                    rows = conn.execute("SELECT * FROM mould_prices ORDER BY mould_name").fetchall()
+                    items = []
+                    for r in rows:
+                        d = dict(r)
+                        d['mouldName'] = d.pop('mould_name', '')
+                        d['updatedAt'] = d.pop('updated_at', 0)
+                        items.append(d)
+                    self.send_json(items)
+
+                # ── Bill Adjustments ──
+                elif path in ('/api/db/bill-adjustments', '/api/db/adjustments'):
+                    party = params.get('party', '').strip()
+                    if party:
+                        rows = conn.execute("SELECT * FROM bill_adjustments WHERE LOWER(party)=LOWER(?) ORDER BY bill_date DESC", (party,)).fetchall()
+                    else:
+                        rows = conn.execute("SELECT * FROM bill_adjustments ORDER BY bill_date DESC").fetchall()
+                    items = []
+                    for r in rows:
+                        d = dict(r)
+                        d['billDbId'] = d.pop('bill_db_id', 0)
+                        d['billDate'] = d.pop('bill_date', '')
+                        d['adjType'] = d.pop('adj_type', '')
+                        d['updatedAt'] = d.pop('updated_at', 0)
+                        items.append(d)
+                    self.send_json(items)
 
                 # ── Control Groups (Manage Groups) ──
                 elif path == '/api/db/groups':
@@ -370,7 +513,7 @@ class DBHandler(BaseHTTPRequestHandler):
                         result.append(d)
                     self.send_json(result)
 
-                # ── Ledger (Live Statement from Bills + Receipts) ──
+                # ── Ledger (Live Statement from Bills + Receipts + Adjustments) ──
                 elif path == '/api/db/ledger':
                     party_name = params.get('party', '').strip()
                     date_from = params.get('dateFrom', '').strip()
@@ -384,6 +527,25 @@ class DBHandler(BaseHTTPRequestHandler):
                     total_cr = 0.0
 
                     if party_name:
+                        def party_matches(record_party, search_party):
+                            if not record_party or not search_party:
+                                return False
+                            rp = str(record_party).strip().lower()
+                            sp = str(search_party).strip().lower()
+                            if rp == sp:
+                                return True
+                            if rp.startswith(sp + ' -') or rp.startswith(sp + '-') or rp.startswith(sp + ' '):
+                                return True
+                            if sp.startswith(rp + ' -') or sp.startswith(rp + '-') or sp.startswith(rp + ' '):
+                                return True
+                            rp_base = rp.split(' -')[0].strip()
+                            sp_base = sp.split(' -')[0].strip()
+                            if rp_base and sp_base and rp_base == sp_base:
+                                return True
+                            if sp in rp or rp in sp:
+                                return True
+                            return False
+
                         # Helper for computing true bill total
                         def extract_bill_total(b_row):
                             try:
@@ -394,14 +556,29 @@ class DBHandler(BaseHTTPRequestHandler):
                                 try:
                                     fin = b_row['finished_items']
                                     if fin:
-                                        items = json.loads(fin)
+                                        items = json.loads(fin) if isinstance(fin, str) else fin
                                         tot = round(sum(float(it.get('total', 0) or 0) for it in items), 2)
+                                except Exception:
+                                    pass
+                            if tot == 0.0:
+                                try:
+                                    raw = b_row['raw_items']
+                                    if raw:
+                                        items = json.loads(raw) if isinstance(raw, str) else raw
+                                        raw_tot = 0.0
+                                        for it in items:
+                                            q = float(it.get('qty', 0) or 0)
+                                            u = float(it.get('uCap', 0) or 0)
+                                            l = float(it.get('lCap', 0) or 0)
+                                            raw_tot += q * (u + l)
+                                        tot = round(raw_tot, 2)
                                 except Exception:
                                     pass
                             return tot
 
                         # 0. Fetch Party metadata (phone, station, gstin, state)
-                        p_row = conn.execute("SELECT * FROM parties WHERE TRIM(LOWER(name)) = TRIM(LOWER(?)) LIMIT 1", (party_name,)).fetchone()
+                        all_parties = conn.execute("SELECT * FROM parties").fetchall()
+                        p_row = next((p for p in all_parties if party_matches(p['name'], party_name)), None)
                         if p_row:
                             party_info = {
                                 'name': p_row['name'],
@@ -416,116 +593,148 @@ class DBHandler(BaseHTTPRequestHandler):
                                     opening_balance = round(float(p_row['balance'] or 0), 2)
                                 except Exception:
                                     pass
+                        else:
+                            # Synthesize party metadata from name string if contains - Station
+                            station_part = party_name.split(' - ')[-1].strip() if ' - ' in party_name else ''
+                            party_info = {
+                                'name': party_name,
+                                'phone': '',
+                                'station': station_part,
+                                'district': station_part,
+                                'state': '',
+                                'gstin': ''
+                            }
+
+                        all_bills = conn.execute("SELECT * FROM bills").fetchall()
+                        matched_bills = [b for b in all_bills if party_matches(b['party'], party_name)]
+
+                        all_rcpts = conn.execute("SELECT * FROM party_receipts").fetchall()
+                        matched_rcpts = [r for r in all_rcpts if party_matches(r['party'], party_name)]
+
+                        all_adjs = conn.execute("SELECT * FROM bill_adjustments").fetchall()
+                        matched_adjs = [a for a in all_adjs if party_matches(a['party'], party_name)]
 
                         # 0.1 Calculate Opening Balance (B/F) prior to date_from
                         if date_from:
-                            # Prior Bills (Debits and Returns)
-                            prior_bills = conn.execute(
-                                "SELECT doc_type, total, finished_items FROM bills WHERE TRIM(LOWER(party)) = TRIM(LOWER(?)) AND substr(date, 1, 10) < ?",
-                                (party_name, date_from)
-                            ).fetchall()
-                            for pb in prior_bills:
-                                pb_type = (pb['doc_type'] or '').upper()
-                                is_ret = 'RETURN' in pb_type
-                                tot = extract_bill_total(pb)
-                                if is_ret:
-                                    opening_balance = round(opening_balance - tot, 2)
-                                else:
-                                    opening_balance = round(opening_balance + tot, 2)
+                            for pb in matched_bills:
+                                b_date = (pb['date'] or '')[:10]
+                                if b_date and b_date < date_from:
+                                    pb_type = (pb['doc_type'] or '').upper()
+                                    is_ret = 'RETURN' in pb_type
+                                    tot = extract_bill_total(pb)
+                                    if is_ret:
+                                        opening_balance = round(opening_balance - tot, 2)
+                                    else:
+                                        opening_balance = round(opening_balance + tot, 2)
 
-                            # Prior Receipts (Credits)
-                            prior_rcpts = conn.execute(
-                                "SELECT amount FROM party_receipts WHERE TRIM(LOWER(party)) = TRIM(LOWER(?)) AND substr(receipt_date, 1, 10) < ?",
-                                (party_name, date_from)
-                            ).fetchall()
-                            for pr in prior_rcpts:
-                                amt = round(float(pr['amount'] or 0), 2)
-                                opening_balance = round(opening_balance - amt, 2)
+                            for pr in matched_rcpts:
+                                r_date = (pr['receipt_date'] or '')[:10]
+                                if r_date and r_date < date_from:
+                                    amt = round(float(pr['amount'] or 0), 2)
+                                    opening_balance = round(opening_balance - amt, 2)
 
-                        # 1. Bills in selected date range
+                            for pa in matched_adjs:
+                                a_date = (pa['bill_date'] or '')[:10]
+                                if a_date and a_date < date_from:
+                                    amt = round(float(pa['amount'] or 0), 2)
+                                    if pa['adj_type'] == 'add':
+                                        opening_balance = round(opening_balance + amt, 2)
+                                    else:
+                                        opening_balance = round(opening_balance - amt, 2)
+
+                        # 1. Current Entries in selected date range
                         current_entries = []
-                        sql_bills = "SELECT id, token, date, doc_type, total, finished_items FROM bills WHERE TRIM(LOWER(party)) = TRIM(LOWER(?))"
-                        params_bills = [party_name]
-                        if date_from:
-                            sql_bills += " AND substr(date, 1, 10) >= ?"
-                            params_bills.append(date_from)
-                        if date_to:
-                            sql_bills += " AND substr(date, 1, 10) <= ?"
-                            params_bills.append(date_to)
 
-                        b_rows = conn.execute(sql_bills, params_bills).fetchall()
-                        for b in b_rows:
-                            b_type = (b['doc_type'] or '').upper()
-                            is_return = 'RETURN' in b_type
-                            is_order = 'ORDER' in b_type
-                            tot = extract_bill_total(b)
+                        # Bills
+                        for b in matched_bills:
                             b_date = (b['date'] or '')[:10]
+                            if (not date_from or b_date >= date_from) and (not date_to or b_date <= date_to):
+                                b_type = (b['doc_type'] or '').upper()
+                                is_return = 'RETURN' in b_type
+                                is_order = 'ORDER' in b_type
+                                tot = extract_bill_total(b)
 
-                            if is_return:
+                                if is_return:
+                                    current_entries.append({
+                                        'id': 'b_' + str(b['id']),
+                                        'rawId': b['id'],
+                                        'date': b_date,
+                                        'type': 'SALE RETURN',
+                                        'voucher': f"R-{b['token']}",
+                                        'particulars': 'Sale Return',
+                                        'debit': 0.0,
+                                        'credit': tot,
+                                        'canDelete': False
+                                    })
+                                elif is_order:
+                                    current_entries.append({
+                                        'id': 'b_' + str(b['id']),
+                                        'rawId': b['id'],
+                                        'date': b_date,
+                                        'type': 'ORDER',
+                                        'voucher': f"O-{b['token']}",
+                                        'particulars': 'Order Estimate',
+                                        'debit': tot,
+                                        'credit': 0.0,
+                                        'canDelete': False
+                                    })
+                                else:
+                                    current_entries.append({
+                                        'id': 'b_' + str(b['id']),
+                                        'rawId': b['id'],
+                                        'date': b_date,
+                                        'type': 'SALE BILL',
+                                        'voucher': f"B-{b['token']}",
+                                        'particulars': 'Sale Bill',
+                                        'debit': tot,
+                                        'credit': 0.0,
+                                        'canDelete': False
+                                    })
+
+                        # Receipts
+                        for r in matched_rcpts:
+                            r_date = (r['receipt_date'] or '')[:10]
+                            if (not date_from or r_date >= date_from) and (not date_to or r_date <= date_to):
+                                amt = round(float(r['amount'] or 0), 2)
                                 current_entries.append({
-                                    'id': 'b_' + str(b['id']),
-                                    'rawId': b['id'],
-                                    'date': b_date,
-                                    'type': 'SALE RETURN',
-                                    'voucher': f"R-{b['token']}",
-                                    'particulars': 'Sale Return',
+                                    'id': 'rcpt_' + str(r['id']),
+                                    'rawId': r['id'],
+                                    'date': r_date,
+                                    'type': 'RECEIPT',
+                                    'voucher': f"RCP-{r['id']}",
+                                    'particulars': r['remarks'] or 'Payment Received',
                                     'debit': 0.0,
-                                    'credit': tot,
-                                    'canDelete': False
+                                    'credit': amt,
+                                    'canDelete': True
                                 })
-                            elif is_order:
+
+                        # Adjustments
+                        for a in matched_adjs:
+                            a_date = (a['bill_date'] or '')[:10]
+                            if (not date_from or a_date >= date_from) and (not date_to or a_date <= date_to):
+                                amt = round(float(a['amount'] or 0), 2)
+                                is_add = a['adj_type'] == 'add'
+                                desc = a['description'] or ('Adjustment (+)' if is_add else 'Adjustment (-)')
                                 current_entries.append({
-                                    'id': 'b_' + str(b['id']),
-                                    'rawId': b['id'],
-                                    'date': b_date,
-                                    'type': 'ORDER',
-                                    'voucher': f"O-{b['token']}",
-                                    'particulars': 'Order Estimate',
-                                    'debit': tot,
-                                    'credit': 0.0,
-                                    'canDelete': False
-                                })
-                            else:
-                                current_entries.append({
-                                    'id': 'b_' + str(b['id']),
-                                    'rawId': b['id'],
-                                    'date': b_date,
-                                    'type': 'SALE BILL',
-                                    'voucher': f"B-{b['token']}",
-                                    'particulars': 'Sale Bill',
-                                    'debit': tot,
-                                    'credit': 0.0,
-                                    'canDelete': False
+                                    'id': 'adj_' + str(a['id']),
+                                    'rawId': a['id'],
+                                    'date': a_date,
+                                    'type': 'ADJUSTMENT',
+                                    'voucher': f"ADJ-{a['id']}",
+                                    'particulars': desc,
+                                    'debit': amt if is_add else 0.0,
+                                    'credit': 0.0 if is_add else amt,
+                                    'canDelete': True
                                 })
 
-                        # 2. Receipts in selected date range
-                        sql_rcpt = "SELECT id, amount, receipt_date, remarks FROM party_receipts WHERE TRIM(LOWER(party)) = TRIM(LOWER(?))"
-                        params_rcpt = [party_name]
-                        if date_from:
-                            sql_rcpt += " AND substr(receipt_date, 1, 10) >= ?"
-                            params_rcpt.append(date_from)
-                        if date_to:
-                            sql_rcpt += " AND substr(receipt_date, 1, 10) <= ?"
-                            params_rcpt.append(date_to)
+                        # Stable chronological sort: date, invoices/orders before returns/receipts/adjustments, then id
+                        current_entries.sort(key=lambda x: (
+                            x['date'] or '',
+                            0 if x['type'] in ('SALE BILL', 'ORDER') else (1 if x['type'] == 'SALE RETURN' else 2),
+                            str(x['id'])
+                        ))
 
-                        r_rows = conn.execute(sql_rcpt, params_rcpt).fetchall()
-                        for r in r_rows:
-                            current_entries.append({
-                                'id': 'rcpt_' + str(r['id']),
-                                'rawId': r['id'],
-                                'date': (r['receipt_date'] or '')[:10],
-                                'type': 'RECEIPT',
-                                'voucher': f"RCP-{r['id']}",
-                                'particulars': r['remarks'] or 'Payment Received',
-                                'debit': 0.0,
-                                'credit': round(float(r['amount'] or 0), 2),
-                                'canDelete': True
-                            })
-
-                        # Stable chronological sort: date, invoices/returns before receipts on same day, then id
-                        current_entries.sort(key=lambda x: (x['date'] or '', 0 if x['type'] != 'RECEIPT' else 1, str(x['id'])))
-
-                        # Compute Running Balances & Assemble Final Entries
+                        # Assemble final entries with running balance
                         if date_from:
                             entries.append({
                                 'id': 'opening_bf',
@@ -654,6 +863,14 @@ class DBHandler(BaseHTTPRequestHandler):
                     conn.execute("INSERT OR REPLACE INTO skip_main_groups (id,name) VALUES (?,?)", (g['id'], g['name']))
                     self.send_json({'success': True})
 
+                elif path == '/api/db/skip-main-groups/bulk':
+                    items = body if isinstance(body, list) else body.get('groups', [])
+                    if isinstance(body, dict) and body.get('mode') == 'replace':
+                        conn.execute("DELETE FROM skip_main_groups")
+                    for g in items:
+                        conn.execute("INSERT OR REPLACE INTO skip_main_groups (id,name) VALUES (?,?)", (g['id'], g['name']))
+                    self.send_json({'success': True, 'count': len(items)})
+
                 # ── Save Skip Sub Group ──
                 elif path == '/api/db/skip-sub-groups':
                     g = body
@@ -661,19 +878,142 @@ class DBHandler(BaseHTTPRequestHandler):
                         (g['id'], g.get('mainGroupId',''), g.get('mainGroup',''), g.get('groupName',''), g.get('sumColumn','QTY')))
                     self.send_json({'success': True})
 
+                elif path == '/api/db/skip-sub-groups/bulk':
+                    items = body if isinstance(body, list) else body.get('groups', [])
+                    if isinstance(body, dict) and body.get('mode') == 'replace':
+                        conn.execute("DELETE FROM skip_sub_groups")
+                    for g in items:
+                        conn.execute("INSERT OR REPLACE INTO skip_sub_groups (id,main_group_id,main_group,group_name,sum_column) VALUES (?,?,?,?,?)",
+                            (g['id'], g.get('mainGroupId',''), g.get('mainGroup',''), g.get('groupName',''), g.get('sumColumn','QTY')))
+                    self.send_json({'success': True, 'count': len(items)})
+
                 # ── Save Skip Item ──
                 elif path == '/api/db/skip-items':
                     it = body
+                    iid = str(it.get('id') or f"si_{now}")
                     conn.execute("INSERT OR REPLACE INTO skip_items (id,sub_group_id,main_group,group_name,item_prefix) VALUES (?,?,?,?,?)",
-                        (it['id'], it.get('subGroupId',''), it.get('mainGroup',''), it.get('groupName',''), it.get('itemPrefix','')))
-                    self.send_json({'success': True})
+                        (iid, it.get('subGroupId',''), it.get('mainGroup',''), it.get('groupName',''), it.get('itemPrefix','')))
+                    self.send_json({'success': True, 'id': iid})
+
+                elif path == '/api/db/skip-items/bulk':
+                    items = body if isinstance(body, list) else body.get('items', [])
+                    replace_groups = body.get('replace_groups', []) if isinstance(body, dict) else []
+                    if replace_groups:
+                        for rg in replace_groups:
+                            conn.execute("DELETE FROM skip_items WHERE TRIM(LOWER(group_name)) = TRIM(LOWER(?)) OR sub_group_id = ?", (str(rg), str(rg)))
+                    elif isinstance(body, dict) and body.get('mode') == 'replace':
+                        conn.execute("DELETE FROM skip_items")
+                    for it in items:
+                        iid = str(it.get('id') or f"si_{now}_{it.get('itemPrefix', '')}")
+                        conn.execute("INSERT OR REPLACE INTO skip_items (id,sub_group_id,main_group,group_name,item_prefix) VALUES (?,?,?,?,?)",
+                            (iid, str(it.get('subGroupId','')), str(it.get('mainGroup','')), str(it.get('groupName','')), str(it.get('itemPrefix',''))))
+                    self.send_json({'success': True, 'count': len(items)})
 
                 # ── Save Conversion ──
                 elif path == '/api/db/conversions':
                     c = body
-                    conn.execute("INSERT OR REPLACE INTO conversions (id,rule,value,description) VALUES (?,?,?,?)",
-                        (c['id'], c.get('rule',''), c.get('value',0), c.get('description','')))
+                    cid = str(c.get('id') or f"cp_{c.get('shortcut', '')}_{c.get('conversion', '')}".lower().replace(' ', '_'))
+                    u_cap = str(c.get('u_cap') if c.get('u_cap') is not None else c.get('uCap', '0'))
+                    l_cap = str(c.get('l_cap') if c.get('l_cap') is not None else c.get('lCap', '0'))
+                    multiplication = float(c.get('multiplication', 1.0) or 1.0)
+                    color = str(c.get('color', '#000000'))
+                    box_size = float(c.get('box_size') if c.get('box_size') is not None else c.get('boxSize', 1.0) or 1.0)
+                    weight = float(c.get('weight_per_pcs') if c.get('weight_per_pcs') is not None else c.get('weight', c.get('weightPerPcs', 0.0)) or 0.0)
+                    real_name = str(c.get('real_item_name') or c.get('realItemName', ''))
+                    grp_name = str(c.get('group_name') or c.get('groupName', ''))
+                    shortcut = str(c.get('shortcut', ''))
+                    conversion = str(c.get('conversion', ''))
+
+                    conn.execute("""
+                        INSERT OR REPLACE INTO control_panel
+                        (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+
+                    conn.execute("""
+                        INSERT OR REPLACE INTO conversions
+                        (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+
+                    self.send_json({'success': True, 'id': cid})
+
+                # ── Bulk Save Conversions ──
+                elif path == '/api/db/conversions/bulk':
+                    items = body if isinstance(body, list) else body.get('conversions', [])
+                    if isinstance(body, dict) and body.get('mode') == 'replace':
+                        conn.execute("DELETE FROM control_panel")
+                        conn.execute("DELETE FROM conversions")
+                    for c in items:
+                        cid = str(c.get('id') or f"cp_{c.get('shortcut', '')}_{c.get('conversion', '')}".lower().replace(' ', '_'))
+                        u_cap = str(c.get('u_cap') if c.get('u_cap') is not None else c.get('uCap', '0'))
+                        l_cap = str(c.get('l_cap') if c.get('l_cap') is not None else c.get('lCap', '0'))
+                        multiplication = float(c.get('multiplication', 1.0) or 1.0)
+                        color = str(c.get('color', '#000000'))
+                        box_size = float(c.get('box_size') if c.get('box_size') is not None else c.get('boxSize', 1.0) or 1.0)
+                        weight = float(c.get('weight_per_pcs') if c.get('weight_per_pcs') is not None else c.get('weight', c.get('weightPerPcs', 0.0)) or 0.0)
+                        real_name = str(c.get('real_item_name') or c.get('realItemName', ''))
+                        grp_name = str(c.get('group_name') or c.get('groupName', ''))
+                        shortcut = str(c.get('shortcut', ''))
+                        conversion = str(c.get('conversion', ''))
+
+                        conn.execute("""
+                            INSERT OR REPLACE INTO control_panel
+                            (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+
+                        conn.execute("""
+                            INSERT OR REPLACE INTO conversions
+                            (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                    self.send_json({'success': True, 'count': len(items)})
+
+                # ── Save Bill Item Name ──
+                elif path == '/api/db/bill-item-names':
+                    it = body
+                    iid = str(it.get('id') or f"bin_{now}")
+                    g_name = it.get('category') or it.get('groupName') or it.get('group_name') or ''
+                    i_name = it.get('printName') or it.get('itemName') or it.get('item_name') or it.get('shortCode') or ''
+                    val_str = str(it.get('rate') if it.get('rate') is not None else it.get('value', ''))
+                    conn.execute("INSERT OR REPLACE INTO bill_item_names (id, group_name, item_name, value, updated_at) VALUES (?,?,?,?,?)",
+                        (iid, g_name, i_name, val_str, now))
+                    self.send_json({'success': True, 'id': iid})
+
+                # ── Bulk Save Bill Item Names ──
+                elif path == '/api/db/bill-item-names/bulk':
+                    payload = body
+                    mode = payload.get('mode', 'replace') if isinstance(payload, dict) else 'replace'
+                    items = payload.get('items', []) if isinstance(payload, dict) else (payload if isinstance(payload, list) else [])
+                    if mode == 'replace':
+                        conn.execute("DELETE FROM bill_item_names")
+                    import random
+                    for idx, it in enumerate(items):
+                        iid = str(it.get('id') or f"bin_{now}_{idx}_{random.randint(100, 999)}")
+                        g_name = it.get('category') or it.get('groupName') or it.get('group_name') or ''
+                        i_name = it.get('printName') or it.get('itemName') or it.get('item_name') or it.get('shortCode') or ''
+                        val_str = str(it.get('rate') if it.get('rate') is not None else it.get('value', ''))
+                        conn.execute("INSERT OR REPLACE INTO bill_item_names (id, group_name, item_name, value, updated_at) VALUES (?,?,?,?,?)",
+                            (iid, g_name, i_name, val_str, now))
+                    self.send_json({'success': True, 'count': len(items)})
+
+                # ── Save Mould Price ──
+                elif path == '/api/db/mould-prices':
+                    m = body
+                    conn.execute("INSERT OR REPLACE INTO mould_prices (mould_name, price, updated_at) VALUES (?,?,?)",
+                        (m.get('mouldName',''), float(m.get('price', 0)), now))
                     self.send_json({'success': True})
+
+                # ── Save Bill Adjustment ──
+                elif path in ('/api/db/bill-adjustments', '/api/db/adjustments'):
+                    a = body
+                    aid = str(a.get('id') or f"adj_{now}")
+                    conn.execute("""
+                        INSERT OR REPLACE INTO bill_adjustments (id, bill_db_id, party, bill_date, adj_type, description, amount, updated_at)
+                        VALUES (?,?,?,?,?,?,?,?)
+                    """, (aid, a.get('billDbId', 0), a.get('party', ''), a.get('billDate', ''), a.get('adjType', ''), a.get('description', ''), float(a.get('amount', 0)), now))
+                    self.send_json({'success': True, 'id': aid})
 
                 # ── Save Control Group ──
                 elif path == '/api/db/groups':
@@ -797,13 +1137,15 @@ class DBHandler(BaseHTTPRequestHandler):
         try:
             with db_lock, get_conn() as conn:
                 if '/api/db/bills/' in path:
-                    bid = path.split('/')[-1]
-                    conn.execute("DELETE FROM bills WHERE id=?", (bid,))
+                    import urllib.parse
+                    bid = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM bills WHERE id=? OR token=?", (bid, bid))
                     self.send_json({'success': True})
 
                 elif '/api/db/parties/' in path:
-                    pid = path.split('/')[-1]
-                    conn.execute("DELETE FROM parties WHERE id=?", (pid,))
+                    import urllib.parse
+                    pid = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM parties WHERE id=? OR TRIM(LOWER(name))=TRIM(LOWER(?))", (pid, pid))
                     self.send_json({'success': True})
 
                 elif '/api/db/skip-main-groups/' in path:
@@ -819,13 +1161,34 @@ class DBHandler(BaseHTTPRequestHandler):
                     self.send_json({'success': True})
 
                 elif '/api/db/skip-items/' in path:
-                    iid = path.split('/')[-1]
-                    conn.execute("DELETE FROM skip_items WHERE id=?", (iid,))
+                    import urllib.parse
+                    iid = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM skip_items WHERE id=? OR item_prefix=?", (iid, iid))
                     self.send_json({'success': True})
 
                 elif '/api/db/conversions/' in path:
-                    cid = path.split('/')[-1]
-                    conn.execute("DELETE FROM conversions WHERE id=?", (cid,))
+                    import urllib.parse
+                    cid = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM control_panel WHERE id=? OR shortcut=?", (cid, cid))
+                    conn.execute("DELETE FROM conversions WHERE id=? OR shortcut=?", (cid, cid))
+                    self.send_json({'success': True})
+
+                elif '/api/db/bill-item-names/' in path:
+                    import urllib.parse
+                    iid = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM bill_item_names WHERE id=?", (iid,))
+                    self.send_json({'success': True})
+
+                elif '/api/db/mould-prices/' in path:
+                    import urllib.parse
+                    mname = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM mould_prices WHERE mould_name=?", (mname,))
+                    self.send_json({'success': True})
+
+                elif '/api/db/bill-adjustments/' in path or '/api/db/adjustments/' in path:
+                    import urllib.parse
+                    aid = urllib.parse.unquote_plus(path.split('/')[-1])
+                    conn.execute("DELETE FROM bill_adjustments WHERE id=?", (aid,))
                     self.send_json({'success': True})
 
                 elif '/api/db/groups/' in path:

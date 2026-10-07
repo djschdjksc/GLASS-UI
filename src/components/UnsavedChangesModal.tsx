@@ -60,13 +60,22 @@ export default function UnsavedChangesModal({
           onCancel?.();
         }
       } else {
-        // Mode 2 (Delete / Confirm Dialog): 1 = Confirm Delete, 2/Esc = Cancel
-        if (isOne) {
+        // Mode 2 (Delete / Confirm Dialog): Delete / Enter / 1 / Y = Confirm Delete, 2 / Esc / N = Cancel
+        const isConfirmDelete = 
+          isOne || 
+          e.key === "Delete" || 
+          e.code === "Delete" || 
+          e.key === "Enter" || 
+          e.code === "Enter" || 
+          e.key === "y" || 
+          e.key === "Y";
+
+        if (isConfirmDelete) {
           e.preventDefault();
           e.stopPropagation();
           macAudio.playClick();
           handleDiscardAction?.();
-        } else if (isTwo || isEscape) {
+        } else if (isTwo || isEscape || e.key === "n" || e.key === "N") {
           e.preventDefault();
           e.stopPropagation();
           macAudio.playClick();
@@ -184,7 +193,7 @@ export default function UnsavedChangesModal({
             </svg>
 
             <span>{discardLabel || (onSave ? 'Discard & Clear' : 'Delete')}</span>
-            <kbd>{onSave ? '2' : '1'}</kbd>
+            <kbd>{onSave ? '2' : 'Del / 1'}</kbd>
           </button>
 
           {/* 3 / 2: Cancel */}

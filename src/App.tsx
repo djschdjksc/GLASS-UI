@@ -27,6 +27,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import { ItemModeProvider, useItemMode } from './context/ItemModeContext';
 import { localDb } from './services/db/localDb';
 import type { BillRecord } from './services/db/schema';
+import { getConversions, getSkipItems, getSkipSubGroups, getControlGroups } from './services/db/sqliteDb';
 import { loadMediaFromDB } from './services/mediaStorage';
 import { LoginPanel } from './components/LoginPanel';
 import { isPasswordProtectionActive } from './utils/authSecurity';
@@ -35,7 +36,7 @@ import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, e
 import { ChattingPanel } from './components/ChattingPanel';
 import { DigitalCalculatorModal } from './components/DigitalCalculatorModal';
 import { triggerCelebrationBlast } from './utils/celebration';
-import { normalizeDocType, getBillCategory } from './utils/billDocTypes';
+import { normalizeDocType, getBillCategory, formatBillNumber } from './utils/billDocTypes';
 import { supabaseSyncService, setSyncNotificationListener } from './services/supabaseSync';
 import { getUserProfile, getNextUserToken } from './services/supabaseClient';
 import { UserIdentityModal } from './components/UserIdentityModal';
@@ -80,7 +81,7 @@ export const createBlankHeader = (docType: string = 'SALE'): BillHeader => {
     docType: normalizeDocType(docType),
     partyName: '',
     typeSelection: 'WHOLESALE',
-    vehicleType: 'OWN VEHICLE',
+    vehicleType: 'SELF',
     vehicleNo: '',
     date: getTodayLocalDateStr(),
     tokenNo: nextToken
@@ -214,14 +215,30 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // 1. Clean Blank Header (No bill loaded on open; Today's local date by default)
   const [header, setHeader] = useState<BillHeader>(() => {
-    return createBlankHeader();
+    const blank = createBlankHeader();
+    try {
+      const saved = localStorage.getItem('modern_app_header');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.vehicleType === 'OWN VEHICLE') parsed.vehicleType = 'SELF';
+        return { ...blank, ...parsed };
+      }
+    } catch {}
+    return blank;
   });
   useEffect(() => {
     localStorage.setItem('modern_app_header', JSON.stringify(header));
   }, [header]);
 
-  // 2. Clean Blank Items (Ready for entry)
+  // 2. Clean Blank Items (Ready for entry) - Persists ongoing draft like WhatsApp across browser refresh
   const [rawItems, setRawItems] = useState<RawItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('modern_app_raw_items');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
     return createBlankRawItems();
   });
   useEffect(() => {
@@ -229,6 +246,13 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   }, [rawItems]);
 
   const [finishedItems, setFinishedItems] = useState<FinishedItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('modern_app_finished_items');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
     return createBlankFinishedItems();
   });
   useEffect(() => {
@@ -283,10 +307,54 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const loadedBillSnapshotRef = useRef<BillRecord | null>(null);
   const [deleteRowConfirm, setDeleteRowConfirm] = useState<{ table: 'raw' | 'finished'; indices: number[] } | null>(null);
 
-  // Bill-specific custom item groups (Mould Groups) for Ctrl+G calculation
-  const [customItemGroups, setCustomItemGroups] = useState<BillItemGroup[]>([]);
+  // Bill-specific custom item groups (Mould Groups) for Ctrl+G calculation - Persists with draft
+  const [customItemGroups, setCustomItemGroups] = useState<BillItemGroup[]>(() => {
+    try {
+      const saved = localStorage.getItem('modern_app_custom_item_groups');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem('modern_app_custom_item_groups', JSON.stringify(customItemGroups));
+  }, [customItemGroups]);
   const [isItemGroupsModalOpen, setIsItemGroupsModalOpen] = useState(false);
   const [prefilledGroupItems, setPrefilledGroupItems] = useState<string[]>([]);
+
+  // Master data directly from SQLite Database (NO Cache)
+  const [appConversions, setAppConversions] = useState<any[]>([]);
+  const [appSkipItems, setAppSkipItems] = useState<any[]>([]);
+  const [appSkipSubGroups, setAppSkipSubGroups] = useState<any[]>([]);
+  const [appControlGroups, setAppControlGroups] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Purge any stale legacy localStorage caches so DB is 100% direct source of truth
+    try {
+      [
+        'billapp_skip_items', 'billapp_skip_sub_groups', 'billapp_skip_main_groups',
+        'billapp_conversions', 'ctrl_conv_rules_v3', 'billapp_bill_maps',
+        'modern_control_groups_data', 'control_group_rules'
+      ].forEach(k => localStorage.removeItem(k));
+    } catch {}
+
+    const fetchMasterData = () => {
+      getConversions().then(res => { if (Array.isArray(res)) setAppConversions(res); }).catch(() => {});
+      getSkipItems().then(res => { if (Array.isArray(res)) setAppSkipItems(res); }).catch(() => {});
+      getSkipSubGroups().then(res => { if (Array.isArray(res)) setAppSkipSubGroups(res); }).catch(() => {});
+      getControlGroups().then(res => { if (Array.isArray(res)) setAppControlGroups(res); }).catch(() => {});
+    };
+
+    fetchMasterData();
+    window.addEventListener('billapp_conversions_updated', fetchMasterData);
+    window.addEventListener('billapp_skip_items_updated', fetchMasterData);
+    window.addEventListener('billapp_groups_updated', fetchMasterData);
+    return () => {
+      window.removeEventListener('billapp_conversions_updated', fetchMasterData);
+      window.removeEventListener('billapp_skip_items_updated', fetchMasterData);
+      window.removeEventListener('billapp_groups_updated', fetchMasterData);
+    };
+  }, []);
 
   const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
   const [incomingCloudBill, setIncomingCloudBill] = useState<CloudNotificationData | null>(null);
@@ -568,7 +636,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       party: cleanPartyName,
       docType: normalizeDocType(header.docType),
       vehicle: header.vehicleNo || '',
-      vehicleType: header.vehicleType || 'OWN VEHICLE',
+      vehicleType: (!header.vehicleType || header.vehicleType === 'OWN VEHICLE') ? 'SELF' : header.vehicleType,
       typeSelection: header.typeSelection || 'WHOLESALE',
       total,
       status: 'PAID',
@@ -608,7 +676,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       docType: currentDoc,
       partyName: '',
       typeSelection: 'WHOLESALE',
-      vehicleType: 'OWN VEHICLE',
+      vehicleType: 'SELF',
       vehicleNo: '',
       date: todayStr,
       tokenNo: nextToken
@@ -641,6 +709,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       localStorage.setItem('modern_app_raw_items', JSON.stringify(blankRaws));
       localStorage.setItem('modern_app_finished_items', JSON.stringify(blankFinished));
       localStorage.setItem('modern_left_dyncols', JSON.stringify([]));
+      localStorage.setItem('modern_app_custom_item_groups', JSON.stringify([]));
+      localStorage.setItem('modern_app_note_text', '');
     } catch {}
 
     // Focus Bill Type dropdown so user can immediately press Home / Enter / continue typing next bill
@@ -665,7 +735,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       docType: currentDoc,
       partyName: '',
       typeSelection: 'WHOLESALE',
-      vehicleType: 'OWN VEHICLE',
+      vehicleType: 'SELF',
       vehicleNo: '',
       date: todayStr,
       tokenNo: nextToken
@@ -689,6 +759,15 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setHasPartyCodeCol(false);
     setSplitRowIndex(null);
     setNoteText('');
+
+    try {
+      localStorage.setItem('modern_app_header', JSON.stringify(blankHeader));
+      localStorage.setItem('modern_app_raw_items', JSON.stringify(blankRaws));
+      localStorage.setItem('modern_app_finished_items', JSON.stringify(blankFinished));
+      localStorage.setItem('modern_left_dyncols', JSON.stringify([]));
+      localStorage.setItem('modern_app_custom_item_groups', JSON.stringify([]));
+      localStorage.setItem('modern_app_note_text', '');
+    } catch {}
 
     lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, blankFinished, [], false);
     setConfirmClearDialog(null);
@@ -752,7 +831,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         docType: normalizeDocType(target.docType),
         partyName: target.party,
         typeSelection: target.typeSelection,
-        vehicleType: target.vehicleType || 'OWN VEHICLE',
+        vehicleType: (!target.vehicleType || target.vehicleType === 'OWN VEHICLE') ? 'SELF' : target.vehicleType,
         vehicleNo: target.vehicle || '',
         date: target.date,
         tokenNo: target.token
@@ -840,7 +919,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         docType: normalizeDocType(target.docType),
         partyName: target.party,
         typeSelection: target.typeSelection,
-        vehicleType: target.vehicleType || 'OWN VEHICLE',
+        vehicleType: (!target.vehicleType || target.vehicleType === 'OWN VEHICLE') ? 'SELF' : target.vehicleType,
         vehicleNo: target.vehicle || '',
         date: target.date,
         tokenNo: target.token
@@ -1312,7 +1391,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       docType: slip.docType,
       partyName: slip.partyName,
       typeSelection: slip.typeSelection,
-      vehicleType: slip.vehicleType || foundBill?.vehicleType || 'OWN VEHICLE',
+      vehicleType: (!slip.vehicleType || slip.vehicleType === 'OWN VEHICLE') ? (foundBill?.vehicleType && foundBill.vehicleType !== 'OWN VEHICLE' ? foundBill.vehicleType : 'SELF') : slip.vehicleType,
       vehicleNo: slip.vehicleNo,
       date: slip.date,
       tokenNo: slip.tokenNo
@@ -1436,7 +1515,29 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [isNoteOpen, setIsNoteOpen] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(false);
   const [isPendingSlipOpen, setIsPendingSlipOpen] = useState<boolean>(false);
-  const [noteText, setNoteText] = useState<string>('');
+  const [noteText, setNoteText] = useState<string>(() => {
+    try {
+      return localStorage.getItem('modern_app_note_text') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem('modern_app_note_text', noteText);
+  }, [noteText]);
+
+  // Accidental refresh / tab-close protection: Warn user if active bill has unsaved draft data
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isBillEmpty(header, rawItems, finishedItems)) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [header, rawItems, finishedItems]);
 
   const handleOpenPrintModal = useCallback((mode: 'estimate' | 'summary_only' | 'loading_slip') => {
     macAudio.playPop();
@@ -1550,8 +1651,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   }, [isDraggingSplitter]);
 
   // Handlers for Raw Items
-  const handleUpdateRawItem = (id: string, field: keyof RawItem, value: any) => {
-    setRawItems(prev => prev.map(it => it.id === id ? { ...it, [field]: value } : it));
+  const handleUpdateRawItem = (id: string, field: any, value?: any) => {
+    if (typeof field === 'object' && field !== null) {
+      setRawItems(prev => prev.map(it => it.id === id ? { ...it, ...field } : it));
+    } else {
+      setRawItems(prev => prev.map(it => it.id === id ? { ...it, [field]: value } : it));
+    }
   };
 
   const handleAddRawItem = () => {
@@ -2127,39 +2232,19 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       });
     }
 
-    // 1. Active conversions from Manage Conversions (localStorage or fallback SQLite control panel)
-    let activeConversions: any[] = SQLITE_CONTROL_CONVERSIONS;
-    try {
-      const saved = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          activeConversions = parsed;
-        }
-      }
-    } catch {}
+    // 1. Active conversions directly from SQLite DB (NO Cache)
+    const activeConversions: any[] = appConversions.length > 0 ? appConversions : SQLITE_CONTROL_CONVERSIONS;
 
     // Sort by conversion string length (longest first), exactly matching main.py line 8099:
-    // control_data_sorted = sorted(control_data, key=lambda x: len(str(x[1])), reverse=True)
     const sortedConversions = [...activeConversions].sort((a: any, b: any) => {
       const lenB = String(b.conversion || '').trim().length;
       const lenA = String(a.conversion || '').trim().length;
       return lenB - lenA;
     });
 
-    // 2. Load Skip Items from localStorage or use Seed
-    let skipMainGroups = SQLITE_SKIP_MAIN_GROUPS;
-    let skipSubGroups = SQLITE_SKIP_SUB_GROUPS;
-    let skipItems = SQLITE_SKIP_ITEMS;
-    try {
-      const isClean = localStorage.getItem('billapp_skip_version_v5');
-      if (isClean) {
-        const ms = localStorage.getItem('billapp_skip_main_groups'); if (ms) skipMainGroups = JSON.parse(ms);
-        const ss = localStorage.getItem('billapp_skip_sub_groups'); if (ss) skipSubGroups = JSON.parse(ss);
-        const is = localStorage.getItem('billapp_skip_items'); if (is) skipItems = JSON.parse(is);
-      }
-    } catch {}
-
+    // 2. Skip items & Sub groups directly from SQLite DB (NO Cache)
+    const skipItems: any[] = appSkipItems.length > 0 ? appSkipItems : SQLITE_SKIP_ITEMS;
+    const skipSubGroups: any[] = appSkipSubGroups.length > 0 ? appSkipSubGroups : SQLITE_SKIP_SUB_GROUPS;
     const sortedSkipItems = [...skipItems].sort((a: any, b: any) => ((b.itemPrefix || '').length - (a.itemPrefix || '').length));
 
     rawList.forEach((it, rIdx) => {
@@ -2392,38 +2477,20 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const calculateRightGridFromLeft = useCallback(() => {
     const isSplit = splitRowIndex !== null && splitRowIndex > 0 && splitRowIndex < rawItems.length;
 
-    // 1. Resolve Group Priority Map from Manage Groups (control_groups in SQLite / localStorage)
+    // 1. Resolve Group Priority Map from Manage Groups (direct from SQLite DB, NO Cache)
     const groupRankMap = new Map<string, number>();
-    SQLITE_CONTROL_GROUPS.forEach(cg => {
-      const key = (cg.group_name || '').toUpperCase().trim();
-      if (key) groupRankMap.set(key, cg.group_index ?? 999);
+    const activeGroups = appControlGroups.length > 0 ? appControlGroups : SQLITE_CONTROL_GROUPS;
+    activeGroups.forEach((g: any, idx: number) => {
+      const key = String(g.groupName || g.group_name || '').toUpperCase().trim();
+      if (key) {
+        const parsedIdx = parseFloat(String(g.groupIndex || g.group_index || '').replace(/[^\d.]/g, ''));
+        const rank = !isNaN(parsedIdx) && parsedIdx > 0 ? parsedIdx : (idx + 1);
+        groupRankMap.set(key, rank);
+      }
     });
-    try {
-      const rawSaved = localStorage.getItem('control_group_rules') || localStorage.getItem('modern_control_groups_data');
-      if (rawSaved) {
-        const parsed = JSON.parse(rawSaved);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((g: any, idx: number) => {
-            const key = String(g.groupName || g.group_name || '').toUpperCase().trim();
-            if (key) {
-              const parsedIdx = parseFloat(String(g.groupIndex || g.group_index || '').replace(/[^\d.]/g, ''));
-              const rank = !isNaN(parsedIdx) && parsedIdx > 0 ? parsedIdx : (idx + 1);
-              groupRankMap.set(key, rank);
-            }
-          });
-        }
-      }
-    } catch {}
 
-    // Resolve active conversions for mapping item to group_name
-    let activeConversions: any[] = SQLITE_CONTROL_CONVERSIONS;
-    try {
-      const saved = localStorage.getItem('billapp_conversions') || localStorage.getItem('ctrl_conv_rules_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) activeConversions = parsed;
-      }
-    } catch {}
+    // Resolve active conversions for mapping item to group_name (direct from SQLite DB, NO Cache)
+    const activeConversions: any[] = appConversions.length > 0 ? appConversions : SQLITE_CONTROL_CONVERSIONS;
 
     const getGroupRank = (mouldName: string): number => {
       const base = mouldName.replace(/\s*\([\d.]+(?:\s*(?:ft|feet|'))?\)/gi, '').trim().toLowerCase();
@@ -3044,6 +3111,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       tableFontSize={tableFontSize}
                       onSetTableFontSize={setTableFontSize}
                       items={rawItems}
+                      skipItems={appSkipItems}
                       onUpdateItem={handleUpdateRawItem}
                       onBulkPaste={handleBulkPasteRaw}
                       onAddNewRow={handleAddRawItem}
@@ -3188,7 +3256,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     docType: normalizeDocType(bill.docType),
                     partyName: bill.party,
                     typeSelection: bill.typeSelection || 'WHOLESALE',
-                    vehicleType: bill.vehicleType || 'OWN VEHICLE',
+                    vehicleType: (!bill.vehicleType || bill.vehicleType === 'OWN VEHICLE') ? 'SELF' : bill.vehicleType,
                     vehicleNo: bill.vehicle || '',
                     date: bill.date,
                     tokenNo: bill.token
@@ -3238,7 +3306,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       docType: bill.docType,
                       partyName: bill.party,
                       typeSelection: bill.typeSelection || 'WHOLESALE',
-                      vehicleType: bill.vehicleType || 'OWN VEHICLE',
+                      vehicleType: (!bill.vehicleType || bill.vehicleType === 'OWN VEHICLE') ? 'SELF' : bill.vehicleType,
                       vehicleNo: bill.vehicle || '',
                       date: bill.date,
                       tokenNo: bill.token
@@ -3315,7 +3383,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         rawItems={rawItems}
         finishedItems={finishedItems}
         initialMode={printModalMode}
-        billNo={header.tokenNo || '0001'}
+        billNo={formatBillNumber(header.tokenNo || '1')}
         dynamicCols={dynamicCols}
         hasPartyCodeCol={hasPartyCodeCol}
         editId={activeEditInfo.editId}
@@ -3426,7 +3494,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               docType: billData.docType || 'SALE BILL',
               partyName: billData.party,
               typeSelection: billData.typeSelection || 'WHOLESALE',
-              vehicleType: billData.vehicleType || 'OWN VEHICLE',
+              vehicleType: (!billData.vehicleType || billData.vehicleType === 'OWN VEHICLE') ? 'SELF' : billData.vehicleType,
               vehicleNo: billData.vehicle || '',
               date: billData.date || getTodayLocalDateStr(),
               rawItems: billData.rawItems || [],

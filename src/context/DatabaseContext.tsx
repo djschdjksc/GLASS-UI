@@ -49,6 +49,9 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLedgerEntries(localDb.getLedgerEntries());
     setIsReady(true);
 
+    // Sync latest real data from SQLite backend
+    localDb.syncFromBackend().catch(console.error);
+
     return () => {
       unsubBills();
       unsubParties();
@@ -88,6 +91,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const handleRefreshAll = useCallback(async () => {
+    await localDb.syncFromBackend();
     setBills([...localDb.getBills()]);
     setParties([...localDb.getParties()]);
     setStockItems([...localDb.getStockItems()]);

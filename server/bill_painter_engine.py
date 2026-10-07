@@ -5,7 +5,7 @@ import sys
 import re
 from collections import defaultdict
 from PyQt6.QtCore import Qt, QRect, QSize, QSizeF, QPoint
-from PyQt6.QtGui import QFont, QPen, QBrush, QColor, QPainter, QImage, QPixmap, QPageSize, QPageLayout
+from PyQt6.QtGui import QFont, QPen, QBrush, QColor, QPainter, QImage, QPixmap, QPageSize, QPageLayout, QPainterPath, QFontMetrics
 from PyQt6.QtPrintSupport import QPrinter
 
 def format_display_date(db_date):
@@ -137,6 +137,7 @@ class BillPainter:
             self.total_pages = 1
 
     def paint(self, painter, rect=None, page_num=0):
+        self.is_img_mode_flag = (page_num == -1) or bool(self.d.get("is_image_mode"))
         if rect:
             painter.save()
             painter.setViewport(rect)
@@ -254,6 +255,174 @@ class BillPainter:
             
         self.cur_y = y
 
+    def _draw_slip_icon(self, painter, x, y, size=38, is_image=False):
+        painter.save()
+        stroke_col = QColor("#2563eb") if is_image else Qt.GlobalColor.black
+        fill_col = QColor("#eff6ff") if is_image else Qt.GlobalColor.white
+        fold_col = QColor("#1d4ed8") if is_image else Qt.GlobalColor.black
+        line_col = QColor("#3b82f6") if is_image else Qt.GlobalColor.black
+
+        w = int(size * 0.72)
+        h = int(size * 0.88)
+        sx = x + int((size - w) / 2)
+        sy = y + int((size - h) / 2)
+        fold = 7
+
+        path = QPainterPath()
+        path.moveTo(sx, sy)
+        path.lineTo(sx + w - fold, sy)
+        path.lineTo(sx + w, sy + fold)
+        path.lineTo(sx + w, sy + h)
+        path.lineTo(sx, sy + h)
+        path.closeSubpath()
+
+        painter.setPen(QPen(stroke_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(QBrush(fill_col))
+        painter.drawPath(path)
+
+        painter.setPen(QPen(fold_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.drawLine(sx + w - fold, sy, sx + w - fold, sy + fold)
+        painter.drawLine(sx + w - fold, sy + fold, sx + w, sy + fold)
+
+        painter.setPen(QPen(line_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.drawLine(sx + 5, sy + 12, sx + w - 5, sy + 12)
+        painter.drawLine(sx + 5, sy + 19, sx + w - 5, sy + 19)
+        painter.drawLine(sx + 5, sy + 26, sx + w - 9, sy + 26)
+        painter.restore()
+
+    def _draw_vehicle_type_icon(self, painter, x, y, size=38, is_image=False):
+        painter.save()
+        truck_col = QColor("#ea580c") if is_image else Qt.GlobalColor.black
+        fill_col = QColor("#fff7ed") if is_image else Qt.GlobalColor.white
+        win_col = QColor("#0284c7") if is_image else Qt.GlobalColor.black
+        wheel_col = QColor("#1f2937") if is_image else Qt.GlobalColor.black
+
+        w = int(size * 0.9)
+        sx = x + int((size - w) / 2)
+        top_y = y + 8
+
+        path = QPainterPath()
+        path.moveTo(sx, top_y)
+        path.lineTo(sx + int(w * 0.62), top_y)
+        path.lineTo(sx + int(w * 0.85), top_y + 7)
+        path.lineTo(sx + w, top_y + 7)
+        path.lineTo(sx + w, top_y + 19)
+        path.lineTo(sx, top_y + 19)
+        path.closeSubpath()
+
+        painter.setPen(QPen(truck_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(QBrush(fill_col))
+        painter.drawPath(path)
+
+        painter.setPen(QPen(win_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.drawLine(sx + int(w * 0.62), top_y, sx + int(w * 0.62), top_y + 9)
+        painter.drawLine(sx + int(w * 0.62), top_y + 9, sx + int(w * 0.82), top_y + 9)
+
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(wheel_col))
+        painter.drawEllipse(sx + int(w * 0.25) - 3, top_y + 17, 7, 7)
+        painter.drawEllipse(sx + int(w * 0.75) - 3, top_y + 17, 7, 7)
+        if is_image:
+            painter.setBrush(QBrush(QColor("#ea580c")))
+            painter.drawEllipse(sx + int(w * 0.25) - 1, top_y + 19, 3, 3)
+            painter.drawEllipse(sx + int(w * 0.75) - 1, top_y + 19, 3, 3)
+        painter.restore()
+
+    def _draw_vehicle_no_icon(self, painter, x, y, size=38, is_image=False):
+        painter.save()
+        plate_col = QColor("#0284c7") if is_image else Qt.GlobalColor.black
+        fill_col = QColor("#f0f9ff") if is_image else Qt.GlobalColor.white
+        bolt_col = QColor("#0369a1") if is_image else Qt.GlobalColor.black
+
+        w = int(size * 0.9)
+        h = int(size * 0.58)
+        sx = x + int((size - w) / 2)
+        top_y = y + int((size - h) / 2)
+
+        painter.setPen(QPen(plate_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(QBrush(fill_col))
+        painter.drawRoundedRect(sx, top_y, w, h, 4, 4)
+
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(bolt_col))
+        painter.drawEllipse(sx + 3, top_y + int(h / 2) - 2, 4, 4)
+        painter.drawEllipse(sx + w - 7, top_y + int(h / 2) - 2, 4, 4)
+
+        painter.setPen(QPen(plate_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.drawLine(sx + 9, top_y + int(h / 2), sx + w - 9, top_y + int(h / 2))
+        painter.restore()
+
+    def _draw_party_icon(self, painter, x, y, size=38, is_image=False):
+        painter.save()
+        dp_border = QColor("#7c3aed") if is_image else Qt.GlobalColor.black
+        dp_bg = QColor("#ede9fe") if is_image else Qt.GlobalColor.white
+        sil_col = QColor("#7c3aed") if is_image else Qt.GlobalColor.black
+
+        w = int(size * 0.88)
+        h = int(size * 0.88)
+        sx = x + int((size - w) / 2)
+        sy = y + int((size - h) / 2)
+        rad = 8
+
+        # 1. DP Squircle Frame
+        painter.setPen(QPen(dp_border, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(QBrush(dp_bg))
+        painter.drawRoundedRect(sx, sy, w, h, rad, rad)
+
+        # 2. Clip inside DP for Head & Shoulders silhouette
+        clip_path = QPainterPath()
+        clip_path.addRoundedRect(sx, sy, w, h, rad, rad)
+        painter.setClipPath(clip_path)
+
+        cx = sx + int(w / 2)
+
+        # Head Circle
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(sil_col))
+        head_r = int(w * 0.2)
+        painter.drawEllipse(cx - head_r, sy + int(h * 0.38) - head_r, head_r * 2, head_r * 2)
+
+        # Shoulders / Torso
+        shoulder_r = int(w * 0.44)
+        painter.drawEllipse(cx - shoulder_r, sy + h - int(shoulder_r * 0.75), shoulder_r * 2, shoulder_r * 2)
+
+        painter.restore()
+
+    def _draw_calendar_icon(self, painter, x, y, size=38, is_image=False):
+        painter.save()
+        cal_col = QColor("#dc2626") if is_image else Qt.GlobalColor.black
+        fill_col = QColor("#fef2f2") if is_image else Qt.GlobalColor.white
+        ring_col = QColor("#991b1b") if is_image else Qt.GlobalColor.black
+
+        w = int(size * 0.78)
+        h = int(size * 0.78)
+        sx = x + int((size - w) / 2)
+        top_y = y + int((size - h) / 2) + 2
+
+        # Calendar body
+        painter.setPen(QPen(cal_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(QBrush(fill_col))
+        painter.drawRect(sx, top_y, w, h)
+
+        # Top header bar
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(cal_col))
+        painter.drawRect(sx, top_y, w, 7)
+
+        # Binder rings
+        painter.setPen(QPen(ring_col, 2.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.drawLine(sx + 6, top_y - 3, sx + 6, top_y + 3)
+        painter.drawLine(sx + w - 6, top_y - 3, sx + w - 6, top_y + 3)
+
+        # Calendar grid marks
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(cal_col))
+        painter.drawEllipse(sx + int(w * 0.35) - 2, top_y + 13, 4, 4)
+        painter.drawEllipse(sx + int(w * 0.65) - 2, top_y + 13, 4, 4)
+        painter.drawEllipse(sx + int(w * 0.35) - 2, top_y + 20, 4, 4)
+        painter.drawEllipse(sx + int(w * 0.65) - 2, top_y + 20, 4, 4)
+        painter.restore()
+
     def _draw_loading_header(self, painter):
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         # Header (Type & Bill ID)
@@ -279,26 +448,61 @@ class BillPainter:
         painter.drawText(QRect(0, 30, self.W, 80), Qt.AlignmentFlag.AlignCenter, title)
         
         # Info Block
-        f_i = QFont("Segoe UI", 0, QFont.Weight.Normal)
+        f_i = QFont("Segoe UI", 0, QFont.Weight.Bold)
         f_i.setPixelSize(35)
         painter.setFont(f_i)
+        painter.setPen(QPen(Qt.GlobalColor.black))
+        metrics = QFontMetrics(f_i)
         y = 130
-        
-        bill_label = f"{pfx}NO:" if pfx else "BILL NO:"
-        if self.d.get("is_loading_slip") and not self.d.get("is_estimate"):
-            bill_label = f"{pfx}SLIP NO:" if pfx else "SLIP NO:"
+        icon_size = 38
+        icon_gap = 12
+        table_right = self.margin + 1290
+        is_img = bool(getattr(self, 'is_img_mode_flag', False) or self.d.get("is_image_mode"))
 
-        edit_sfx = f" [{self.d.get('edit_id')}]" if self.d.get('edit_id') else ""
-        painter.drawText(self.margin, y, f"{bill_label} {self.d.get('bill_no', 'N/A')}{edit_sfx}")
-        painter.drawText(self.W - 400, y, f"DATE: {format_display_date(self.d.get('date', 'N/A'))}")
-        
-        if not self.d.get("is_equation"):
-            y += 50
-            painter.drawText(self.margin, y, f"PARTY: {self.d.get('party', 'N/A')}")
-            v_name = str(self.d.get('v_name', '')).strip()
-            if v_name:
-                painter.drawText(self.W - 400, y, f"VEHICLE: {v_name}")
-        
+        # Locked X position for right column: Upper Vehicle Icon & Lower Date Icon in exact same vertical line
+        right_icon_x = table_right - 280
+        right_text_x = right_icon_x + icon_size + icon_gap
+        max_right_w = table_right - right_text_x
+
+        # Row 1 (Upper 3: Slip No | Vehicle Type | Vehicle No)
+        # 1. Slip No (Left)
+        self._draw_slip_icon(painter, self.margin, y - 28, icon_size, is_image=is_img)
+        bill_str = str(self.d.get('bill_no', 'N/A'))
+        painter.drawText(self.margin + icon_size + icon_gap, y, bill_str)
+
+        # 2 & 3. Vehicle Type & Vehicle No
+        raw_v_type = str(self.d.get('v_type', '')).strip()
+        v_type = "SELF" if raw_v_type.upper() == "OWN VEHICLE" else raw_v_type
+        v_name = str(self.d.get('v_name', '')).strip()
+
+        if v_type and v_name:
+            # Vehicle Type in center
+            v_type_x = 520
+            self._draw_vehicle_type_icon(painter, v_type_x, y - 28, icon_size, is_image=is_img)
+            painter.drawText(v_type_x + icon_size + icon_gap, y, v_type)
+
+            # Vehicle No on locked right position
+            self._draw_vehicle_no_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+            painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, v_name)
+        elif v_type:
+            self._draw_vehicle_type_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+            painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, v_type)
+        elif v_name:
+            self._draw_vehicle_no_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+            painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, v_name)
+
+        # Row 2 (Lower 2: Party Name | Date)
+        y += 50
+        # 1. Party Name (Left)
+        party_str = str(self.d.get('party', 'N/A'))
+        self._draw_party_icon(painter, self.margin, y - 28, icon_size, is_image=is_img)
+        painter.drawText(QRect(self.margin + icon_size + icon_gap, y - 35, right_icon_x - (self.margin + icon_size + icon_gap) - 20, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, party_str)
+
+        # 2. Date (Right - EXACT same column position as Upper Vehicle Icon)
+        date_str = format_display_date(self.d.get('date', 'N/A'))
+        self._draw_calendar_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+        painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, date_str)
+
         self.cur_y = y + 70
 
     def _draw_generic_header(self, painter):
@@ -587,7 +791,8 @@ class BillPainter:
                 self.total_pages = 1
                 self.is_last_page = True
             else:
-                rows_per_page = 27 if self.d.get("is_loading_slip") else 20
+                default_rows = 27
+                rows_per_page = int(self.d.get("rows_per_page") or default_rows)
                 start_idx = page_num * rows_per_page
                 items_to_draw = items[start_idx : start_idx + rows_per_page]
                 self.total_pages = max(1, (len(items) + rows_per_page - 1) // rows_per_page)
@@ -617,7 +822,7 @@ class BillPainter:
         raw_groups = self.d.get("groups", [])
         groups = [g for g in raw_groups if any(str(x).strip() for x in g)]
         
-        is_img_mode = (page_num == -1)
+        is_img_mode = (page_num == -1) or bool(self.d.get("is_image_mode"))
         
         if (self.d.get("is_estimate") or self.d.get("is_summary_only")) and self.is_last_page and groups:
             self.cur_y += 30
@@ -697,10 +902,16 @@ class BillPainter:
             # Draw Totals dynamically aligned under each column
             cols = self._get_table_cols()
             x_footer = self.margin
-            for col_info in cols:
+            for i, col_info in enumerate(cols):
                 w = col_info[1]
                 fld = col_info[2] if len(col_info) > 2 else None
-                if fld and fld in self.col_sums:
+                if i == 0:
+                    pass # 'TOTAL' text removed as requested
+                elif i == 1:
+                    edit_id = str(self.d.get('edit_id', '')).strip()
+                    if edit_id:
+                        painter.drawText(QRect(x_footer + 15, self.cur_y, w - 15, 60), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, edit_id)
+                elif fld and fld in self.col_sums:
                     sum_val = self.col_sums[fld]
                     if sum_val != 0:
                         painter.drawText(QRect(x_footer, self.cur_y, w, 60), Qt.AlignmentFlag.AlignCenter, f"{sum_val:g}")
@@ -750,6 +961,7 @@ class BillPainter:
             painter.setFont(f_adj)
             
             final_total = self.grand_total
+            is_img_adj = bool(getattr(self, 'is_img_mode_flag', False) or self.d.get("is_image_mode"))
             
             for adj in adjs:
                 desc = adj.get("desc", "Adjustment")
@@ -759,12 +971,16 @@ class BillPainter:
                 if adj_type == "sub":
                     final_total -= val
                     prefix = "(-)"
+                    val_color = QColor("#dc2626") if is_img_adj else Qt.GlobalColor.black
                 else:
                     final_total += val
                     prefix = "(+)"
+                    val_color = QColor("#16a34a") if is_img_adj else Qt.GlobalColor.black
                 
                 self.cur_y += 45
+                painter.setPen(QPen(Qt.GlobalColor.black))
                 painter.drawText(QRect(x_label, self.cur_y, block_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, f"{prefix} {desc}")
+                painter.setPen(QPen(val_color))
                 painter.drawText(QRect(x_value, self.cur_y, val_w, 50), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, format_indian_currency(val))
             
             # 3. Draw Final Balance with custom label

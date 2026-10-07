@@ -1,6 +1,6 @@
 // =====================================================================
-// SQLITE_SKIP_DATA — Generated directly from BillApp_Backup.json (Desktop)
-// Fresh Clean Data: 5 Main Groups, 34 Sub Groups, 698 Skip Items
+// SQLITE_SKIP_DATA — Clean & Deduplicated directly from BillTrack (bill_data.db)
+// 5 Main Groups, 35 Sub Groups, 363 Skip Items
 // =====================================================================
 
 export interface SkipMainGroupSeed {
@@ -26,5475 +26,2815 @@ export interface SkipItemSeed {
 
 export const SQLITE_SKIP_MAIN_GROUPS: SkipMainGroupSeed[] = [
   {
-    "id": "mg-1",
+    "id": "mg_1",
     "name": "General"
   },
   {
-    "id": "mg-2",
+    "id": "mg_2",
     "name": "Digital or Golden"
   },
   {
-    "id": "mg-3",
+    "id": "mg_3",
     "name": "Digital"
   },
   {
-    "id": "mg-4",
+    "id": "mg_4",
     "name": "Digital or Golden Lower Film"
   },
   {
-    "id": "mg-5",
+    "id": "mg_5",
     "name": "7D UV SHEET"
   }
 ];
 
 export const SQLITE_SKIP_SUB_GROUPS: SkipSubGroupSeed[] = [
   {
-    "id": "sg-1",
-    "mainGroupId": "mg-2",
+    "id": "sg-1791281454388",
+    "mainGroupId": "mg_3",
+    "mainGroup": "Digital",
+    "groupName": "UVD",
+    "sumColumn": "QTY"
+  },
+  {
+    "id": "sg_1",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(A)-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-2",
-    "mainGroupId": "mg-3",
+    "id": "sg_2",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-3",
-    "mainGroupId": "mg-3",
+    "id": "sg_3",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-4",
-    "mainGroupId": "mg-3",
+    "id": "sg_4",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-5",
-    "mainGroupId": "mg-3",
+    "id": "sg_5",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-6",
-    "mainGroupId": "mg-3",
+    "id": "sg_6",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-7",
-    "mainGroupId": "mg-3",
+    "id": "sg_7",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-8",
-    "mainGroupId": "mg-3",
+    "id": "sg_8",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-9",
-    "mainGroupId": "mg-3",
+    "id": "sg_9",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-10",
-    "mainGroupId": "mg-2",
+    "id": "sg_10",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(B)-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-11",
-    "mainGroupId": "mg-2",
+    "id": "sg_11",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(G)-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-12",
-    "mainGroupId": "mg-2",
+    "id": "sg_12",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "C.M-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-13",
-    "mainGroupId": "mg-2",
+    "id": "sg_13",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "F.P-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-14",
-    "mainGroupId": "mg-2",
+    "id": "sg_14",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "F.P.C.G-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-15",
-    "mainGroupId": "mg-2",
+    "id": "sg_15",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "F.P.G-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-16",
-    "mainGroupId": "mg-2",
+    "id": "sg_16",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "S.L-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-17",
-    "mainGroupId": "mg-2",
+    "id": "sg_17",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "S.P-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-18",
-    "mainGroupId": "mg-2",
+    "id": "sg_18",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "T.G-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-19",
-    "mainGroupId": "mg-3",
+    "id": "sg_19",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-20",
-    "mainGroupId": "mg-3",
+    "id": "sg_20",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-21",
-    "mainGroupId": "mg-3",
+    "id": "sg_21",
+    "mainGroupId": "mg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-22",
-    "mainGroupId": "mg-2",
+    "id": "sg_22",
+    "mainGroupId": "mg_2",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(Digital-or-Golden)",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-23",
-    "mainGroupId": "mg-4",
+    "id": "sg_23",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-24",
-    "mainGroupId": "mg-4",
+    "id": "sg_24",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-25",
-    "mainGroupId": "mg-4",
+    "id": "sg_25",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-26",
-    "mainGroupId": "mg-4",
+    "id": "sg_26",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-27",
-    "mainGroupId": "mg-4",
+    "id": "sg_27",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "C.M-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-28",
-    "mainGroupId": "mg-4",
+    "id": "sg_28",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-29",
-    "mainGroupId": "mg-4",
+    "id": "sg_29",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P.C.G-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-30",
-    "mainGroupId": "mg-4",
+    "id": "sg_30",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P.G-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-31",
-    "mainGroupId": "mg-4",
+    "id": "sg_31",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "S.L-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-32",
-    "mainGroupId": "mg-4",
+    "id": "sg_32",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "S.P-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-33",
-    "mainGroupId": "mg-4",
+    "id": "sg_33",
+    "mainGroupId": "mg_4",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "T.G-(Digital)-Lower-Film",
     "sumColumn": "QTY"
   },
   {
-    "id": "sg-34",
-    "mainGroupId": "mg-5",
+    "id": "sg_34",
+    "mainGroupId": "mg_5",
     "mainGroup": "7D UV SHEET",
     "groupName": "7D UV",
-    "sumColumn": "QTY"
-  },
-  {
-    "id": "sg-35",
-    "mainGroupId": "mg-3",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
     "sumColumn": "QTY"
   }
 ];
 
 export const SQLITE_SKIP_ITEMS: SkipItemSeed[] = [
   {
-    "id": "si-1",
-    "subGroupId": "sg-1",
+    "id": "si_1",
+    "subGroupId": "sg_1",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(A)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(A) 770"
   },
   {
-    "id": "si-2",
-    "subGroupId": "sg-11",
+    "id": "si_2",
+    "subGroupId": "sg_11",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(G)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(G) 770"
   },
   {
-    "id": "si-3",
-    "subGroupId": "sg-10",
+    "id": "si_3",
+    "subGroupId": "sg_10",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(B)-(Digital-or-Golden)",
     "itemPrefix": "B.F.P-(B) 770"
   },
   {
-    "id": "si-4",
-    "subGroupId": "sg-13",
+    "id": "si_4",
+    "subGroupId": "sg_13",
     "mainGroup": "Digital or Golden",
     "groupName": "F.P-(Digital-or-Golden)",
     "itemPrefix": "F.P 770"
   },
   {
-    "id": "si-5",
-    "subGroupId": "sg-15",
+    "id": "si_5",
+    "subGroupId": "sg_15",
     "mainGroup": "Digital or Golden",
     "groupName": "F.P.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.G 770"
   },
   {
-    "id": "si-6",
-    "subGroupId": "sg-16",
+    "id": "si_6",
+    "subGroupId": "sg_16",
     "mainGroup": "Digital or Golden",
     "groupName": "S.L-(Digital-or-Golden)",
     "itemPrefix": "S.L 770"
   },
   {
-    "id": "si-7",
-    "subGroupId": "sg-17",
+    "id": "si_7",
+    "subGroupId": "sg_17",
     "mainGroup": "Digital or Golden",
     "groupName": "S.P-(Digital-or-Golden)",
     "itemPrefix": "S.P 770"
   },
   {
-    "id": "si-8",
-    "subGroupId": "sg-18",
+    "id": "si_8",
+    "subGroupId": "sg_18",
     "mainGroup": "Digital or Golden",
     "groupName": "T.G-(Digital-or-Golden)",
     "itemPrefix": "T.G 770"
   },
   {
-    "id": "si-9",
-    "subGroupId": "sg-14",
+    "id": "si_9",
+    "subGroupId": "sg_14",
     "mainGroup": "Digital or Golden",
     "groupName": "F.P.C.G-(Digital-or-Golden)",
     "itemPrefix": "F.P.C.G 770"
   },
   {
-    "id": "si-10",
-    "subGroupId": "sg-12",
+    "id": "si_10",
+    "subGroupId": "sg_12",
     "mainGroup": "Digital or Golden",
     "groupName": "C.M-(Digital-or-Golden)",
     "itemPrefix": "C.M 770"
   },
   {
-    "id": "si-11",
-    "subGroupId": "sg-22",
+    "id": "si_11",
+    "subGroupId": "sg_22",
     "mainGroup": "Digital or Golden",
     "groupName": "B.F.P-(Digital-or-Golden)",
     "itemPrefix": "B.F.P 770"
   },
   {
-    "id": "si-12",
-    "subGroupId": "sg-23",
+    "id": "si_12",
+    "subGroupId": "sg_23",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(A) 780"
   },
   {
-    "id": "si-13",
-    "subGroupId": "sg-24",
+    "id": "si_13",
+    "subGroupId": "sg_24",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(B) 780"
   },
   {
-    "id": "si-14",
-    "subGroupId": "sg-25",
+    "id": "si_14",
+    "subGroupId": "sg_25",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P 780"
   },
   {
-    "id": "si-15",
-    "subGroupId": "sg-26",
+    "id": "si_15",
+    "subGroupId": "sg_26",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
     "itemPrefix": "B.F.P-(G) 780"
   },
   {
-    "id": "si-16",
-    "subGroupId": "sg-27",
+    "id": "si_16",
+    "subGroupId": "sg_27",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "C.M-(Digital)-Lower-Film",
     "itemPrefix": "C.M 780"
   },
   {
-    "id": "si-17",
-    "subGroupId": "sg-28",
+    "id": "si_17",
+    "subGroupId": "sg_28",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P-(Digital)-Lower-Film",
     "itemPrefix": "F.P 780"
   },
   {
-    "id": "si-18",
-    "subGroupId": "sg-29",
+    "id": "si_18",
+    "subGroupId": "sg_29",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P.C.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.C.G 780"
   },
   {
-    "id": "si-19",
-    "subGroupId": "sg-30",
+    "id": "si_19",
+    "subGroupId": "sg_30",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "F.P.G-(Digital)-Lower-Film",
     "itemPrefix": "F.P.G 780"
   },
   {
-    "id": "si-20",
-    "subGroupId": "sg-31",
+    "id": "si_20",
+    "subGroupId": "sg_31",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "S.L-(Digital)-Lower-Film",
     "itemPrefix": "S.L 780"
   },
   {
-    "id": "si-21",
-    "subGroupId": "sg-32",
+    "id": "si_21",
+    "subGroupId": "sg_32",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "S.P-(Digital)-Lower-Film",
     "itemPrefix": "S.P 780"
   },
   {
-    "id": "si-22",
-    "subGroupId": "sg-33",
+    "id": "si_22",
+    "subGroupId": "sg_33",
     "mainGroup": "Digital or Golden Lower Film",
     "groupName": "T.G-(Digital)-Lower-Film",
     "itemPrefix": "T.G 780"
   },
   {
-    "id": "si-23",
-    "subGroupId": "sg-1",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(A)-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P-(A) 770"
-  },
-  {
-    "id": "si-24",
-    "subGroupId": "sg-11",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(G)-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P-(G) 770"
-  },
-  {
-    "id": "si-25",
-    "subGroupId": "sg-10",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(B)-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P-(B) 770"
-  },
-  {
-    "id": "si-26",
-    "subGroupId": "sg-13",
-    "mainGroup": "Digital or Golden",
-    "groupName": "F.P-(Digital-or-Golden)",
-    "itemPrefix": "F.P 770"
-  },
-  {
-    "id": "si-27",
-    "subGroupId": "sg-15",
-    "mainGroup": "Digital or Golden",
-    "groupName": "F.P.G-(Digital-or-Golden)",
-    "itemPrefix": "F.P.G 770"
-  },
-  {
-    "id": "si-28",
-    "subGroupId": "sg-16",
-    "mainGroup": "Digital or Golden",
-    "groupName": "S.L-(Digital-or-Golden)",
-    "itemPrefix": "S.L 770"
-  },
-  {
-    "id": "si-29",
-    "subGroupId": "sg-17",
-    "mainGroup": "Digital or Golden",
-    "groupName": "S.P-(Digital-or-Golden)",
-    "itemPrefix": "S.P 770"
-  },
-  {
-    "id": "si-30",
-    "subGroupId": "sg-18",
-    "mainGroup": "Digital or Golden",
-    "groupName": "T.G-(Digital-or-Golden)",
-    "itemPrefix": "T.G 770"
-  },
-  {
-    "id": "si-31",
-    "subGroupId": "sg-14",
-    "mainGroup": "Digital or Golden",
-    "groupName": "F.P.C.G-(Digital-or-Golden)",
-    "itemPrefix": "F.P.C.G 770"
-  },
-  {
-    "id": "si-32",
-    "subGroupId": "sg-12",
-    "mainGroup": "Digital or Golden",
-    "groupName": "C.M-(Digital-or-Golden)",
-    "itemPrefix": "C.M 770"
-  },
-  {
-    "id": "si-33",
-    "subGroupId": "sg-22",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P 770"
-  },
-  {
-    "id": "si-34",
-    "subGroupId": "sg-23",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P-(A) 780"
-  },
-  {
-    "id": "si-35",
-    "subGroupId": "sg-24",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P-(B) 780"
-  },
-  {
-    "id": "si-36",
-    "subGroupId": "sg-25",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P 780"
-  },
-  {
-    "id": "si-37",
-    "subGroupId": "sg-26",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P-(G) 780"
-  },
-  {
-    "id": "si-38",
-    "subGroupId": "sg-27",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "C.M-(Digital)-Lower-Film",
-    "itemPrefix": "C.M 780"
-  },
-  {
-    "id": "si-39",
-    "subGroupId": "sg-28",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "F.P-(Digital)-Lower-Film",
-    "itemPrefix": "F.P 780"
-  },
-  {
-    "id": "si-40",
-    "subGroupId": "sg-29",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "F.P.C.G-(Digital)-Lower-Film",
-    "itemPrefix": "F.P.C.G 780"
-  },
-  {
-    "id": "si-41",
-    "subGroupId": "sg-30",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "F.P.G-(Digital)-Lower-Film",
-    "itemPrefix": "F.P.G 780"
-  },
-  {
-    "id": "si-42",
-    "subGroupId": "sg-31",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "S.L-(Digital)-Lower-Film",
-    "itemPrefix": "S.L 780"
-  },
-  {
-    "id": "si-43",
-    "subGroupId": "sg-32",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "S.P-(Digital)-Lower-Film",
-    "itemPrefix": "S.P 780"
-  },
-  {
-    "id": "si-44",
-    "subGroupId": "sg-33",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "T.G-(Digital)-Lower-Film",
-    "itemPrefix": "T.G 780"
-  },
-  {
-    "id": "si-45",
-    "subGroupId": "sg-1",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(A)-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P-(A) 770"
-  },
-  {
-    "id": "si-46",
-    "subGroupId": "sg-11",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(G)-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P-(G) 770"
-  },
-  {
-    "id": "si-47",
-    "subGroupId": "sg-10",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(B)-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P-(B) 770"
-  },
-  {
-    "id": "si-48",
-    "subGroupId": "sg-13",
-    "mainGroup": "Digital or Golden",
-    "groupName": "F.P-(Digital-or-Golden)",
-    "itemPrefix": "F.P 770"
-  },
-  {
-    "id": "si-49",
-    "subGroupId": "sg-15",
-    "mainGroup": "Digital or Golden",
-    "groupName": "F.P.G-(Digital-or-Golden)",
-    "itemPrefix": "F.P.G 770"
-  },
-  {
-    "id": "si-50",
-    "subGroupId": "sg-16",
-    "mainGroup": "Digital or Golden",
-    "groupName": "S.L-(Digital-or-Golden)",
-    "itemPrefix": "S.L 770"
-  },
-  {
-    "id": "si-51",
-    "subGroupId": "sg-17",
-    "mainGroup": "Digital or Golden",
-    "groupName": "S.P-(Digital-or-Golden)",
-    "itemPrefix": "S.P 770"
-  },
-  {
-    "id": "si-52",
-    "subGroupId": "sg-18",
-    "mainGroup": "Digital or Golden",
-    "groupName": "T.G-(Digital-or-Golden)",
-    "itemPrefix": "T.G 770"
-  },
-  {
-    "id": "si-53",
-    "subGroupId": "sg-14",
-    "mainGroup": "Digital or Golden",
-    "groupName": "F.P.C.G-(Digital-or-Golden)",
-    "itemPrefix": "F.P.C.G 770"
-  },
-  {
-    "id": "si-54",
-    "subGroupId": "sg-12",
-    "mainGroup": "Digital or Golden",
-    "groupName": "C.M-(Digital-or-Golden)",
-    "itemPrefix": "C.M 770"
-  },
-  {
-    "id": "si-55",
-    "subGroupId": "sg-22",
-    "mainGroup": "Digital or Golden",
-    "groupName": "B.F.P-(Digital-or-Golden)",
-    "itemPrefix": "B.F.P 770"
-  },
-  {
-    "id": "si-56",
-    "subGroupId": "sg-23",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(A)-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P-(A) 780"
-  },
-  {
-    "id": "si-57",
-    "subGroupId": "sg-24",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(B)-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P-(B) 780"
-  },
-  {
-    "id": "si-58",
-    "subGroupId": "sg-25",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P 780"
-  },
-  {
-    "id": "si-59",
-    "subGroupId": "sg-26",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "B.F.P-(G)-(Digital)-Lower-Film",
-    "itemPrefix": "B.F.P-(G) 780"
-  },
-  {
-    "id": "si-60",
-    "subGroupId": "sg-27",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "C.M-(Digital)-Lower-Film",
-    "itemPrefix": "C.M 780"
-  },
-  {
-    "id": "si-61",
-    "subGroupId": "sg-28",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "F.P-(Digital)-Lower-Film",
-    "itemPrefix": "F.P 780"
-  },
-  {
-    "id": "si-62",
-    "subGroupId": "sg-29",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "F.P.C.G-(Digital)-Lower-Film",
-    "itemPrefix": "F.P.C.G 780"
-  },
-  {
-    "id": "si-63",
-    "subGroupId": "sg-30",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "F.P.G-(Digital)-Lower-Film",
-    "itemPrefix": "F.P.G 780"
-  },
-  {
-    "id": "si-64",
-    "subGroupId": "sg-31",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "S.L-(Digital)-Lower-Film",
-    "itemPrefix": "S.L 780"
-  },
-  {
-    "id": "si-65",
-    "subGroupId": "sg-32",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "S.P-(Digital)-Lower-Film",
-    "itemPrefix": "S.P 780"
-  },
-  {
-    "id": "si-66",
-    "subGroupId": "sg-33",
-    "mainGroup": "Digital or Golden Lower Film",
-    "groupName": "T.G-(Digital)-Lower-Film",
-    "itemPrefix": "T.G 780"
-  },
-  {
-    "id": "si-67",
-    "subGroupId": "sg-34",
+    "id": "si_23",
+    "subGroupId": "sg_34",
     "mainGroup": "7D UV SHEET",
     "groupName": "7D UV",
     "itemPrefix": "UVD 2044"
   },
   {
-    "id": "si-68",
-    "subGroupId": "sg-34",
+    "id": "si_24",
+    "subGroupId": "sg_34",
     "mainGroup": "7D UV SHEET",
     "groupName": "7D UV",
     "itemPrefix": "UVD 2043"
   },
   {
-    "id": "si-69",
-    "subGroupId": "sg-34",
+    "id": "si_25",
+    "subGroupId": "sg_34",
     "mainGroup": "7D UV SHEET",
     "groupName": "7D UV",
     "itemPrefix": "UVD 2042"
   },
   {
-    "id": "si-70",
-    "subGroupId": "sg-2",
+    "id": "si_26",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 200"
   },
   {
-    "id": "si-71",
-    "subGroupId": "sg-2",
+    "id": "si_27",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 209"
   },
   {
-    "id": "si-72",
-    "subGroupId": "sg-2",
+    "id": "si_28",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 216"
   },
   {
-    "id": "si-73",
-    "subGroupId": "sg-2",
+    "id": "si_29",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 217"
   },
   {
-    "id": "si-74",
-    "subGroupId": "sg-2",
+    "id": "si_30",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 756"
   },
   {
-    "id": "si-75",
-    "subGroupId": "sg-2",
+    "id": "si_31",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 768"
   },
   {
-    "id": "si-76",
-    "subGroupId": "sg-2",
+    "id": "si_32",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 769"
   },
   {
-    "id": "si-77",
-    "subGroupId": "sg-2",
+    "id": "si_33",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 770"
   },
   {
-    "id": "si-78",
-    "subGroupId": "sg-2",
+    "id": "si_34",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 773"
   },
   {
-    "id": "si-79",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 773"
-  },
-  {
-    "id": "si-80",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 773"
-  },
-  {
-    "id": "si-81",
-    "subGroupId": "sg-2",
+    "id": "si_35",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 774"
   },
   {
-    "id": "si-82",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 774"
-  },
-  {
-    "id": "si-83",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 774"
-  },
-  {
-    "id": "si-84",
-    "subGroupId": "sg-2",
+    "id": "si_36",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 775"
   },
   {
-    "id": "si-85",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 775"
-  },
-  {
-    "id": "si-86",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 775"
-  },
-  {
-    "id": "si-87",
-    "subGroupId": "sg-2",
+    "id": "si_37",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 776"
   },
   {
-    "id": "si-88",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 776"
-  },
-  {
-    "id": "si-89",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 776"
-  },
-  {
-    "id": "si-90",
-    "subGroupId": "sg-2",
+    "id": "si_38",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 777"
   },
   {
-    "id": "si-91",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 777"
-  },
-  {
-    "id": "si-92",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 777"
-  },
-  {
-    "id": "si-93",
-    "subGroupId": "sg-2",
+    "id": "si_39",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 778"
   },
   {
-    "id": "si-94",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 778"
-  },
-  {
-    "id": "si-95",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 778"
-  },
-  {
-    "id": "si-96",
-    "subGroupId": "sg-2",
+    "id": "si_40",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 779"
   },
   {
-    "id": "si-97",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 779"
-  },
-  {
-    "id": "si-98",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 779"
-  },
-  {
-    "id": "si-99",
-    "subGroupId": "sg-2",
+    "id": "si_41",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 780"
   },
   {
-    "id": "si-100",
-    "subGroupId": "sg-2",
+    "id": "si_42",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 781"
   },
   {
-    "id": "si-101",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 781"
-  },
-  {
-    "id": "si-102",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 781"
-  },
-  {
-    "id": "si-103",
-    "subGroupId": "sg-2",
+    "id": "si_43",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 782"
   },
   {
-    "id": "si-104",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 782"
-  },
-  {
-    "id": "si-105",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 782"
-  },
-  {
-    "id": "si-106",
-    "subGroupId": "sg-2",
+    "id": "si_44",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 783"
   },
   {
-    "id": "si-107",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 783"
-  },
-  {
-    "id": "si-108",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 783"
-  },
-  {
-    "id": "si-109",
-    "subGroupId": "sg-2",
+    "id": "si_45",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 785"
   },
   {
-    "id": "si-110",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 785"
-  },
-  {
-    "id": "si-111",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 785"
-  },
-  {
-    "id": "si-112",
-    "subGroupId": "sg-2",
+    "id": "si_46",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 786"
   },
   {
-    "id": "si-113",
-    "subGroupId": "sg-2",
+    "id": "si_47",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 787"
   },
   {
-    "id": "si-114",
-    "subGroupId": "sg-2",
+    "id": "si_48",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 800"
   },
   {
-    "id": "si-115",
-    "subGroupId": "sg-2",
+    "id": "si_49",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 801"
   },
   {
-    "id": "si-116",
-    "subGroupId": "sg-2",
+    "id": "si_50",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 802"
   },
   {
-    "id": "si-117",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 802"
-  },
-  {
-    "id": "si-118",
-    "subGroupId": "sg-2",
+    "id": "si_51",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 803"
   },
   {
-    "id": "si-119",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 803"
-  },
-  {
-    "id": "si-120",
-    "subGroupId": "sg-2",
+    "id": "si_52",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 804"
   },
   {
-    "id": "si-121",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 804"
-  },
-  {
-    "id": "si-122",
-    "subGroupId": "sg-2",
+    "id": "si_53",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 805"
   },
   {
-    "id": "si-123",
-    "subGroupId": "sg-2",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(A)-(Digital)",
-    "itemPrefix": "B.F.P-(A) 805"
-  },
-  {
-    "id": "si-124",
-    "subGroupId": "sg-2",
+    "id": "si_54",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 808"
   },
   {
-    "id": "si-125",
-    "subGroupId": "sg-2",
+    "id": "si_55",
+    "subGroupId": "sg_2",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(A)-(Digital)",
     "itemPrefix": "B.F.P-(A) 809"
   },
   {
-    "id": "si-126",
-    "subGroupId": "sg-3",
+    "id": "si_56",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 200"
   },
   {
-    "id": "si-127",
-    "subGroupId": "sg-3",
+    "id": "si_57",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 209"
   },
   {
-    "id": "si-128",
-    "subGroupId": "sg-3",
+    "id": "si_58",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 216"
   },
   {
-    "id": "si-129",
-    "subGroupId": "sg-3",
+    "id": "si_59",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 217"
   },
   {
-    "id": "si-130",
-    "subGroupId": "sg-3",
+    "id": "si_60",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 756"
   },
   {
-    "id": "si-131",
-    "subGroupId": "sg-3",
+    "id": "si_61",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 768"
   },
   {
-    "id": "si-132",
-    "subGroupId": "sg-3",
+    "id": "si_62",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 769"
   },
   {
-    "id": "si-133",
-    "subGroupId": "sg-3",
+    "id": "si_63",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 770"
   },
   {
-    "id": "si-134",
-    "subGroupId": "sg-3",
+    "id": "si_64",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 773"
   },
   {
-    "id": "si-135",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 773"
-  },
-  {
-    "id": "si-136",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 773"
-  },
-  {
-    "id": "si-137",
-    "subGroupId": "sg-3",
+    "id": "si_65",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 774"
   },
   {
-    "id": "si-138",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 774"
-  },
-  {
-    "id": "si-139",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 774"
-  },
-  {
-    "id": "si-140",
-    "subGroupId": "sg-3",
+    "id": "si_66",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 775"
   },
   {
-    "id": "si-141",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 775"
-  },
-  {
-    "id": "si-142",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 775"
-  },
-  {
-    "id": "si-143",
-    "subGroupId": "sg-3",
+    "id": "si_67",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 776"
   },
   {
-    "id": "si-144",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 776"
-  },
-  {
-    "id": "si-145",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 776"
-  },
-  {
-    "id": "si-146",
-    "subGroupId": "sg-3",
+    "id": "si_68",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 777"
   },
   {
-    "id": "si-147",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 777"
-  },
-  {
-    "id": "si-148",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 777"
-  },
-  {
-    "id": "si-149",
-    "subGroupId": "sg-3",
+    "id": "si_69",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 778"
   },
   {
-    "id": "si-150",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 778"
-  },
-  {
-    "id": "si-151",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 778"
-  },
-  {
-    "id": "si-152",
-    "subGroupId": "sg-3",
+    "id": "si_70",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 779"
   },
   {
-    "id": "si-153",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 779"
-  },
-  {
-    "id": "si-154",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 779"
-  },
-  {
-    "id": "si-155",
-    "subGroupId": "sg-3",
+    "id": "si_71",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 780"
   },
   {
-    "id": "si-156",
-    "subGroupId": "sg-3",
+    "id": "si_72",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 781"
   },
   {
-    "id": "si-157",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 781"
-  },
-  {
-    "id": "si-158",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 781"
-  },
-  {
-    "id": "si-159",
-    "subGroupId": "sg-3",
+    "id": "si_73",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 782"
   },
   {
-    "id": "si-160",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 782"
-  },
-  {
-    "id": "si-161",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 782"
-  },
-  {
-    "id": "si-162",
-    "subGroupId": "sg-3",
+    "id": "si_74",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 783"
   },
   {
-    "id": "si-163",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 783"
-  },
-  {
-    "id": "si-164",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 783"
-  },
-  {
-    "id": "si-165",
-    "subGroupId": "sg-3",
+    "id": "si_75",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 785"
   },
   {
-    "id": "si-166",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 785"
-  },
-  {
-    "id": "si-167",
-    "subGroupId": "sg-3",
+    "id": "si_76",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 786"
   },
   {
-    "id": "si-168",
-    "subGroupId": "sg-3",
+    "id": "si_77",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 787"
   },
   {
-    "id": "si-169",
-    "subGroupId": "sg-3",
+    "id": "si_78",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 800"
   },
   {
-    "id": "si-170",
-    "subGroupId": "sg-3",
+    "id": "si_79",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 801"
   },
   {
-    "id": "si-171",
-    "subGroupId": "sg-3",
+    "id": "si_80",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 802"
   },
   {
-    "id": "si-172",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 802"
-  },
-  {
-    "id": "si-173",
-    "subGroupId": "sg-3",
+    "id": "si_81",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 803"
   },
   {
-    "id": "si-174",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 803"
-  },
-  {
-    "id": "si-175",
-    "subGroupId": "sg-3",
+    "id": "si_82",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 804"
   },
   {
-    "id": "si-176",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 804"
-  },
-  {
-    "id": "si-177",
-    "subGroupId": "sg-3",
+    "id": "si_83",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 805"
   },
   {
-    "id": "si-178",
-    "subGroupId": "sg-3",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(B)-(Digital)",
-    "itemPrefix": "B.F.P-(B) 805"
-  },
-  {
-    "id": "si-179",
-    "subGroupId": "sg-3",
+    "id": "si_84",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 808"
   },
   {
-    "id": "si-180",
-    "subGroupId": "sg-3",
+    "id": "si_85",
+    "subGroupId": "sg_3",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(B)-(Digital)",
     "itemPrefix": "B.F.P-(B) 809"
   },
   {
-    "id": "si-181",
-    "subGroupId": "sg-21",
+    "id": "si_86",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 200"
   },
   {
-    "id": "si-182",
-    "subGroupId": "sg-21",
+    "id": "si_87",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 209"
   },
   {
-    "id": "si-183",
-    "subGroupId": "sg-21",
+    "id": "si_88",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 216"
   },
   {
-    "id": "si-184",
-    "subGroupId": "sg-21",
+    "id": "si_89",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 217"
   },
   {
-    "id": "si-185",
-    "subGroupId": "sg-21",
+    "id": "si_90",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 756"
   },
   {
-    "id": "si-186",
-    "subGroupId": "sg-21",
+    "id": "si_91",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 768"
   },
   {
-    "id": "si-187",
-    "subGroupId": "sg-21",
+    "id": "si_92",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 769"
   },
   {
-    "id": "si-188",
-    "subGroupId": "sg-21",
+    "id": "si_93",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 770"
   },
   {
-    "id": "si-189",
-    "subGroupId": "sg-21",
+    "id": "si_94",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 773"
   },
   {
-    "id": "si-190",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 773"
-  },
-  {
-    "id": "si-191",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 773"
-  },
-  {
-    "id": "si-192",
-    "subGroupId": "sg-21",
+    "id": "si_95",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 774"
   },
   {
-    "id": "si-193",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 774"
-  },
-  {
-    "id": "si-194",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 774"
-  },
-  {
-    "id": "si-195",
-    "subGroupId": "sg-21",
+    "id": "si_96",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 775"
   },
   {
-    "id": "si-196",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 775"
-  },
-  {
-    "id": "si-197",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 775"
-  },
-  {
-    "id": "si-198",
-    "subGroupId": "sg-21",
+    "id": "si_97",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 776"
   },
   {
-    "id": "si-199",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 776"
-  },
-  {
-    "id": "si-200",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 776"
-  },
-  {
-    "id": "si-201",
-    "subGroupId": "sg-21",
+    "id": "si_98",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 777"
   },
   {
-    "id": "si-202",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 777"
-  },
-  {
-    "id": "si-203",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 777"
-  },
-  {
-    "id": "si-204",
-    "subGroupId": "sg-21",
+    "id": "si_99",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 778"
   },
   {
-    "id": "si-205",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 778"
-  },
-  {
-    "id": "si-206",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 778"
-  },
-  {
-    "id": "si-207",
-    "subGroupId": "sg-21",
+    "id": "si_100",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 779"
   },
   {
-    "id": "si-208",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 779"
-  },
-  {
-    "id": "si-209",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 779"
-  },
-  {
-    "id": "si-210",
-    "subGroupId": "sg-21",
+    "id": "si_101",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 780"
   },
   {
-    "id": "si-211",
-    "subGroupId": "sg-21",
+    "id": "si_102",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 781"
   },
   {
-    "id": "si-212",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 781"
-  },
-  {
-    "id": "si-213",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 781"
-  },
-  {
-    "id": "si-214",
-    "subGroupId": "sg-21",
+    "id": "si_103",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 782"
   },
   {
-    "id": "si-215",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 782"
-  },
-  {
-    "id": "si-216",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 782"
-  },
-  {
-    "id": "si-217",
-    "subGroupId": "sg-21",
+    "id": "si_104",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 783"
   },
   {
-    "id": "si-218",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 783"
-  },
-  {
-    "id": "si-219",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 783"
-  },
-  {
-    "id": "si-220",
-    "subGroupId": "sg-21",
+    "id": "si_105",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 785"
   },
   {
-    "id": "si-221",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 785"
-  },
-  {
-    "id": "si-222",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 785"
-  },
-  {
-    "id": "si-223",
-    "subGroupId": "sg-21",
+    "id": "si_106",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 786"
   },
   {
-    "id": "si-224",
-    "subGroupId": "sg-21",
+    "id": "si_107",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 787"
   },
   {
-    "id": "si-225",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 787"
-  },
-  {
-    "id": "si-226",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 787"
-  },
-  {
-    "id": "si-227",
-    "subGroupId": "sg-21",
+    "id": "si_108",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 800"
   },
   {
-    "id": "si-228",
-    "subGroupId": "sg-21",
+    "id": "si_109",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 801"
   },
   {
-    "id": "si-229",
-    "subGroupId": "sg-21",
+    "id": "si_110",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 802"
   },
   {
-    "id": "si-230",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 802"
-  },
-  {
-    "id": "si-231",
-    "subGroupId": "sg-21",
+    "id": "si_111",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 803"
   },
   {
-    "id": "si-232",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 803"
-  },
-  {
-    "id": "si-233",
-    "subGroupId": "sg-21",
+    "id": "si_112",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 804"
   },
   {
-    "id": "si-234",
-    "subGroupId": "sg-21",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(Digital)",
-    "itemPrefix": "B.F.P 804"
-  },
-  {
-    "id": "si-235",
-    "subGroupId": "sg-21",
+    "id": "si_113",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 805"
   },
   {
-    "id": "si-236",
-    "subGroupId": "sg-21",
+    "id": "si_114",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 808"
   },
   {
-    "id": "si-237",
-    "subGroupId": "sg-21",
+    "id": "si_115",
+    "subGroupId": "sg_21",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(Digital)",
     "itemPrefix": "B.F.P 809"
   },
   {
-    "id": "si-238",
-    "subGroupId": "sg-4",
+    "id": "si_116",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 200"
   },
   {
-    "id": "si-239",
-    "subGroupId": "sg-4",
+    "id": "si_117",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 209"
   },
   {
-    "id": "si-240",
-    "subGroupId": "sg-4",
+    "id": "si_118",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 216"
   },
   {
-    "id": "si-241",
-    "subGroupId": "sg-4",
+    "id": "si_119",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 217"
   },
   {
-    "id": "si-242",
-    "subGroupId": "sg-4",
+    "id": "si_120",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 756"
   },
   {
-    "id": "si-243",
-    "subGroupId": "sg-4",
+    "id": "si_121",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 768"
   },
   {
-    "id": "si-244",
-    "subGroupId": "sg-4",
+    "id": "si_122",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 769"
   },
   {
-    "id": "si-245",
-    "subGroupId": "sg-4",
+    "id": "si_123",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 770"
   },
   {
-    "id": "si-246",
-    "subGroupId": "sg-4",
+    "id": "si_124",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 773"
   },
   {
-    "id": "si-247",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 773"
-  },
-  {
-    "id": "si-248",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 773"
-  },
-  {
-    "id": "si-249",
-    "subGroupId": "sg-4",
+    "id": "si_125",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 774"
   },
   {
-    "id": "si-250",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 774"
-  },
-  {
-    "id": "si-251",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 774"
-  },
-  {
-    "id": "si-252",
-    "subGroupId": "sg-4",
+    "id": "si_126",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 775"
   },
   {
-    "id": "si-253",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 775"
-  },
-  {
-    "id": "si-254",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 775"
-  },
-  {
-    "id": "si-255",
-    "subGroupId": "sg-4",
+    "id": "si_127",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 776"
   },
   {
-    "id": "si-256",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 776"
-  },
-  {
-    "id": "si-257",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 776"
-  },
-  {
-    "id": "si-258",
-    "subGroupId": "sg-4",
+    "id": "si_128",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 777"
   },
   {
-    "id": "si-259",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 777"
-  },
-  {
-    "id": "si-260",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 777"
-  },
-  {
-    "id": "si-261",
-    "subGroupId": "sg-4",
+    "id": "si_129",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 778"
   },
   {
-    "id": "si-262",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 778"
-  },
-  {
-    "id": "si-263",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 778"
-  },
-  {
-    "id": "si-264",
-    "subGroupId": "sg-4",
+    "id": "si_130",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 779"
   },
   {
-    "id": "si-265",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 779"
-  },
-  {
-    "id": "si-266",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 779"
-  },
-  {
-    "id": "si-267",
-    "subGroupId": "sg-4",
+    "id": "si_131",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 780"
   },
   {
-    "id": "si-268",
-    "subGroupId": "sg-4",
+    "id": "si_132",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 781"
   },
   {
-    "id": "si-269",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 781"
-  },
-  {
-    "id": "si-270",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 781"
-  },
-  {
-    "id": "si-271",
-    "subGroupId": "sg-4",
+    "id": "si_133",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 782"
   },
   {
-    "id": "si-272",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 782"
-  },
-  {
-    "id": "si-273",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 782"
-  },
-  {
-    "id": "si-274",
-    "subGroupId": "sg-4",
+    "id": "si_134",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 783"
   },
   {
-    "id": "si-275",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 783"
-  },
-  {
-    "id": "si-276",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 783"
-  },
-  {
-    "id": "si-277",
-    "subGroupId": "sg-4",
+    "id": "si_135",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 785"
   },
   {
-    "id": "si-278",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 785"
-  },
-  {
-    "id": "si-279",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 785"
-  },
-  {
-    "id": "si-280",
-    "subGroupId": "sg-4",
+    "id": "si_136",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 786"
   },
   {
-    "id": "si-281",
-    "subGroupId": "sg-4",
+    "id": "si_137",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 787"
   },
   {
-    "id": "si-282",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 787"
-  },
-  {
-    "id": "si-283",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 787"
-  },
-  {
-    "id": "si-284",
-    "subGroupId": "sg-4",
+    "id": "si_138",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 800"
   },
   {
-    "id": "si-285",
-    "subGroupId": "sg-4",
+    "id": "si_139",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 801"
   },
   {
-    "id": "si-286",
-    "subGroupId": "sg-4",
+    "id": "si_140",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 802"
   },
   {
-    "id": "si-287",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 802"
-  },
-  {
-    "id": "si-288",
-    "subGroupId": "sg-4",
+    "id": "si_141",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 803"
   },
   {
-    "id": "si-289",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 803"
-  },
-  {
-    "id": "si-290",
-    "subGroupId": "sg-4",
+    "id": "si_142",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 804"
   },
   {
-    "id": "si-291",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 804"
-  },
-  {
-    "id": "si-292",
-    "subGroupId": "sg-4",
+    "id": "si_143",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 805"
   },
   {
-    "id": "si-293",
-    "subGroupId": "sg-4",
-    "mainGroup": "Digital",
-    "groupName": "B.F.P-(G)-(Digital)",
-    "itemPrefix": "B.F.P-(G) 805"
-  },
-  {
-    "id": "si-294",
-    "subGroupId": "sg-4",
+    "id": "si_144",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 808"
   },
   {
-    "id": "si-295",
-    "subGroupId": "sg-4",
+    "id": "si_145",
+    "subGroupId": "sg_4",
     "mainGroup": "Digital",
     "groupName": "B.F.P-(G)-(Digital)",
     "itemPrefix": "B.F.P-(G) 809"
   },
   {
-    "id": "si-296",
-    "subGroupId": "sg-5",
+    "id": "si_146",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 200"
   },
   {
-    "id": "si-297",
-    "subGroupId": "sg-5",
+    "id": "si_147",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 209"
   },
   {
-    "id": "si-298",
-    "subGroupId": "sg-5",
+    "id": "si_148",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 216"
   },
   {
-    "id": "si-299",
-    "subGroupId": "sg-5",
+    "id": "si_149",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 217"
   },
   {
-    "id": "si-300",
-    "subGroupId": "sg-5",
+    "id": "si_150",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 756"
   },
   {
-    "id": "si-301",
-    "subGroupId": "sg-5",
+    "id": "si_151",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 768"
   },
   {
-    "id": "si-302",
-    "subGroupId": "sg-5",
+    "id": "si_152",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 769"
   },
   {
-    "id": "si-303",
-    "subGroupId": "sg-5",
+    "id": "si_153",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 770"
   },
   {
-    "id": "si-304",
-    "subGroupId": "sg-5",
+    "id": "si_154",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 773"
   },
   {
-    "id": "si-305",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 773"
-  },
-  {
-    "id": "si-306",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 773"
-  },
-  {
-    "id": "si-307",
-    "subGroupId": "sg-5",
+    "id": "si_155",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 774"
   },
   {
-    "id": "si-308",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 774"
-  },
-  {
-    "id": "si-309",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 774"
-  },
-  {
-    "id": "si-310",
-    "subGroupId": "sg-5",
+    "id": "si_156",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 775"
   },
   {
-    "id": "si-311",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 775"
-  },
-  {
-    "id": "si-312",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 775"
-  },
-  {
-    "id": "si-313",
-    "subGroupId": "sg-5",
+    "id": "si_157",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 776"
   },
   {
-    "id": "si-314",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 776"
-  },
-  {
-    "id": "si-315",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 776"
-  },
-  {
-    "id": "si-316",
-    "subGroupId": "sg-5",
+    "id": "si_158",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 777"
   },
   {
-    "id": "si-317",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 777"
-  },
-  {
-    "id": "si-318",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 777"
-  },
-  {
-    "id": "si-319",
-    "subGroupId": "sg-5",
+    "id": "si_159",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 778"
   },
   {
-    "id": "si-320",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 778"
-  },
-  {
-    "id": "si-321",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 778"
-  },
-  {
-    "id": "si-322",
-    "subGroupId": "sg-5",
+    "id": "si_160",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 779"
   },
   {
-    "id": "si-323",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 779"
-  },
-  {
-    "id": "si-324",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 779"
-  },
-  {
-    "id": "si-325",
-    "subGroupId": "sg-5",
+    "id": "si_161",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 780"
   },
   {
-    "id": "si-326",
-    "subGroupId": "sg-5",
+    "id": "si_162",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 781"
   },
   {
-    "id": "si-327",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 781"
-  },
-  {
-    "id": "si-328",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 781"
-  },
-  {
-    "id": "si-329",
-    "subGroupId": "sg-5",
+    "id": "si_163",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 782"
   },
   {
-    "id": "si-330",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 782"
-  },
-  {
-    "id": "si-331",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 782"
-  },
-  {
-    "id": "si-332",
-    "subGroupId": "sg-5",
+    "id": "si_164",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 783"
   },
   {
-    "id": "si-333",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 783"
-  },
-  {
-    "id": "si-334",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 783"
-  },
-  {
-    "id": "si-335",
-    "subGroupId": "sg-5",
+    "id": "si_165",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 785"
   },
   {
-    "id": "si-336",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 785"
-  },
-  {
-    "id": "si-337",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 785"
-  },
-  {
-    "id": "si-338",
-    "subGroupId": "sg-5",
+    "id": "si_166",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 786"
   },
   {
-    "id": "si-339",
-    "subGroupId": "sg-5",
+    "id": "si_167",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 787"
   },
   {
-    "id": "si-340",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 787"
-  },
-  {
-    "id": "si-341",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 787"
-  },
-  {
-    "id": "si-342",
-    "subGroupId": "sg-5",
+    "id": "si_168",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 800"
   },
   {
-    "id": "si-343",
-    "subGroupId": "sg-5",
+    "id": "si_169",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 801"
   },
   {
-    "id": "si-344",
-    "subGroupId": "sg-5",
+    "id": "si_170",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 802"
   },
   {
-    "id": "si-345",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 802"
-  },
-  {
-    "id": "si-346",
-    "subGroupId": "sg-5",
+    "id": "si_171",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 803"
   },
   {
-    "id": "si-347",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 803"
-  },
-  {
-    "id": "si-348",
-    "subGroupId": "sg-5",
+    "id": "si_172",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 804"
   },
   {
-    "id": "si-349",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 804"
-  },
-  {
-    "id": "si-350",
-    "subGroupId": "sg-5",
+    "id": "si_173",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 805"
   },
   {
-    "id": "si-351",
-    "subGroupId": "sg-5",
-    "mainGroup": "Digital",
-    "groupName": "C.M-(Digital)",
-    "itemPrefix": "C.M 805"
-  },
-  {
-    "id": "si-352",
-    "subGroupId": "sg-5",
+    "id": "si_174",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 808"
   },
   {
-    "id": "si-353",
-    "subGroupId": "sg-5",
+    "id": "si_175",
+    "subGroupId": "sg_5",
     "mainGroup": "Digital",
     "groupName": "C.M-(Digital)",
     "itemPrefix": "C.M 809"
   },
   {
-    "id": "si-354",
-    "subGroupId": "sg-6",
+    "id": "si_176",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 200"
   },
   {
-    "id": "si-355",
-    "subGroupId": "sg-6",
+    "id": "si_177",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 209"
   },
   {
-    "id": "si-356",
-    "subGroupId": "sg-6",
+    "id": "si_178",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 216"
   },
   {
-    "id": "si-357",
-    "subGroupId": "sg-6",
+    "id": "si_179",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 217"
   },
   {
-    "id": "si-358",
-    "subGroupId": "sg-6",
+    "id": "si_180",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 756"
   },
   {
-    "id": "si-359",
-    "subGroupId": "sg-6",
+    "id": "si_181",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 768"
   },
   {
-    "id": "si-360",
-    "subGroupId": "sg-6",
+    "id": "si_182",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 769"
   },
   {
-    "id": "si-361",
-    "subGroupId": "sg-6",
+    "id": "si_183",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 770"
   },
   {
-    "id": "si-362",
-    "subGroupId": "sg-6",
+    "id": "si_184",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 773"
   },
   {
-    "id": "si-363",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 773"
-  },
-  {
-    "id": "si-364",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 773"
-  },
-  {
-    "id": "si-365",
-    "subGroupId": "sg-6",
+    "id": "si_185",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 774"
   },
   {
-    "id": "si-366",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 774"
-  },
-  {
-    "id": "si-367",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 774"
-  },
-  {
-    "id": "si-368",
-    "subGroupId": "sg-6",
+    "id": "si_186",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 775"
   },
   {
-    "id": "si-369",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 775"
-  },
-  {
-    "id": "si-370",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 775"
-  },
-  {
-    "id": "si-371",
-    "subGroupId": "sg-6",
+    "id": "si_187",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 776"
   },
   {
-    "id": "si-372",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 776"
-  },
-  {
-    "id": "si-373",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 776"
-  },
-  {
-    "id": "si-374",
-    "subGroupId": "sg-6",
+    "id": "si_188",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 777"
   },
   {
-    "id": "si-375",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 777"
-  },
-  {
-    "id": "si-376",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 777"
-  },
-  {
-    "id": "si-377",
-    "subGroupId": "sg-6",
+    "id": "si_189",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 778"
   },
   {
-    "id": "si-378",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 778"
-  },
-  {
-    "id": "si-379",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 778"
-  },
-  {
-    "id": "si-380",
-    "subGroupId": "sg-6",
+    "id": "si_190",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 779"
   },
   {
-    "id": "si-381",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 779"
-  },
-  {
-    "id": "si-382",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 779"
-  },
-  {
-    "id": "si-383",
-    "subGroupId": "sg-6",
+    "id": "si_191",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 780"
   },
   {
-    "id": "si-384",
-    "subGroupId": "sg-6",
+    "id": "si_192",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 781"
   },
   {
-    "id": "si-385",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 781"
-  },
-  {
-    "id": "si-386",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 781"
-  },
-  {
-    "id": "si-387",
-    "subGroupId": "sg-6",
+    "id": "si_193",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 782"
   },
   {
-    "id": "si-388",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 782"
-  },
-  {
-    "id": "si-389",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 782"
-  },
-  {
-    "id": "si-390",
-    "subGroupId": "sg-6",
+    "id": "si_194",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 783"
   },
   {
-    "id": "si-391",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 783"
-  },
-  {
-    "id": "si-392",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 783"
-  },
-  {
-    "id": "si-393",
-    "subGroupId": "sg-6",
+    "id": "si_195",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 785"
   },
   {
-    "id": "si-394",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 785"
-  },
-  {
-    "id": "si-395",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 785"
-  },
-  {
-    "id": "si-396",
-    "subGroupId": "sg-6",
+    "id": "si_196",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 786"
   },
   {
-    "id": "si-397",
-    "subGroupId": "sg-6",
+    "id": "si_197",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 787"
   },
   {
-    "id": "si-398",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 787"
-  },
-  {
-    "id": "si-399",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 787"
-  },
-  {
-    "id": "si-400",
-    "subGroupId": "sg-6",
+    "id": "si_198",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 800"
   },
   {
-    "id": "si-401",
-    "subGroupId": "sg-6",
+    "id": "si_199",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 801"
   },
   {
-    "id": "si-402",
-    "subGroupId": "sg-6",
+    "id": "si_200",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 802"
   },
   {
-    "id": "si-403",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 802"
-  },
-  {
-    "id": "si-404",
-    "subGroupId": "sg-6",
+    "id": "si_201",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 803"
   },
   {
-    "id": "si-405",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 803"
-  },
-  {
-    "id": "si-406",
-    "subGroupId": "sg-6",
+    "id": "si_202",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 804"
   },
   {
-    "id": "si-407",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 804"
-  },
-  {
-    "id": "si-408",
-    "subGroupId": "sg-6",
+    "id": "si_203",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 805"
   },
   {
-    "id": "si-409",
-    "subGroupId": "sg-6",
-    "mainGroup": "Digital",
-    "groupName": "F.P-(Digital)",
-    "itemPrefix": "F.P 805"
-  },
-  {
-    "id": "si-410",
-    "subGroupId": "sg-6",
+    "id": "si_204",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 808"
   },
   {
-    "id": "si-411",
-    "subGroupId": "sg-6",
+    "id": "si_205",
+    "subGroupId": "sg_6",
     "mainGroup": "Digital",
     "groupName": "F.P-(Digital)",
     "itemPrefix": "F.P 809"
   },
   {
-    "id": "si-412",
-    "subGroupId": "sg-7",
+    "id": "si_206",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G 783"
   },
   {
-    "id": "si-413",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P C.G 783"
-  },
-  {
-    "id": "si-414",
-    "subGroupId": "sg-7",
+    "id": "si_207",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G.781"
   },
   {
-    "id": "si-415",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P C.G.781"
-  },
-  {
-    "id": "si-416",
-    "subGroupId": "sg-7",
+    "id": "si_208",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G.785"
   },
   {
-    "id": "si-417",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P C.G.785"
-  },
-  {
-    "id": "si-418",
-    "subGroupId": "sg-7",
+    "id": "si_209",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G782"
   },
   {
-    "id": "si-419",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P C.G782"
-  },
-  {
-    "id": "si-420",
-    "subGroupId": "sg-7",
+    "id": "si_210",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P C.G802"
   },
   {
-    "id": "si-421",
-    "subGroupId": "sg-7",
+    "id": "si_211",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P CG803"
   },
   {
-    "id": "si-422",
-    "subGroupId": "sg-7",
+    "id": "si_212",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P CG804"
   },
   {
-    "id": "si-423",
-    "subGroupId": "sg-7",
+    "id": "si_213",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P CG805"
   },
   {
-    "id": "si-424",
-    "subGroupId": "sg-7",
+    "id": "si_214",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 200"
   },
   {
-    "id": "si-425",
-    "subGroupId": "sg-7",
+    "id": "si_215",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 209"
   },
   {
-    "id": "si-426",
-    "subGroupId": "sg-7",
+    "id": "si_216",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 216"
   },
   {
-    "id": "si-427",
-    "subGroupId": "sg-7",
+    "id": "si_217",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 217"
   },
   {
-    "id": "si-428",
-    "subGroupId": "sg-7",
+    "id": "si_218",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 756"
   },
   {
-    "id": "si-429",
-    "subGroupId": "sg-7",
+    "id": "si_219",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 768"
   },
   {
-    "id": "si-430",
-    "subGroupId": "sg-7",
+    "id": "si_220",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 769"
   },
   {
-    "id": "si-431",
-    "subGroupId": "sg-7",
+    "id": "si_221",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 770"
   },
   {
-    "id": "si-432",
-    "subGroupId": "sg-7",
+    "id": "si_222",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 773"
   },
   {
-    "id": "si-433",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 773"
-  },
-  {
-    "id": "si-434",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 773"
-  },
-  {
-    "id": "si-435",
-    "subGroupId": "sg-7",
+    "id": "si_223",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 774"
   },
   {
-    "id": "si-436",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 774"
-  },
-  {
-    "id": "si-437",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 774"
-  },
-  {
-    "id": "si-438",
-    "subGroupId": "sg-7",
+    "id": "si_224",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 775"
   },
   {
-    "id": "si-439",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 775"
-  },
-  {
-    "id": "si-440",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 775"
-  },
-  {
-    "id": "si-441",
-    "subGroupId": "sg-7",
+    "id": "si_225",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 776"
   },
   {
-    "id": "si-442",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 776"
-  },
-  {
-    "id": "si-443",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 776"
-  },
-  {
-    "id": "si-444",
-    "subGroupId": "sg-7",
+    "id": "si_226",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 777"
   },
   {
-    "id": "si-445",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 777"
-  },
-  {
-    "id": "si-446",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 777"
-  },
-  {
-    "id": "si-447",
-    "subGroupId": "sg-7",
+    "id": "si_227",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 778"
   },
   {
-    "id": "si-448",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 778"
-  },
-  {
-    "id": "si-449",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 778"
-  },
-  {
-    "id": "si-450",
-    "subGroupId": "sg-7",
+    "id": "si_228",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 779"
   },
   {
-    "id": "si-451",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 779"
-  },
-  {
-    "id": "si-452",
-    "subGroupId": "sg-7",
-    "mainGroup": "Digital",
-    "groupName": "F.P.C.G-(Digital)",
-    "itemPrefix": "F.P.C.G 779"
-  },
-  {
-    "id": "si-453",
-    "subGroupId": "sg-7",
+    "id": "si_229",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 780"
   },
   {
-    "id": "si-454",
-    "subGroupId": "sg-7",
+    "id": "si_230",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 781"
   },
   {
-    "id": "si-455",
-    "subGroupId": "sg-7",
+    "id": "si_231",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 782"
   },
   {
-    "id": "si-456",
-    "subGroupId": "sg-7",
+    "id": "si_232",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 783"
   },
   {
-    "id": "si-457",
-    "subGroupId": "sg-7",
+    "id": "si_233",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 784"
   },
   {
-    "id": "si-458",
-    "subGroupId": "sg-7",
+    "id": "si_234",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 785"
   },
   {
-    "id": "si-459",
-    "subGroupId": "sg-7",
+    "id": "si_235",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 786"
   },
   {
-    "id": "si-460",
-    "subGroupId": "sg-7",
+    "id": "si_236",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 800"
   },
   {
-    "id": "si-461",
-    "subGroupId": "sg-7",
+    "id": "si_237",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 801"
   },
   {
-    "id": "si-462",
-    "subGroupId": "sg-7",
+    "id": "si_238",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 802"
   },
   {
-    "id": "si-463",
-    "subGroupId": "sg-7",
+    "id": "si_239",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 803"
   },
   {
-    "id": "si-464",
-    "subGroupId": "sg-7",
+    "id": "si_240",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 804"
   },
   {
-    "id": "si-465",
-    "subGroupId": "sg-7",
+    "id": "si_241",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 805"
   },
   {
-    "id": "si-466",
-    "subGroupId": "sg-7",
+    "id": "si_242",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 808"
   },
   {
-    "id": "si-467",
-    "subGroupId": "sg-7",
+    "id": "si_243",
+    "subGroupId": "sg_7",
     "mainGroup": "Digital",
     "groupName": "F.P.C.G-(Digital)",
     "itemPrefix": "F.P.C.G 809"
   },
   {
-    "id": "si-468",
-    "subGroupId": "sg-8",
+    "id": "si_244",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 200"
   },
   {
-    "id": "si-469",
-    "subGroupId": "sg-8",
+    "id": "si_245",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 209"
   },
   {
-    "id": "si-470",
-    "subGroupId": "sg-8",
+    "id": "si_246",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 216"
   },
   {
-    "id": "si-471",
-    "subGroupId": "sg-8",
+    "id": "si_247",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 217"
   },
   {
-    "id": "si-472",
-    "subGroupId": "sg-8",
+    "id": "si_248",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 756"
   },
   {
-    "id": "si-473",
-    "subGroupId": "sg-8",
+    "id": "si_249",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 768"
   },
   {
-    "id": "si-474",
-    "subGroupId": "sg-8",
+    "id": "si_250",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 769"
   },
   {
-    "id": "si-475",
-    "subGroupId": "sg-8",
+    "id": "si_251",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 770"
   },
   {
-    "id": "si-476",
-    "subGroupId": "sg-8",
+    "id": "si_252",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 773"
   },
   {
-    "id": "si-477",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 773"
-  },
-  {
-    "id": "si-478",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 773"
-  },
-  {
-    "id": "si-479",
-    "subGroupId": "sg-8",
+    "id": "si_253",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 774"
   },
   {
-    "id": "si-480",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 774"
-  },
-  {
-    "id": "si-481",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 774"
-  },
-  {
-    "id": "si-482",
-    "subGroupId": "sg-8",
+    "id": "si_254",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 775"
   },
   {
-    "id": "si-483",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 775"
-  },
-  {
-    "id": "si-484",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 775"
-  },
-  {
-    "id": "si-485",
-    "subGroupId": "sg-8",
+    "id": "si_255",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 776"
   },
   {
-    "id": "si-486",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 776"
-  },
-  {
-    "id": "si-487",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 776"
-  },
-  {
-    "id": "si-488",
-    "subGroupId": "sg-8",
+    "id": "si_256",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 777"
   },
   {
-    "id": "si-489",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 777"
-  },
-  {
-    "id": "si-490",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 777"
-  },
-  {
-    "id": "si-491",
-    "subGroupId": "sg-8",
+    "id": "si_257",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 778"
   },
   {
-    "id": "si-492",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 778"
-  },
-  {
-    "id": "si-493",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 778"
-  },
-  {
-    "id": "si-494",
-    "subGroupId": "sg-8",
+    "id": "si_258",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 779"
   },
   {
-    "id": "si-495",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 779"
-  },
-  {
-    "id": "si-496",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 779"
-  },
-  {
-    "id": "si-497",
-    "subGroupId": "sg-8",
+    "id": "si_259",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 780"
   },
   {
-    "id": "si-498",
-    "subGroupId": "sg-8",
+    "id": "si_260",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 781"
   },
   {
-    "id": "si-499",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 781"
-  },
-  {
-    "id": "si-500",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 781"
-  },
-  {
-    "id": "si-501",
-    "subGroupId": "sg-8",
+    "id": "si_261",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 782"
   },
   {
-    "id": "si-502",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 782"
-  },
-  {
-    "id": "si-503",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 782"
-  },
-  {
-    "id": "si-504",
-    "subGroupId": "sg-8",
+    "id": "si_262",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 783"
   },
   {
-    "id": "si-505",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 783"
-  },
-  {
-    "id": "si-506",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 783"
-  },
-  {
-    "id": "si-507",
-    "subGroupId": "sg-8",
+    "id": "si_263",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 785"
   },
   {
-    "id": "si-508",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 785"
-  },
-  {
-    "id": "si-509",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 785"
-  },
-  {
-    "id": "si-510",
-    "subGroupId": "sg-8",
+    "id": "si_264",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 786"
   },
   {
-    "id": "si-511",
-    "subGroupId": "sg-8",
+    "id": "si_265",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 787"
   },
   {
-    "id": "si-512",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 787"
-  },
-  {
-    "id": "si-513",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 787"
-  },
-  {
-    "id": "si-514",
-    "subGroupId": "sg-8",
+    "id": "si_266",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 800"
   },
   {
-    "id": "si-515",
-    "subGroupId": "sg-8",
+    "id": "si_267",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 801"
   },
   {
-    "id": "si-516",
-    "subGroupId": "sg-8",
+    "id": "si_268",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 802"
   },
   {
-    "id": "si-517",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 802"
-  },
-  {
-    "id": "si-518",
-    "subGroupId": "sg-8",
+    "id": "si_269",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 803"
   },
   {
-    "id": "si-519",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 803"
-  },
-  {
-    "id": "si-520",
-    "subGroupId": "sg-8",
+    "id": "si_270",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 804"
   },
   {
-    "id": "si-521",
-    "subGroupId": "sg-8",
-    "mainGroup": "Digital",
-    "groupName": "F.P.G-(Digital)",
-    "itemPrefix": "F.P.G 804"
-  },
-  {
-    "id": "si-522",
-    "subGroupId": "sg-8",
+    "id": "si_271",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 805"
   },
   {
-    "id": "si-523",
-    "subGroupId": "sg-8",
+    "id": "si_272",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 808"
   },
   {
-    "id": "si-524",
-    "subGroupId": "sg-8",
+    "id": "si_273",
+    "subGroupId": "sg_8",
     "mainGroup": "Digital",
     "groupName": "F.P.G-(Digital)",
     "itemPrefix": "F.P.G 809"
   },
   {
-    "id": "si-525",
-    "subGroupId": "sg-9",
+    "id": "si_274",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 200"
   },
   {
-    "id": "si-526",
-    "subGroupId": "sg-9",
+    "id": "si_275",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 209"
   },
   {
-    "id": "si-527",
-    "subGroupId": "sg-9",
+    "id": "si_276",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 216"
   },
   {
-    "id": "si-528",
-    "subGroupId": "sg-9",
+    "id": "si_277",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 217"
   },
   {
-    "id": "si-529",
-    "subGroupId": "sg-9",
+    "id": "si_278",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 756"
   },
   {
-    "id": "si-530",
-    "subGroupId": "sg-9",
+    "id": "si_279",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 768"
   },
   {
-    "id": "si-531",
-    "subGroupId": "sg-9",
+    "id": "si_280",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 769"
   },
   {
-    "id": "si-532",
-    "subGroupId": "sg-9",
+    "id": "si_281",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 770"
   },
   {
-    "id": "si-533",
-    "subGroupId": "sg-9",
+    "id": "si_282",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 773"
   },
   {
-    "id": "si-534",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 773"
-  },
-  {
-    "id": "si-535",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 773"
-  },
-  {
-    "id": "si-536",
-    "subGroupId": "sg-9",
+    "id": "si_283",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 774"
   },
   {
-    "id": "si-537",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 774"
-  },
-  {
-    "id": "si-538",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 774"
-  },
-  {
-    "id": "si-539",
-    "subGroupId": "sg-9",
+    "id": "si_284",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 775"
   },
   {
-    "id": "si-540",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 775"
-  },
-  {
-    "id": "si-541",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 775"
-  },
-  {
-    "id": "si-542",
-    "subGroupId": "sg-9",
+    "id": "si_285",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 776"
   },
   {
-    "id": "si-543",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 776"
-  },
-  {
-    "id": "si-544",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 776"
-  },
-  {
-    "id": "si-545",
-    "subGroupId": "sg-9",
+    "id": "si_286",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 777"
   },
   {
-    "id": "si-546",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 777"
-  },
-  {
-    "id": "si-547",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 777"
-  },
-  {
-    "id": "si-548",
-    "subGroupId": "sg-9",
+    "id": "si_287",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 778"
   },
   {
-    "id": "si-549",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 778"
-  },
-  {
-    "id": "si-550",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 778"
-  },
-  {
-    "id": "si-551",
-    "subGroupId": "sg-9",
+    "id": "si_288",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 779"
   },
   {
-    "id": "si-552",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 779"
-  },
-  {
-    "id": "si-553",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 779"
-  },
-  {
-    "id": "si-554",
-    "subGroupId": "sg-9",
+    "id": "si_289",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 780"
   },
   {
-    "id": "si-555",
-    "subGroupId": "sg-9",
+    "id": "si_290",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 781"
   },
   {
-    "id": "si-556",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 781"
-  },
-  {
-    "id": "si-557",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 781"
-  },
-  {
-    "id": "si-558",
-    "subGroupId": "sg-9",
+    "id": "si_291",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 782"
   },
   {
-    "id": "si-559",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 782"
-  },
-  {
-    "id": "si-560",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 782"
-  },
-  {
-    "id": "si-561",
-    "subGroupId": "sg-9",
+    "id": "si_292",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 783"
   },
   {
-    "id": "si-562",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 783"
-  },
-  {
-    "id": "si-563",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 783"
-  },
-  {
-    "id": "si-564",
-    "subGroupId": "sg-9",
+    "id": "si_293",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 785"
   },
   {
-    "id": "si-565",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 785"
-  },
-  {
-    "id": "si-566",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 785"
-  },
-  {
-    "id": "si-567",
-    "subGroupId": "sg-9",
+    "id": "si_294",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 786"
   },
   {
-    "id": "si-568",
-    "subGroupId": "sg-9",
+    "id": "si_295",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 787"
   },
   {
-    "id": "si-569",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 787"
-  },
-  {
-    "id": "si-570",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 787"
-  },
-  {
-    "id": "si-571",
-    "subGroupId": "sg-9",
+    "id": "si_296",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 800"
   },
   {
-    "id": "si-572",
-    "subGroupId": "sg-9",
+    "id": "si_297",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 801"
   },
   {
-    "id": "si-573",
-    "subGroupId": "sg-9",
+    "id": "si_298",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 802"
   },
   {
-    "id": "si-574",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 802"
-  },
-  {
-    "id": "si-575",
-    "subGroupId": "sg-9",
+    "id": "si_299",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 803"
   },
   {
-    "id": "si-576",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 803"
-  },
-  {
-    "id": "si-577",
-    "subGroupId": "sg-9",
+    "id": "si_300",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 804"
   },
   {
-    "id": "si-578",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 804"
-  },
-  {
-    "id": "si-579",
-    "subGroupId": "sg-9",
+    "id": "si_301",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 805"
   },
   {
-    "id": "si-580",
-    "subGroupId": "sg-9",
-    "mainGroup": "Digital",
-    "groupName": "S.L-(Digital)",
-    "itemPrefix": "S.L 805"
-  },
-  {
-    "id": "si-581",
-    "subGroupId": "sg-9",
+    "id": "si_302",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 808"
   },
   {
-    "id": "si-582",
-    "subGroupId": "sg-9",
+    "id": "si_303",
+    "subGroupId": "sg_9",
     "mainGroup": "Digital",
     "groupName": "S.L-(Digital)",
     "itemPrefix": "S.L 809"
   },
   {
-    "id": "si-583",
-    "subGroupId": "sg-19",
+    "id": "si_304",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 200"
   },
   {
-    "id": "si-584",
-    "subGroupId": "sg-19",
+    "id": "si_305",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 209"
   },
   {
-    "id": "si-585",
-    "subGroupId": "sg-19",
+    "id": "si_306",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 216"
   },
   {
-    "id": "si-586",
-    "subGroupId": "sg-19",
+    "id": "si_307",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 217"
   },
   {
-    "id": "si-587",
-    "subGroupId": "sg-19",
+    "id": "si_308",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 756"
   },
   {
-    "id": "si-588",
-    "subGroupId": "sg-19",
+    "id": "si_309",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 768"
   },
   {
-    "id": "si-589",
-    "subGroupId": "sg-19",
+    "id": "si_310",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 769"
   },
   {
-    "id": "si-590",
-    "subGroupId": "sg-19",
+    "id": "si_311",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 770"
   },
   {
-    "id": "si-591",
-    "subGroupId": "sg-19",
+    "id": "si_312",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 773"
   },
   {
-    "id": "si-592",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 773"
-  },
-  {
-    "id": "si-593",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 773"
-  },
-  {
-    "id": "si-594",
-    "subGroupId": "sg-19",
+    "id": "si_313",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 774"
   },
   {
-    "id": "si-595",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 774"
-  },
-  {
-    "id": "si-596",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 774"
-  },
-  {
-    "id": "si-597",
-    "subGroupId": "sg-19",
+    "id": "si_314",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 775"
   },
   {
-    "id": "si-598",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 775"
-  },
-  {
-    "id": "si-599",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 775"
-  },
-  {
-    "id": "si-600",
-    "subGroupId": "sg-19",
+    "id": "si_315",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 776"
   },
   {
-    "id": "si-601",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 776"
-  },
-  {
-    "id": "si-602",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 776"
-  },
-  {
-    "id": "si-603",
-    "subGroupId": "sg-19",
+    "id": "si_316",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 777"
   },
   {
-    "id": "si-604",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 777"
-  },
-  {
-    "id": "si-605",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 777"
-  },
-  {
-    "id": "si-606",
-    "subGroupId": "sg-19",
+    "id": "si_317",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 778"
   },
   {
-    "id": "si-607",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 778"
-  },
-  {
-    "id": "si-608",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 778"
-  },
-  {
-    "id": "si-609",
-    "subGroupId": "sg-19",
+    "id": "si_318",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 779"
   },
   {
-    "id": "si-610",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 779"
-  },
-  {
-    "id": "si-611",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 779"
-  },
-  {
-    "id": "si-612",
-    "subGroupId": "sg-19",
+    "id": "si_319",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 780"
   },
   {
-    "id": "si-613",
-    "subGroupId": "sg-19",
+    "id": "si_320",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 781"
   },
   {
-    "id": "si-614",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 781"
-  },
-  {
-    "id": "si-615",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 781"
-  },
-  {
-    "id": "si-616",
-    "subGroupId": "sg-19",
+    "id": "si_321",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 782"
   },
   {
-    "id": "si-617",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 782"
-  },
-  {
-    "id": "si-618",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 782"
-  },
-  {
-    "id": "si-619",
-    "subGroupId": "sg-19",
+    "id": "si_322",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 783"
   },
   {
-    "id": "si-620",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 783"
-  },
-  {
-    "id": "si-621",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 783"
-  },
-  {
-    "id": "si-622",
-    "subGroupId": "sg-19",
+    "id": "si_323",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 785"
   },
   {
-    "id": "si-623",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 785"
-  },
-  {
-    "id": "si-624",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 785"
-  },
-  {
-    "id": "si-625",
-    "subGroupId": "sg-19",
+    "id": "si_324",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 786"
   },
   {
-    "id": "si-626",
-    "subGroupId": "sg-19",
+    "id": "si_325",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 787"
   },
   {
-    "id": "si-627",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 787"
-  },
-  {
-    "id": "si-628",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 787"
-  },
-  {
-    "id": "si-629",
-    "subGroupId": "sg-19",
+    "id": "si_326",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 800"
   },
   {
-    "id": "si-630",
-    "subGroupId": "sg-19",
+    "id": "si_327",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 801"
   },
   {
-    "id": "si-631",
-    "subGroupId": "sg-19",
+    "id": "si_328",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 802"
   },
   {
-    "id": "si-632",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 802"
-  },
-  {
-    "id": "si-633",
-    "subGroupId": "sg-19",
+    "id": "si_329",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 803"
   },
   {
-    "id": "si-634",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 803"
-  },
-  {
-    "id": "si-635",
-    "subGroupId": "sg-19",
+    "id": "si_330",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 804"
   },
   {
-    "id": "si-636",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 804"
-  },
-  {
-    "id": "si-637",
-    "subGroupId": "sg-19",
+    "id": "si_331",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 805"
   },
   {
-    "id": "si-638",
-    "subGroupId": "sg-19",
-    "mainGroup": "Digital",
-    "groupName": "S.P-(Digital)",
-    "itemPrefix": "S.P 805"
-  },
-  {
-    "id": "si-639",
-    "subGroupId": "sg-19",
+    "id": "si_332",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 808"
   },
   {
-    "id": "si-640",
-    "subGroupId": "sg-19",
+    "id": "si_333",
+    "subGroupId": "sg_19",
     "mainGroup": "Digital",
     "groupName": "S.P-(Digital)",
     "itemPrefix": "S.P 809"
   },
   {
-    "id": "si-641",
-    "subGroupId": "sg-20",
+    "id": "si_334",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 200"
   },
   {
-    "id": "si-642",
-    "subGroupId": "sg-20",
+    "id": "si_335",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 209"
   },
   {
-    "id": "si-643",
-    "subGroupId": "sg-20",
+    "id": "si_336",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 216"
   },
   {
-    "id": "si-644",
-    "subGroupId": "sg-20",
+    "id": "si_337",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 217"
   },
   {
-    "id": "si-645",
-    "subGroupId": "sg-20",
+    "id": "si_338",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 756"
   },
   {
-    "id": "si-646",
-    "subGroupId": "sg-20",
+    "id": "si_339",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 768"
   },
   {
-    "id": "si-647",
-    "subGroupId": "sg-20",
+    "id": "si_340",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 769"
   },
   {
-    "id": "si-648",
-    "subGroupId": "sg-20",
+    "id": "si_341",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 770"
   },
   {
-    "id": "si-649",
-    "subGroupId": "sg-20",
+    "id": "si_342",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 773"
   },
   {
-    "id": "si-650",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 773"
-  },
-  {
-    "id": "si-651",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 773"
-  },
-  {
-    "id": "si-652",
-    "subGroupId": "sg-20",
+    "id": "si_343",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 774"
   },
   {
-    "id": "si-653",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 774"
-  },
-  {
-    "id": "si-654",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 774"
-  },
-  {
-    "id": "si-655",
-    "subGroupId": "sg-20",
+    "id": "si_344",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 775"
   },
   {
-    "id": "si-656",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 775"
-  },
-  {
-    "id": "si-657",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 775"
-  },
-  {
-    "id": "si-658",
-    "subGroupId": "sg-20",
+    "id": "si_345",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 776"
   },
   {
-    "id": "si-659",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 776"
-  },
-  {
-    "id": "si-660",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 776"
-  },
-  {
-    "id": "si-661",
-    "subGroupId": "sg-20",
+    "id": "si_346",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 777"
   },
   {
-    "id": "si-662",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 777"
-  },
-  {
-    "id": "si-663",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 777"
-  },
-  {
-    "id": "si-664",
-    "subGroupId": "sg-20",
+    "id": "si_347",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 778"
   },
   {
-    "id": "si-665",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 778"
-  },
-  {
-    "id": "si-666",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 778"
-  },
-  {
-    "id": "si-667",
-    "subGroupId": "sg-20",
+    "id": "si_348",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 779"
   },
   {
-    "id": "si-668",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 779"
-  },
-  {
-    "id": "si-669",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 779"
-  },
-  {
-    "id": "si-670",
-    "subGroupId": "sg-20",
+    "id": "si_349",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 780"
   },
   {
-    "id": "si-671",
-    "subGroupId": "sg-20",
+    "id": "si_350",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 781"
   },
   {
-    "id": "si-672",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 781"
-  },
-  {
-    "id": "si-673",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 781"
-  },
-  {
-    "id": "si-674",
-    "subGroupId": "sg-20",
+    "id": "si_351",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 782"
   },
   {
-    "id": "si-675",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 782"
-  },
-  {
-    "id": "si-676",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 782"
-  },
-  {
-    "id": "si-677",
-    "subGroupId": "sg-20",
+    "id": "si_352",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 783"
   },
   {
-    "id": "si-678",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 783"
-  },
-  {
-    "id": "si-679",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 783"
-  },
-  {
-    "id": "si-680",
-    "subGroupId": "sg-20",
+    "id": "si_353",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 785"
   },
   {
-    "id": "si-681",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 785"
-  },
-  {
-    "id": "si-682",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 785"
-  },
-  {
-    "id": "si-683",
-    "subGroupId": "sg-20",
+    "id": "si_354",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 786"
   },
   {
-    "id": "si-684",
-    "subGroupId": "sg-20",
+    "id": "si_355",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 787"
   },
   {
-    "id": "si-685",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 787"
-  },
-  {
-    "id": "si-686",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 787"
-  },
-  {
-    "id": "si-687",
-    "subGroupId": "sg-20",
+    "id": "si_356",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 800"
   },
   {
-    "id": "si-688",
-    "subGroupId": "sg-20",
+    "id": "si_357",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 801"
   },
   {
-    "id": "si-689",
-    "subGroupId": "sg-20",
+    "id": "si_358",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 802"
   },
   {
-    "id": "si-690",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 802"
-  },
-  {
-    "id": "si-691",
-    "subGroupId": "sg-20",
+    "id": "si_359",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 803"
   },
   {
-    "id": "si-692",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 803"
-  },
-  {
-    "id": "si-693",
-    "subGroupId": "sg-20",
+    "id": "si_360",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 804"
   },
   {
-    "id": "si-694",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 804"
-  },
-  {
-    "id": "si-695",
-    "subGroupId": "sg-20",
+    "id": "si_361",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 805"
   },
   {
-    "id": "si-696",
-    "subGroupId": "sg-20",
-    "mainGroup": "Digital",
-    "groupName": "T.G-(Digital)",
-    "itemPrefix": "T.G 805"
-  },
-  {
-    "id": "si-697",
-    "subGroupId": "sg-20",
+    "id": "si_362",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 808"
   },
   {
-    "id": "si-698",
-    "subGroupId": "sg-20",
+    "id": "si_363",
+    "subGroupId": "sg_20",
     "mainGroup": "Digital",
     "groupName": "T.G-(Digital)",
     "itemPrefix": "T.G 809"
-  },
-  {
-    "id": "si-699",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2000"
-  },
-  {
-    "id": "si-700",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2001"
-  },
-  {
-    "id": "si-701",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2002"
-  },
-  {
-    "id": "si-702",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2003"
-  },
-  {
-    "id": "si-703",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2004"
-  },
-  {
-    "id": "si-704",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2005"
-  },
-  {
-    "id": "si-705",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2006"
-  },
-  {
-    "id": "si-706",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2007"
-  },
-  {
-    "id": "si-707",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2008"
-  },
-  {
-    "id": "si-708",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2009"
-  },
-  {
-    "id": "si-709",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2010"
-  },
-  {
-    "id": "si-710",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2011"
-  },
-  {
-    "id": "si-711",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2012"
-  },
-  {
-    "id": "si-712",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2013"
-  },
-  {
-    "id": "si-713",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2014"
-  },
-  {
-    "id": "si-714",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2015"
-  },
-  {
-    "id": "si-715",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2016"
-  },
-  {
-    "id": "si-716",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2017"
-  },
-  {
-    "id": "si-717",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2018"
-  },
-  {
-    "id": "si-718",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2019"
-  },
-  {
-    "id": "si-719",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2020"
-  },
-  {
-    "id": "si-720",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2021"
-  },
-  {
-    "id": "si-721",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2022"
-  },
-  {
-    "id": "si-722",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2023"
-  },
-  {
-    "id": "si-723",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2024"
-  },
-  {
-    "id": "si-724",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2025"
-  },
-  {
-    "id": "si-725",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2026"
-  },
-  {
-    "id": "si-726",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2027"
-  },
-  {
-    "id": "si-727",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2028"
-  },
-  {
-    "id": "si-728",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2029"
-  },
-  {
-    "id": "si-730",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2030"
-  },
-  {
-    "id": "si-731",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2031"
-  },
-  {
-    "id": "si-732",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2032"
-  },
-  {
-    "id": "si-733",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2033"
-  },
-  {
-    "id": "si-734",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2034"
-  },
-  {
-    "id": "si-735",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2035"
-  },
-  {
-    "id": "si-736",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2036"
-  },
-  {
-    "id": "si-737",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2037"
-  },
-  {
-    "id": "si-738",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2038"
-  },
-  {
-    "id": "si-739",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2039"
-  },
-  {
-    "id": "si-740",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2040"
-  },
-  {
-    "id": "si-741",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2041"
-  },
-  {
-    "id": "si-742",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2042"
-  },
-  {
-    "id": "si-743",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2043"
-  },
-  {
-    "id": "si-744",
-    "subGroupId": "sg-35",
-    "mainGroup": "Digital",
-    "groupName": "UV-(Digital)",
-    "itemPrefix": "UV 2044"
   }
 ];

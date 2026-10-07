@@ -225,6 +225,10 @@ const LuxuryToggle: React.FC<LuxuryToggleProps> = ({ checked, onChange, title, d
     <div onClick={(e) => e.stopPropagation()}>
       <Switch
         checked={checked}
+        onCheckedChange={(val: boolean) => {
+          onChange(val);
+          macAudio.playClick();
+        }}
         onChange={(val: boolean) => {
           onChange(val);
           macAudio.playClick();

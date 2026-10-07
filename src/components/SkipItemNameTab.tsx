@@ -1,8 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { macAudio } from '../utils/macAudio';
 import { Plus, Check, RotateCcw, Layers, Tag, FolderPlus, Folder, Trash2, Edit2, X, ArrowRightLeft, PackagePlus, SlidersHorizontal } from 'lucide-react';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from '../data/sqliteSkipData';
 import type { SkipMainGroupSeed, SkipSubGroupSeed, SkipItemSeed } from '../data/sqliteSkipData';
+import {
+  getSkipMainGroups,
+  saveSkipMainGroup,
+  deleteSkipMainGroup,
+  saveSkipMainGroupsBulk,
+  getSkipSubGroups,
+  saveSkipSubGroup,
+  deleteSkipSubGroup,
+  saveSkipSubGroupsBulk,
+  getSkipItems,
+  saveSkipItem,
+  deleteSkipItem,
+  saveSkipItemsBulk
+} from '../services/db/sqliteDb';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { Select as ShadcnSelect, Tooltip, toast } from './ui/shadcn';
 import { useItemMode } from '../context/ItemModeContext';
@@ -48,91 +62,38 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
 
   const itemSearch = externalSearch !== undefined ? externalSearch : internalSearch;
 
-  /* ─── seed / restore ─── */
-  const purgeAndLoadPristineBackup = () => {
-    try {
-      ['billapp_skip_items','billapp_skip_sub_groups','billapp_skip_main_groups',
-       'si_main_groups','si_sub_groups','si_items','si_skip_items']
-        .forEach(k => localStorage.removeItem(k));
-    } catch {}
-    setMainGroups(SQLITE_SKIP_MAIN_GROUPS);
-    setSubGroups(SQLITE_SKIP_SUB_GROUPS);
-    setSkipItems(SQLITE_SKIP_ITEMS);
-    try {
-      localStorage.setItem('billapp_skip_main_groups', JSON.stringify(SQLITE_SKIP_MAIN_GROUPS));
-      localStorage.setItem('billapp_skip_sub_groups',  JSON.stringify(SQLITE_SKIP_SUB_GROUPS));
-      localStorage.setItem('billapp_skip_items',       JSON.stringify(SQLITE_SKIP_ITEMS));
-      localStorage.setItem('billapp_skip_version_v5',  'true');
-    } catch {}
-    if (SQLITE_SKIP_SUB_GROUPS.length > 0) setSelectedMainGroupId(SQLITE_SKIP_SUB_GROUPS[0].id);
-    macAudio.playPop();
-  };
-
   useEffect(() => {
-    try {
-      if (!localStorage.getItem('billapp_skip_version_v5')) { purgeAndLoadPristineBackup(); return; }
-      const sm = localStorage.getItem('billapp_skip_main_groups');
-      const ss = localStorage.getItem('billapp_skip_sub_groups');
-      const si = localStorage.getItem('billapp_skip_items');
-      if (sm && ss && si) {
-        setMainGroups(JSON.parse(sm));
-        let ls: SkipSubGroupSeed[] = JSON.parse(ss);
-        let items: SkipItemSeed[] = JSON.parse(si);
-
-        // One-time migration guard: only populate UV-(Digital) seeds once, never re-add if user deleted them
-        const hasMigratedUv = localStorage.getItem('billapp_skip_uv_migrated_v1');
-        if (!hasMigratedUv) {
-          // Ensure UV-(Digital) subgroup exists
-          let uvSub = ls.find(s => s.groupName?.trim().toLowerCase() === 'uv-(digital)');
-          if (!uvSub) {
-            uvSub = {
-              id: 'sg-35',
-              mainGroupId: 'mg-3',
-              mainGroup: 'Digital',
-              groupName: 'UV-(Digital)',
-              sumColumn: 'QTY'
-            };
-            ls.push(uvSub);
-            try { localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(ls)); } catch {}
-          }
-
-          // Ensure UV 2000 to UV 2044 items exist initially
-          let itemsUpdated = false;
-          const targetSubGroupId = uvSub.id;
-          for (let n = 2000; n <= 2044; n++) {
-            const prefix = `UV ${n}`;
-            const exists = items.some(
-              it => it.itemPrefix?.trim().toLowerCase() === prefix.toLowerCase() &&
-                    (it.subGroupId === targetSubGroupId || it.groupName?.trim().toLowerCase() === 'uv-(digital)')
-            );
-            if (!exists) {
-              items.push({
-                id: `si-uv-${n}`,
-                subGroupId: targetSubGroupId,
-                mainGroup: uvSub.mainGroup || 'Digital',
-                groupName: uvSub.groupName || 'UV-(Digital)',
-                itemPrefix: prefix
-              });
-              itemsUpdated = true;
-            }
-          }
-
-          if (itemsUpdated) {
-            try { localStorage.setItem('billapp_skip_items', JSON.stringify(items)); } catch {}
-          }
-          try { localStorage.setItem('billapp_skip_uv_migrated_v1', 'true'); } catch {}
+    const fetchFromSqlite = async () => {
+      try {
+        const [mgData, sgData, siData] = await Promise.all([
+          getSkipMainGroups(),
+          getSkipSubGroups(),
+          getSkipItems()
+        ]);
+        if (Array.isArray(mgData) && Array.isArray(sgData)) {
+          setMainGroups(mgData);
+          setSubGroups(sgData);
+          setSkipItems(Array.isArray(siData) ? siData : []);
+          setSelectedMainGroupId(prev => {
+            if (prev && sgData.some(s => s.id === prev)) return prev;
+            return sgData[0]?.id || null;
+          });
         }
+      } catch (err) {
+        console.warn('Could not fetch skip data directly from SQLite server:', err);
+      }
+    };
 
-        setSubGroups(ls);
-        setSkipItems(items);
-        if (ls.length > 0) setSelectedMainGroupId(prev => prev || ls[0].id);
-      } else purgeAndLoadPristineBackup();
-    } catch { purgeAndLoadPristineBackup(); }
+    fetchFromSqlite();
+    window.addEventListener('billapp_skip_items_updated', fetchFromSqlite);
+    return () => window.removeEventListener('billapp_skip_items_updated', fetchFromSqlite);
   }, []);
 
-  const saveMainGroups = (d: SkipMainGroupSeed[]) => {
+  const saveMainGroups = (d: SkipMainGroupSeed[], syncToServer = true) => {
     setMainGroups(d);
-    try { localStorage.setItem('billapp_skip_main_groups', JSON.stringify(d)); } catch {}
+    if (syncToServer) {
+      saveSkipMainGroupsBulk(d, 'replace').catch(e => console.error('Failed to sync main groups to SQLite:', e));
+    }
   };
 
   const handleAddMainGroup = (name: string): string | null => {
@@ -200,18 +161,23 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     }
     const nextMg = mainGroups.filter(m => m.id !== id);
     saveMainGroups(nextMg);
+    deleteSkipMainGroup(id).catch(e => console.error('Failed to delete main group in SQLite:', e));
     macAudio.playSuccess();
     setMainGroupToDelete(null);
   };
 
-  const saveSubGroups = (d: SkipSubGroupSeed[]) => {
+  const saveSubGroups = (d: SkipSubGroupSeed[], syncToServer = true) => {
     setSubGroups(d);
-    try { localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(d)); } catch {}
+    if (syncToServer) {
+      saveSkipSubGroupsBulk(d, 'replace').catch(e => console.error('Failed to sync sub groups to SQLite:', e));
+    }
   };
-  const saveSkipItems = (updaterOrList: SkipItemSeed[] | ((prev: SkipItemSeed[]) => SkipItemSeed[])) => {
+  const saveSkipItems = (updaterOrList: SkipItemSeed[] | ((prev: SkipItemSeed[]) => SkipItemSeed[]), syncToServer = true) => {
     setSkipItems(prev => {
       const next = typeof updaterOrList === 'function' ? updaterOrList(prev) : updaterOrList;
-      try { localStorage.setItem('billapp_skip_items', JSON.stringify(next)); } catch {}
+      if (syncToServer) {
+        saveSkipItemsBulk(next, 'replace').catch(e => console.error('Failed to sync skip items to SQLite:', e));
+      }
       return next;
     });
   };
@@ -266,6 +232,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     const nextItems = skipItems.filter(si => si.subGroupId !== delId && si.groupName !== subGroupToDelete.groupName);
     saveSubGroups(nextSubGroups);
     saveSkipItems(nextItems);
+    deleteSkipSubGroup(delId).catch(e => console.error('Failed to delete sub group in SQLite:', e));
     macAudio.playSuccess();
 
     setSelectedMainGroupId(nextActiveId);
@@ -298,6 +265,16 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     });
     const toSave = finalName || rawVal;
     handleItemChange(id, toSave);
+
+    const cleanLower = toSave.trim().toLowerCase();
+    const alreadyExistsInGroup = itemsForSelectedGroup.some(
+      si => si.id !== id && (si.itemPrefix || '').trim().toLowerCase() === cleanLower
+    );
+    if (alreadyExistsInGroup) {
+      macAudio.playPop();
+      toast.warning('Duplicate Item', `"${toSave}" is already used in this group! Marked in red.`);
+    }
+
     return toSave;
   };
 
@@ -340,7 +317,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     const currentGroupItems = curSub
       ? skipItems.filter(si =>
           si.subGroupId === curSub.id ||
-          (si.groupName === curSub.groupName && (!si.mainGroup || si.mainGroup === curSub.mainGroup))
+          (si.groupName && curSub.groupName && si.groupName.trim().toLowerCase() === curSub.groupName.trim().toLowerCase())
         )
       : [];
 
@@ -358,6 +335,10 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
 
     const nextItems = skipItems.filter(si => si.id !== delId);
     saveSkipItems(nextItems);
+    deleteSkipItem(delId).catch(e => console.error('Failed to delete skip item in SQLite:', e));
+    if (itemToDelete.itemPrefix) {
+      deleteSkipItem(itemToDelete.itemPrefix).catch(() => {});
+    }
     macAudio.playSuccess();
 
     // Jump cursor to next row!
@@ -419,7 +400,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
       (sg.mainGroup||'').toLowerCase().includes(q) ||
       skipItems.some(si =>
         (si.subGroupId === sg.id ||
-         (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))) &&
+         (si.groupName && sg.groupName && si.groupName.trim().toLowerCase() === sg.groupName.trim().toLowerCase())) &&
         (si.itemPrefix||'').toLowerCase().includes(q)
       );
   });
@@ -428,12 +409,35 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
   const itemsForSelectedGroup = curSub
     ? skipItems.filter(si =>
         si.subGroupId === curSub.id ||
-        (si.groupName === curSub.groupName && (!si.mainGroup || si.mainGroup === curSub.mainGroup))
+        (si.groupName && curSub.groupName && si.groupName.trim().toLowerCase() === curSub.groupName.trim().toLowerCase())
       )
     : [];
   const filteredItems = itemsForSelectedGroup.filter(si =>
     si.itemPrefix.toLowerCase().includes(itemSearch.toLowerCase())
   );
+
+  // Accurate Duplicate Item Analysis: strictly scoped WITHIN each group
+  // Key: `${groupKey}:::${cleanPrefix}`, Value: count of occurrences within that group
+  const groupDuplicateMap = useMemo(() => {
+    const counts = new Map<string, number>();
+    skipItems.forEach(si => {
+      const gKey = (si.groupName || si.subGroupId || '').trim().toLowerCase();
+      const clean = (si.itemPrefix || '').trim().toLowerCase();
+      if (!gKey || !clean) return;
+      const key = `${gKey}:::${clean}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [skipItems]);
+
+  const curSubDupeCount = useMemo(() => {
+    if (!curSub) return 0;
+    const gKey = (curSub.groupName || curSub.id || '').trim().toLowerCase();
+    return itemsForSelectedGroup.filter(si => {
+      const c = (si.itemPrefix || '').trim().toLowerCase();
+      return c && (groupDuplicateMap.get(`${gKey}:::${c}`) || 0) > 1;
+    }).length;
+  }, [curSub, itemsForSelectedGroup, groupDuplicateMap]);
 
   /* ─────────────────────────────────────────────────────────
      KEYBOARD HANDLER: UP, DOWN, LEFT, RIGHT, ENTER, ESC, DEL, INSERT
@@ -594,6 +598,25 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
         }
       }
 
+      // Enter or Delete while delete confirmation modal is active → confirm immediately!
+      if (e.key === 'Enter' || e.key === 'Delete') {
+        if (itemToDelete) {
+          e.preventDefault();
+          confirmDeleteItem();
+          return;
+        }
+        if (subGroupToDelete) {
+          e.preventDefault();
+          confirmDeleteSubGroup();
+          return;
+        }
+        if (mainGroupToDelete) {
+          e.preventDefault();
+          confirmDeleteMainGroup();
+          return;
+        }
+      }
+
       // Ctrl+Enter — enter edit mode on selected row
       if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
@@ -626,10 +649,22 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
         return;
       }
 
-      // Delete → delete selected row (triggers confirmation modal)
+      // Delete → delete selected row (triggers confirmation modal on 1st press, 2nd press confirms!)
       if (e.key === 'Delete') {
         e.preventDefault();
-        if (itemToDelete || subGroupToDelete || isMainGroupModalOpen) return;
+        if (itemToDelete) {
+          confirmDeleteItem();
+          return;
+        }
+        if (subGroupToDelete) {
+          confirmDeleteSubGroup();
+          return;
+        }
+        if (mainGroupToDelete) {
+          confirmDeleteMainGroup();
+          return;
+        }
+        if (isMainGroupModalOpen) return;
         if (selectedItemId) {
           const it = skipItems.find(s => s.id === selectedItemId);
           if (it) promptDeleteItem(it);
@@ -647,7 +682,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     selectedMainGroupId, editingGroupId,
     selectedItemId, editingItemId,
     subGroups, skipItems, mainGroups,
-    itemToDelete, subGroupToDelete, isMainGroupModalOpen,
+    itemToDelete, subGroupToDelete, mainGroupToDelete, isMainGroupModalOpen,
     filteredItems, filteredSubGroups, activePanel
   ]);
 
@@ -724,21 +759,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
               </button>
             </Tooltip>
 
-            <Tooltip title="Reset to Backup Data" side="bottom">
-              <button
-                type="button"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '4px',
-                  height: '28px', padding: '0 8px', borderRadius: '5px',
-                  background: 'transparent', border: '1px solid #27272a',
-                  color: '#ef4444', fontSize: '11px', fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-                onClick={purgeAndLoadPristineBackup}
-              >
-                <RotateCcw size={12} /> Reset
-              </button>
-            </Tooltip>
+
 
             <Tooltip title="Add New Group (Insert)" side="bottom">
               <button
@@ -775,10 +796,16 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
               {filteredSubGroups.map((sg, idx) => {
                 const isSelected = selectedMainGroupId === sg.id;
                 const isEditing  = editingGroupId      === sg.id;
-                const itemCount  = skipItems.filter(si =>
+                const groupItems = skipItems.filter(si =>
                   si.subGroupId === sg.id ||
                   (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))
-                ).length;
+                );
+                const itemCount  = groupItems.length;
+                const gKey = (sg.id || sg.groupName || '').trim().toLowerCase();
+                const groupDupeCount = groupItems.filter(si => {
+                  const c = (si.itemPrefix || '').trim().toLowerCase();
+                  return c && (groupDuplicateMap.get(`${gKey}:::${c}`) || 0) > 1;
+                }).length;
 
                 return (
                   <tr
@@ -874,8 +901,23 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                     {/* ITEM COUNT */}
                     <td style={{ textAlign: 'center', color: '#ffffff', fontWeight: 600, fontSize: '11px' }}>
                       {itemCount > 0 ? (
-                        <span style={{ background: 'rgba(255,255,255,0.12)', color: '#ffffff', padding: '1px 6px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 600 }}>
+                        <span
+                          style={{
+                            background: groupDupeCount > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.12)',
+                            color: groupDupeCount > 0 ? '#ff4d4f' : '#ffffff',
+                            border: groupDupeCount > 0 ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid transparent',
+                            padding: '1px 6px',
+                            borderRadius: '10px',
+                            fontSize: '9.5px',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}
+                          title={groupDupeCount > 0 ? `⚠️ ${groupDupeCount} duplicate item(s) found in this group` : undefined}
+                        >
                           {itemCount}
+                          {groupDupeCount > 0 && <span style={{ fontSize: '9px' }}>⚠️</span>}
                         </span>
                       ) : <span style={{ color: '#475569', fontSize: '9.5px' }}>0</span>}
                     </td>
@@ -957,6 +999,25 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5' }}>
               {curSub ? `${curSub.groupName} (${itemsForSelectedGroup.length})` : 'Select a Group'}
             </span>
+            {curSub && curSubDupeCount > 0 && (
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#ff4d4f',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                title={`⚠️ ${curSubDupeCount} duplicate item(s) found in this group`}
+              >
+                ⚠️ {curSubDupeCount} Duplicate{curSubDupeCount > 1 ? 's' : ''}
+              </span>
+            )}
             {externalSearch === undefined && curSub && (
               <input
                 type="text"
@@ -1083,6 +1144,14 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                 {filteredItems.map((si, idx) => {
                   const isSel  = selectedItemId === si.id;
                   const isEdit = editingItemId  === si.id;
+                  const curGroupKey = (curSub?.id || curSub?.groupName || si.subGroupId || si.groupName || '').trim().toLowerCase();
+                  const cleanPrefix = (si.itemPrefix || '').trim().toLowerCase();
+                  const inThisGroupCount = cleanPrefix ? (groupDuplicateMap.get(`${curGroupKey}:::${cleanPrefix}`) || 0) : 0;
+                  const isDuplicate = cleanPrefix.length > 0 && inThisGroupCount > 1;
+                  const dupeTooltip = isDuplicate
+                    ? `⚠️ Duplicate Item: "${si.itemPrefix}" appears ${inThisGroupCount} times in this group!`
+                    : undefined;
+
                   return (
                     <tr
                       key={si.id}
@@ -1092,9 +1161,12 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                       style={{
                         height: '28px',
                         borderBottom: '1px solid #27272a',
-                        background: isSel ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
+                        background: isDuplicate
+                          ? (isSel ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.1)')
+                          : (isSel ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent'),
                         outline: isSel ? '1px solid #3f3f46' : 'none',
                         outlineOffset: '-1px',
+                        boxShadow: isDuplicate ? 'inset 3px 0 0 #ff4d4f' : undefined,
                         cursor: 'pointer',
                         transition: 'background 0.1s ease'
                       }}
@@ -1104,13 +1176,24 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                       }}
                       onDoubleClick={() => setEditingItemId(si.id)}
                     >
-                      <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
+                      <td style={{ textAlign: 'center', color: isDuplicate ? '#ff4d4f' : '#52525b', fontSize: '11px', fontWeight: isDuplicate ? 700 : 500, userSelect: 'none', padding: '4px 6px' }}>
                         {idx + 1}
                       </td>
-                      <td style={{ padding: '2px 4px' }}>
+                      <td 
+                        style={{ 
+                          padding: '2px 4px',
+                          background: isDuplicate ? 'rgba(239, 68, 68, 0.08)' : undefined
+                        }}
+                        title={dupeTooltip}
+                      >
                         {isEdit ? (
                           <input
-                            style={{ ...cellInput, fontWeight: 600 }}
+                            style={{ 
+                              ...cellInput, 
+                              fontWeight: isDuplicate ? 700 : 600,
+                              color: isDuplicate ? '#ff4d4f' : '#f4f4f5',
+                              textShadow: isDuplicate ? '0 0 8px rgba(255, 77, 79, 0.45)' : undefined
+                            }}
                             value={si.itemPrefix}
                             onChange={e => handleItemChange(si.id, e.target.value)}
                             onBlur={e => {
@@ -1129,9 +1212,37 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                             autoFocus
                           />
                         ) : (
-                          <span style={{ ...cellText, fontWeight: 600 }}>
-                            {si.itemPrefix || '—'}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '6px' }}>
+                            <span 
+                              style={{ 
+                                ...cellText, 
+                                fontWeight: isDuplicate ? 700 : 600,
+                                color: isDuplicate ? '#ff4d4f' : cellText.color,
+                                textShadow: isDuplicate ? '0 0 8px rgba(255, 77, 79, 0.45)' : undefined
+                              }}
+                            >
+                              {si.itemPrefix || '—'}
+                            </span>
+                            {isDuplicate && (
+                              <span
+                                style={{
+                                  fontSize: '9.5px',
+                                  fontWeight: 700,
+                                  color: '#ff4d4f',
+                                  background: 'rgba(239, 68, 68, 0.2)',
+                                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                                  padding: '1px 5px',
+                                  borderRadius: '3px',
+                                  letterSpacing: '0.2px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  flexShrink: 0
+                                }}
+                              >
+                                DUPLICATE
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td style={{ textAlign: 'center', padding: '2px 6px' }}>

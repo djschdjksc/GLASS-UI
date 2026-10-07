@@ -47,7 +47,7 @@ const REAL_PARTIES: string[] = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
 const TYPE_SELECTIONS = ['RETAIL', 'WHOLESALE', 'JOB WORK', 'INTER-STATE', 'EXPORT'];
 
 const DEFAULT_VEHICLE_TYPES = [
-  'OWN VEHICLE',
+  'SELF',
   'TRUCK',
   'TEMPO',
   'AUTO',
@@ -478,7 +478,7 @@ export const AppleHeader: React.FC<Props> = ({
             id="header-vehicle-type"
             data-np-target="1-3"
             style={{ width: '130px', height: '32px' }}
-            value={header.vehicleType || vehicleTypes[0]}
+            value={(!header.vehicleType || header.vehicleType === 'OWN VEHICLE') ? 'SELF' : header.vehicleType}
             onChange={(e: any) => onChange({ vehicleType: e.target.value })}
             onKeyDown={(e: any) => {
               if (e.key === 'Enter') {
