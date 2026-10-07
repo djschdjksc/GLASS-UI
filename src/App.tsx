@@ -305,7 +305,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [auditTarget, setAuditTarget] = useState<{ id: string; token: string; party?: string } | null>(null);
   const loadedBillSnapshotRef = useRef<BillRecord | null>(null);
-  const [deleteRowConfirm, setDeleteRowConfirm] = useState<{ table: 'raw' | 'finished'; indices: number[] } | null>(null);
 
   // Bill-specific custom item groups (Mould Groups) for Ctrl+G calculation - Persists with draft
   const [customItemGroups, setCustomItemGroups] = useState<BillItemGroup[]>(() => {
@@ -1699,16 +1698,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   };
 
   const handleDeleteRawRows = (indices: number[]) => {
-    const hasData = indices.some(idx => {
-      const it = rawItems[idx];
-      return it && (it.name?.trim() || it.qty > 0 || it.uCap > 0 || it.lCap > 0);
+    macAudio.playTrash();
+    setRawItems(prev => {
+      const next = prev.filter((_, idx) => !indices.includes(idx));
+      return next.length > 0 ? next : [{ id: 'raw-' + Date.now(), name: '', qty: 0, uCap: 0, lCap: 0 }];
     });
-    if (hasData) {
-      macAudio.playPop();
-      setDeleteRowConfirm({ table: 'raw', indices });
-      return;
-    }
-    setRawItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
     showToast(`Deleted ${indices.length} Row(s)`, 'warning');
   };
 
@@ -2070,30 +2064,12 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   };
 
   const handleDeleteFinishedRows = (indices: number[]) => {
-    const hasData = indices.some(idx => {
-      const it = finishedItems[idx];
-      return it && (it.mould?.trim() || it.qty > 0 || (it as any).price > 0);
+    macAudio.playTrash();
+    setFinishedItems(prev => {
+      const next = prev.filter((_, idx) => !indices.includes(idx));
+      return next.length > 0 ? next : [{ id: 'fin-' + Date.now(), mould: '', qty: 0, price: 0, total: 0 }];
     });
-    if (hasData) {
-      macAudio.playPop();
-      setDeleteRowConfirm({ table: 'finished', indices });
-      return;
-    }
-    setFinishedItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
     showToast(`Deleted ${indices.length} Row(s)`, 'warning');
-  };
-
-  const handleConfirmDeleteRows = () => {
-    if (!deleteRowConfirm) return;
-    const { table, indices } = deleteRowConfirm;
-    if (table === 'raw') {
-      setRawItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
-    } else {
-      setFinishedItems(prev => prev.filter((_, idx) => !indices.includes(idx)));
-    }
-    macAudio.playSuccess();
-    showToast(`Deleted ${indices.length} Row(s)`, 'warning');
-    setDeleteRowConfirm(null);
   };
 
   const handleJumpToRightGrid = (row: number) => {
@@ -3454,16 +3430,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         />
       )}
 
-      {/* Row Deletion Confirmation Modal */}
-      {deleteRowConfirm && (
-        <UnsavedChangesModal
-          titleText="Delete Table Row?"
-          descText={`Kya aap sach me selected ${deleteRowConfirm.indices.length} row(s) ko delete karna chahte hain? Iska data table se permanently remove ho jayega.`}
-          discardLabel="Haan, Delete Karo"
-          onDiscard={handleConfirmDeleteRows}
-          onCancel={() => setDeleteRowConfirm(null)}
-        />
-      )}
+
 
       {/* NumPad Shortcut Navigator (Press '.' on NumPad) */}
       <NumpadNavigator 

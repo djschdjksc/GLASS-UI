@@ -39,7 +39,8 @@ import {
   renderBillToCanvas,
   copyBillCanvasToClipboard,
   downloadBillCanvasAsImage,
-  formatIndianCurrency
+  formatIndianCurrency,
+  isAdjustmentReceive
 } from '../utils/billCanvasPainter';
 
 export interface BillPrintModalProps {
@@ -95,9 +96,23 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [balanceLabel, setBalanceLabel] = useState('BALANCE');
   const [adjustments, setAdjustments] = useState<PrintAdjustment[]>([]);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
+  const [copiedCombinedSuccess, setCopiedCombinedSuccess] = useState(false);
   const [isNativeServiceActive, setIsNativeServiceActive] = useState<boolean>(false);
-  const [detectedPrinter, setDetectedPrinter] = useState<string | null>(null);
-  const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
+  const [detectedPrinter, setDetectedPrinter] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('modern_cached_default_printer') || null;
+    } catch {
+      return null;
+    }
+  });
+  const [availablePrinters, setAvailablePrinters] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('modern_cached_printers');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [defaultDesktopPath, setDefaultDesktopPath] = useState<string>('');
   const [defaultDownloadsPath, setDefaultDownloadsPath] = useState<string>('');
   const [isPrintingNative, setIsPrintingNative] = useState<boolean>(false);
@@ -359,11 +374,45 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     let bal = subTotal;
     adjustments.forEach(adj => {
       const v = Number(adj.val) || 0;
-      if (adj.type === 'sub') bal -= v;
-      else bal += v;
+      if (isAdjustmentReceive(adj)) {
+        bal -= v;
+      } else {
+        bal += v;
+      }
     });
     return bal;
   }, [subTotal, adjustments]);
+
+  const prevBalanceSignRef = useRef<'pos' | 'neg' | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      prevBalanceSignRef.current = null;
+    }
+  }, [isOpen, billNo]);
+
+  // Auto-switch Custom Balance Label text box to 'ADVANCE' when balance transitions to negative (and back to 'BALANCE' if positive)
+  useEffect(() => {
+    const currentSign = finalBalance < 0 ? 'neg' : 'pos';
+    if (prevBalanceSignRef.current !== null && prevBalanceSignRef.current !== currentSign) {
+      if (currentSign === 'neg') {
+        if (!balanceLabel || balanceLabel.trim().toUpperCase() === 'BALANCE') {
+          setBalanceLabel('ADVANCE');
+          saveAdjustmentsCache(adjustments, 'ADVANCE');
+        }
+      } else {
+        if (!balanceLabel || balanceLabel.trim().toUpperCase() === 'ADVANCE') {
+          setBalanceLabel('BALANCE');
+          saveAdjustmentsCache(adjustments, 'BALANCE');
+        }
+      }
+    } else if (prevBalanceSignRef.current === null) {
+      if (currentSign === 'neg' && (!balanceLabel || balanceLabel.trim().toUpperCase() === 'BALANCE')) {
+        setBalanceLabel('ADVANCE');
+      }
+    }
+    prevBalanceSignRef.current = currentSign;
+  }, [finalBalance]);
 
   // Build Payload (Format 100% untouched)
   const printPayload: BillPrintPayload = useMemo(() => {
@@ -410,7 +459,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         total: f.total
       })),
       adjustments,
-      balanceLabel,
+      balanceLabel: (balanceLabel && balanceLabel.trim()) ? balanceLabel.trim() : (finalBalance < 0 ? 'ADVANCE' : 'BALANCE'),
       subTotal,
       finalBalance,
       isColorful: true,
@@ -439,26 +488,37 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     let active = true;
 
     // Detect default Windows printer & status
-    fetch('http://127.0.0.1:5005/api/status')
-      .then(res => res.json())
-      .then(statusData => {
-        if (active && statusData.status === 'ok') {
-          setIsNativeServiceActive(true);
-          if (statusData.printer) setDetectedPrinter(statusData.printer);
-          if (Array.isArray(statusData.availablePrinters)) setAvailablePrinters(statusData.availablePrinters);
-          if (statusData.defaultDesktopPath) setDefaultDesktopPath(statusData.defaultDesktopPath);
-          if (statusData.defaultDownloadsPath) setDefaultDownloadsPath(statusData.defaultDownloadsPath);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setIsNativeServiceActive(false);
-          setDetectedPrinter(null);
-        }
-      });
+    const fetchStatus = () => {
+      fetch('http://127.0.0.1:5005/api/status')
+        .then(res => res.json())
+        .then(statusData => {
+          if (active && statusData.status === 'ok') {
+            setIsNativeServiceActive(true);
+            if (statusData.printer) {
+              setDetectedPrinter(statusData.printer);
+              try { localStorage.setItem('modern_cached_default_printer', statusData.printer); } catch {}
+            }
+            if (Array.isArray(statusData.availablePrinters) && statusData.availablePrinters.length > 0) {
+              setAvailablePrinters(statusData.availablePrinters);
+              try { localStorage.setItem('modern_cached_printers', JSON.stringify(statusData.availablePrinters)); } catch {}
+            }
+            if (statusData.defaultDesktopPath) setDefaultDesktopPath(statusData.defaultDesktopPath);
+            if (statusData.defaultDownloadsPath) setDefaultDownloadsPath(statusData.defaultDownloadsPath);
+          }
+        })
+        .catch(() => {
+          if (active) {
+            setIsNativeServiceActive(false);
+          }
+        });
+    };
+
+    fetchStatus();
+    const retryTimer = setTimeout(fetchStatus, 800);
 
     return () => {
       active = false;
+      clearTimeout(retryTimer);
     };
   }, [isOpen, printPayload, retryTrigger, rawItems, printMode]);
 
@@ -513,7 +573,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       if (e.key === 'Insert') {
         e.preventDefault();
         try { macAudio.playClick(); } catch { }
-        handleAddAdjustment(e.shiftKey ? 'sub' : 'add');
+        handleAddAdjustment(e.shiftKey ? 'pay' : 'receive', e.shiftKey ? 'Pay' : 'Receive');
         return;
       }
 
@@ -523,13 +583,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         if (e.key === '+' || e.key === '=') {
           e.preventDefault();
           try { macAudio.playClick(); } catch { }
-          handleAddAdjustment('add');
+          handleAddAdjustment('receive', 'Receive');
           return;
         }
         if (e.key === '-' || e.key === '_') {
           e.preventDefault();
           try { macAudio.playClick(); } catch { }
-          handleAddAdjustment('sub');
+          handleAddAdjustment('pay', 'Pay');
           return;
         }
         if (e.key === 'r' || e.key === 'R') {
@@ -582,7 +642,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   if (!isOpen) return null;
 
   // Add adjustment row (supports optional defaultDesc and defaultVal)
-  const handleAddAdjustment = (type: 'add' | 'sub', defaultDesc: string = '', defaultVal: number = 0) => {
+  const handleAddAdjustment = (type: 'receive' | 'pay' | 'add' | 'sub', defaultDesc: string = '', defaultVal: number = 0) => {
     try { macAudio.playClick(); } catch { }
     const newId = 'adj_' + Date.now() + Math.random().toString(36).substring(2, 6);
     const newAdj: PrintAdjustment = {
@@ -604,13 +664,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     try { macAudio.playSuccess(); } catch { }
     const desc = `Return Bill #${b.token || b.id} (${b.date || ''})`;
     const amt = Number(b.total) || 0;
-    handleAddAdjustment('sub', desc, amt);
+    handleAddAdjustment('receive', desc, amt);
     setIsReturnModalOpen(false);
     setReturnSearchQuery('');
   };
 
   // Helper when user applies Old Balance
-  const handleApplyOldBalance = (type: 'add' | 'sub', amt: number, labelSuffix: string = '') => {
+  const handleApplyOldBalance = (type: 'receive' | 'pay' | 'add' | 'sub', amt: number, labelSuffix: string = '') => {
     if (amt <= 0) return;
     try { macAudio.playSuccess(); } catch { }
     const desc = labelSuffix ? `Purana Bakaya (${labelSuffix})` : 'Purana Bakaya';
@@ -714,25 +774,47 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     } catch {}
   };
 
-  const handleCopyAsImage = async () => {
+  const handleCopyAsImage = async (isCombined = false) => {
     try { macAudio.playClick(); } catch { }
-    if (canvasRef.current) {
-      const success = await copyBillCanvasToClipboard(canvasRef.current);
+    let targetCanvas: HTMLCanvasElement | null = null;
+    if (isCombined) {
+      targetCanvas = document.createElement('canvas');
+      renderBillToCanvas({ ...printPayload, pageNum: -1, combineAllPages: true }, targetCanvas);
+    } else {
+      targetCanvas = canvasRef.current;
+    }
+
+    if (targetCanvas) {
+      const success = await copyBillCanvasToClipboard(targetCanvas);
       if (success) {
         try { macAudio.playSuccess(); } catch { }
-        setCopiedSuccess(true);
-        setTimeout(() => setCopiedSuccess(false), 2500);
+        if (isCombined) {
+          setCopiedCombinedSuccess(true);
+          setTimeout(() => setCopiedCombinedSuccess(false), 2500);
+        } else {
+          setCopiedSuccess(true);
+          setTimeout(() => setCopiedSuccess(false), 2500);
+        }
       }
     }
   };
 
-  const handleSaveAsImage = () => {
+  const handleSaveAsImage = (isCombined = false) => {
     try { macAudio.playClick(); } catch { }
     const cleanParty = (header.partyName || 'SALE').replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filename = `${printMode.toUpperCase()}_${billNo}_${cleanParty}.png`;
+    const suffix = isCombined ? '_COMBINED' : (totalPages > 1 ? `_PAGE_${currentPage + 1}` : '');
+    const filename = `${printMode.toUpperCase()}_${billNo}_${cleanParty}${suffix}.png`;
 
-    if (canvasRef.current) {
-      downloadBillCanvasAsImage(canvasRef.current, filename);
+    let targetCanvas: HTMLCanvasElement | null = null;
+    if (isCombined) {
+      targetCanvas = document.createElement('canvas');
+      renderBillToCanvas({ ...printPayload, pageNum: -1, combineAllPages: true }, targetCanvas);
+    } else {
+      targetCanvas = canvasRef.current;
+    }
+
+    if (targetCanvas) {
+      downloadBillCanvasAsImage(targetCanvas, filename);
     }
   };
 
@@ -1493,11 +1575,69 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               </button>
             </div>
 
-            {/* Actions: Copy & Save */}
+            {/* Multi-page Combined Image Actions (When > 1 page) */}
+            {totalPages > 1 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleCopyAsImage(true)}
+                  onMouseEnter={() => { try { macAudio.playHover(); } catch { } }}
+                  title="Copy ALL pages combined as one continuous long image (WhatsApp / Share)"
+                  style={{
+                    background: copiedCombinedSuccess
+                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                      : 'linear-gradient(135deg, rgba(14, 165, 233, 0.25) 0%, rgba(2, 132, 199, 0.35) 100%)',
+                    color: '#38bdf8',
+                    border: '1px solid rgba(56, 189, 248, 0.45)',
+                    height: '32px',
+                    borderRadius: '7px',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(14, 165, 233, 0.2)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {copiedCombinedSuccess ? <Check size={13} color="#ffffff" /> : <Layers size={13} />}
+                  <span>{copiedCombinedSuccess ? 'Combined Copied!' : `Copy Combined (${totalPages} Pgs)`}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveAsImage(true)}
+                  onMouseEnter={() => { try { macAudio.playHover(); } catch { } }}
+                  title="Download ALL pages combined as one continuous PNG file"
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.1)',
+                    color: '#7dd3fc',
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    height: '32px',
+                    borderRadius: '7px',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Download size={13} />
+                  <span>Save Combined</span>
+                </button>
+              </div>
+            )}
+
+            {/* Actions: Copy & Save Single/Current Page */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
-                onClick={handleCopyAsImage}
+                onClick={() => handleCopyAsImage(false)}
                 onMouseEnter={() => { try { macAudio.playHover(); } catch { } }}
                 style={{
                   background: copiedSuccess
@@ -1518,12 +1658,12 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 }}
               >
                 {copiedSuccess ? <Check size={13} /> : <Camera size={13} />}
-                <span>{copiedSuccess ? 'Copied' : 'Copy Image'}</span>
+                <span>{copiedSuccess ? 'Copied' : (totalPages > 1 ? `Copy Page ${currentPage + 1}` : 'Copy Image')}</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleSaveAsImage}
+                onClick={() => handleSaveAsImage(false)}
                 onMouseEnter={() => { try { macAudio.playHover(); } catch { } }}
                 style={{
                   background: 'rgba(255, 255, 255, 0.06)',
@@ -1542,7 +1682,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 }}
               >
                 <Download size={13} />
-                <span>Save PNG</span>
+                <span>{totalPages > 1 ? `Save Page ${currentPage + 1}` : 'Save PNG'}</span>
               </button>
             </div>
 
@@ -1572,8 +1712,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => handleAddAdjustment('add')}
-                    title="Add amount to receive (+ shortcut)"
+                    onClick={() => handleAddAdjustment('receive', 'Receive')}
+                    title="Receive amount from customer (- Subtotal) (+ shortcut)"
                     style={{
                       background: 'rgba(16, 185, 129, 0.12)',
                       border: '1px solid rgba(16, 185, 129, 0.28)',
@@ -1596,8 +1736,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => handleAddAdjustment('sub')}
-                    title="Deduct amount to pay/discount (- shortcut)"
+                    onClick={() => handleAddAdjustment('pay', 'Pay')}
+                    title="Pay amount to customer / freight (+ Balance) (- shortcut)"
                     style={{
                       background: 'rgba(239, 68, 68, 0.12)',
                       border: '1px solid rgba(239, 68, 68, 0.28)',
@@ -1701,33 +1841,38 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                           gap: '6px'
                         }}
                       >
-                        {/* Interactive Type Switcher (+ / -) */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newType = adj.type === 'sub' ? 'add' : 'sub';
-                            const updated = adjustments.map(a => a.id === adj.id ? { ...a, type: newType } : a);
-                            setAdjustments(updated);
-                            saveAdjustmentsCache(updated, balanceLabel);
-                          }}
-                          title={`Click to switch between Receive (+) and Pay (-). Current: ${adj.type === 'sub' ? 'Pay (-)' : 'Receive (+)'}`}
-                          style={{
-                            background: adj.type === 'sub' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                            border: `1px solid ${adj.type === 'sub' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
-                            color: adj.type === 'sub' ? '#f87171' : '#34d399',
-                            width: '22px',
-                            height: '22px',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            padding: 0
-                          }}
-                        >
-                          {adj.type === 'sub' ? <Minus size={12} /> : <Plus size={12} />}
-                        </button>
+                        {/* Interactive Type Switcher (Receive / Pay) */}
+                        {(() => {
+                          const isRecv = isAdjustmentReceive(adj);
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newType = isRecv ? 'pay' : 'receive';
+                                const updated = adjustments.map(a => a.id === adj.id ? { ...a, type: newType } : a);
+                                setAdjustments(updated);
+                                saveAdjustmentsCache(updated, balanceLabel);
+                              }}
+                              title={`Click to switch between Receive (-) and Pay (+). Current: ${isRecv ? 'Receive (-)' : 'Pay (+)'}`}
+                              style={{
+                                background: isRecv ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                border: `1px solid ${isRecv ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                                color: isRecv ? '#34d399' : '#f87171',
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                padding: 0
+                              }}
+                            >
+                              {isRecv ? <Minus size={12} /> : <Plus size={12} />}
+                            </button>
+                          );
+                        })()}
 
                         {/* Editable Description Input */}
                         <input
@@ -1853,22 +1998,29 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   />
                 </div>
 
-                <div
-                  style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                    paddingTop: '8px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline'
-                  }}
-                >
-                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#f8fafc' }}>
-                    {balanceLabel || 'BALANCE'}:
-                  </span>
-                  <span style={{ fontSize: '18px', fontWeight: 900, color: '#00F0FF', letterSpacing: '-0.02em' }}>
-                    {formatIndianCurrency(finalBalance)}
-                  </span>
-                </div>
+                {(() => {
+                  const isAdvance = finalBalance < 0;
+                  const effectiveLabel = (balanceLabel && balanceLabel.trim()) ? balanceLabel.trim().toUpperCase() : (isAdvance ? 'ADVANCE' : 'BALANCE');
+                  const displayBal = isAdvance ? Math.abs(finalBalance) : finalBalance;
+                  return (
+                    <div
+                      style={{
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        paddingTop: '8px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline'
+                      }}
+                    >
+                      <span style={{ fontSize: '11.5px', fontWeight: 800, color: isAdvance ? '#34d399' : '#f8fafc' }}>
+                        {effectiveLabel}:
+                      </span>
+                      <span style={{ fontSize: '18px', fontWeight: 900, color: isAdvance ? '#34d399' : '#00F0FF', letterSpacing: '-0.02em' }}>
+                        {formatIndianCurrency(displayBal)}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -2193,17 +2345,17 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       onClick={() => {
                         const bal = activePartyRecord?.balance || 0;
                         if (bal >= 0) {
-                          handleApplyOldBalance('add', bal, 'Lene Wala');
+                          handleApplyOldBalance('pay', bal, 'Lene Wala');
                         } else {
-                          handleApplyOldBalance('sub', Math.abs(bal), 'Dene Wala');
+                          handleApplyOldBalance('receive', Math.abs(bal), 'Dene Wala');
                         }
                       }}
                       style={{
                         background: (activePartyRecord?.balance || 0) >= 0
-                          ? 'rgba(16, 185, 129, 0.2)'
-                          : 'rgba(239, 68, 68, 0.2)',
-                        border: `1px solid ${(activePartyRecord?.balance || 0) >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
-                        color: (activePartyRecord?.balance || 0) >= 0 ? '#6ee7b7' : '#fca5a5',
+                          ? 'rgba(239, 68, 68, 0.2)'
+                          : 'rgba(16, 185, 129, 0.2)',
+                        border: `1px solid ${(activePartyRecord?.balance || 0) >= 0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+                        color: (activePartyRecord?.balance || 0) >= 0 ? '#fca5a5' : '#6ee7b7',
                         fontSize: '11px',
                         fontWeight: 700,
                         padding: '6px 12px',
@@ -2244,13 +2396,13 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       type="button"
                       onClick={() => {
                         const amt = parseFloat(customOldBalanceInput) || 0;
-                        handleApplyOldBalance('add', amt, 'Lene Wala');
+                        handleApplyOldBalance('pay', amt, 'Lene Wala');
                       }}
                       disabled={!parseFloat(customOldBalanceInput)}
                       style={{
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        border: '1px solid rgba(16, 185, 129, 0.35)',
-                        color: '#6ee7b7',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        color: '#fca5a5',
                         height: '32px',
                         borderRadius: '7px',
                         fontSize: '11px',
@@ -2271,7 +2423,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                       type="button"
                       onClick={() => {
                         const amt = parseFloat(customOldBalanceInput) || 0;
-                        handleApplyOldBalance('sub', amt, 'Dene Wala');
+                        handleApplyOldBalance('receive', amt, 'Dene Wala');
                       }}
                       disabled={!parseFloat(customOldBalanceInput)}
                       style={{

@@ -162,26 +162,35 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == '/api/status':
-            self.send_response(200)
-            self._send_cors_headers()
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            default_printer = QPrinterInfo.defaultPrinterName()
-            available = [p.printerName() for p in QPrinterInfo.availablePrinters()]
-            desktop_dir = get_real_desktop_dir()
-            downloads_dir = os.path.join(os.path.expanduser('~'), 'Downloads')
-            self.wfile.write(json.dumps({
-                'status': 'ok',
-                'engine': 'PyQt6 BillPainter Native',
-                'printer': default_printer,
-                'availablePrinters': available,
-                'defaultDesktopPath': desktop_dir,
-                'defaultDownloadsPath': downloads_dir
-            }).encode('utf-8'))
-        else:
-            self.send_response(404)
-            self.end_headers()
+        try:
+            clean_path = self.path.split('?')[0]
+            if clean_path in ('/api/status', '/api/print/status', '/api/printers', '/api/print/printers'):
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                try:
+                    default_printer = QPrinterInfo.defaultPrinterName()
+                    available = [p.printerName() for p in QPrinterInfo.availablePrinters()]
+                except Exception as pe:
+                    print(f'Warning querying printers: {pe}', flush=True)
+                    default_printer = None
+                    available = []
+                desktop_dir = get_real_desktop_dir()
+                downloads_dir = os.path.join(os.path.expanduser('~'), 'Downloads')
+                self.wfile.write(json.dumps({
+                    'status': 'ok',
+                    'engine': 'PyQt6 BillPainter Native',
+                    'printer': default_printer,
+                    'availablePrinters': available,
+                    'defaultDesktopPath': desktop_dir,
+                    'defaultDownloadsPath': downloads_dir
+                }).encode('utf-8'))
+            else:
+                self.send_response(404)
+                self.end_headers()
+        except Exception as ex:
+            print(f'Error in do_GET: {ex}', flush=True)
 
     def do_POST(self):
         length = int(self.headers.get('Content-Length', 0))
@@ -217,7 +226,7 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(res).encode('utf-8'))
 
         elif self.path == '/api/print/copy-to-clipboard':
-            img, _ = render_qimage(bill_data)
+            img, _ = render_qimage(bill_data, page_num=-1)
             QApplication.clipboard().setImage(img)
             self.send_response(200)
             self._send_cors_headers()
@@ -676,8 +685,9 @@ class PrintRequestHandler(BaseHTTPRequestHandler):
 
 
 def run_server(port=5005):
+    ThreadingHTTPServer.allow_reuse_address = False
     server = ThreadingHTTPServer(('127.0.0.1', port), PrintRequestHandler)
-    print(f'Native PyQt6 Print Service started on http://127.0.0.1:{port}')
+    print(f'Native PyQt6 Print Service started on http://127.0.0.1:{port}', flush=True)
     server.serve_forever()
 
 if __name__ == '__main__':

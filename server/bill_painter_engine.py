@@ -4,7 +4,7 @@
 import sys
 import re
 from collections import defaultdict
-from PyQt6.QtCore import Qt, QRect, QSize, QSizeF, QPoint
+from PyQt6.QtCore import Qt, QRect, QSize, QSizeF, QPoint, QPointF
 from PyQt6.QtGui import QFont, QPen, QBrush, QColor, QPainter, QImage, QPixmap, QPageSize, QPageLayout, QPainterPath, QFontMetrics
 from PyQt6.QtPrintSupport import QPrinter
 
@@ -255,173 +255,146 @@ class BillPainter:
             
         self.cur_y = y
 
-    def _draw_slip_icon(self, painter, x, y, size=38, is_image=False):
+    def _render_lucide_icon(self, painter, x, y, size, stroke_col, draw_fn, badge_fill=None):
         painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        if badge_fill:
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(badge_fill))
+            painter.drawRoundedRect(x - 3, y - 3, size + 6, size + 6, 6, 6)
+
+        painter.translate(x, y)
+        scale = size / 24.0
+        painter.scale(scale, scale)
+
+        pen = QPen(stroke_col, 2.1, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+
+        draw_fn(painter)
+        painter.restore()
+
+    def _draw_slip_icon(self, painter, x, y, size=34, is_image=False):
         stroke_col = QColor("#2563eb") if is_image else Qt.GlobalColor.black
-        fill_col = QColor("#eff6ff") if is_image else Qt.GlobalColor.white
-        fold_col = QColor("#1d4ed8") if is_image else Qt.GlobalColor.black
-        line_col = QColor("#3b82f6") if is_image else Qt.GlobalColor.black
+        badge_fill = QColor("#eff6ff") if is_image else None
 
-        w = int(size * 0.72)
-        h = int(size * 0.88)
-        sx = x + int((size - w) / 2)
-        sy = y + int((size - h) / 2)
-        fold = 7
+        def _draw(p):
+            path = QPainterPath()
+            path.moveTo(14, 2)
+            path.lineTo(6, 2)
+            path.quadTo(4, 2, 4, 4)
+            path.lineTo(4, 20)
+            path.quadTo(4, 22, 6, 22)
+            path.lineTo(18, 22)
+            path.quadTo(20, 22, 20, 20)
+            path.lineTo(20, 8)
+            path.closeSubpath()
+            p.drawPath(path)
 
-        path = QPainterPath()
-        path.moveTo(sx, sy)
-        path.lineTo(sx + w - fold, sy)
-        path.lineTo(sx + w, sy + fold)
-        path.lineTo(sx + w, sy + h)
-        path.lineTo(sx, sy + h)
-        path.closeSubpath()
+            flap = QPainterPath()
+            flap.moveTo(14, 2)
+            flap.lineTo(14, 8)
+            flap.lineTo(20, 8)
+            p.drawPath(flap)
 
-        painter.setPen(QPen(stroke_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.setBrush(QBrush(fill_col))
-        painter.drawPath(path)
+            p.drawLine(8, 9, 10, 9)
+            p.drawLine(8, 13, 16, 13)
+            p.drawLine(8, 17, 16, 17)
 
-        painter.setPen(QPen(fold_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.drawLine(sx + w - fold, sy, sx + w - fold, sy + fold)
-        painter.drawLine(sx + w - fold, sy + fold, sx + w, sy + fold)
+        self._render_lucide_icon(painter, x, y, size, stroke_col, _draw, badge_fill)
 
-        painter.setPen(QPen(line_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.drawLine(sx + 5, sy + 12, sx + w - 5, sy + 12)
-        painter.drawLine(sx + 5, sy + 19, sx + w - 5, sy + 19)
-        painter.drawLine(sx + 5, sy + 26, sx + w - 9, sy + 26)
-        painter.restore()
+    def _draw_vehicle_type_icon(self, painter, x, y, size=34, is_image=False):
+        stroke_col = QColor("#ea580c") if is_image else Qt.GlobalColor.black
+        badge_fill = QColor("#fff7ed") if is_image else None
 
-    def _draw_vehicle_type_icon(self, painter, x, y, size=38, is_image=False):
-        painter.save()
-        truck_col = QColor("#ea580c") if is_image else Qt.GlobalColor.black
-        fill_col = QColor("#fff7ed") if is_image else Qt.GlobalColor.white
-        win_col = QColor("#0284c7") if is_image else Qt.GlobalColor.black
-        wheel_col = QColor("#1f2937") if is_image else Qt.GlobalColor.black
+        def _draw(p):
+            path = QPainterPath()
+            path.moveTo(14, 18)
+            path.lineTo(14, 6)
+            path.quadTo(14, 4, 12, 4)
+            path.lineTo(4, 4)
+            path.quadTo(2, 4, 2, 6)
+            path.lineTo(2, 17)
+            path.quadTo(2, 18, 3, 18)
+            path.lineTo(5, 18)
+            p.drawPath(path)
 
-        w = int(size * 0.9)
-        sx = x + int((size - w) / 2)
-        top_y = y + 8
+            p.drawLine(9, 18, 15, 18)
 
-        path = QPainterPath()
-        path.moveTo(sx, top_y)
-        path.lineTo(sx + int(w * 0.62), top_y)
-        path.lineTo(sx + int(w * 0.85), top_y + 7)
-        path.lineTo(sx + w, top_y + 7)
-        path.lineTo(sx + w, top_y + 19)
-        path.lineTo(sx, top_y + 19)
-        path.closeSubpath()
+            cab = QPainterPath()
+            cab.moveTo(19, 18)
+            cab.lineTo(21, 18)
+            cab.quadTo(22, 18, 22, 17)
+            cab.lineTo(22, 13.35)
+            cab.lineTo(18.52, 9)
+            cab.lineTo(14, 9)
+            p.drawPath(cab)
 
-        painter.setPen(QPen(truck_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.setBrush(QBrush(fill_col))
-        painter.drawPath(path)
+            p.drawEllipse(QPointF(7, 18.5), 2.5, 2.5)
+            p.drawEllipse(QPointF(17, 18.5), 2.5, 2.5)
 
-        painter.setPen(QPen(win_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.drawLine(sx + int(w * 0.62), top_y, sx + int(w * 0.62), top_y + 9)
-        painter.drawLine(sx + int(w * 0.62), top_y + 9, sx + int(w * 0.82), top_y + 9)
+        self._render_lucide_icon(painter, x, y, size, stroke_col, _draw, badge_fill)
 
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(wheel_col))
-        painter.drawEllipse(sx + int(w * 0.25) - 3, top_y + 17, 7, 7)
-        painter.drawEllipse(sx + int(w * 0.75) - 3, top_y + 17, 7, 7)
-        if is_image:
-            painter.setBrush(QBrush(QColor("#ea580c")))
-            painter.drawEllipse(sx + int(w * 0.25) - 1, top_y + 19, 3, 3)
-            painter.drawEllipse(sx + int(w * 0.75) - 1, top_y + 19, 3, 3)
-        painter.restore()
+    def _draw_vehicle_no_icon(self, painter, x, y, size=34, is_image=False):
+        stroke_col = QColor("#0284c7") if is_image else Qt.GlobalColor.black
+        badge_fill = QColor("#f0f9ff") if is_image else None
 
-    def _draw_vehicle_no_icon(self, painter, x, y, size=38, is_image=False):
-        painter.save()
-        plate_col = QColor("#0284c7") if is_image else Qt.GlobalColor.black
-        fill_col = QColor("#f0f9ff") if is_image else Qt.GlobalColor.white
-        bolt_col = QColor("#0369a1") if is_image else Qt.GlobalColor.black
+        def _draw(p):
+            car = QPainterPath()
+            car.moveTo(19, 17)
+            car.lineTo(21, 17)
+            car.quadTo(22, 17, 22, 16)
+            car.lineTo(22, 13)
+            car.lineTo(16, 10)
+            car.lineTo(13.8, 7.7)
+            car.quadTo(13, 7, 12.2, 7)
+            car.lineTo(5, 7)
+            car.lineTo(2.2, 10.8)
+            car.quadTo(2, 11.5, 2, 12)
+            car.lineTo(2, 16)
+            car.quadTo(2, 17, 3, 17)
+            car.lineTo(5, 17)
+            p.drawPath(car)
 
-        w = int(size * 0.9)
-        h = int(size * 0.58)
-        sx = x + int((size - w) / 2)
-        top_y = y + int((size - h) / 2)
+            p.drawLine(9, 17, 15, 17)
+            p.drawEllipse(QPointF(7, 17), 2.0, 2.0)
+            p.drawEllipse(QPointF(17, 17), 2.0, 2.0)
 
-        painter.setPen(QPen(plate_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.setBrush(QBrush(fill_col))
-        painter.drawRoundedRect(sx, top_y, w, h, 4, 4)
+        self._render_lucide_icon(painter, x, y, size, stroke_col, _draw, badge_fill)
 
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(bolt_col))
-        painter.drawEllipse(sx + 3, top_y + int(h / 2) - 2, 4, 4)
-        painter.drawEllipse(sx + w - 7, top_y + int(h / 2) - 2, 4, 4)
+    def _draw_party_icon(self, painter, x, y, size=34, is_image=False):
+        stroke_col = QColor("#7c3aed") if is_image else Qt.GlobalColor.black
+        badge_fill = QColor("#ede9fe") if is_image else None
 
-        painter.setPen(QPen(plate_col, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.drawLine(sx + 9, top_y + int(h / 2), sx + w - 9, top_y + int(h / 2))
-        painter.restore()
+        def _draw(p):
+            body = QPainterPath()
+            body.moveTo(19, 21)
+            body.lineTo(19, 19)
+            body.quadTo(19, 15, 15, 15)
+            body.lineTo(9, 15)
+            body.quadTo(5, 15, 5, 19)
+            body.lineTo(5, 21)
+            p.drawPath(body)
 
-    def _draw_party_icon(self, painter, x, y, size=38, is_image=False):
-        painter.save()
-        dp_border = QColor("#7c3aed") if is_image else Qt.GlobalColor.black
-        dp_bg = QColor("#ede9fe") if is_image else Qt.GlobalColor.white
-        sil_col = QColor("#7c3aed") if is_image else Qt.GlobalColor.black
+            p.drawEllipse(QPointF(12, 7), 4.0, 4.0)
 
-        w = int(size * 0.88)
-        h = int(size * 0.88)
-        sx = x + int((size - w) / 2)
-        sy = y + int((size - h) / 2)
-        rad = 8
+        self._render_lucide_icon(painter, x, y, size, stroke_col, _draw, badge_fill)
 
-        # 1. DP Squircle Frame
-        painter.setPen(QPen(dp_border, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.setBrush(QBrush(dp_bg))
-        painter.drawRoundedRect(sx, sy, w, h, rad, rad)
+    def _draw_calendar_icon(self, painter, x, y, size=34, is_image=False):
+        stroke_col = QColor("#dc2626") if is_image else Qt.GlobalColor.black
+        badge_fill = QColor("#fef2f2") if is_image else None
 
-        # 2. Clip inside DP for Head & Shoulders silhouette
-        clip_path = QPainterPath()
-        clip_path.addRoundedRect(sx, sy, w, h, rad, rad)
-        painter.setClipPath(clip_path)
+        def _draw(p):
+            p.drawLine(8, 2, 8, 6)
+            p.drawLine(16, 2, 16, 6)
 
-        cx = sx + int(w / 2)
+            body = QPainterPath()
+            body.addRoundedRect(3, 4, 18, 18, 2.0, 2.0)
+            p.drawPath(body)
 
-        # Head Circle
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(sil_col))
-        head_r = int(w * 0.2)
-        painter.drawEllipse(cx - head_r, sy + int(h * 0.38) - head_r, head_r * 2, head_r * 2)
+            p.drawLine(3, 10, 21, 10)
 
-        # Shoulders / Torso
-        shoulder_r = int(w * 0.44)
-        painter.drawEllipse(cx - shoulder_r, sy + h - int(shoulder_r * 0.75), shoulder_r * 2, shoulder_r * 2)
-
-        painter.restore()
-
-    def _draw_calendar_icon(self, painter, x, y, size=38, is_image=False):
-        painter.save()
-        cal_col = QColor("#dc2626") if is_image else Qt.GlobalColor.black
-        fill_col = QColor("#fef2f2") if is_image else Qt.GlobalColor.white
-        ring_col = QColor("#991b1b") if is_image else Qt.GlobalColor.black
-
-        w = int(size * 0.78)
-        h = int(size * 0.78)
-        sx = x + int((size - w) / 2)
-        top_y = y + int((size - h) / 2) + 2
-
-        # Calendar body
-        painter.setPen(QPen(cal_col, 2.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.setBrush(QBrush(fill_col))
-        painter.drawRect(sx, top_y, w, h)
-
-        # Top header bar
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(cal_col))
-        painter.drawRect(sx, top_y, w, 7)
-
-        # Binder rings
-        painter.setPen(QPen(ring_col, 2.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-        painter.drawLine(sx + 6, top_y - 3, sx + 6, top_y + 3)
-        painter.drawLine(sx + w - 6, top_y - 3, sx + w - 6, top_y + 3)
-
-        # Calendar grid marks
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(cal_col))
-        painter.drawEllipse(sx + int(w * 0.35) - 2, top_y + 13, 4, 4)
-        painter.drawEllipse(sx + int(w * 0.65) - 2, top_y + 13, 4, 4)
-        painter.drawEllipse(sx + int(w * 0.35) - 2, top_y + 20, 4, 4)
-        painter.drawEllipse(sx + int(w * 0.65) - 2, top_y + 20, 4, 4)
-        painter.restore()
+        self._render_lucide_icon(painter, x, y, size, stroke_col, _draw, badge_fill)
 
     def _draw_loading_header(self, painter):
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
@@ -445,7 +418,7 @@ class BillPainter:
         if self.d.get("is_equation"): 
             title = "MULTI-PARTY REPORT"
         
-        painter.drawText(QRect(0, 30, self.W, 80), Qt.AlignmentFlag.AlignCenter, title)
+        painter.drawText(QRect(0, 20, self.W, 80), Qt.AlignmentFlag.AlignCenter, title)
         
         # Info Block
         f_i = QFont("Segoe UI", 0, QFont.Weight.Bold)
@@ -454,8 +427,9 @@ class BillPainter:
         painter.setPen(QPen(Qt.GlobalColor.black))
         metrics = QFontMetrics(f_i)
         y = 130
-        icon_size = 38
+        icon_size = 34
         icon_gap = 12
+        icon_y_offset = 27
         table_right = self.margin + 1290
         is_img = bool(getattr(self, 'is_img_mode_flag', False) or self.d.get("is_image_mode"))
 
@@ -466,7 +440,7 @@ class BillPainter:
 
         # Row 1 (Upper 3: Slip No | Vehicle Type | Vehicle No)
         # 1. Slip No (Left)
-        self._draw_slip_icon(painter, self.margin, y - 28, icon_size, is_image=is_img)
+        self._draw_slip_icon(painter, self.margin, y - icon_y_offset, icon_size, is_image=is_img)
         bill_str = str(self.d.get('bill_no', 'N/A'))
         painter.drawText(self.margin + icon_size + icon_gap, y, bill_str)
 
@@ -478,29 +452,29 @@ class BillPainter:
         if v_type and v_name:
             # Vehicle Type in center
             v_type_x = 520
-            self._draw_vehicle_type_icon(painter, v_type_x, y - 28, icon_size, is_image=is_img)
+            self._draw_vehicle_type_icon(painter, v_type_x, y - icon_y_offset, icon_size, is_image=is_img)
             painter.drawText(v_type_x + icon_size + icon_gap, y, v_type)
 
             # Vehicle No on locked right position
-            self._draw_vehicle_no_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+            self._draw_vehicle_no_icon(painter, right_icon_x, y - icon_y_offset, icon_size, is_image=is_img)
             painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, v_name)
         elif v_type:
-            self._draw_vehicle_type_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+            self._draw_vehicle_type_icon(painter, right_icon_x, y - icon_y_offset, icon_size, is_image=is_img)
             painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, v_type)
         elif v_name:
-            self._draw_vehicle_no_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+            self._draw_vehicle_no_icon(painter, right_icon_x, y - icon_y_offset, icon_size, is_image=is_img)
             painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, v_name)
 
         # Row 2 (Lower 2: Party Name | Date)
         y += 50
         # 1. Party Name (Left)
         party_str = str(self.d.get('party', 'N/A'))
-        self._draw_party_icon(painter, self.margin, y - 28, icon_size, is_image=is_img)
+        self._draw_party_icon(painter, self.margin, y - icon_y_offset, icon_size, is_image=is_img)
         painter.drawText(QRect(self.margin + icon_size + icon_gap, y - 35, right_icon_x - (self.margin + icon_size + icon_gap) - 20, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, party_str)
 
         # 2. Date (Right - EXACT same column position as Upper Vehicle Icon)
         date_str = format_display_date(self.d.get('date', 'N/A'))
-        self._draw_calendar_icon(painter, right_icon_x, y - 28, icon_size, is_image=is_img)
+        self._draw_calendar_icon(painter, right_icon_x, y - icon_y_offset, icon_size, is_image=is_img)
         painter.drawText(QRect(right_text_x, y - 35, max_right_w, 50), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, date_str)
 
         self.cur_y = y + 70
@@ -965,17 +939,35 @@ class BillPainter:
             
             for adj in adjs:
                 desc = adj.get("desc", "Adjustment")
-                val = adj.get("val", 0.0)
-                adj_type = adj.get("type", "add")
+                val = float(adj.get("val", 0.0) or 0.0)
+                adj_type = str(adj.get("type", "")).lower()
+                desc_lower = desc.lower()
                 
-                if adj_type == "sub":
+                # Check if adjustment is Receive (Paisa Aaya) vs Pay (Paisa Gaya)
+                is_recv = False
+                if adj_type in ("receive", "recv", "sub_receive"):
+                    is_recv = True
+                elif adj_type in ("pay", "add_pay"):
+                    is_recv = False
+                elif "pay" in desc_lower or "debit" in desc_lower or "freight" in desc_lower or "bhada" in desc_lower or "lene wala" in desc_lower or "bakaya" in desc_lower:
+                    is_recv = False
+                elif "receive" in desc_lower or "jama" in desc_lower or "recv" in desc_lower or "return" in desc_lower or "dene wala" in desc_lower or "advance" in desc_lower or "discount" in desc_lower:
+                    is_recv = True
+                elif adj_type == "add":
+                    is_recv = True # In modern UI '+' was Receive
+                elif adj_type == "sub":
+                    is_recv = False # In modern UI '-' was Pay
+                else:
+                    is_recv = True
+                
+                if is_recv:
                     final_total -= val
                     prefix = "(-)"
-                    val_color = QColor("#dc2626") if is_img_adj else Qt.GlobalColor.black
+                    val_color = QColor("#16a34a") if is_img_adj else Qt.GlobalColor.black # Green for Receive
                 else:
                     final_total += val
                     prefix = "(+)"
-                    val_color = QColor("#16a34a") if is_img_adj else Qt.GlobalColor.black
+                    val_color = QColor("#dc2626") if is_img_adj else Qt.GlobalColor.black # Red for Pay
                 
                 self.cur_y += 45
                 painter.setPen(QPen(Qt.GlobalColor.black))
@@ -983,7 +975,7 @@ class BillPainter:
                 painter.setPen(QPen(val_color))
                 painter.drawText(QRect(x_value, self.cur_y, val_w, 50), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, format_indian_currency(val))
             
-            # 3. Draw Final Balance with custom label
+            # 3. Draw Final Balance with custom label (or ADVANCE if negative)
             self.cur_y += 65
             f.setPixelSize(48)
             f.setWeight(QFont.Weight.Bold)
@@ -991,9 +983,14 @@ class BillPainter:
             painter.setFont(f)
             painter.setPen(QPen(Qt.GlobalColor.black))
             
-            balance_label = self.d.get("balance_label", "BALANCE")
+            custom_lbl = str(self.d.get("balance_label") or "").strip()
+            if not custom_lbl:
+                custom_lbl = "ADVANCE" if final_total < 0 else "BALANCE"
+            balance_label = custom_lbl.upper()
+            display_val = format_indian_currency(abs(final_total) if final_total < 0 else final_total)
+                
             painter.drawText(QRect(x_label, self.cur_y, block_w, 80), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, f"{balance_label}")
-            painter.drawText(QRect(x_value, self.cur_y, val_w, 80), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, format_indian_currency(final_total))
+            painter.drawText(QRect(x_value, self.cur_y, val_w, 80), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, display_val)
         else:
             if not self.d.get("is_equation"):
                 f.setPixelSize(45) # ENLARGED Total Font

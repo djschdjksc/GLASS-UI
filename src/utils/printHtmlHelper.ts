@@ -1,5 +1,5 @@
 import type { BillPrintPayload } from './billCanvasPainter';
-import { formatIndianCurrency, formatDisplayDate } from './billCanvasPainter';
+import { formatIndianCurrency, formatDisplayDate, isAdjustmentReceive } from './billCanvasPainter';
 import { getCachedSkipItems } from '../services/db/sqliteDb';
 import { formatBillNumber } from './billDocTypes';
 
@@ -158,8 +158,9 @@ export function directPrintBill(data: BillPrintPayload): void {
   }).join('');
 
   const adjustmentsHtml = (data.adjustments || []).map(adj => {
-    const prefix = adj.type === 'sub' ? '(-) ' : '(+) ';
-    const valColor = adj.type === 'sub' ? '#dc2626' : '#16a34a';
+    const isRecv = isAdjustmentReceive(adj);
+    const prefix = isRecv ? '(-) ' : '(+) ';
+    const valColor = isRecv ? '#16a34a' : '#dc2626';
     return `
       <div style="display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 4px;">
         <span style="color: #000000; font-style: italic; font-weight: 600;">${prefix}${adj.desc || 'Adjustment'}</span>
@@ -489,8 +490,8 @@ export function directPrintBill(data: BillPrintPayload): void {
             </div>
             ${adjustmentsHtml}
             <div class="balance-line">
-              <span>${(data.balanceLabel || 'BALANCE').toUpperCase()}</span>
-              <span>${formatIndianCurrency(data.finalBalance)}</span>
+              <span>${(((data.balanceLabel || '').trim() || ((data.finalBalance || 0) < 0 ? 'ADVANCE' : 'BALANCE'))).toUpperCase()}</span>
+              <span>${formatIndianCurrency((data.finalBalance || 0) < 0 ? Math.abs(data.finalBalance || 0) : (data.finalBalance || 0))}</span>
             </div>
           </div>
         ` : ''}

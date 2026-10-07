@@ -5,9 +5,25 @@ import { formatBillNumber } from './billDocTypes';
 
 export interface PrintAdjustment {
   id: string;
-  type: 'add' | 'sub';
+  type: 'receive' | 'pay' | 'add' | 'sub';
   desc: string;
   val: number;
+}
+
+export function isAdjustmentReceive(adj: { type?: string; desc?: string }): boolean {
+  const t = String(adj.type || '').toLowerCase();
+  const d = String(adj.desc || '').toLowerCase();
+  if (t === 'receive' || t === 'recv' || t === 'sub_receive') return true;
+  if (t === 'pay' || t === 'add_pay') return false;
+  if (d.includes('pay') || d.includes('debit') || d.includes('freight') || d.includes('bhada') || d.includes('lene wala') || d.includes('bakaya')) {
+    return false;
+  }
+  if (d.includes('receive') || d.includes('jama') || d.includes('recv') || d.includes('return') || d.includes('dene wala') || d.includes('advance') || d.includes('discount')) {
+    return true;
+  }
+  if (t === 'add') return true; // In modern UI '+' was Receive
+  if (t === 'sub') return false; // In modern UI '-' was Pay
+  return true;
 }
 
 export interface BillPrintPayload {
@@ -41,6 +57,7 @@ export interface BillPrintPayload {
   finalBalance: number;
   pageNum?: number;
   rowsPerPage?: number;
+  combineAllPages?: boolean;
   /** Skip group lookup — passed to Python native print server for inline group labels */
   skipGroupEntries?: Array<{ prefix: string; group: string }>;
   isColorful?: boolean;
@@ -109,25 +126,32 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   const validGroups = (data.groups || []).filter(g => (g.mould || '').trim() || Number(g.qty) > 0 || Number(g.total) > 0);
 
   const pageNum = data.pageNum ?? 0;
+  const isCombineAll = pageNum === -1 || Boolean(data.combineAllPages);
   const rowsPerPage = Number(data.rowsPerPage) || 27;
   const totalPages = isSummaryOnly ? 1 : Math.max(1, Math.ceil(validItems.length / rowsPerPage));
-  const startIdx = pageNum * rowsPerPage;
-  const itemsToDraw = isSummaryOnly ? [] : validItems.slice(startIdx, startIdx + rowsPerPage);
-  const isLastPage = isSummaryOnly || (startIdx + rowsPerPage >= validItems.length) || (pageNum >= totalPages - 1);
+  const startIdx = isCombineAll ? 0 : pageNum * rowsPerPage;
+  const itemsToDraw = isSummaryOnly ? [] : (isCombineAll ? validItems : validItems.slice(startIdx, startIdx + rowsPerPage));
+  const isLastPage = isCombineAll || isSummaryOnly || (startIdx + rowsPerPage >= validItems.length) || (pageNum >= totalPages - 1);
 
   // Exact row height from main.py
   const rowH = 60;
 
-  // Calculate dynamic canvas height
+  // Calculate dynamic canvas height (Tightly cropped to match data, exactly like F:\SUMMARY)
   let H = 2000;
   if (isSummaryOnly) {
-    H = 450 + (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200;
+    const grpCount = validGroups.length;
+    const adjCount = (data.adjustments || []).length;
+    H = 450 + (grpCount * 60) + 200 + (grpCount > 0 ? 250 + (adjCount * 50) + 150 : 0);
   } else if (isEstimate) {
-    H = 450 + (itemsToDraw.length * 60) + 200 + (isLastPage ? (validGroups.length * 60) + 250 + ((data.adjustments || []).length * 50) + 200 : 0);
+    const itemCount = itemsToDraw.length;
+    const grpCount = validGroups.length;
+    const adjCount = (data.adjustments || []).length;
+    const hasSummarySection = isLastPage && grpCount > 0;
+    H = 420 + (itemCount * 60) + 140 + (hasSummarySection ? 200 + (grpCount * 60) + 250 + (adjCount * 50) + 180 : 0);
   } else if (isLoadingSlip) {
-    H = Math.max(400 + (itemsToDraw.length * 60) + 200, 2000);
+    H = 380 + (itemsToDraw.length * 60) + 140;
   }
-  H = Math.min(Math.max(H, 1500), 30000);
+  H = Math.min(Math.max(H, 450), 30000);
 
   const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
   const scale = Math.max(dpr, 1);
@@ -161,264 +185,211 @@ export function renderBillToCanvas(data: BillPrintPayload, targetCanvas?: HTMLCa
   ctx.font = 'bold 60px "Segoe UI", Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText(title, W / 2, 30);
+  ctx.fillText(title, W / 2, 20); // Shifted 10px up as requested (was 30)
 
-// Crisp Canvas Vector Icon Helpers (Circle badge removed, 100% Vector, Colorful in Image Mode, Black in Direct Print)
-function drawSlipIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
+// ============================================================================
+// Official Lucide Vector SVG Paths (100% Vector, Ultra-Crisp, Scaled from 24x24)
+// ============================================================================
+
+function renderLucideShape(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  strokeColor: string,
+  drawCmds: (ctx: CanvasRenderingContext2D) => void,
+  badgeFill?: string
+) {
   ctx.save();
-  const strokeColor = isColorful ? '#2563eb' : '#000000';
-  const fillColor = isColorful ? '#eff6ff' : '#ffffff';
-  const foldColor = isColorful ? '#1d4ed8' : '#000000';
-  const lineCol = isColorful ? '#3b82f6' : '#000000';
+  ctx.translate(x, y);
 
-  const w = size * 0.72;
-  const h = size * 0.88;
-  const startX = x + (size - w) / 2;
-  const startY = y + (size - h) / 2;
-  const fold = 7;
-
-  // Paper body
-  ctx.beginPath();
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(startX + w - fold, startY);
-  ctx.lineTo(startX + w, startY + fold);
-  ctx.lineTo(startX + w, startY + h);
-  ctx.lineTo(startX, startY + h);
-  ctx.closePath();
-  ctx.fillStyle = fillColor;
-  ctx.fill();
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = 2.4;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  // Paper folded corner
-  ctx.beginPath();
-  ctx.moveTo(startX + w - fold, startY);
-  ctx.lineTo(startX + w - fold, startY + fold);
-  ctx.lineTo(startX + w, startY + fold);
-  ctx.strokeStyle = foldColor;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Content lines
-  ctx.strokeStyle = lineCol;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(startX + 5, startY + 12);
-  ctx.lineTo(startX + w - 5, startY + 12);
-  ctx.moveTo(startX + 5, startY + 19);
-  ctx.lineTo(startX + w - 5, startY + 19);
-  ctx.moveTo(startX + 5, startY + 26);
-  ctx.lineTo(startX + w - 9, startY + 26);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function drawVehicleTypeIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
-  ctx.save();
-  const truckColor = isColorful ? '#ea580c' : '#000000';
-  const cabFill = isColorful ? '#fff7ed' : '#ffffff';
-  const windowColor = isColorful ? '#0284c7' : '#000000';
-  const wheelColor = isColorful ? '#1f2937' : '#000000';
-
-  const w = size * 0.9;
-  const startX = x + (size - w) / 2;
-  const topY = y + 8;
-
-  // Truck outline
-  ctx.beginPath();
-  ctx.moveTo(startX, topY);
-  ctx.lineTo(startX + w * 0.62, topY);
-  ctx.lineTo(startX + w * 0.85, topY + 7);
-  ctx.lineTo(startX + w, topY + 7);
-  ctx.lineTo(startX + w, topY + 19);
-  ctx.lineTo(startX, topY + 19);
-  ctx.closePath();
-  ctx.fillStyle = cabFill;
-  ctx.fill();
-  ctx.strokeStyle = truckColor;
-  ctx.lineWidth = 2.4;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  // Window divider / window
-  ctx.beginPath();
-  ctx.moveTo(startX + w * 0.62, topY);
-  ctx.lineTo(startX + w * 0.62, topY + 9);
-  ctx.lineTo(startX + w * 0.82, topY + 9);
-  ctx.strokeStyle = windowColor;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Wheels
-  ctx.fillStyle = wheelColor;
-  ctx.beginPath();
-  ctx.arc(startX + w * 0.25, topY + 20, 3.6, 0, Math.PI * 2);
-  ctx.arc(startX + w * 0.75, topY + 20, 3.6, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (isColorful) {
-    ctx.fillStyle = '#ea580c';
+  if (badgeFill) {
+    ctx.fillStyle = badgeFill;
     ctx.beginPath();
-    ctx.arc(startX + w * 0.25, topY + 20, 1.2, 0, Math.PI * 2);
-    ctx.arc(startX + w * 0.75, topY + 20, 1.2, 0, Math.PI * 2);
+    if (ctx.roundRect) {
+      ctx.roundRect(-3, -3, size + 6, size + 6, 6);
+    } else {
+      ctx.rect(-3, -3, size + 6, size + 6);
+    }
     ctx.fill();
   }
 
-  ctx.restore();
-}
-
-function drawVehicleNoIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
-  ctx.save();
-  const plateColor = isColorful ? '#0284c7' : '#000000';
-  const plateFill = isColorful ? '#f0f9ff' : '#ffffff';
-  const boltColor = isColorful ? '#0369a1' : '#000000';
-
-  const w = size * 0.9;
-  const h = size * 0.58;
-  const startX = x + (size - w) / 2;
-  const startY = y + (size - h) / 2;
-
-  // Number plate border
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(startX, startY, w, h, 4);
-  } else {
-    ctx.rect(startX, startY, w, h);
-  }
-  ctx.fillStyle = plateFill;
-  ctx.fill();
-  ctx.strokeStyle = plateColor;
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
-
-  // Corner bolts
-  ctx.fillStyle = boltColor;
-  ctx.beginPath();
-  ctx.arc(startX + 4, startY + h / 2, 1.6, 0, Math.PI * 2);
-  ctx.arc(startX + w - 4, startY + h / 2, 1.6, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Plate center bar
-  ctx.beginPath();
-  ctx.moveTo(startX + 9, startY + h / 2);
-  ctx.lineTo(startX + w - 9, startY + h / 2);
-  ctx.strokeStyle = plateColor;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function drawPartyIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
-  ctx.save();
-  const dpBorder = isColorful ? '#7c3aed' : '#000000';
-  const dpBg = isColorful ? '#ede9fe' : '#ffffff';
-  const silhouetteCol = isColorful ? '#7c3aed' : '#000000';
-
-  const w = size * 0.88;
-  const h = size * 0.88;
-  const startX = x + (size - w) / 2;
-  const startY = y + (size - h) / 2;
-  const rad = 8;
-
-  // 1. Draw DP Squircle Frame
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(startX, startY, w, h, rad);
-  } else {
-    ctx.rect(startX, startY, w, h);
-  }
-  ctx.fillStyle = dpBg;
-  ctx.fill();
-  ctx.strokeStyle = dpBorder;
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
-
-  // 2. Clip inside DP to draw clean head & shoulders silhouette
-  ctx.save();
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(startX, startY, w, h, rad);
-  } else {
-    ctx.rect(startX, startY, w, h);
-  }
-  ctx.clip();
-
-  const cx = startX + w / 2;
-
-  // Head Circle
-  ctx.fillStyle = silhouetteCol;
-  ctx.beginPath();
-  ctx.arc(cx, startY + h * 0.38, w * 0.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Torso / Shoulders
-  ctx.beginPath();
-  ctx.arc(cx, startY + h + 2, w * 0.44, Math.PI, 0, false);
-  ctx.fill();
-
-  ctx.restore();
-  ctx.restore();
-}
-
-function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 40, isColorful = true) {
-  ctx.save();
-  const mainColor = isColorful ? '#dc2626' : '#000000';
-  const headerFill = isColorful ? '#dc2626' : '#000000';
-  const bodyFill = isColorful ? '#fef2f2' : '#ffffff';
-  const ringColor = isColorful ? '#991b1b' : '#000000';
-
-  const w = size * 0.78;
-  const h = size * 0.78;
-  const startX = x + (size - w) / 2;
-  const startY = y + (size - h) / 2 + 1;
-
-  // Calendar body
-  ctx.fillStyle = bodyFill;
-  ctx.fillRect(startX, startY, w, h);
-  ctx.strokeStyle = mainColor;
-  ctx.lineWidth = 2.4;
-  ctx.strokeRect(startX, startY, w, h);
-
-  // Top header bar
-  ctx.fillStyle = headerFill;
-  ctx.fillRect(startX, startY, w, 7);
-
-  // Binder rings
-  ctx.strokeStyle = ringColor;
-  ctx.lineWidth = 2.2;
+  const scale = size / 24;
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 2.1;
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
   ctx.beginPath();
-  ctx.moveTo(startX + 6, startY - 3);
-  ctx.lineTo(startX + 6, startY + 3);
-  ctx.moveTo(startX + w - 6, startY - 3);
-  ctx.lineTo(startX + w - 6, startY + 3);
+  drawCmds(ctx);
   ctx.stroke();
 
-  // Calendar grid dots / marks
-  ctx.fillStyle = mainColor;
-  ctx.beginPath();
-  ctx.arc(startX + w * 0.35, startY + 14, 1.8, 0, Math.PI * 2);
-  ctx.arc(startX + w * 0.65, startY + 14, 1.8, 0, Math.PI * 2);
-  ctx.arc(startX + w * 0.35, startY + 21, 1.8, 0, Math.PI * 2);
-  ctx.arc(startX + w * 0.65, startY + 21, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-
   ctx.restore();
+}
+
+// 1. Slip / Bill No: Lucide FileText
+function drawSlipIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 34, isColorful = true) {
+  const strokeCol = isColorful ? '#2563eb' : '#000000';
+  const badgeFill = isColorful ? '#eff6ff' : undefined;
+
+  renderLucideShape(ctx, x, y, size, strokeCol, (c) => {
+    // Sheet: M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z
+    c.moveTo(14, 2);
+    c.lineTo(6, 2);
+    c.arcTo(4, 2, 4, 4, 2);
+    c.lineTo(4, 20);
+    c.arcTo(4, 22, 6, 22, 2);
+    c.lineTo(18, 22);
+    c.arcTo(20, 22, 20, 20, 2);
+    c.lineTo(20, 8);
+    c.closePath();
+
+    // Corner fold flap: M14 2v6h6
+    c.moveTo(14, 2);
+    c.lineTo(14, 8);
+    c.lineTo(20, 8);
+
+    // Text lines: M16 13H8, M16 17H8, M10 9H8
+    c.moveTo(8, 9);
+    c.lineTo(10, 9);
+    c.moveTo(8, 13);
+    c.lineTo(16, 13);
+    c.moveTo(8, 17);
+    c.lineTo(16, 17);
+  }, badgeFill);
+}
+
+// 2. Vehicle Type: Lucide Truck
+function drawVehicleTypeIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 34, isColorful = true) {
+  const strokeCol = isColorful ? '#ea580c' : '#000000';
+  const badgeFill = isColorful ? '#fff7ed' : undefined;
+
+  renderLucideShape(ctx, x, y, size, strokeCol, (c) => {
+    // Truck bed & roof: M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2
+    c.moveTo(14, 18);
+    c.lineTo(14, 6);
+    c.arcTo(14, 4, 12, 4, 2);
+    c.lineTo(4, 4);
+    c.arcTo(2, 4, 2, 6, 2);
+    c.lineTo(2, 17);
+    c.arcTo(2, 18, 3, 18, 1);
+    c.lineTo(5, 18);
+
+    // Bottom center line: M15 18H9
+    c.moveTo(9, 18);
+    c.lineTo(15, 18);
+
+    // Cabin front: M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14
+    c.moveTo(19, 18);
+    c.lineTo(21, 18);
+    c.arcTo(22, 18, 22, 17, 1);
+    c.lineTo(22, 13.35);
+    c.lineTo(18.52, 9);
+    c.lineTo(14, 9);
+
+    // Wheels: circle cx="7" cy="18.5" r="2.5", circle cx="17" cy="18.5" r="2.5"
+    c.moveTo(9.5, 18.5);
+    c.arc(7, 18.5, 2.5, 0, Math.PI * 2);
+    c.moveTo(19.5, 18.5);
+    c.arc(17, 18.5, 2.5, 0, Math.PI * 2);
+  }, badgeFill);
+}
+
+// 3. Vehicle No: Lucide Car
+function drawVehicleNoIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 34, isColorful = true) {
+  const strokeCol = isColorful ? '#0284c7' : '#000000';
+  const badgeFill = isColorful ? '#f0f9ff' : undefined;
+
+  renderLucideShape(ctx, x, y, size, strokeCol, (c) => {
+    // Car body: M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2
+    c.moveTo(19, 17);
+    c.lineTo(21, 17);
+    c.arcTo(22, 17, 22, 16, 1);
+    c.lineTo(22, 13);
+    c.arcTo(22, 11.5, 20.5, 11.1, 1.5);
+    c.lineTo(16, 10);
+    c.lineTo(13.8, 7.7);
+    c.arcTo(13, 7, 12.2, 7, 1);
+    c.lineTo(5, 7);
+    c.arcTo(3.9, 7, 3.6, 7.9, 1);
+    c.lineTo(2.2, 10.8);
+    c.arcTo(2, 11.5, 2, 12, 1);
+    c.lineTo(2, 16);
+    c.arcTo(2, 17, 3, 17, 1);
+    c.lineTo(5, 17);
+
+    // Bottom center line: M9 17h6
+    c.moveTo(9, 17);
+    c.lineTo(15, 17);
+
+    // Wheels: circle cx="7" cy="17" r="2", circle cx="17" cy="17" r="2"
+    c.moveTo(9, 17);
+    c.arc(7, 17, 2, 0, Math.PI * 2);
+    c.moveTo(19, 17);
+    c.arc(17, 17, 2, 0, Math.PI * 2);
+  }, badgeFill);
+}
+
+// 4. Party Name: Lucide User
+function drawPartyIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 34, isColorful = true) {
+  const strokeCol = isColorful ? '#7c3aed' : '#000000';
+  const badgeFill = isColorful ? '#ede9fe' : undefined;
+
+  renderLucideShape(ctx, x, y, size, strokeCol, (c) => {
+    // Shoulders: M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2
+    c.moveTo(19, 21);
+    c.lineTo(19, 19);
+    c.arcTo(19, 15, 15, 15, 4);
+    c.lineTo(9, 15);
+    c.arcTo(5, 15, 5, 19, 4);
+    c.lineTo(5, 21);
+
+    // Head: circle cx="12" cy="7" r="4"
+    c.moveTo(16, 7);
+    c.arc(12, 7, 4, 0, Math.PI * 2);
+  }, badgeFill);
+}
+
+// 5. Date: Lucide Calendar
+function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size = 34, isColorful = true) {
+  const strokeCol = isColorful ? '#dc2626' : '#000000';
+  const badgeFill = isColorful ? '#fef2f2' : undefined;
+
+  renderLucideShape(ctx, x, y, size, strokeCol, (c) => {
+    // Binder pegs: M8 2v4, M16 2v4
+    c.moveTo(8, 2);
+    c.lineTo(8, 6);
+    c.moveTo(16, 2);
+    c.lineTo(16, 6);
+
+    // Calendar body: rect x="3" y="4" width="18" height="18" rx="2"
+    c.moveTo(5, 4);
+    c.lineTo(19, 4);
+    c.arcTo(21, 4, 21, 6, 2);
+    c.lineTo(21, 20);
+    c.arcTo(21, 22, 19, 22, 2);
+    c.lineTo(5, 22);
+    c.arcTo(3, 22, 3, 20, 2);
+    c.lineTo(3, 6);
+    c.arcTo(3, 4, 5, 4, 2);
+    c.closePath();
+
+    // Divider: M3 10h18
+    c.moveTo(3, 10);
+    c.lineTo(21, 10);
+  }, badgeFill);
 }
 
   const isColorful = data.isColorful !== false;
 
   // 2. Info Block (y = 130)
   ctx.font = 'bold 35px "Segoe UI", Arial, sans-serif';
+  ctx.textBaseline = 'middle'; // Center text baseline vertically with icon center
   let y = 130;
-  const iconSize = 40;
+  const iconSize = 34;
   const iconGap = 12;
+  const iconYOffset = Math.round(iconSize / 2); // 17: Exactly centers 34px icon with middle text baseline
   const rightX = margin + 1290; // Exactly matches right edge of 1290px table (1320)
 
   // Locked X position for right column: Upper Vehicle Icon & Lower Date Icon in exact same vertical line
@@ -428,7 +399,7 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
 
   // ROW 1 (Upper 3: Slip No | Vehicle Type | Vehicle No)
   // 1. Slip No (Left)
-  drawSlipIcon(ctx, margin, y - 2, iconSize, isColorful);
+  drawSlipIcon(ctx, margin, y - iconYOffset, iconSize, isColorful);
   ctx.textAlign = 'left';
   const formattedBillNo = formatBillNumber(data.billNo);
   ctx.fillText(formattedBillNo || '0001', margin + iconSize + iconGap, y);
@@ -441,19 +412,19 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
   if (vType && vNo) {
     // Both present: Vehicle Type in center, Vehicle No locked on right
     const vTypeX = 520;
-    drawVehicleTypeIcon(ctx, vTypeX, y - 2, iconSize, isColorful);
+    drawVehicleTypeIcon(ctx, vTypeX, y - iconYOffset, iconSize, isColorful);
     ctx.textAlign = 'left';
     ctx.fillText(vType, vTypeX + iconSize + iconGap, y);
 
-    drawVehicleNoIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+    drawVehicleNoIcon(ctx, rightIconX, y - iconYOffset, iconSize, isColorful);
     ctx.textAlign = 'left';
     ctx.fillText(vNo, rightTextX, y, maxRightTextW);
   } else if (vType) {
-    drawVehicleTypeIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+    drawVehicleTypeIcon(ctx, rightIconX, y - iconYOffset, iconSize, isColorful);
     ctx.textAlign = 'left';
     ctx.fillText(vType, rightTextX, y, maxRightTextW);
   } else if (vNo) {
-    drawVehicleNoIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+    drawVehicleNoIcon(ctx, rightIconX, y - iconYOffset, iconSize, isColorful);
     ctx.textAlign = 'left';
     ctx.fillText(vNo, rightTextX, y, maxRightTextW);
   }
@@ -461,13 +432,13 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
   // ROW 2 (Lower 2: Party Name | Date)
   y += 50;
   // 1. Party Name (Left)
-  drawPartyIcon(ctx, margin, y - 2, iconSize, isColorful);
+  drawPartyIcon(ctx, margin, y - iconYOffset, iconSize, isColorful);
   ctx.textAlign = 'left';
   ctx.fillText(data.partyName || 'CASH SALE', margin + iconSize + iconGap, y, rightIconX - (margin + iconSize + iconGap) - 20);
 
   // 2. Date (Right - EXACT same column position as Upper Vehicle Icon)
   const dateStr = formatDisplayDate(data.date);
-  drawCalendarIcon(ctx, rightIconX, y - 2, iconSize, isColorful);
+  drawCalendarIcon(ctx, rightIconX, y - iconYOffset, iconSize, isColorful);
   ctx.textAlign = 'left';
   ctx.fillText(dateStr, rightTextX, y, maxRightTextW);
 
@@ -792,32 +763,37 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
     let runningTotal = data.subTotal;
     (data.adjustments || []).forEach(adj => {
       const v = Number(adj.val) || 0;
-      const isSub = adj.type === 'sub';
-      if (isSub) runningTotal -= v;
+      const isRecv = isAdjustmentReceive(adj);
+      if (isRecv) runningTotal -= v;
       else runningTotal += v;
 
       curY += 45;
       ctx.font = 'italic 30px "Segoe UI", Arial, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillStyle = '#000000';
-      ctx.fillText(`${isSub ? '(-)' : '(+)'} ${adj.desc || 'Adjustment'}`, xLabel, curY + 25);
+      ctx.fillText(`${isRecv ? '(-)' : '(+)'} ${adj.desc || 'Adjustment'}`, xLabel, curY + 25);
 
       ctx.textAlign = 'right';
       ctx.font = 'bold 34px "Segoe UI", Arial, sans-serif';
-      ctx.fillStyle = isColorful ? (isSub ? '#dc2626' : '#16a34a') : '#000000';
+      // Receive is Green (#16a34a), Pay is Red (#dc2626)
+      ctx.fillStyle = isColorful ? (isRecv ? '#16a34a' : '#dc2626') : '#000000';
       ctx.fillText(formatIndianCurrency(v), xValue + valW, curY + 25);
       ctx.fillStyle = '#000000';
     });
 
-    // Final Balance
+    // Final Balance / Advance
     curY += 65;
     ctx.font = 'bold 48px "Segoe UI", Arial, sans-serif';
     ctx.textAlign = 'left';
-    const bLabel = (data.balanceLabel || 'BALANCE').toUpperCase();
+    const computedBal = data.finalBalance !== undefined ? data.finalBalance : runningTotal;
+    const isAdvance = computedBal < 0;
+    const rawLabel = (data.balanceLabel || '').trim();
+    const bLabel = (rawLabel || (isAdvance ? 'ADVANCE' : 'BALANCE')).toUpperCase();
     ctx.fillText(bLabel, xLabel, curY + 40);
 
     ctx.textAlign = 'right';
-    ctx.fillText(formatIndianCurrency(data.finalBalance || runningTotal), xValue + valW, curY + 40);
+    const displayAmt = isAdvance ? Math.abs(computedBal) : computedBal;
+    ctx.fillText(formatIndianCurrency(displayAmt), xValue + valW, curY + 40);
   }
 
   ctx.restore();

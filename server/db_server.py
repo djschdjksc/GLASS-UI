@@ -637,7 +637,7 @@ class DBHandler(BaseHTTPRequestHandler):
                                 a_date = (pa['bill_date'] or '')[:10]
                                 if a_date and a_date < date_from:
                                     amt = round(float(pa['amount'] or 0), 2)
-                                    if pa['adj_type'] == 'add':
+                                    if pa['adj_type'] in ('add', 'pay'):
                                         opening_balance = round(opening_balance + amt, 2)
                                     else:
                                         opening_balance = round(opening_balance - amt, 2)
@@ -713,7 +713,7 @@ class DBHandler(BaseHTTPRequestHandler):
                             a_date = (a['bill_date'] or '')[:10]
                             if (not date_from or a_date >= date_from) and (not date_to or a_date <= date_to):
                                 amt = round(float(a['amount'] or 0), 2)
-                                is_add = a['adj_type'] == 'add'
+                                is_add = a['adj_type'] in ('add', 'pay')
                                 desc = a['description'] or ('Adjustment (+)' if is_add else 'Adjustment (-)')
                                 current_entries.append({
                                     'id': 'adj_' + str(a['id']),
