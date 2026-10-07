@@ -161,9 +161,28 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
   const [selectedZone, setSelectedZone] = useState<NavZone | null>(null);
   const [zoneBadges, setZoneBadges] = useState<ZoneBadgeInfo[]>([]);
   const [targetBadges, setTargetBadges] = useState<TargetBadgeInfo[]>([]);
+  const [activeTargetIndex, setActiveTargetIndex] = useState<number>(0);
+  const [activeZoneIndex, setActiveZoneIndex] = useState<number>(0);
+
+  const activeTargetIndexRef = useRef<number>(0);
+  const activeZoneIndexRef = useRef<number>(0);
+  activeTargetIndexRef.current = activeTargetIndex;
+  activeZoneIndexRef.current = activeZoneIndex;
 
   // Sound feedback helper
   const playBeep = () => macAudio.playClick();
+
+  // Reset active indices on state changes
+  useEffect(() => {
+    setActiveTargetIndex(0);
+  }, [selectedZone]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveZoneIndex(0);
+      setActiveTargetIndex(0);
+    }
+  }, [isOpen]);
 
   // Measure DOM zones & targets
   const updatePositions = useCallback(() => {
@@ -357,8 +376,58 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
           e.stopPropagation();
           macAudio.playHover();
           setSelectedZone(null);
+          setActiveTargetIndex(0);
           return;
         }
+      }
+
+      // Handle Arrow keys (Up, Down, Left, Right) to navigate between targets or zones
+      if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        macAudio.playHover();
+
+        const isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+
+        if (selectedZone) {
+          // STEP 2: Navigate targets inside selected zone
+          const len = selectedZone.targets.length;
+          if (len > 0) {
+            setActiveTargetIndex(prev => isNext ? (prev + 1) % len : (prev - 1 + len) % len);
+          }
+        } else {
+          // STEP 1: Navigate zones
+          const len = NUMPAD_ZONES.length;
+          if (len > 0) {
+            setActiveZoneIndex(prev => isNext ? (prev + 1) % len : (prev - 1 + len) % len);
+          }
+        }
+        return;
+      }
+
+      // Handle Enter or NumpadEnter to trigger selected button or open zone
+      if (e.key === 'Enter' || e.code === 'NumpadEnter') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (selectedZone) {
+          // STEP 2: Execute target at active index
+          const currIdx = activeTargetIndexRef.current;
+          const activeT = selectedZone.targets[currIdx] || selectedZone.targets[0];
+          if (activeT) {
+            executeTarget(activeT);
+          }
+        } else {
+          // STEP 1: Open zone at active index
+          const currIdx = activeZoneIndexRef.current;
+          const activeZ = NUMPAD_ZONES[currIdx] || NUMPAD_ZONES[0];
+          if (activeZ) {
+            playBeep();
+            setSelectedZone(activeZ);
+            setActiveTargetIndex(0);
+          }
+        }
+        return;
       }
 
       // Check numeric key (1 - 9)
@@ -374,6 +443,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
           if (foundZone) {
             playBeep();
             setSelectedZone(foundZone);
+            setActiveTargetIndex(0);
           }
         } else {
           // STEP 2: Execute Target within Zone
@@ -382,6 +452,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
             executeTarget(foundTarget);
           }
         }
+        return;
       }
     };
 
@@ -390,7 +461,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
   }, [isOpen, selectedZone, executeTarget]);
 
   // Helper for arrow rendering
-  const renderPointingArrow = (direction: 'up' | 'down' | 'left' | 'right', arrowOffset?: string) => {
+  const renderPointingArrow = (direction: 'up' | 'down' | 'left' | 'right', arrowOffset?: string, arrowColor: string = '#1c1c1e') => {
     const horizontalOffset = arrowOffset || '50%';
     switch (direction) {
       case 'down':
@@ -405,7 +476,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
               height: 0,
               borderLeft: '5px solid transparent',
               borderRight: '5px solid transparent',
-              borderTop: '5px solid #1c1c1e',
+              borderTop: `5px solid ${arrowColor}`,
               filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))',
               pointerEvents: 'none',
             }}
@@ -423,7 +494,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
               height: 0,
               borderLeft: '5px solid transparent',
               borderRight: '5px solid transparent',
-              borderBottom: '5px solid #1c1c1e',
+              borderBottom: `5px solid ${arrowColor}`,
               filter: 'drop-shadow(0 -1px 1px rgba(0,0,0,0.5))',
               pointerEvents: 'none',
             }}
@@ -441,7 +512,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
               height: 0,
               borderTop: '5px solid transparent',
               borderBottom: '5px solid transparent',
-              borderRight: '5px solid #1c1c1e',
+              borderRight: `5px solid ${arrowColor}`,
               filter: 'drop-shadow(-1px 0 1px rgba(0,0,0,0.5))',
               pointerEvents: 'none',
             }}
@@ -459,7 +530,7 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
               height: 0,
               borderTop: '5px solid transparent',
               borderBottom: '5px solid transparent',
-              borderLeft: '5px solid #1c1c1e',
+              borderLeft: `5px solid ${arrowColor}`,
               filter: 'drop-shadow(1px 0 1px rgba(0,0,0,0.5))',
               pointerEvents: 'none',
             }}
@@ -476,13 +547,13 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
 
-    // 1. BILL HEADER (Zone 1) -> Placed nicely right below header on left side
+    // 1. BILL HEADER (Zone 1) -> Placed nicely below header, shifted right to avoid overlapping Zone 3
     if (zone.id === 1) {
       return {
         style: {
           position: 'absolute',
           top: `${rect.bottom + 8}px`,
-          left: `${rect.left + 24}px`,
+          left: `${rect.left + 260}px`,
         },
         arrowDirection: 'up'
       };
@@ -657,6 +728,16 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
             filter: drop-shadow(0 0 14px currentColor);
           }
         }
+        @keyframes numpadTargetPulse {
+          0%, 100% {
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.35);
+            border-color: #38bdf8;
+          }
+          50% {
+            box-shadow: 0 0 28px rgba(56, 189, 248, 1), inset 0 0 14px rgba(56, 189, 248, 0.55);
+            border-color: #7dd3fc;
+          }
+        }
       `}</style>
 
       {/* ----------------------------------------------------------------- */}
@@ -676,108 +757,136 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
         >
           {/* STEP 1: GLOWING BORDER AROUND GROUPS + FLOATING POINTING TOOLTIPS */}
           {/* ----------------------------------------------------------------- */}
-          {!selectedZone && zoneBadges.map(({ zone, rect }) => {
-            const placement = getZonePlacement(zone, rect);
+          {!selectedZone && (
+            <>
+              {zoneBadges.map(({ zone, rect }, idx) => {
+                const placement = getZonePlacement(zone, rect);
+                const isZoneActive = idx === activeZoneIndex;
 
-            return (
-              <React.Fragment key={zone.id}>
-                {/* Glowing Light Border around the Group */}
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playBeep();
-                    setSelectedZone(zone);
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: `${rect.top}px`,
-                    left: `${rect.left}px`,
-                    width: `${rect.width}px`,
-                    height: `${rect.height}px`,
-                    border: `1.5px solid ${zone.color}bb`,
-                    borderRadius: '10px',
-                    background: `${zone.color}06`,
-                    boxShadow: `0 0 18px ${zone.color}45, 0 0 32px ${zone.color}20, inset 0 0 14px ${zone.color}15`,
-                    color: zone.color,
-                    animation: 'numpadLightGlow 2.5s ease-in-out infinite',
-                    pointerEvents: 'auto',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                />
+                return (
+                  <React.Fragment key={zone.id}>
+                    {/* Glowing Light Border around the Group */}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playBeep();
+                        setSelectedZone(zone);
+                        setActiveTargetIndex(0);
+                      }}
+                      onMouseEnter={() => setActiveZoneIndex(idx)}
+                      style={{
+                        position: 'absolute',
+                        top: `${rect.top}px`,
+                        left: `${rect.left}px`,
+                        width: `${rect.width}px`,
+                        height: `${rect.height}px`,
+                        border: `1.5px solid ${zone.color}bb`,
+                        borderRadius: '10px',
+                        background: `${zone.color}06`,
+                        boxShadow: `0 0 18px ${zone.color}45, 0 0 32px ${zone.color}20, inset 0 0 14px ${zone.color}15`,
+                        color: zone.color,
+                        animation: 'numpadLightGlow 2.5s ease-in-out infinite',
+                        pointerEvents: 'auto',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    />
 
-                {/* Floating Capsule Tooltip with Pointing Arrow & Number Badge */}
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playBeep();
-                    setSelectedZone(zone);
-                  }}
-                  style={{
-                    ...placement.style,
-                    zIndex: 999999,
-                    background: '#1c1c1e',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255, 255, 255, 0.16)',
-                    borderRadius: '9999px',
-                    height: '28px',
-                    padding: '3px 4px 3px 12px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
-                    fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
-                    lineHeight: '1',
-                    cursor: 'pointer',
-                    pointerEvents: 'auto',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      letterSpacing: '-0.01em',
-                      whiteSpace: 'nowrap',
-                      lineHeight: '1',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', lineHeight: 1 }}>{zone.icon}</span>
-                    <span>{zone.name}</span>
-                  </span>
-                  <kbd
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#3f3f42',
-                      color: '#f4f4f5',
-                      padding: '3px 8.5px',
-                      borderRadius: '9999px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
-                      letterSpacing: '0.02em',
-                      lineHeight: '1',
-                      border: 'none',
-                      boxShadow: 'none',
-                      whiteSpace: 'nowrap',
-                      userSelect: 'none',
-                    }}
-                  >
-                    {zone.id}
-                  </kbd>
-                  {renderPointingArrow(placement.arrowDirection)}
-                </div>
-              </React.Fragment>
-            );
-          })}
+                    {/* Floating Capsule Tooltip with Pointing Arrow & Number Badge */}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playBeep();
+                        setSelectedZone(zone);
+                        setActiveTargetIndex(0);
+                      }}
+                      onMouseEnter={() => setActiveZoneIndex(idx)}
+                      style={{
+                        ...placement.style,
+                        zIndex: isZoneActive ? 1000000 : 999999,
+                        background: isZoneActive ? '#0284c7' : '#1c1c1e',
+                        color: '#ffffff',
+                        border: isZoneActive ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.16)',
+                        borderRadius: '9999px',
+                        height: '28px',
+                        padding: '3px 4px 3px 12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: isZoneActive
+                          ? '0 0 25px rgba(56, 189, 248, 0.95), 0 4px 14px rgba(0,0,0,0.8)'
+                          : '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                        fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
+                        whiteSpace: 'nowrap',
+                        userSelect: 'none',
+                        lineHeight: '1',
+                        cursor: 'pointer',
+                        pointerEvents: 'auto',
+                        transform: isZoneActive ? 'scale(1.08)' : 'scale(1)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: isZoneActive ? 700 : 600,
+                          color: '#ffffff',
+                          letterSpacing: '-0.01em',
+                          whiteSpace: 'nowrap',
+                          lineHeight: '1',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span style={{ fontSize: '13px', lineHeight: 1 }}>{zone.icon}</span>
+                        <span>{zone.name}</span>
+                      </span>
+                      <kbd
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: isZoneActive ? '#ffffff' : '#3f3f42',
+                          color: isZoneActive ? '#0284c7' : '#f4f4f5',
+                          padding: '3px 8.5px',
+                          borderRadius: '9999px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+                          letterSpacing: '0.02em',
+                          lineHeight: '1',
+                          border: 'none',
+                          boxShadow: 'none',
+                          whiteSpace: 'nowrap',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {zone.id}
+                      </kbd>
+                      {isZoneActive && (
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            background: 'rgba(0, 0, 0, 0.35)',
+                            padding: '2px 5px',
+                            borderRadius: '4px',
+                            letterSpacing: '0.02em'
+                          }}
+                        >
+                          ↵ ENTER
+                        </span>
+                      )}
+                      {renderPointingArrow(placement.arrowDirection, undefined, isZoneActive ? '#0284c7' : '#1c1c1e')}
+                    </div>
+                  </React.Fragment>
+                );
+              })}
+
+            </>
+          )}
 
           {/* ----------------------------------------------------------------- */}
           {/* STEP 2: SIMULTANEOUS TARGET POINTING TOOLTIPS ONLY (NO BUTTON BORDERS) */}
@@ -810,6 +919,8 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
               {targetBadges.map(({ target, rect }) => {
                 const isNumberOnly = selectedZone.id === 3 || selectedZone.id === 4 || selectedZone.id === 5;
                 const placement = getTargetPlacement(rect, selectedZone.id);
+                const activeTarget = selectedZone.targets[activeTargetIndex] || selectedZone.targets[0];
+                const isActive = target.num === activeTarget?.num;
 
                 // COMPACT NUMBER-ONLY BADGE (for clustered table buttons & mode buttons)
                 if (isNumberOnly) {
@@ -820,27 +931,34 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                         e.stopPropagation();
                         executeTarget(target);
                       }}
+                      onMouseEnter={() => {
+                        const idx = selectedZone.targets.findIndex(t => t.num === target.num);
+                        if (idx !== -1) setActiveTargetIndex(idx);
+                      }}
                       title={target.label}
                       style={{
                         ...placement.style,
-                        zIndex: 999999,
-                        background: '#1c1c1e',
+                        zIndex: isActive ? 1000000 : 999999,
+                        background: isActive ? '#0284c7' : '#1c1c1e',
                         color: '#ffffff',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        border: isActive ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.18)',
                         borderRadius: '9999px',
-                        height: '26px',
-                        minWidth: '26px',
+                        height: isActive ? '28px' : '26px',
+                        minWidth: isActive ? '28px' : '26px',
                         padding: '0 6px',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                        boxShadow: isActive
+                          ? '0 0 24px rgba(56, 189, 248, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8)'
+                          : '0 6px 20px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
                         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
                         userSelect: 'none',
                         lineHeight: '1',
                         cursor: 'pointer',
                         pointerEvents: 'auto',
-                        transition: 'all 0.15s ease',
+                        transform: isActive ? 'scale(1.18)' : 'scale(1)',
+                        transition: 'all 0.12s cubic-bezier(0.2, 0, 0, 1)',
                       }}
                     >
                       <kbd
@@ -848,12 +966,12 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          backgroundColor: '#3f3f42',
-                          color: '#f4f4f5',
+                          backgroundColor: isActive ? '#ffffff' : '#3f3f42',
+                          color: isActive ? '#0284c7' : '#f4f4f5',
                           padding: '2px 6px',
                           borderRadius: '9999px',
                           fontSize: '12px',
-                          fontWeight: 700,
+                          fontWeight: 800,
                           fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
                           lineHeight: '1',
                           border: 'none',
@@ -863,7 +981,23 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                       >
                         {target.num}
                       </kbd>
-                      {renderPointingArrow(placement.arrowDirection)}
+                      {isActive && (
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            marginLeft: '4px',
+                            background: 'rgba(0, 0, 0, 0.35)',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          ↵ ENTER
+                        </span>
+                      )}
+                      {renderPointingArrow(placement.arrowDirection, undefined, isActive ? '#0284c7' : '#1c1c1e')}
                     </div>
                   );
                 }
@@ -876,32 +1010,39 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                       e.stopPropagation();
                       executeTarget(target);
                     }}
+                    onMouseEnter={() => {
+                      const idx = selectedZone.targets.findIndex(t => t.num === target.num);
+                      if (idx !== -1) setActiveTargetIndex(idx);
+                    }}
                     style={{
                       ...placement.style,
-                      zIndex: 999999,
-                      background: '#1c1c1e',
+                      zIndex: isActive ? 1000000 : 999999,
+                      background: isActive ? '#0284c7' : '#1c1c1e',
                       color: '#ffffff',
-                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                      border: isActive ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.16)',
                       borderRadius: '9999px',
                       height: '28px',
-                      padding: '3px 4px 3px 12px',
+                      padding: '3px 6px 3px 12px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
+                      boxShadow: isActive
+                        ? '0 0 24px rgba(56, 189, 248, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8)'
+                        : '0 8px 24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4)',
                       fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif)',
                       whiteSpace: 'nowrap',
                       userSelect: 'none',
                       lineHeight: '1',
                       cursor: 'pointer',
                       pointerEvents: 'auto',
-                      transition: 'all 0.15s ease',
+                      transform: isActive ? 'scale(1.08)' : 'scale(1)',
+                      transition: 'all 0.12s cubic-bezier(0.2, 0, 0, 1)',
                     }}
                   >
                     <span
                       style={{
                         fontSize: '12px',
-                        fontWeight: 500,
+                        fontWeight: isActive ? 700 : 500,
                         color: '#ffffff',
                         letterSpacing: '-0.01em',
                         whiteSpace: 'nowrap',
@@ -915,12 +1056,12 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: '#3f3f42',
-                        color: '#f4f4f5',
+                        backgroundColor: isActive ? '#ffffff' : '#3f3f42',
+                        color: isActive ? '#0284c7' : '#f4f4f5',
                         padding: '3px 8.5px',
                         borderRadius: '9999px',
                         fontSize: '11px',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
                         letterSpacing: '0.02em',
                         lineHeight: '1',
@@ -932,10 +1073,26 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
                     >
                       {target.num}
                     </kbd>
-                    {renderPointingArrow(placement.arrowDirection)}
+                    {isActive && (
+                      <span
+                        style={{
+                          fontSize: '9.5px',
+                          fontWeight: 800,
+                          color: '#ffffff',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        ↵ ENTER
+                      </span>
+                    )}
+                    {renderPointingArrow(placement.arrowDirection, undefined, isActive ? '#0284c7' : '#1c1c1e')}
                   </div>
                 );
               })}
+
             </>
           )}
         </div>
