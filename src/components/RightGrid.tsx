@@ -205,32 +205,42 @@ export const RightGrid: React.FC<Props> = ({
   // Local editing cache
   const [cellDrafts, setCellDrafts] = useState<Record<string, string>>({});
 
-  let filteredItems = items.filter(it =>
-    (it?.mould || '').toLowerCase().includes((searchQuery || '').toLowerCase())
-  );
+  // Memoized filtered and sorted items
+  const filteredItems = useMemo(() => {
+    let result = items.filter(it =>
+      (it?.mould || '').toLowerCase().includes((searchQuery || '').toLowerCase())
+    );
 
-  if (sortField) {
-    filteredItems = [...filteredItems].sort((a, b) => {
-      const valA = a[sortField];
-      const valB = b[sortField];
-      if (typeof valA === 'string' && typeof valB === 'string') {
-        return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-      }
-      const numA = Number(valA) || 0;
-      const numB = Number(valB) || 0;
-      return sortOrder === 'asc' ? numA - numB : numB - numA;
-    });
-  }
+    if (sortField) {
+      result = [...result].sort((a, b) => {
+        const valA = a[sortField];
+        const valB = b[sortField];
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        const numA = Number(valA) || 0;
+        const numB = Number(valB) || 0;
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      });
+    }
+    return result;
+  }, [items, searchQuery, sortField, sortOrder]);
+
+  // Track previous active mould to avoid duplicate/infinite state notifications
+  const prevActiveMouldRef = useRef<string | null>(null);
 
   // Notify parent component when active row changes (for instantaneous Left Table highlight)
   useEffect(() => {
-    if (activeCell && activeCell.r >= 0 && activeCell.r < filteredItems.length) {
-      const activeItem = filteredItems[activeCell.r];
-      onActiveRowChange?.(activeItem || null);
-    } else {
-      onActiveRowChange?.(null);
+    const activeItem = (activeCell && activeCell.r >= 0 && activeCell.r < filteredItems.length)
+      ? filteredItems[activeCell.r]
+      : null;
+    const activeMould = activeItem?.mould ? activeItem.mould.trim() : null;
+
+    if (prevActiveMouldRef.current !== activeMould) {
+      prevActiveMouldRef.current = activeMould;
+      onActiveRowChange?.(activeItem);
     }
-  }, [activeCell, filteredItems, onActiveRowChange]);
+  }, [activeCell?.r, filteredItems, onActiveRowChange]);
 
   const totalQty = items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
   const grandTotal = items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);

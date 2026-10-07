@@ -2423,6 +2423,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const [summarySourceMap, setSummarySourceMap] = useState<Record<string, { rowId: string; rowIndex: number; field: string; qty: number }[]>>({});
   const [activeRightMould, setActiveRightMould] = useState<string | null>(null);
 
+  const handleActiveRightRowChange = useCallback((item: any) => {
+    const nextMould = item?.mould ? item.mould.trim() : null;
+    setActiveRightMould(prev => (prev === nextMould ? prev : nextMould));
+  }, []);
+
   // Automatically keep summary mapping cache fresh whenever rawItems or dynamicCols change
   useEffect(() => {
     const { sourceMap } = groupRawItemsForSummary(rawItems, dynamicCols);
@@ -3171,7 +3176,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                         setEnterDirection(dir);
                         showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
-                      onActiveRowChange={(item) => setActiveRightMould(item?.mould ? item.mould.trim() : null)}
+                      onActiveRowChange={handleActiveRightRowChange}
                       isActiveTable={activeTable === 'right'}
                       onActivateTable={() => setActiveTable('right')}
                     />
