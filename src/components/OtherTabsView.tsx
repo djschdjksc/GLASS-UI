@@ -1139,6 +1139,22 @@ export const OtherTabsView: React.FC<Props> = ({
   const editingPartyIdRef = useRef(editingPartyId);
   editingPartyIdRef.current = editingPartyId;
 
+  const confirmDeleteParty = useCallback(async () => {
+    if (!partyToDelete) return;
+    const { id, name } = partyToDelete;
+    const currentList = paginatedPartiesRef.current;
+    const currentIndex = currentList.findIndex(p => p.id === id);
+    const nextSelected = currentList[currentIndex + 1] || currentList[currentIndex - 1];
+    setSelectedPartyId(nextSelected ? nextSelected.id : null);
+    setEditingPartyId(null);
+    setPartyToDelete(null);
+    try {
+      await deleteParty(id);
+    } catch {}
+    showPartyToast(`Party "${name}" removed`);
+    macAudio.playSuccess();
+  }, [partyToDelete, deleteParty]);
+
   // F5 Keyboard Navigation (Enter to edit/save, Delete key to delete row, Arrow keys to navigate)
   useEffect(() => {
     if (activeTab !== 'F5') return;
@@ -1146,6 +1162,28 @@ export const OtherTabsView: React.FC<Props> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       // NumLock and Clear guards: never delete or disrupt UI
       if (e.key === 'NumLock' || e.code === 'NumLock' || e.key === 'Clear') {
+        return;
+      }
+
+      // If delete modal is open, strictly handle delete confirmation shortcuts: Enter / 1 / Delete / Y to confirm, Esc / 2 / N to cancel
+      if (partyToDelete) {
+        const isOne = e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1';
+        const isTwo = e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2';
+        const isEnter = e.key === 'Enter' || e.code === 'Enter';
+        const isDel = e.key === 'Delete' || e.code === 'Delete';
+        const isY = e.key === 'y' || e.key === 'Y';
+        const isN = e.key === 'n' || e.key === 'N';
+        const isEsc = e.key === 'Escape';
+
+        if (isOne || isEnter || isDel || isY) {
+          e.preventDefault();
+          e.stopPropagation();
+          confirmDeleteParty();
+        } else if (isTwo || isEsc || isN) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPartyToDelete(null);
+        }
         return;
       }
 
@@ -1459,19 +1497,6 @@ export const OtherTabsView: React.FC<Props> = ({
   const handleDeletePartyAction = (id: string, name: string) => {
     macAudio.playPop();
     setPartyToDelete({ id, name });
-  };
-
-  const confirmDeleteParty = async () => {
-    if (!partyToDelete) return;
-    const { id, name } = partyToDelete;
-    const currentIndex = paginatedParties.findIndex(p => p.id === id);
-    const nextSelected = paginatedParties[currentIndex + 1] || paginatedParties[currentIndex - 1];
-    setSelectedPartyId(nextSelected ? nextSelected.id : null);
-    setEditingPartyId(null);
-    await deleteParty(id);
-    showPartyToast(`Party "${name}" removed`);
-    macAudio.playSuccess();
-    setPartyToDelete(null);
   };
 
   // F8 Stock Inventory state
