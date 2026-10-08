@@ -320,6 +320,21 @@ export const NumpadNavigator: React.FC<Props> = ({ isActiveTabBill, onToast }) =
 
       // TOGGLE OPEN / CLOSE VIA NumPad ".":
       if (isNumpadDel) {
+        // If navigator is closed and active element is a price input, do NOT open navigator!
+        // Allow user to freely enter decimal dots in price.
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isPriceInput = Boolean(
+          activeEl && (
+            activeEl.getAttribute('data-field') === 'price' ||
+            activeEl.classList?.contains('price-input') ||
+            (activeEl.id && /^right-cell-\d+-2$/.test(activeEl.id))
+          )
+        );
+
+        if (!isOpen && isPriceInput) {
+          return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 

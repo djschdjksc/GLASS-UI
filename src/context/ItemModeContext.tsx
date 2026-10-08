@@ -80,10 +80,8 @@ export const ItemModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const cycleMode = useCallback(() => {
     setModeState((prev) => {
-      let next: ItemEntryMode = 'CONVERSION';
-      if (prev === 'CONVERSION') next = 'AUTO_ITEM';
-      else if (prev === 'AUTO_ITEM') next = 'SIMPLE';
-      else if (prev === 'SIMPLE') next = 'CONVERSION';
+      // Toggle exclusively between CONVERSION and AUTO_ITEM (Simple mode remains for manual/paste toggle)
+      const next: ItemEntryMode = prev === 'CONVERSION' ? 'AUTO_ITEM' : 'CONVERSION';
 
       localStorage.setItem(STORAGE_KEY, next);
       macAudio.playPop();

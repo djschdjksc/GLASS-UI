@@ -10,7 +10,7 @@ import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from './ui/shadcn';
 
 const evaluateMathExpression = (val: string): number => {
-  const clean = val.replace(/^=/, '').trim();
+  const clean = val.replace(/^=/, '').replace(/[₹,]/g, '').trim();
   if (!clean) return 0;
   if (!/^[\d+\-*/.()\s]+$/.test(clean)) {
     const parsed = parseFloat(clean);
@@ -1314,7 +1314,7 @@ export const RightGrid: React.FC<Props> = ({
                 className={(isActiveTable && selectedCol === 2) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
-                <span>PRICE {sortField === 'price' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
+                <span>PRICE (₹) {sortField === 'price' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
                 <div className="th-resizer" onMouseDown={(e) => startResizeCol('price', e)} />
               </th>
 
@@ -1340,7 +1340,7 @@ export const RightGrid: React.FC<Props> = ({
                 className={(isActiveTable && selectedCol === 3) ? 'col-selected' : ''}
                 title="Click to select column, drag right border to resize"
               >
-                <span>TOTAL {sortField === 'total' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
+                <span>TOTAL (₹) {sortField === 'total' ? (sortOrder === 'asc' ? ' ↑ (Min)' : ' ↓ (Max)') : ''}</span>
                 <div className="th-resizer" onMouseDown={(e) => startResizeCol('total', e)} />
               </th>
             </tr>
@@ -1538,38 +1538,56 @@ export const RightGrid: React.FC<Props> = ({
                     style={{ width: `${colWidths.price}px`, height: `${rowHeight}px`, padding: 0 }}
                     className={((isActiveTable && selectedCol === 2) ? 'col-selected ' : '') + ((isActiveTable && selectedCellKeys.has(rIdx + '-2')) ? 'cell-selected' : '')}
                   >
-                    <input
-                      id={'right-cell-' + rIdx + '-2'}
-                      type="text"
-                      inputMode="decimal"
-                      className="excel-cell-input"
-                      style={{ textAlign: 'center' }}
-                      value={cellDrafts[rIdx + '-2'] !== undefined ? cellDrafts[rIdx + '-2'] : (item.price === 0 ? '' : item.price)}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                      data-lpignore="true"
-                      data-form-type="other"
-                      onMouseDown={(e) => handleInputMouseDown(rIdx, 2, e)}
-                      onMouseEnter={() => handleInputMouseEnter(rIdx, 2)}
-                      onPaste={(e) => handleInputPaste(rIdx, 2, e)}
-                      onFocus={() => {
-                        onActivateTable?.();
-                        setActiveCell({ r: rIdx, c: 2 });
-                        setAnchorCell({ r: rIdx, c: 2 });
-                        setSelectedCellKeys(new Set([`${rIdx}-2`]));
-                        setSelectedCol(null);
-                        setSelectedRows([]);
-                        setCellDrafts(prev => ({ ...prev, [rIdx + '-2']: item.price === 0 ? '' : String(item.price) }));
-                      }}
-                      onChange={(e) => {
-                        const clean = e.target.value.replace(/[^0-9+\-*/.()\s=]/g, '');
-                        setCellDrafts(prev => ({ ...prev, [rIdx + '-2']: clean }));
-                      }}
-                      onBlur={() => commitNumericCell(rIdx, 2, 'price')}
-                      onKeyDown={(e) => handleCellKeyDown(e, rIdx, 2, 'price')}
-                    />
+                    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
+                      <span 
+                        style={{ 
+                          position: 'absolute', 
+                          left: '6px', 
+                          pointerEvents: 'none', 
+                          color: '#a1a1aa', 
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          userSelect: 'none',
+                          opacity: 0.75
+                        }}
+                      >
+                        ₹
+                      </span>
+                      <input
+                        id={'right-cell-' + rIdx + '-2'}
+                        data-field="price"
+                        data-col="2"
+                        type="text"
+                        inputMode="decimal"
+                        className="excel-cell-input price-input"
+                        style={{ textAlign: 'center', width: '100%', paddingLeft: '14px' }}
+                        value={cellDrafts[rIdx + '-2'] !== undefined ? cellDrafts[rIdx + '-2'] : (item.price === 0 ? '' : item.price)}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        data-lpignore="true"
+                        data-form-type="other"
+                        onMouseDown={(e) => handleInputMouseDown(rIdx, 2, e)}
+                        onMouseEnter={() => handleInputMouseEnter(rIdx, 2)}
+                        onPaste={(e) => handleInputPaste(rIdx, 2, e)}
+                        onFocus={() => {
+                          onActivateTable?.();
+                          setActiveCell({ r: rIdx, c: 2 });
+                          setAnchorCell({ r: rIdx, c: 2 });
+                          setSelectedCellKeys(new Set([`${rIdx}-2`]));
+                          setSelectedCol(null);
+                          setSelectedRows([]);
+                          setCellDrafts(prev => ({ ...prev, [rIdx + '-2']: item.price === 0 ? '' : String(item.price) }));
+                        }}
+                        onChange={(e) => {
+                          const clean = e.target.value.replace(/[^0-9+\-*/.()\s=₹]/g, '');
+                          setCellDrafts(prev => ({ ...prev, [rIdx + '-2']: clean }));
+                        }}
+                        onBlur={() => commitNumericCell(rIdx, 2, 'price')}
+                        onKeyDown={(e) => handleCellKeyDown(e, rIdx, 2, 'price')}
+                      />
+                    </div>
                   </td>
 
                   {/* Col 3: TOTAL */}

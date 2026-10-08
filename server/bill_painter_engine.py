@@ -809,7 +809,7 @@ class BillPainter:
             self.cur_y += 60
             
             # Table Headers (Black BG / White Text)
-            group_cols = [("MOULD NAME", 520), ("QTY", 230), ("PRICE", 230), ("TOTAL", 310)]
+            group_cols = [("MOULD NAME", 520), ("QTY", 230), ("PRICE (₹)", 230), ("TOTAL (₹)", 310)]
             x = self.margin
             for txt, w in group_cols:
                 painter.setPen(Qt.PenStyle.NoPen)
@@ -847,7 +847,18 @@ class BillPainter:
                     painter.drawRect(x, self.cur_y, w, row_h)
                     align = Qt.AlignmentFlag.AlignCenter
                     if i == 0: align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-                    if i >= 2: align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                    if i >= 2:
+                        align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                        if draw_val and not draw_val.startswith("₹"):
+                            try:
+                                num = float(draw_val.replace("₹", "").replace(",", "").strip())
+                                if num > 0:
+                                    if i == 2:
+                                        draw_val = f"₹ {num:.2f}"
+                                    else:
+                                        draw_val = f"₹ {num:,.2f}"
+                            except Exception:
+                                pass
                     painter.drawText(QRect(x+10, self.cur_y, w-20, row_h), align, draw_val)
                     x += w
                 self.cur_y += row_h

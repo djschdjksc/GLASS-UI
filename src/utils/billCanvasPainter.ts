@@ -673,8 +673,8 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
     const groupCols = [
       { title: 'MOULD NAME', w: 520 },
       { title: 'QTY', w: 230 },
-      { title: 'PRICE', w: 230 },
-      { title: 'TOTAL', w: 310 }
+      { title: 'PRICE (₹)', w: 230 },
+      { title: 'TOTAL (₹)', w: 310 }
     ];
 
     // Group Table Header (Black Rect, White Text)
@@ -707,8 +707,8 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
       const rowVals = [
         cleanMould,
         qVal > 0 ? String(qVal) : '',
-        pVal.toFixed(2),
-        tVal.toFixed(2)
+        pVal > 0 ? `₹ ${pVal.toFixed(2)}` : '',
+        tVal > 0 ? `₹ ${tVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
       ];
 
       rowVals.forEach((val, i) => {

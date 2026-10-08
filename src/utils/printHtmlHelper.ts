@@ -472,8 +472,8 @@ export function directPrintBill(data: BillPrintPayload): void {
               <tr>
                 <th>MOULD NAME</th>
                 <th style="width: 100px;">QTY</th>
-                <th style="width: 130px;">PRICE</th>
-                <th style="width: 150px;">TOTAL</th>
+                <th style="width: 130px;">PRICE (₹)</th>
+                <th style="width: 150px;">TOTAL (₹)</th>
               </tr>
             </thead>
             <tbody>
