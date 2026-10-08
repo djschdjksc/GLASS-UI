@@ -13,31 +13,35 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
+import { getDeterministicAvatarId } from '../utils/avatarUtils';
+
 export interface UserProfile {
   name: string;
   prefix: string;
   role: string;
   terminal: string;
   avatarId?: number;
+  avatar?: string;
 }
 
 export const getUserPrefix = (name: string, customPrefix?: string): string => {
   if (customPrefix && customPrefix.trim()) {
     return customPrefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
-  const clean = (name || 'USER').split(' ')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  return clean || 'BILL';
+  const clean = (name || 'ROHIT').split(' ')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return clean || 'ROHIT';
 };
 
 export const getUserProfile = (): UserProfile => {
-  const name = localStorage.getItem('modern_app_user_name') || '';
+  const name = localStorage.getItem('modern_app_user_name') || 'Rohit';
   const storedPrefix = localStorage.getItem('modern_app_user_prefix') || '';
   const prefix = storedPrefix || getUserPrefix(name);
   const role = localStorage.getItem('modern_app_user_role') || 'Billing Counter';
   const terminal = localStorage.getItem('modern_app_user_terminal') || 'Counter #1';
   const avatarIdStr = localStorage.getItem('modern_app_user_avatar_id');
-  const avatarId = avatarIdStr ? parseInt(avatarIdStr, 10) : undefined;
-  return { name, prefix, role, terminal, avatarId };
+  const avatarId = avatarIdStr ? parseInt(avatarIdStr, 10) : getDeterministicAvatarId(name);
+  const avatar = localStorage.getItem('modern_app_user_avatar') || `/avatars/${avatarId}.webp`;
+  return { name, prefix, role, terminal, avatarId, avatar };
 };
 
 export const setUserProfile = (profile: Partial<UserProfile>) => {
@@ -45,7 +49,17 @@ export const setUserProfile = (profile: Partial<UserProfile>) => {
   if (profile.prefix !== undefined) localStorage.setItem('modern_app_user_prefix', profile.prefix.toUpperCase().trim());
   if (profile.role !== undefined) localStorage.setItem('modern_app_user_role', profile.role);
   if (profile.terminal !== undefined) localStorage.setItem('modern_app_user_terminal', profile.terminal);
-  if (profile.avatarId !== undefined) localStorage.setItem('modern_app_user_avatar_id', String(profile.avatarId));
+  if (profile.avatarId !== undefined) {
+    localStorage.setItem('modern_app_user_avatar_id', String(profile.avatarId));
+    localStorage.setItem('modern_app_user_avatar', `/avatars/${profile.avatarId}.webp`);
+  }
+  if (profile.avatar !== undefined) {
+    localStorage.setItem('modern_app_user_avatar', profile.avatar);
+    const m = profile.avatar.match(/\/avatars\/(\d+)\.webp/);
+    if (m) {
+      localStorage.setItem('modern_app_user_avatar_id', m[1]);
+    }
+  }
   window.dispatchEvent(new Event('storage'));
 };
 

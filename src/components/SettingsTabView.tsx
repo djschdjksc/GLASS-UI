@@ -584,6 +584,21 @@ export const SettingsTabView: React.FC<Props> = ({
   const [syncMachineRules, setSyncMachineRules] = useState<boolean>(() => localStorage.getItem('sync_machine_rules') !== '0');
   const [syncOfflineCache, setSyncOfflineCache] = useState<boolean>(() => localStorage.getItem('sync_offline_cache') !== '0');
 
+  // Sync profile live whenever changed anywhere in app
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      const p = getUserProfile();
+      setUserName(p.name);
+      setUserRole(p.role);
+      setUserTerminal(p.terminal);
+      setUserPrefix(p.prefix);
+      setUserAvatarId(p.avatarId || 1);
+      setUserAvatar(p.avatar || `/avatars/${p.avatarId || 1}.webp`);
+    };
+    window.addEventListener('storage', handleStorageUpdate);
+    return () => window.removeEventListener('storage', handleStorageUpdate);
+  }, []);
+
   // Connected Factory Devices
   const [pairedDevices, setPairedDevices] = useState<Array<{ id: string; name: string; station: string; type: string; lastSeen: string; isCurrent: boolean; ip: string; pingMs?: number }>>([
     { id: 'dev-1', name: 'Bottero CNC Cutting Line 1', station: 'Station 01', type: 'CNC Terminal', lastSeen: 'This Device • Active Now', isCurrent: true, ip: '192.168.1.120', pingMs: 1 },
@@ -2460,8 +2475,7 @@ export const SettingsTabView: React.FC<Props> = ({
                               setUserAvatar(`/avatars/${id}.webp`);
                               localStorage.setItem('modern_app_user_avatar_id', String(id));
                               localStorage.setItem('modern_app_user_avatar', `/avatars/${id}.webp`);
-                              setUserProfile({ avatarId: id });
-                              window.dispatchEvent(new Event('storage'));
+                              setUserProfile({ avatarId: id, avatar: `/avatars/${id}.webp` });
                               macAudio.playPop();
                               onShowToast?.(`Avatar #${id} Selected!`, 'success');
                             }}

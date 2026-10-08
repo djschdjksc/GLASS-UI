@@ -48,7 +48,14 @@ export const UserIdentityModal: React.FC<Props> = ({ isOpen, onClose, isInitialS
     const trimmed = name.trim();
     if (!trimmed) return;
     const cleanPrefix = (prefix.trim() || getUserPrefix(trimmed)).toUpperCase().replace(/[^A-Z0-9]/g, '');
-    setUserProfile({ name: trimmed, prefix: cleanPrefix, role, terminal, avatarId });
+    setUserProfile({
+      name: trimmed,
+      prefix: cleanPrefix,
+      role,
+      terminal,
+      avatarId,
+      avatar: `/avatars/${avatarId}.webp`
+    });
     try {
       macAudio.playSuccess();
     } catch {}

@@ -94,14 +94,11 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
   }, [header.partyName]);
 
   // User Profile loaded live from Settings (localStorage)
-  const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
-  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Main Billing Counter');
-  const [userAvatar, setUserAvatar] = useState<string>(() => localStorage.getItem('modern_app_user_avatar') || '');
-  const [userAvatarId, setUserAvatarId] = useState<number>(() => {
-    const profile = getUserProfile();
-    return profile.avatarId || getDeterministicAvatarId(profile.name || 'User');
-  });
-  const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Counter #1');
+  const [userName, setUserName] = useState<string>(() => getUserProfile().name);
+  const [userRole, setUserRole] = useState<string>(() => getUserProfile().role);
+  const [userAvatar, setUserAvatar] = useState<string>(() => getUserProfile().avatar || '');
+  const [userAvatarId, setUserAvatarId] = useState<number>(() => getUserProfile().avatarId || 1);
+  const [userTerminal, setUserTerminal] = useState<string>(() => getUserProfile().terminal);
 
   // Emoji Reactions Map
   const [reactionsMap, setReactionsMap] = useState<Record<string, Record<string, number>>>(() => {
@@ -139,11 +136,11 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
   useEffect(() => {
     const handleStorageUpdate = () => {
       const p = getUserProfile();
-      setUserName(p.name || 'Rohit (Billing Desk)');
-      setUserRole(p.role || 'Main Billing Counter');
-      setUserAvatar(localStorage.getItem('modern_app_user_avatar') || '');
-      setUserAvatarId(p.avatarId || getDeterministicAvatarId(p.name || 'User'));
-      setUserTerminal(p.terminal || 'Counter #1');
+      setUserName(p.name);
+      setUserRole(p.role);
+      setUserAvatar(p.avatar || `/avatars/${p.avatarId || 1}.webp`);
+      setUserAvatarId(p.avatarId || 1);
+      setUserTerminal(p.terminal);
     };
 
     window.addEventListener('storage', handleStorageUpdate);
@@ -804,7 +801,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
               }}
             >
               <img
-                src={getAvatarUrl(userAvatarId, userName)}
+                src={userAvatar || getAvatarUrl(userAvatarId, userName)}
                 alt="DP"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -1184,10 +1181,14 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                             }}
                           >
                             <img
-                              src={getAvatarUrl(
-                                isMine ? userAvatarId : (m.senderAvatar || onlineUsers.find(u => u.name === m.senderName)?.avatarId),
-                                isMine ? userName : m.senderName
-                              )}
+                              src={
+                                isMine
+                                  ? (userAvatar || getAvatarUrl(userAvatarId, userName))
+                                  : getAvatarUrl(
+                                      m.senderAvatar || onlineUsers.find(u => u.name === m.senderName)?.avatarId,
+                                      m.senderName
+                                    )
+                              }
                               alt={m.senderName}
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               onError={(e) => {
