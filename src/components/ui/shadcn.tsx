@@ -1343,7 +1343,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     <button
       id={`${idPrefix}-${key}`}
       type="button"
-      tabIndex={disabled ? -1 : 0}
+      tabIndex={-1}
       disabled={disabled}
       onClick={onClick}
       onKeyDown={(e) => handleBtnKeyDown(key, disabled, onClick, e)}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { BillHeader } from '../types';
-import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History, Building2 } from 'lucide-react';
+import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History, Building2, X } from 'lucide-react';
 import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
@@ -114,6 +114,8 @@ export const AppleHeader: React.FC<Props> = ({
   const [newPartyConfirm, setNewPartyConfirm] = useState<{
     isOpen: boolean;
     name: string;
+    district: string;
+    phone: string;
   } | null>(null);
   const [vehicleTypes, setVehicleTypes] = useState<string[]>(DEFAULT_VEHICLE_TYPES);
   const [addVehicleTypeModal, setAddVehicleTypeModal] = useState(false);
@@ -171,21 +173,24 @@ export const AppleHeader: React.FC<Props> = ({
     }, 40);
   };
 
-  const handleConfirmSaveNewParty = async (name: string) => {
+  const handleConfirmSaveNewParty = async (name: string, district = '', phone = '') => {
     const trimmed = name.trim();
     if (!trimmed) {
       setNewPartyConfirm(null);
       return;
     }
 
+    const cleanDistrict = (district || '').trim();
+    const cleanPhone = (phone || '').trim();
+
     const newParty: PartyRecord = {
       id: `P-${Date.now()}`,
       name: trimmed,
-      contact: '',
-      phone: '',
-      city: 'Local',
-      station: '',
-      district: '',
+      contact: trimmed,
+      phone: cleanPhone,
+      city: cleanDistrict || 'Local',
+      station: cleanDistrict,
+      district: cleanDistrict,
       state: '',
       pincode: '',
       balance: 0,
@@ -199,7 +204,7 @@ export const AppleHeader: React.FC<Props> = ({
       await localDb.saveParty(newParty);
     } catch {}
 
-    setPartyList(prev => [{ name: trimmed }, ...prev]);
+    setPartyList(prev => [{ name: trimmed, district: cleanDistrict, station: cleanDistrict }, ...prev]);
     onAddNewParty(trimmed);
     onChange({ partyName: trimmed });
     macAudio.playPop();
@@ -207,19 +212,35 @@ export const AppleHeader: React.FC<Props> = ({
     focusNextInput();
   };
 
+  // Auto focus district or name when modal opens
+  useEffect(() => {
+    if (newPartyConfirm?.isOpen) {
+      const timer = setTimeout(() => {
+        const districtInput = document.getElementById('modal-party-district') as HTMLInputElement | null;
+        if (districtInput) {
+          districtInput.focus();
+        } else {
+          const nameInput = document.getElementById('modal-party-name') as HTMLInputElement | null;
+          nameInput?.focus();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [newPartyConfirm?.isOpen]);
+
   // Keyboard accessibility for confirmation modal
   useEffect(() => {
     if (!newPartyConfirm?.isOpen) return;
     const handleModalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        handleConfirmSaveNewParty(newPartyConfirm.name);
-      } else if (e.key === 'Escape') {
+      if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         setNewPartyConfirm(null);
         focusNextInput();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleConfirmSaveNewParty(newPartyConfirm.name, newPartyConfirm.district, newPartyConfirm.phone);
       }
     };
     window.addEventListener('keydown', handleModalKeyDown, { capture: true });
@@ -240,7 +261,7 @@ export const AppleHeader: React.FC<Props> = ({
       focusNextInput();
     } else {
       setShowPartySuggestions(false);
-      setNewPartyConfirm({ isOpen: true, name: entered });
+      setNewPartyConfirm({ isOpen: true, name: entered, district: '', phone: '' });
     }
   };
 
@@ -590,92 +611,196 @@ export const AppleHeader: React.FC<Props> = ({
         </Tooltip>
       </div>
 
-      {/* New Party Confirmation Modal */}
+      {/* New Party Registration Modal - Sleek Shadcn UI */}
       {newPartyConfirm && newPartyConfirm.isOpen && (
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(14px)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 99999999,
             animation: 'fadeIn 0.15s ease'
           }}
-          onClick={() => {
-            // Do not dismiss on accidental click
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setNewPartyConfirm(null);
+              focusNextInput();
+            }
           }}
         >
           <div
             style={{
-              width: '440px',
-              maxWidth: '92vw',
-              background: 'rgba(18, 22, 32, 0.98)',
-              border: '1px solid rgba(56, 189, 248, 0.45)',
-              borderRadius: '16px',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.25)',
-              padding: '22px 24px',
+              width: '460px',
+              maxWidth: '94vw',
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '12px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              padding: '24px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px',
-              animation: 'antSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+              gap: '20px',
+              animation: 'antSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '11px',
-                background: 'rgba(56, 189, 248, 0.16)',
-                border: '1px solid rgba(56, 189, 248, 0.38)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <Building2 size={23} color="#38bdf8" />
+            {/* Header */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'rgba(244, 244, 245, 0.08)',
+                    border: '1px solid #27272a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Building2 size={16} color="#f4f4f5" />
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#f4f4f5', letterSpacing: '-0.01em' }}>
+                    Save Party to Database
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewPartyConfirm(null);
+                    focusNextInput();
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#71717a',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <X size={16} />
+                </button>
               </div>
+              <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#a1a1aa', lineHeight: 1.4 }}>
+                "{newPartyConfirm.name}" is not registered. Save permanently to auto-suggest in bills and reports.
+              </p>
+            </div>
+
+            {/* Inputs Body */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Field 1: Party Name */}
               <div>
-                <h3 style={{ margin: 0, fontSize: '15.5px', fontWeight: 700, color: '#f4f4f5', letterSpacing: '-0.01em' }}>
-                  Save New Party? / नई पार्टी सेव करें?
-                </h3>
-                <p style={{ margin: '3px 0 0', fontSize: '11.5px', color: '#94a3b8' }}>
-                  Party not available in database registry
-                </p>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                  Party Name <span style={{ color: '#38bdf8' }}>*</span>
+                </label>
+                <input
+                  id="modal-party-name"
+                  type="text"
+                  value={newPartyConfirm.name}
+                  onChange={(e) => setNewPartyConfirm(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      document.getElementById('modal-party-district')?.focus();
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 12px',
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    color: '#f4f4f5',
+                    background: '#18181b',
+                    border: '1px solid #27272a',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = '#52525b')}
+                  onBlur={(e) => (e.target.style.borderColor = '#27272a')}
+                />
+              </div>
+
+              {/* Field 2: District / City (Optional) */}
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                  District / Station <span style={{ color: '#71717a', fontWeight: 400, textTransform: 'none' }}>(Optional)</span>
+                </label>
+                <input
+                  id="modal-party-district"
+                  type="text"
+                  value={newPartyConfirm.district}
+                  placeholder="e.g. Jaipur, Kota, Delhi... (Optional)"
+                  onChange={(e) => setNewPartyConfirm(prev => prev ? { ...prev, district: e.target.value } : null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      document.getElementById('modal-party-phone')?.focus();
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 12px',
+                    fontSize: '13.5px',
+                    color: '#f4f4f5',
+                    background: '#18181b',
+                    border: '1px solid #27272a',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = '#52525b')}
+                  onBlur={(e) => (e.target.style.borderColor = '#27272a')}
+                />
+              </div>
+
+              {/* Field 3: Phone Number (Optional) */}
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                  Phone Number <span style={{ color: '#71717a', fontWeight: 400, textTransform: 'none' }}>(Optional)</span>
+                </label>
+                <input
+                  id="modal-party-phone"
+                  type="text"
+                  value={newPartyConfirm.phone}
+                  placeholder="e.g. 9876543210 (Optional)"
+                  onChange={(e) => setNewPartyConfirm(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleConfirmSaveNewParty(newPartyConfirm.name, newPartyConfirm.district, newPartyConfirm.phone);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 12px',
+                    fontSize: '13.5px',
+                    color: '#f4f4f5',
+                    background: '#18181b',
+                    border: '1px solid #27272a',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = '#52525b')}
+                  onBlur={(e) => (e.target.style.borderColor = '#27272a')}
+                />
               </div>
             </div>
 
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.09)',
-              borderRadius: '10px',
-              padding: '13px 15px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}>
-              <div style={{ fontSize: '10.5px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-                Party Name (नया नाम)
-              </div>
-              <div style={{ fontSize: '17px', fontWeight: 800, color: '#38bdf8', fontFamily: "'JetBrains Mono', sans-serif" }}>
-                {newPartyConfirm.name}
-              </div>
-              <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '4px', lineHeight: '1.45' }}>
-                Kya aap <strong>"{newPartyConfirm.name}"</strong> ko Database mein <strong>Permanently Save</strong> karna chahte hain?
-                <br />
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  (Save karne par yeh aage se suggestions, bill history aur ledger mein hamesha show hogi)
-                </span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+            {/* Footer Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '4px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -683,40 +808,48 @@ export const AppleHeader: React.FC<Props> = ({
                   focusNextInput();
                 }}
                 style={{
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.16)',
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  color: '#d4d4d8',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
+                  height: '36px',
+                  padding: '0 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #27272a',
+                  background: 'transparent',
+                  color: '#a1a1aa',
+                  fontSize: '12.5px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
+                onMouseEnter={(e) => { (e.currentTarget.style.background = '#18181b'); (e.currentTarget.style.color = '#f4f4f5'); }}
+                onMouseLeave={(e) => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#a1a1aa'); }}
               >
-                ✕ No, Use Once Only (Esc)
+                Use Once (Esc)
               </button>
 
               <button
                 type="button"
-                autoFocus
-                onClick={() => handleConfirmSaveNewParty(newPartyConfirm.name)}
+                id="modal-save-party-btn"
+                onClick={() => handleConfirmSaveNewParty(newPartyConfirm.name, newPartyConfirm.district, newPartyConfirm.phone)}
                 style={{
-                  padding: '8px 18px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(52, 211, 153, 0.55)',
-                  background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                  color: '#ffffff',
+                  height: '36px',
+                  padding: '0 18px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: '#f4f4f5',
+                  color: '#09090b',
                   fontSize: '12.5px',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.45)'
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  transition: 'background 0.15s ease'
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#ffffff')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#f4f4f5')}
               >
                 <Check size={14} />
-                <span>YES, Save Permanently (Enter)</span>
+                <span>Save Party (Enter)</span>
               </button>
             </div>
           </div>

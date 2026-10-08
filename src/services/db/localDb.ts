@@ -132,11 +132,18 @@ class LocalDatabase {
       });
     }
 
-    // Load any custom user-created/saved parties from localStorage synchronously
+    // Load any custom user-created/saved parties from localStorage synchronously (prepend to top)
     try {
       const customParties = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');
       if (Array.isArray(customParties)) {
-        customParties.forEach((p: PartyRecord) => this.partiesCache.set(p.id, p));
+        const newMap = new Map<string, PartyRecord>();
+        customParties.forEach((p: PartyRecord) => newMap.set(p.id, p));
+        for (const [k, v] of this.partiesCache.entries()) {
+          if (!newMap.has(k)) {
+            newMap.set(k, v);
+          }
+        }
+        this.partiesCache = newMap;
       }
     } catch {}
 
@@ -693,7 +700,15 @@ class LocalDatabase {
 
   public async saveParty(party: PartyRecord, enqueueSync = true): Promise<PartyRecord> {
     party.updatedAt = Date.now();
-    this.partiesCache.set(party.id, party);
+    // Prepend to partiesCache so new/updated parties appear at the top
+    const newMap = new Map<string, PartyRecord>();
+    newMap.set(party.id, party);
+    for (const [k, v] of this.partiesCache.entries()) {
+      if (k !== party.id) {
+        newMap.set(k, v);
+      }
+    }
+    this.partiesCache = newMap;
 
     try {
       const currentSaved: PartyRecord[] = JSON.parse(localStorage.getItem('modern_saved_custom_parties') || '[]');

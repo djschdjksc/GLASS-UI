@@ -784,6 +784,7 @@ export const OtherTabsView: React.FC<Props> = ({
   const [isEditingParty, setIsEditingParty] = useState(false);
   const [partyToast, setPartyToast] = useState<string | null>(null);
   const [partyToDelete, setPartyToDelete] = useState<{ id: string; name: string } | null>(null);
+  const partyRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   // iPhone Cards vs Table View Mode ('cards' | 'table')
   const [partyViewMode, setPartyViewMode] = useState<'cards' | 'table'>(() => {
@@ -1054,7 +1055,7 @@ export const OtherTabsView: React.FC<Props> = ({
     setEditingPartyId(party.id);
     setInlinePartyDraft({ ...party });
     setTimeout(() => {
-      const rowEl = document.getElementById(`party-row-${party.id}`);
+      const rowEl = partyRowRefs.current[party.id] || document.getElementById(`party-row-${party.id}`);
       const input = (rowEl?.querySelector(`input[data-field="${fieldToFocus}"]`) || rowEl?.querySelector('input')) as HTMLInputElement | null;
       if (input) {
         input.focus();
@@ -1079,7 +1080,7 @@ export const OtherTabsView: React.FC<Props> = ({
     const finalRecord: PartyRecord = {
       ...original,
       ...inlinePartyDraft,
-      name: (inlinePartyDraft.name !== undefined ? inlinePartyDraft.name : (original.name || 'NEW PARTY')).trim() || original.name || 'NEW PARTY',
+      name: (inlinePartyDraft.name !== undefined ? inlinePartyDraft.name : (original.name || '')).trim() || original.name || 'NEW PARTY',
       updatedAt: Date.now()
     };
     await saveParty(finalRecord);
@@ -1101,26 +1102,42 @@ export const OtherTabsView: React.FC<Props> = ({
     const newId = `P-${Date.now()}`;
     const newRecord: PartyRecord = {
       id: newId,
-      name: 'NEW PARTY',
+      name: '',
       phone: '',
       station: '',
       district: '',
       state: '',
       pincode: '',
       city: '',
-      contact: 'NEW PARTY',
+      contact: '',
       balance: 0,
       limit: 500000,
       gstin: '',
       updatedAt: Date.now(),
       synced: false
     };
-    await saveParty(newRecord);
+    // Clear search so new row at index 0 of Page 1 is immediately visible!
+    setPartySearchQuery('');
     setPartyCurrentPage(1);
     setSelectedPartyId(newId);
+    await saveParty(newRecord);
     startInlineEdit(newRecord, 'name');
     macAudio.playSuccess();
   }, [saveParty, startInlineEdit]);
+
+  // Sync refs for high-speed zero-lag keyboard navigation without remounting event listeners
+  const paginatedPartiesRef = useRef(paginatedParties);
+  paginatedPartiesRef.current = paginatedParties;
+  const filteredPartiesRef = useRef(filteredParties);
+  filteredPartiesRef.current = filteredParties;
+  const partyCurrentPageRef = useRef(partyCurrentPage);
+  partyCurrentPageRef.current = partyCurrentPage;
+  const totalPartyPagesRef = useRef(totalPartyPages);
+  totalPartyPagesRef.current = totalPartyPages;
+  const selectedPartyIdRef = useRef(selectedPartyId);
+  selectedPartyIdRef.current = selectedPartyId;
+  const editingPartyIdRef = useRef(editingPartyId);
+  editingPartyIdRef.current = editingPartyId;
 
   // F5 Keyboard Navigation (Enter to edit/save, Delete key to delete row, Arrow keys to navigate)
   useEffect(() => {
@@ -1132,8 +1149,16 @@ export const OtherTabsView: React.FC<Props> = ({
         return;
       }
 
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+
+      if (isInput) {
         if (e.key === 'Delete' || e.key === 'Backspace') {
+          return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleCommitInlineParty();
           return;
         }
 
@@ -1208,64 +1233,71 @@ export const OtherTabsView: React.FC<Props> = ({
         return;
       }
 
-      if (paginatedParties.length === 0) return;
-      const currentIndex = paginatedParties.findIndex(p => p.id === selectedPartyId);
+      const currentList = paginatedPartiesRef.current;
+      if (currentList.length === 0) return;
+      const curId = selectedPartyIdRef.current;
+      const currentIndex = currentList.findIndex(p => p.id === curId);
 
       // Enter key on selected row: start inline editing party name immediately!
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (selectedPartyId) {
-          const target = paginatedParties.find(p => p.id === selectedPartyId);
+        if (curId) {
+          const target = currentList.find(p => p.id === curId);
           if (target) {
             startInlineEdit(target, 'name');
           }
-        } else if (paginatedParties.length > 0) {
-          setSelectedPartyId(paginatedParties[0].id);
-          startInlineEdit(paginatedParties[0], 'name');
+        } else if (currentList.length > 0) {
+          setSelectedPartyId(currentList[0].id);
+          startInlineEdit(currentList[0], 'name');
         }
         return;
       }
 
+      // Arrow Down: fast row navigation & seamless page flip
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (currentIndex < paginatedParties.length - 1) {
-          const nextIdx = currentIndex + 1;
-          setSelectedPartyId(paginatedParties[nextIdx].id);
+        if (currentIndex < currentList.length - 1 && currentIndex >= 0) {
+          const nextParty = currentList[currentIndex + 1];
+          setSelectedPartyId(nextParty.id);
           playNavSound();
-        } else if (currentIndex === paginatedParties.length - 1) {
-          // Reached last row! Auto-flip seamlessly to Next Page row 0!
-          if (partyCurrentPage < totalPartyPages) {
-            const nextP = partyCurrentPage + 1;
+        } else if (currentIndex === currentList.length - 1) {
+          // Reached last row! Auto-flip seamlessly to Next Page row 0 without stopping on button!
+          const currPage = partyCurrentPageRef.current;
+          const maxPages = totalPartyPagesRef.current;
+          if (currPage < maxPages) {
+            const nextP = currPage + 1;
             setPartyCurrentPage(nextP);
             const start = (nextP - 1) * PARTIES_PER_PAGE;
-            const slice = filteredParties.slice(start, start + PARTIES_PER_PAGE);
-            if (slice.length > 0) {
-              setSelectedPartyId(slice[0].id);
+            const nextSlice = filteredPartiesRef.current.slice(start, start + PARTIES_PER_PAGE);
+            if (nextSlice.length > 0) {
+              setSelectedPartyId(nextSlice[0].id);
               playNavSound();
             }
           }
-        } else if (currentIndex === -1 && paginatedParties.length > 0) {
-          setSelectedPartyId(paginatedParties[0].id);
+        } else if (currentList.length > 0) {
+          setSelectedPartyId(currentList[0].id);
           playNavSound();
         }
         return;
       }
 
+      // Arrow Up: fast row navigation & seamless page flip
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (currentIndex > 0) {
-          const prevIdx = currentIndex - 1;
-          setSelectedPartyId(paginatedParties[prevIdx].id);
+          const prevParty = currentList[currentIndex - 1];
+          setSelectedPartyId(prevParty.id);
           playNavSound();
         } else if (currentIndex === 0) {
-          // Reached first row! Auto-flip seamlessly to Previous Page last row!
-          if (partyCurrentPage > 1) {
-            const prevP = partyCurrentPage - 1;
+          // Reached first row! Auto-flip seamlessly to Previous Page last row without stopping on button!
+          const currPage = partyCurrentPageRef.current;
+          if (currPage > 1) {
+            const prevP = currPage - 1;
             setPartyCurrentPage(prevP);
             const start = (prevP - 1) * PARTIES_PER_PAGE;
-            const slice = filteredParties.slice(start, start + PARTIES_PER_PAGE);
-            if (slice.length > 0) {
-              setSelectedPartyId(slice[slice.length - 1].id);
+            const prevSlice = filteredPartiesRef.current.slice(start, start + PARTIES_PER_PAGE);
+            if (prevSlice.length > 0) {
+              setSelectedPartyId(prevSlice[prevSlice.length - 1].id);
               playNavSound();
             }
           }
@@ -1278,10 +1310,10 @@ export const OtherTabsView: React.FC<Props> = ({
         e.preventDefault();
         macAudio.playHover();
         if (e.ctrlKey) {
-          setSelectedPartyId(paginatedParties[paginatedParties.length - 1].id);
+          setSelectedPartyId(currentList[currentList.length - 1].id);
         } else {
-          const nextIdx = Math.min(currentIndex + 10, paginatedParties.length - 1);
-          setSelectedPartyId(paginatedParties[nextIdx].id);
+          const nextIdx = Math.min(currentIndex + 10, currentList.length - 1);
+          setSelectedPartyId(currentList[nextIdx].id);
         }
         return;
       }
@@ -1291,10 +1323,10 @@ export const OtherTabsView: React.FC<Props> = ({
         e.preventDefault();
         macAudio.playHover();
         if (e.ctrlKey) {
-          setSelectedPartyId(paginatedParties[0].id);
+          setSelectedPartyId(currentList[0].id);
         } else {
           const prevIdx = Math.max(currentIndex - 10, 0);
-          setSelectedPartyId(paginatedParties[prevIdx].id);
+          setSelectedPartyId(currentList[prevIdx].id);
         }
         return;
       }
@@ -1303,7 +1335,7 @@ export const OtherTabsView: React.FC<Props> = ({
       if (e.key === 'Home') {
         e.preventDefault();
         macAudio.playHover();
-        setSelectedPartyId(paginatedParties[0].id);
+        setSelectedPartyId(currentList[0].id);
         return;
       }
 
@@ -1311,15 +1343,15 @@ export const OtherTabsView: React.FC<Props> = ({
       if (e.key === 'End') {
         e.preventDefault();
         macAudio.playHover();
-        setSelectedPartyId(paginatedParties[paginatedParties.length - 1].id);
+        setSelectedPartyId(currentList[currentList.length - 1].id);
         return;
       }
 
       // Ctrl + Enter: Make Selected Row Editable
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        if (selectedPartyId) {
-          const target = paginatedParties.find(p => p.id === selectedPartyId);
+        if (curId) {
+          const target = currentList.find(p => p.id === curId);
           if (target) {
             startInlineEdit(target, 'name');
           }
@@ -1336,8 +1368,8 @@ export const OtherTabsView: React.FC<Props> = ({
 
       if (e.key === 'Delete') {
         e.preventDefault();
-        if (selectedPartyId && currentIndex >= 0 && !partyToDelete) {
-          const target = paginatedParties[currentIndex];
+        if (curId && currentIndex >= 0 && !partyToDelete) {
+          const target = currentList[currentIndex];
           if (target) {
             macAudio.playPop();
             setPartyToDelete({ id: target.id, name: target.name || target.id });
@@ -1347,22 +1379,34 @@ export const OtherTabsView: React.FC<Props> = ({
       }
     };
 
+    const handleAppInsert = () => {
+      handleStartNewParty();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, inlinePartyDraft, deleteParty, partyToDelete, partyCurrentPage, totalPartyPages, handleCommitInlineParty, handleCancelInlineParty, startInlineEdit, handleStartNewParty]);
+    window.addEventListener('app-insert-row', handleAppInsert);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('app-insert-row', handleAppInsert);
+    };
+  }, [activeTab, handleCommitInlineParty, handleCancelInlineParty, startInlineEdit, handleStartNewParty, partyToDelete]);
 
   // Auto-scroll selected party row instantly into view on arrow navigation and set DOM focus
   useEffect(() => {
     if (activeTab === 'F5' && selectedPartyId) {
-      const el = document.getElementById(`party-row-${selectedPartyId}`);
-      if (el) {
-        el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-        if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
-          el.focus({ preventScroll: true });
+      const scrollAndFocus = () => {
+        const el = partyRowRefs.current[selectedPartyId] || document.getElementById(`party-row-${selectedPartyId}`);
+        if (el) {
+          el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+          if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+            el.focus({ preventScroll: true });
+          }
         }
-      }
+      };
+      scrollAndFocus();
+      requestAnimationFrame(scrollAndFocus);
     }
-  }, [activeTab, selectedPartyId]);
+  }, [activeTab, selectedPartyId, partyCurrentPage]);
 
   const handleStartEditParty = (p: typeof parties[0]) => {
     setPartyForm({
@@ -2513,6 +2557,7 @@ export const OtherTabsView: React.FC<Props> = ({
                         return (
                           <TableRow
                             key={p.id || idx}
+                            ref={(el) => { partyRowRefs.current[p.id] = el; }}
                             id={`party-row-${p.id}`}
                             isSelected={isSelected}
                             tabIndex={isSelected ? 0 : -1}
@@ -2769,10 +2814,13 @@ export const OtherTabsView: React.FC<Props> = ({
                 if (nextList.length > 0) {
                   const targetIdx = targetRow === 'last' ? nextList.length - 1 : 0;
                   setSelectedPartyId(nextList[targetIdx].id);
-                  const el = document.getElementById(`party-row-${nextList[targetIdx].id}`);
-                  if (el) el.scrollIntoView({ block: 'nearest' });
+                  const el = partyRowRefs.current[nextList[targetIdx].id] || document.getElementById(`party-row-${nextList[targetIdx].id}`);
+                  if (el) {
+                    el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+                    el.focus({ preventScroll: true });
+                  }
                 }
-              }, 50);
+              }, 20);
             }}
             onFocusTableFirstRow={() => {
               if (paginatedParties.length > 0) {
