@@ -2,6 +2,7 @@
 // Reproduces exact pixel-perfect layout of native Qt QPainter
 
 import { formatBillNumber } from './billDocTypes';
+import { sanitizePrintName } from './printHtmlHelper';
 
 export interface PrintAdjustment {
   id: string;
@@ -559,7 +560,7 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
       colSums['lCap'] += lVal;
 
       const rawDesc = String(it.name || '');
-      const cleanDesc = rawDesc.replace(/\./g, '').replace(/-/g, ' ');
+      const cleanDesc = sanitizePrintName(rawDesc);
       const grp = getGroupLabel(rawDesc) || getGroupLabel(cleanDesc);
 
       let descWithGroup = cleanDesc;
@@ -702,7 +703,7 @@ function drawCalendarIcon(ctx: CanvasRenderingContext2D, x: number, y: number, s
       const qVal = parseFloat(String(g.qty)) || 0;
       const pVal = parseFloat(String(g.price)) || 0;
       const tVal = parseFloat(String(g.total)) || (qVal * pVal);
-      const cleanMould = String(g.mould || '').replace(/\./g, '').replace(/-/g, ' ');
+      const cleanMould = sanitizePrintName(String(g.mould || ''));
 
       const rowVals = [
         cleanMould,

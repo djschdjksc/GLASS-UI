@@ -26,6 +26,23 @@ def format_slip_no(serial_no, bill_type):
         return serial_str
     return f"{prefix}{serial_str}"
 
+def sanitize_print_name(text):
+    if not text:
+        return ""
+    def repl(m):
+        if m.group(1) is not None:
+            # Inside brackets: keep exact contents intact (e.g. "(9.5)", "(9.5 FT)")
+            return f"({m.group(1)})"
+        outside = m.group(2)
+        if outside is not None:
+            # Protect decimal numbers (e.g. 9.5), replace non-decimal dots and hyphens with space
+            protected = re.sub(r'(?<=\d)\.(?=\d)', '__DECIMAL_DOT__', outside)
+            cleaned = protected.replace('.', ' ').replace('-', ' ')
+            return cleaned.replace('__DECIMAL_DOT__', '.')
+        return m.group(0)
+    res = re.sub(r'\(([^)]*)\)|([^()]+)', repl, str(text))
+    return re.sub(r'\s+', ' ', res).strip()
+
 class BillPainter:
     def __init__(self, data):
         self.d = data
@@ -226,7 +243,7 @@ class BillPainter:
             align_left = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             align_center = Qt.AlignmentFlag.AlignCenter
             
-            item_name = str(row[0]).replace(".", "").replace("-", " ")
+            item_name = sanitize_print_name(str(row[0]))
             painter.drawText(QRect(x+20, y, cols[0][1]-40, 60), align_left, item_name)
             x += cols[0][1]
             
@@ -572,7 +589,7 @@ class BillPainter:
             x = self.margin
             
             raw_desc = str(item.get("desc", ""))
-            clean_desc = raw_desc.replace(".", "").replace("-", " ")
+            clean_desc = sanitize_print_name(raw_desc)
             
             row_data = [str(idx + 1), clean_desc]
             for col_info in cols[2:]:
@@ -708,7 +725,7 @@ class BillPainter:
             painter.setPen(QPen(Qt.GlobalColor.black, 2))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             
-            clean_desc = desc.replace(".", "").replace("-", " ")
+            clean_desc = sanitize_print_name(desc)
             row_data = [clean_desc, pcs, boxes, mult, bill_qty, rate, weight, total]
             
             x = self.margin
@@ -841,7 +858,7 @@ class BillPainter:
                     # --- SANITIZE MOULD NAME ---
                     draw_val = str(val)
                     if i == 0:
-                        draw_val = draw_val.replace(".", "").replace("-", " ")
+                        draw_val = sanitize_print_name(draw_val)
 
                     w = group_cols[i][1]
                     painter.drawRect(x, self.cur_y, w, row_h)

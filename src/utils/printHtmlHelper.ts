@@ -4,6 +4,26 @@ import { getCachedSkipItems } from '../services/db/sqliteDb';
 import { formatBillNumber } from './billDocTypes';
 
 // Build itemPrefix → mainGroup map from SQLite cache (same logic as LeftGrid)
+export const sanitizePrintName = (text: string): string => {
+  if (!text) return '';
+  const processed = text.replace(/\(([^)]*)\)|([^\(\)]+)/g, (match, insideParen, outsideParen) => {
+    if (insideParen !== undefined) {
+      // Inside brackets: preserve exactly as-is (e.g. "(9.5)", "(9.5 FT)", "(LOT 1)")
+      return `(${insideParen})`;
+    }
+    if (outsideParen !== undefined) {
+      // Outside brackets: protect decimal dots between digits (e.g. 9.5), then replace other dots/hyphens with space
+      return outsideParen
+        .replace(/(?<=\d)\.(?=\d)/g, '__DECIMAL_DOT__')
+        .replace(/\./g, ' ')
+        .replace(/-/g, ' ')
+        .replace(/__DECIMAL_DOT__/g, '.');
+    }
+    return match;
+  });
+  return processed.replace(/\s+/g, ' ').trim();
+};
+
 function buildPrintSkipMap(): Map<string, string> {
   try {
     const raw: any[] = getCachedSkipItems();
@@ -102,7 +122,7 @@ export function directPrintBill(data: BillPrintPayload): void {
     const isActual = idx < validItems.length;
     const u = isActual ? (Number(it.uCap) || 0) : 0;
     const l = isActual ? (Number(it.lCap) || 0) : 0;
-    const cleanName = isActual ? (it.name || '').replace(/\./g, '').replace(/-/g, ' ') : '';
+    const cleanName = isActual ? sanitizePrintName(it.name || '') : '';
     const pCode = isActual ? (it.partyCode || '') : '';
     const groupLabel = isActual ? (getPrintGroupLabel(it.name, skipMap) || getPrintGroupLabel(cleanName, skipMap)) : null;
 
@@ -146,7 +166,7 @@ export function directPrintBill(data: BillPrintPayload): void {
     const q = Number(g.qty) || 0;
     const p = Number(g.price) || 0;
     const t = Number(g.total) || q * p;
-    const cleanMould = (g.mould || '').replace(/\./g, '').replace(/-/g, ' ');
+    const cleanMould = sanitizePrintName(g.mould || '');
     return `
       <tr style="height: 34px;">
         <td style="text-align: left; font-weight: 700; padding-left: 10px; font-size: 14.5px;">${cleanMould}</td>
