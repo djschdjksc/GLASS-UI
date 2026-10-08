@@ -59,11 +59,12 @@ export async function saveBill(bill: any): Promise<void> {
   const clean = {
     ...bill,
     rawItems: (bill.rawItems || []).filter((r: any) =>
-      (r.name && r.name.trim()) || Number(r.qty) > 0 || Number(r.uCap) > 0 || Number(r.lCap) > 0
+      (r.name && r.name.trim()) || Number(r.qty) > 0 || Number(r.uCap) > 0 || Number(r.lCap) > 0 ||
+      Object.keys(r).some(k => (k.startsWith('col_') || k.startsWith('qty_')) && (Number(r[k]) || 0) > 0)
     ),
     finishedItems: (bill.finishedItems || []).filter((f: any) =>
       (f.mould && f.mould.trim() && f.mould !== 'Mould Name') &&
-      (Number(f.qty) > 0 || Number(f.total) > 0)
+      (Number(f.qty) > 0 || Number(f.total) > 0 || Number(f.price) > 0)
     )
   };
   await dbPost('/api/db/bills', clean);
@@ -281,11 +282,28 @@ export async function saveLedgerEntry(entry: any): Promise<void> {
 
 export async function getSetting(key: string): Promise<string | null> {
   const data = await dbGet<{ value: string | null }>(`/api/db/settings/${key}`);
-  return data.value;
+  return data ? data.value : null;
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
   await dbPost('/api/db/settings', { key, value });
+}
+
+export async function getAllSettings(): Promise<Record<string, string>> {
+  try {
+    const res = await dbGet<Record<string, string>>('/api/db/settings');
+    return res || {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveSettingsBulk(settings: Record<string, string>): Promise<void> {
+  try {
+    await dbPost('/api/db/settings', { settings });
+  } catch (e) {
+    console.warn('Failed to bulk save settings to SQLite:', e);
+  }
 }
 
 // ─── Data Sync (Export/Import for other USB users) ───────────────────────────

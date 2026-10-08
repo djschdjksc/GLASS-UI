@@ -256,11 +256,18 @@ class LocalDatabase {
             status: (b.status as any) || 'PAID',
             rawItems: b.rawItems || [],
             finishedItems: b.finishedItems || [],
+            dynamicCols: b.dynamicCols || [],
+            hasPartyCodeCol: Boolean(b.hasPartyCodeCol),
+            adjustments: b.adjustments || [],
+            balanceLabel: b.balanceLabel || 'BALANCE',
+            notes: b.notes || '',
+            splitRowIndex: b.splitRowIndex ?? null,
+            customItemGroups: b.customItemGroups || [],
             createdAt: b.createdAt || Date.now(),
             updatedAt: b.updatedAt || Date.now(),
             saveIndex: b.saveIndex || 0,
             synced: true,
-            version: 1
+            version: b.version || 1
           };
           this.billsCache.set(rec.id, rec);
           if (this.db) {
@@ -550,7 +557,7 @@ class LocalDatabase {
       const hasName = Boolean(r.name && r.name.trim() !== '');
       const hasQty = (Number(r.qty) || 0) > 0;
       const hasPartyCode = Boolean(r.partyCode && r.partyCode.trim() !== '');
-      const hasDyn = Object.keys(r).some(k => (k.startsWith('col_') || k === 'qty') && (Number((r as any)[k]) || 0) > 0);
+      const hasDyn = Object.keys(r).some(k => (k.startsWith('col_') || k.startsWith('qty_') || k === 'qty') && (Number((r as any)[k]) || 0) > 0);
       const hasCaps = (Number(r.uCap) || 0) > 0 || (Number(r.lCap) || 0) > 0;
       return hasName || hasQty || hasPartyCode || hasDyn || hasCaps;
     });

@@ -27,7 +27,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import { ItemModeProvider, useItemMode } from './context/ItemModeContext';
 import { localDb } from './services/db/localDb';
 import type { BillRecord } from './services/db/schema';
-import { getConversions, getSkipItems, getSkipSubGroups, getControlGroups } from './services/db/sqliteDb';
+import { getConversions, getSkipItems, getSkipSubGroups, getControlGroups, getAllSettings, setSetting } from './services/db/sqliteDb';
 import { loadMediaFromDB } from './services/mediaStorage';
 import { LoginPanel } from './components/LoginPanel';
 import { isPasswordProtectionActive } from './utils/authSecurity';
@@ -153,7 +153,55 @@ const getBillFingerprint = (h: BillHeader, raws: RawItem[], moulds: FinishedItem
       itemNames: (g.itemNames || []).map(n => n.trim()).filter(Boolean)
     }))
   });
-};
+export function resolveBillDynamicCols(bill: any): { field: string; label: string }[] {
+  if (!bill) return [];
+  const result: { field: string; label: string; size?: number }[] = [];
+  const seen = new Set<string>();
+
+  const parseFeetSize = (labelOrField: string): number => {
+    const clean = labelOrField.replace('_', '.');
+    const m = clean.match(/([\d]+(?:\.[\d]+)?)/);
+    return m ? parseFloat(m[1]) : 0;
+  };
+
+  // 1. Check explicitly saved dynamicCols
+  if (Array.isArray(bill.dynamicCols)) {
+    bill.dynamicCols.forEach((c: any) => {
+      if (c && c.field && !seen.has(c.field)) {
+        seen.add(c.field);
+        result.push({
+          field: c.field,
+          label: c.label || c.field,
+          size: parseFeetSize(c.label || c.field)
+        });
+      }
+    });
+  }
+
+  // 2. Automatically scan rawItems to recover any size columns used (e.g. qty_9_5, col_12ft)
+  if (Array.isArray(bill.rawItems)) {
+    bill.rawItems.forEach((row: any) => {
+      if (!row || typeof row !== 'object') return;
+      Object.keys(row).forEach((k) => {
+        if (['qty', 'uCap', 'lCap', 'id', 'name', 'partyCode'].includes(k)) return;
+        const m = k.match(/^(?:qty_|col_)([\d]+(?:_[\d]+)?)(?:ft)?$/i);
+        if (m && !seen.has(k)) {
+          seen.add(k);
+          const sizeNum = m[1].replace('_', '.');
+          result.push({
+            field: k,
+            label: `(${sizeNum} FT)`,
+            size: parseFloat(sizeNum) || 0
+          });
+        }
+      });
+    });
+  }
+
+  // Sort descending by feet size (e.g. 12 FT -> 10 FT -> 9.5 FT)
+  result.sort((a, b) => (b.size || 0) - (a.size || 0));
+  return result.map(({ field, label }) => ({ field, label }));
+}
 
 const isBillEmpty = (h: BillHeader, raws: RawItem[], moulds: FinishedItem[]) => {
   const hasParty = (h.partyName || '').trim().length > 0;
@@ -269,6 +317,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   });
   useEffect(() => {
     localStorage.setItem('modern_left_dyncols', JSON.stringify(dynamicCols));
+    setSetting('modern_left_dyncols', JSON.stringify(dynamicCols)).catch(() => {});
   }, [dynamicCols]);
 
   const [hasPartyCodeCol, setHasPartyCodeCol] = useState<boolean>(() => {
@@ -280,6 +329,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   });
   useEffect(() => {
     localStorage.setItem('modern_has_party_code_col', String(hasPartyCodeCol));
+    setSetting('modern_has_party_code_col', String(hasPartyCodeCol)).catch(() => {});
   }, [hasPartyCodeCol]);
 
   // Dual Section Partition (Table Divide below row index)
@@ -342,6 +392,21 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       getSkipItems().then(res => { if (Array.isArray(res)) setAppSkipItems(res); }).catch(() => {});
       getSkipSubGroups().then(res => { if (Array.isArray(res)) setAppSkipSubGroups(res); }).catch(() => {});
       getControlGroups().then(res => { if (Array.isArray(res)) setAppControlGroups(res); }).catch(() => {});
+      getAllSettings().then(settings => {
+        if (settings && typeof settings === 'object') {
+          if (settings['modern_left_dyncols']) {
+            try {
+              const parsed = JSON.parse(settings['modern_left_dyncols']);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setDynamicCols(prev => prev.length === 0 ? parsed : prev);
+              }
+            } catch {}
+          }
+          if (settings['modern_has_party_code_col'] !== undefined) {
+            setHasPartyCodeCol(settings['modern_has_party_code_col'] === 'true');
+          }
+        }
+      }).catch(() => {});
     };
 
     fetchMasterData();
@@ -846,7 +911,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       }
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
-      setDynamicCols(target.dynamicCols || []);
+      const resolvedCols = resolveBillDynamicCols(target);
+      setDynamicCols(resolvedCols);
       setCustomItemGroups(target.customItemGroups || []);
       setSplitRowIndex(target.splitRowIndex ?? null);
       setNoteText((target as any).notes || (target as any).note || '');
@@ -863,7 +929,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         },
         target.rawItems || [],
         target.finishedItems || [],
-        target.dynamicCols || [],
+        resolvedCols,
         partyCodeCol,
         target.customItemGroups || []
       );
@@ -934,7 +1000,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       }
       setRawItems(target.rawItems || []);
       setFinishedItems(target.finishedItems || []);
-      setDynamicCols(target.dynamicCols || []);
+      const resolvedCols = resolveBillDynamicCols(target);
+      setDynamicCols(resolvedCols);
       setCustomItemGroups(target.customItemGroups || []);
       setSplitRowIndex(target.splitRowIndex ?? null);
       setNoteText((target as any).notes || (target as any).note || '');
@@ -951,7 +1018,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         },
         target.rawItems || [],
         target.finishedItems || [],
-        target.dynamicCols || [],
+        resolvedCols,
         partyCodeCol,
         target.customItemGroups || []
       );
@@ -1410,7 +1477,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     }
     setRawItems(slip.rawItems || []);
     setFinishedItems(slip.finishedItems || []);
-    setDynamicCols(slip.dynamicCols || []);
+    const resolvedCols = resolveBillDynamicCols(slip);
+    setDynamicCols(resolvedCols);
     setCustomItemGroups(slip.customItemGroups || foundBill?.customItemGroups || []);
     setSplitRowIndex(slip.splitRowIndex ?? (foundBill?.splitRowIndex ?? null));
     setNoteText(slip.notes || foundBill?.notes || '');
@@ -1431,7 +1499,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       },
       slip.rawItems || [],
       slip.finishedItems || [],
-      slip.dynamicCols || [],
+      resolvedCols,
       partyCodeCol,
       slip.customItemGroups || foundBill?.customItemGroups || []
     );
@@ -3296,7 +3364,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     });
                   }
                   setFinishedItems(loadedFinished);
-                  setDynamicCols(bill.dynamicCols || []);
+                  const resolvedCols = resolveBillDynamicCols(bill);
+                  setDynamicCols(resolvedCols);
                   setCustomItemGroups(bill.customItemGroups || []);
                   const partyCodeCol = Boolean(bill.hasPartyCodeCol || bill.rawItems?.some((r: any) => r.partyCode && r.partyCode.trim() !== ''));
                   setHasPartyCodeCol(partyCodeCol);
@@ -3312,7 +3381,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     },
                     loadedRaws,
                     loadedFinished,
-                    bill.dynamicCols || [],
+                    resolvedCols,
                     partyCodeCol,
                     bill.customItemGroups || []
                   );

@@ -41,6 +41,13 @@ def init_db():
                 status TEXT DEFAULT 'PAID',
                 raw_items TEXT DEFAULT '[]',
                 finished_items TEXT DEFAULT '[]',
+                dynamic_cols TEXT DEFAULT '[]',
+                has_party_code_col INTEGER DEFAULT 0,
+                adjustments TEXT DEFAULT '[]',
+                balance_label TEXT DEFAULT 'BALANCE',
+                notes TEXT DEFAULT '',
+                split_row_index INTEGER DEFAULT NULL,
+                custom_item_groups TEXT DEFAULT '[]',
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL
             );
@@ -192,6 +199,26 @@ def init_db():
             except Exception:
                 pass
 
+        # Ensure dynamic columns and modern bill attributes exist in bills table
+        try:
+            bill_cols = [c['name'] for c in conn.execute("PRAGMA table_info(bills)").fetchall()]
+            if 'dynamic_cols' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN dynamic_cols TEXT DEFAULT '[]'")
+            if 'has_party_code_col' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN has_party_code_col INTEGER DEFAULT 0")
+            if 'adjustments' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN adjustments TEXT DEFAULT '[]'")
+            if 'balance_label' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN balance_label TEXT DEFAULT 'BALANCE'")
+            if 'notes' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN notes TEXT DEFAULT ''")
+            if 'split_row_index' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN split_row_index INTEGER DEFAULT NULL")
+            if 'custom_item_groups' not in bill_cols:
+                conn.execute("ALTER TABLE bills ADD COLUMN custom_item_groups TEXT DEFAULT '[]'")
+        except Exception as e:
+            print(f"[DB] Migration notice: {e}")
+
         # Auto-seed default groups if empty
         grp_cnt = conn.execute("SELECT COUNT(*) FROM control_groups").fetchone()[0]
         if grp_cnt == 0:
@@ -322,8 +349,15 @@ class DBHandler(BaseHTTPRequestHandler):
                     bills = []
                     for r in rows:
                         b = dict(r)
-                        b['rawItems'] = json.loads(b.pop('raw_items', '[]'))
-                        b['finishedItems'] = json.loads(b.pop('finished_items', '[]'))
+                        b['rawItems'] = json.loads(b.pop('raw_items', '[]') or '[]')
+                        b['finishedItems'] = json.loads(b.pop('finished_items', '[]') or '[]')
+                        b['dynamicCols'] = json.loads(b.pop('dynamic_cols', '[]') or '[]')
+                        b['hasPartyCodeCol'] = bool(b.pop('has_party_code_col', 0))
+                        b['adjustments'] = json.loads(b.pop('adjustments', '[]') or '[]')
+                        b['balanceLabel'] = b.pop('balance_label', 'BALANCE')
+                        b['notes'] = b.pop('notes', '')
+                        b['splitRowIndex'] = b.pop('split_row_index', None)
+                        b['customItemGroups'] = json.loads(b.pop('custom_item_groups', '[]') or '[]')
                         b['docType'] = b.pop('doc_type', 'SALE BILL')
                         b['typeSelection'] = b.pop('type_selection', 'WHOLESALE')
                         b['createdAt'] = b.pop('created_at', 0)
@@ -336,8 +370,15 @@ class DBHandler(BaseHTTPRequestHandler):
                     row = conn.execute("SELECT * FROM bills WHERE id=?", (bid,)).fetchone()
                     if row:
                         b = dict(row)
-                        b['rawItems'] = json.loads(b.pop('raw_items', '[]'))
-                        b['finishedItems'] = json.loads(b.pop('finished_items', '[]'))
+                        b['rawItems'] = json.loads(b.pop('raw_items', '[]') or '[]')
+                        b['finishedItems'] = json.loads(b.pop('finished_items', '[]') or '[]')
+                        b['dynamicCols'] = json.loads(b.pop('dynamic_cols', '[]') or '[]')
+                        b['hasPartyCodeCol'] = bool(b.pop('has_party_code_col', 0))
+                        b['adjustments'] = json.loads(b.pop('adjustments', '[]') or '[]')
+                        b['balanceLabel'] = b.pop('balance_label', 'BALANCE')
+                        b['notes'] = b.pop('notes', '')
+                        b['splitRowIndex'] = b.pop('split_row_index', None)
+                        b['customItemGroups'] = json.loads(b.pop('custom_item_groups', '[]') or '[]')
                         b['docType'] = b.pop('doc_type', 'SALE BILL')
                         b['typeSelection'] = b.pop('type_selection', 'WHOLESALE')
                         b['createdAt'] = b.pop('created_at', 0)
@@ -792,6 +833,11 @@ class DBHandler(BaseHTTPRequestHandler):
 
 
                 # ── Settings ──
+                elif path == '/api/db/settings':
+                    rows = conn.execute("SELECT key, value FROM settings").fetchall()
+                    res = {r['key']: r['value'] for r in rows}
+                    self.send_json(res)
+
                 elif path.startswith('/api/db/settings/'):
                     key = path.split('/')[-1]
                     row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
@@ -824,18 +870,28 @@ class DBHandler(BaseHTTPRequestHandler):
                 # ── Save Bill ──
                 if path == '/api/db/bills':
                     b = body
+                    dynamic_cols = json.dumps(b.get('dynamicCols', []), ensure_ascii=False)
+                    has_party_code_col = 1 if b.get('hasPartyCodeCol') else 0
+                    adjustments = json.dumps(b.get('adjustments', []), ensure_ascii=False)
+                    balance_label = b.get('balanceLabel', 'BALANCE')
+                    notes = b.get('notes', '')
+                    split_row_index = b.get('splitRowIndex')
+                    custom_item_groups = json.dumps(b.get('customItemGroups', []), ensure_ascii=False)
+
                     conn.execute("""
                         INSERT OR REPLACE INTO bills
-                        (id,token,date,party,doc_type,vehicle,type_selection,total,status,raw_items,finished_items,created_at,updated_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        (id,token,date,party,doc_type,vehicle,type_selection,total,status,raw_items,finished_items,dynamic_cols,has_party_code_col,adjustments,balance_label,notes,split_row_index,custom_item_groups,created_at,updated_at)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     """, (
                         b.get('id'), b.get('token', '0'), b.get('date', ''), b.get('party', ''),
                         b.get('docType', 'SALE BILL'), b.get('vehicle', ''), b.get('typeSelection', 'WHOLESALE'),
                         b.get('total', 0), b.get('status', 'PAID'),
                         json.dumps(b.get('rawItems', []), ensure_ascii=False),
                         json.dumps(b.get('finishedItems', []), ensure_ascii=False),
+                        dynamic_cols, has_party_code_col, adjustments, balance_label, notes, split_row_index, custom_item_groups,
                         b.get('createdAt', now), now
                     ))
+                    conn.commit()
                     self.send_json({'success': True})
 
                 # ── Bulk Update Bill Prefix ──
@@ -1118,20 +1174,40 @@ class DBHandler(BaseHTTPRequestHandler):
 
                 # ── Save Setting ──
                 elif path == '/api/db/settings':
-                    conn.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (body['key'], body['value']))
-                    self.send_json({'success': True})
+                    if 'settings' in body and isinstance(body['settings'], dict):
+                        for k, v in body['settings'].items():
+                            conn.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (str(k), str(v)))
+                        conn.commit()
+                        self.send_json({'success': True, 'count': len(body['settings'])})
+                    elif 'key' in body:
+                        conn.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (str(body['key']), str(body.get('value', ''))))
+                        conn.commit()
+                        self.send_json({'success': True})
+                    else:
+                        self.send_error_json("Invalid settings payload", 400)
 
                 # ── Bulk Import (for sync from other device) ──
                 elif path == '/api/db/import':
                     data = body
                     imported = 0
                     for b in data.get('bills', []):
-                        conn.execute("INSERT OR REPLACE INTO bills (id,token,date,party,doc_type,vehicle,type_selection,total,status,raw_items,finished_items,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                            (b.get('id'), b.get('token','0'), b.get('date',''), b.get('party',''),
-                             b.get('docType','SALE BILL'), b.get('vehicle',''), b.get('typeSelection','WHOLESALE'),
-                             b.get('total',0), b.get('status','PAID'),
-                             json.dumps(b.get('rawItems',[])), json.dumps(b.get('finishedItems',[])),
-                             b.get('createdAt',now), now))
+                        conn.execute("""
+                            INSERT OR REPLACE INTO bills 
+                            (id,token,date,party,doc_type,vehicle,type_selection,total,status,raw_items,finished_items,dynamic_cols,has_party_code_col,adjustments,balance_label,notes,split_row_index,custom_item_groups,created_at,updated_at) 
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        """, (
+                            b.get('id'), b.get('token','0'), b.get('date',''), b.get('party',''),
+                            b.get('docType','SALE BILL'), b.get('vehicle',''), b.get('typeSelection','WHOLESALE'),
+                            b.get('total',0), b.get('status','PAID'),
+                            json.dumps(b.get('rawItems',[]), ensure_ascii=False), json.dumps(b.get('finishedItems',[]), ensure_ascii=False),
+                            json.dumps(b.get('dynamicCols',[]), ensure_ascii=False),
+                            1 if b.get('hasPartyCodeCol') else 0,
+                            json.dumps(b.get('adjustments',[]), ensure_ascii=False),
+                            b.get('balanceLabel','BALANCE'),
+                            b.get('notes',''),
+                            b.get('splitRowIndex'),
+                            json.dumps(b.get('customItemGroups',[]), ensure_ascii=False),
+                            b.get('createdAt',now), now))
                         imported += 1
                     for p in data.get('parties', []):
                         conn.execute("INSERT OR REPLACE INTO parties (id,name,phone,station,district,state_name,pincode,balance,party_limit,gstin,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
