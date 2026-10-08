@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import type { BillHeader, RawItem, FinishedItem, EnterDirection, NavKey, AppThemeMode, BillItemGroup } from './types';
-import { SQLITE_SHORTCUTS, SQLITE_BILLS, SQLITE_PARTIES } from './data/sqliteData';
 import { SQLITE_CONTROL_CONVERSIONS, SQLITE_CONTROL_GROUPS } from './data/sqliteControlPanel';
 import { SQLITE_SKIP_MAIN_GROUPS, SQLITE_SKIP_SUB_GROUPS, SQLITE_SKIP_ITEMS } from './data/sqliteSkipData';
 import { AppleHeader } from './components/AppleHeader';
@@ -8,14 +7,6 @@ import { LeftActionRail } from './components/LeftActionRail';
 import { RightNavRail } from './components/RightNavRail';
 import { LeftGrid } from './components/LeftGrid';
 import { RightGrid } from './components/RightGrid';
-import { BillItemGroupsModal } from './components/BillItemGroupsModal';
-import { SlipModal } from './components/SlipModal';
-import { GoodsDistributionModal } from './components/GoodsDistributionModal';
-import { OcrModal } from './components/OcrModal';
-import { NoteModal } from './components/NoteModal';
-import { PendingSlipModal } from './components/PendingSlipModal';
-import { JsonModal } from './components/JsonModal';
-import { OtherTabsView } from './components/OtherTabsView';
 import { BottomModeBar } from './components/BottomModeBar';
 import type { AppMode, SavedSlipData } from './components/BottomModeBar';
 import { NumpadNavigator } from './components/common/NumpadNavigator';
@@ -26,29 +17,55 @@ import { DatabaseProvider } from './context/DatabaseContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { ItemModeProvider, useItemMode } from './context/ItemModeContext';
 import { localDb } from './services/db/localDb';
-import type { BillRecord } from './services/db/schema';
+import type { BillRecord, PartyRecord } from './services/db/schema';
 import { getConversions, getSkipItems, getSkipSubGroups, getControlGroups, getAllSettings, setSetting } from './services/db/sqliteDb';
 import { loadMediaFromDB } from './services/mediaStorage';
-import { LoginPanel } from './components/LoginPanel';
 import { isPasswordProtectionActive } from './utils/authSecurity';
 import { SpaceLoader } from './components/common/SpaceLoader';
 import { parseProductAndSize, formatMouldWithSize, calculateProportionalPrice, extractSizeFromColLabel } from './utils/mouldUtils';
-import { ChattingPanel } from './components/ChattingPanel';
-import { DigitalCalculatorModal } from './components/DigitalCalculatorModal';
 import { triggerCelebrationBlast } from './utils/celebration';
 import { normalizeDocType, getBillCategory, formatBillNumber } from './utils/billDocTypes';
 import { supabaseSyncService, setSyncNotificationListener } from './services/supabaseSync';
 import { getUserProfile, getNextUserToken } from './services/supabaseClient';
-import { UserIdentityModal } from './components/UserIdentityModal';
-import { BillAuditHistoryModal } from './components/BillAuditHistoryModal';
-import { CloudBillNotification, type CloudNotificationData } from './components/CloudBillNotification';
-import { RateHistoryModal } from './components/RateHistoryModal';
 import { speakVoiceSummaryHindi } from './utils/hindiVoiceSummary';
 import { toast, Toaster } from './components/ui/shadcn';
 
+// Lightweight on-demand code splitting for secondary tabs and modals
+const BillItemGroupsModal = React.lazy(() => import('./components/BillItemGroupsModal').then(m => ({ default: m.BillItemGroupsModal })));
+const SlipModal = React.lazy(() => import('./components/SlipModal').then(m => ({ default: m.SlipModal })));
+const GoodsDistributionModal = React.lazy(() => import('./components/GoodsDistributionModal').then(m => ({ default: m.GoodsDistributionModal })));
+const OcrModal = React.lazy(() => import('./components/OcrModal').then(m => ({ default: m.OcrModal })));
+const NoteModal = React.lazy(() => import('./components/NoteModal').then(m => ({ default: m.NoteModal })));
+const PendingSlipModal = React.lazy(() => import('./components/PendingSlipModal').then(m => ({ default: m.PendingSlipModal })));
+const JsonModal = React.lazy(() => import('./components/JsonModal').then(m => ({ default: m.JsonModal })));
+const OtherTabsView = React.lazy(() => import('./components/OtherTabsView').then(m => ({ default: m.OtherTabsView })));
+const LoginPanel = React.lazy(() => import('./components/LoginPanel').then(m => ({ default: m.LoginPanel })));
+const ChattingPanel = React.lazy(() => import('./components/ChattingPanel').then(m => ({ default: m.ChattingPanel })));
+const DigitalCalculatorModal = React.lazy(() => import('./components/DigitalCalculatorModal').then(m => ({ default: m.DigitalCalculatorModal })));
+const UserIdentityModal = React.lazy(() => import('./components/UserIdentityModal').then(m => ({ default: m.UserIdentityModal })));
+const BillAuditHistoryModal = React.lazy(() => import('./components/BillAuditHistoryModal').then(m => ({ default: m.BillAuditHistoryModal })));
+const RateHistoryModal = React.lazy(() => import('./components/RateHistoryModal').then(m => ({ default: m.RateHistoryModal })));
+
+let sharedAudioCtx: AudioContext | null = null;
+const getSharedAudioCtx = (): AudioContext | null => {
+  try {
+    if (!sharedAudioCtx) {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtxClass) sharedAudioCtx = new AudioCtxClass();
+    }
+    if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+      sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+};
+
 const playTapSound = () => {
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = getSharedAudioCtx();
+    if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
@@ -423,7 +440,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   }, []);
 
   const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
-  const [incomingCloudBill, setIncomingCloudBill] = useState<CloudNotificationData | null>(null);
 
   // Initialize Supabase Multi-device Cloud Sync
   useEffect(() => {
@@ -432,23 +448,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     setSyncNotificationListener((notif) => {
       console.log(`[Cloud Sync] ${notif.title}: ${notif.body}`);
     });
-
-    // Real-time listener for incoming bills from other computers
-    const handleCloudBillEvent = (e: any) => {
-      const b = e.detail;
-      if (b) {
-        setIncomingCloudBill({
-          id: b.id,
-          token: b.token,
-          party: b.party,
-          total: b.total,
-          fromUser: b.last_modified_by || 'Team Member',
-          docType: b.header?.docType,
-          billData: b
-        });
-      }
-    };
-    window.addEventListener('cloud_bill_received', handleCloudBillEvent);
 
     // Real-time listener for incoming team chat messages
     const handleChatReceived = () => {
@@ -459,7 +458,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     window.addEventListener('team_chat_message_received', handleChatReceived);
 
     return () => {
-      window.removeEventListener('cloud_bill_received', handleCloudBillEvent);
       window.removeEventListener('team_chat_message_received', handleChatReceived);
     };
   }, [isChatOpen]);
@@ -838,7 +836,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     lastSavedSnapshotRef.current = getBillFingerprint(blankHeader, blankRaws, blankFinished, [], false);
     setConfirmClearDialog(null);
 
-    showToast(`New Blank ${currentDoc} Bill #${nextToken} Ready (Panel Cleared)`, 'success');
     playTapSound();
 
     setActiveTab('F1');
@@ -925,6 +922,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           docType: normalizeDocType(target.docType),
           partyName: target.party,
           typeSelection: target.typeSelection,
+          vehicleType: target.vehicleType || 'SELF',
           vehicleNo: target.vehicle,
           date: target.date,
           tokenNo: target.token
@@ -935,7 +933,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         partyCodeCol,
         target.customItemGroups || []
       );
-      showToast(`Loaded ${currentDoc} Bill #${target.token} (${target.party || 'No Party'})`, 'info');
       setActiveTab('F1');
       playTapSound();
     }
@@ -968,7 +965,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     if (currentIdx === -1) {
       // Currently on new unsaved bill
-      showToast(`Already on new ${currentDoc} bill entry`, 'info');
       return;
     }
 
@@ -1014,6 +1010,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
           docType: normalizeDocType(target.docType),
           partyName: target.party,
           typeSelection: target.typeSelection,
+          vehicleType: target.vehicleType || 'SELF',
           vehicleNo: target.vehicle,
           date: target.date,
           tokenNo: target.token
@@ -1024,7 +1021,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         partyCodeCol,
         target.customItemGroups || []
       );
-      showToast(`Loaded ${currentDoc} Bill #${target.token} (${target.party || 'No Party'})`, 'info');
       setActiveTab('F1');
       playTapSound();
     }
@@ -1495,6 +1491,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         docType: slip.docType,
         partyName: slip.partyName,
         typeSelection: slip.typeSelection,
+        vehicleType: slip.vehicleType || 'SELF',
         vehicleNo: slip.vehicleNo,
         date: slip.date,
         tokenNo: slip.tokenNo
@@ -2732,7 +2729,15 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     // If finished table is currently empty, calculate moulds from rawItems first!
     if (!hasMeaningfulFinished && rawItems.some(r => (r.name || '').trim())) {
-      const calculated = groupRawItemsForSummary(rawItems, dynamicCols);
+      const { itemSummary, groupSummary } = groupRawItemsForSummary(rawItems, dynamicCols);
+      const calculated: FinishedItem[] = [];
+      let cId = 1;
+      Object.entries(itemSummary).forEach(([mould, qty]) => {
+        calculated.push({ id: `fin-calc-${cId++}`, mould, qty: Number(qty) || 0, price: 0, total: 0 });
+      });
+      Object.entries(groupSummary).forEach(([mould, qty]) => {
+        calculated.push({ id: `fin-calc-${cId++}`, mould, qty: Number(qty) || 0, price: 0, total: 0 });
+      });
       if (calculated.length > 0) {
         targetFinished = calculated;
       }
@@ -3142,7 +3147,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
               <AppleHeader
                 header={header}
                 onChange={(up) => setHeader(h => ({ ...h, ...up }))}
-                onCloseApp={() => showToast('Apple App Session Active', 'info')}
+                onCloseApp={() => {}}
                 onAddNewParty={(name) => showToast(`Added "${name}" to Party Registry`, 'success')}
                 onSkipBill={handleTriggerEscapeClear}
                 onSaveBill={handleSaveCurrentBill}
@@ -3198,7 +3203,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       enterDirection={enterDirection}
                       onSetEnterDirection={(dir) => {
                         setEnterDirection(dir);
-                        showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
                       highlightedCells={highlightedSourceCells}
                       isActiveTable={activeTable === 'left'}
@@ -3262,7 +3266,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       enterDirection={enterDirection}
                       onSetEnterDirection={(dir) => {
                         setEnterDirection(dir);
-                        showToast(`Enter Jump Direction: ${dir.toUpperCase()}`, 'info');
                       }}
                       onActiveRowChange={handleActiveRightRowChange}
                       isActiveTable={activeTable === 'right'}
@@ -3280,7 +3283,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   activeMode={activeMode}
                   onChangeMode={(m) => {
                     setActiveMode(m);
-                    showToast(`Mode switched to ${m}`, 'info');
                   }}
                   onLoadSlipData={handleLoadSlip}
                   onToast={showToast}
@@ -3299,7 +3301,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
             {/* Right Navigation Rail */}
             <RightNavRail
               activeTab={activeTab}
-              onCloseApp={() => showToast('App Closed', 'info')}
+              onCloseApp={() => {}}
               onSelectTab={(t) => {
                 setActiveTab(t);
               }}
@@ -3388,17 +3390,14 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                     bill.customItemGroups || []
                   );
                   setActiveTab('F1');
-                  showToast('Loaded Invoice #' + bill.token + ' into Bill UI', 'success');
                 }}
                 onSelectPartyForBill={(pName: string) => {
                   setHeader(prev => ({ ...prev, partyName: pName }));
                   setActiveTab('F1');
-                  showToast(`Selected Party "${pName}" for new bill`, 'success');
                 }}
                 bgImage={bgImage}
                 onSelectBgImage={(url) => {
                   setBgImage(url);
-                  showToast('Wallpaper Updated', 'success');
                 }}
                 blurAmount={blurAmount}
                 onChangeBlur={(val) => {
@@ -3424,7 +3423,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
             {/* Right Navigation Rail */}
             <RightNavRail
               activeTab={activeTab}
-              onCloseApp={() => showToast('App Closed', 'info')}
+              onCloseApp={() => {}}
               onSelectTab={(t) => {
                 setActiveTab(t);
               }}
@@ -3543,36 +3542,6 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         onOpenUserProfile={() => setIsUserIdentityOpen(true)}
       />
 
-      {/* Cloud Incoming Bill Floating Banner Notification */}
-      <CloudBillNotification
-        notification={incomingCloudBill}
-        onClose={() => setIncomingCloudBill(null)}
-        onViewBill={(billData) => {
-          if (billData) {
-            handleLoadSlip({
-              id: billData.id,
-              tokenNo: billData.token,
-              docType: billData.docType || 'SALE BILL',
-              partyName: billData.party,
-              typeSelection: billData.typeSelection || 'WHOLESALE',
-              vehicleType: (!billData.vehicleType || billData.vehicleType === 'OWN VEHICLE') ? 'SELF' : billData.vehicleType,
-              vehicleNo: billData.vehicle || '',
-              date: billData.date || getTodayLocalDateStr(),
-              rawItems: billData.rawItems || [],
-              finishedItems: billData.finishedItems || [],
-              dynamicCols: billData.dynamicCols || [],
-              adjustments: billData.adjustments || [],
-              balanceLabel: billData.balanceLabel || 'BALANCE',
-              notes: billData.notes || '',
-              hasPartyCodeCol: billData.hasPartyCodeCol,
-              splitRowIndex: billData.splitRowIndex ?? null,
-              customItemGroups: billData.customItemGroups || []
-            });
-            setActiveTab('F1');
-          }
-          setIncomingCloudBill(null);
-        }}
-      />
 
       {/* Retro Neumorphic Digital Calculator with 100% Physical Numpad Control */}
       <DigitalCalculatorModal
@@ -3678,14 +3647,20 @@ export default function App() {
   }
 
   if (!isAuthenticated) {
-    return <LoginPanel onLogin={handleLogin} />;
+    return (
+      <Suspense fallback={<SpaceLoader text="Loading Workspace..." />}>
+        <LoginPanel onLogin={handleLogin} />
+      </Suspense>
+    );
   }
 
   return (
     <DatabaseProvider>
       <SettingsProvider>
         <ItemModeProvider>
-          <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
+          <Suspense fallback={<SpaceLoader text="Loading Workspace..." />}>
+            <AppContent themeMode={themeMode} onChangeThemeMode={setThemeMode} />
+          </Suspense>
         </ItemModeProvider>
       </SettingsProvider>
     </DatabaseProvider>

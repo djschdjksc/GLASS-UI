@@ -992,7 +992,7 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
       const label = `(${insertedSize} FT)`;
       setDynamicCols(prev => {
         if (prev.some(c => c.field === field)) return prev;
-        return [...prev, { field, label }];
+        return [...prev, { field, label, sizeNum: Number(insertedSize) || 0 }];
       });
       showToast?.(`Auto-inserted (${insertedSize} FT) size column for ${finalName}`, 'info');
     }

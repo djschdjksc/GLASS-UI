@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { macAudio } from '../utils/macAudio';
-import { SQLITE_PARTIES } from '../data/sqliteData';
 import {
   Calculator,
   X,
@@ -9,6 +8,7 @@ import {
   Trash2,
   FileSpreadsheet
 } from 'lucide-react';
+import { localDb } from '../services/db/localDb';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 
 interface Contributor {
@@ -67,8 +67,9 @@ export const GoodsDistributionModal: React.FC<Props> = ({
   const handleAddContributor = () => {
     macAudio.playClick();
     const newId = String(Date.now());
-    const randomParty = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0) 
-      ? SQLITE_PARTIES[Math.floor(Math.random() * Math.min(50, SQLITE_PARTIES.length))]?.party_name 
+    const allP = localDb.getParties();
+    const randomParty = (allP && allP.length > 0) 
+      ? allP[Math.floor(Math.random() * Math.min(50, allP.length))]?.name 
       : 'New Party Account';
     setContributors(prev => [...prev, { id: newId, name: randomParty, paidAmount: 25000 }]);
   };

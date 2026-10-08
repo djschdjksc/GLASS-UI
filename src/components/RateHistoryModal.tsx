@@ -15,7 +15,7 @@ import {
   Tag
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
-import { SQLITE_BILLS } from '../data/sqliteData';
+import type { FinishedItem, RawItem } from '../types';
 import { Tooltip, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 
 export interface RateHistoryItem {
@@ -159,8 +159,7 @@ export const RateHistoryModal: React.FC<Props> = ({
   const rateHistoryData = useMemo(() => {
     if (!isOpen) return { all: [], party: [] };
 
-    const allBills = localDb.getBills();
-    const sourceBills = allBills && allBills.length > 0 ? allBills : (SQLITE_BILLS || []);
+    const sourceBills = localDb.getBills();
 
     // Sort bills strictly from NEWEST/MOST RECENT to OLDEST
     const sortedBills = [...sourceBills].sort((a, b) => {

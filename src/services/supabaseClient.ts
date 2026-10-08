@@ -18,6 +18,7 @@ export interface UserProfile {
   prefix: string;
   role: string;
   terminal: string;
+  avatarId?: number;
 }
 
 export const getUserPrefix = (name: string, customPrefix?: string): string => {
@@ -34,7 +35,9 @@ export const getUserProfile = (): UserProfile => {
   const prefix = storedPrefix || getUserPrefix(name);
   const role = localStorage.getItem('modern_app_user_role') || 'Billing Counter';
   const terminal = localStorage.getItem('modern_app_user_terminal') || 'Counter #1';
-  return { name, prefix, role, terminal };
+  const avatarIdStr = localStorage.getItem('modern_app_user_avatar_id');
+  const avatarId = avatarIdStr ? parseInt(avatarIdStr, 10) : undefined;
+  return { name, prefix, role, terminal, avatarId };
 };
 
 export const setUserProfile = (profile: Partial<UserProfile>) => {
@@ -42,6 +45,7 @@ export const setUserProfile = (profile: Partial<UserProfile>) => {
   if (profile.prefix !== undefined) localStorage.setItem('modern_app_user_prefix', profile.prefix.toUpperCase().trim());
   if (profile.role !== undefined) localStorage.setItem('modern_app_user_role', profile.role);
   if (profile.terminal !== undefined) localStorage.setItem('modern_app_user_terminal', profile.terminal);
+  if (profile.avatarId !== undefined) localStorage.setItem('modern_app_user_avatar_id', String(profile.avatarId));
   window.dispatchEvent(new Event('storage'));
 };
 

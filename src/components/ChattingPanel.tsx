@@ -29,6 +29,7 @@ import type { BillRecord, PartyRecord } from '../services/db/schema';
 import { macAudio } from '../utils/macAudio';
 import type { BillHeader, RawItem, FinishedItem } from '../types';
 import { supabase, getUserProfile } from '../services/supabaseClient';
+import { getAvatarUrl, getDeterministicAvatarId } from '../utils/avatarUtils';
 import { Tooltip } from './ui/shadcn';
 
 export interface ChatMessage {
@@ -96,6 +97,10 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
   const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Main Billing Counter');
   const [userAvatar, setUserAvatar] = useState<string>(() => localStorage.getItem('modern_app_user_avatar') || '');
+  const [userAvatarId, setUserAvatarId] = useState<number>(() => {
+    const profile = getUserProfile();
+    return profile.avatarId || getDeterministicAvatarId(profile.name || 'User');
+  });
   const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Counter #1');
 
   // Emoji Reactions Map
@@ -133,10 +138,12 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
   // Listen to profile updates
   useEffect(() => {
     const handleStorageUpdate = () => {
-      setUserName(localStorage.getItem('modern_app_user_name') || 'Rohit (Billing Desk)');
-      setUserRole(localStorage.getItem('modern_app_user_role') || 'Main Billing Counter');
+      const p = getUserProfile();
+      setUserName(p.name || 'Rohit (Billing Desk)');
+      setUserRole(p.role || 'Main Billing Counter');
       setUserAvatar(localStorage.getItem('modern_app_user_avatar') || '');
-      setUserTerminal(localStorage.getItem('modern_app_user_terminal') || 'Counter #1');
+      setUserAvatarId(p.avatarId || getDeterministicAvatarId(p.name || 'User'));
+      setUserTerminal(p.terminal || 'Counter #1');
     };
 
     window.addEventListener('storage', handleStorageUpdate);
@@ -189,7 +196,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
     ];
   });
 
-  const [onlineUsers, setOnlineUsers] = useState<{ name: string; role: string; terminal: string; onlineAt: string }[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<{ name: string; role: string; terminal: string; avatarId?: number; onlineAt: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -207,7 +214,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        const active: { name: string; role: string; terminal: string; onlineAt: string }[] = [];
+        const active: { name: string; role: string; terminal: string; avatarId?: number; onlineAt: string }[] = [];
         const seenNames = new Set<string>();
 
         Object.values(state).forEach((presences: any) => {
@@ -218,6 +225,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                 name: p.name,
                 role: p.role || 'Counter',
                 terminal: p.terminal || '',
+                avatarId: p.avatarId,
                 onlineAt: p.onlineAt || new Date().toISOString()
               });
             }
@@ -229,6 +237,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
             name: currentName,
             role: userRole,
             terminal: userTerminal,
+            avatarId: userAvatarId,
             onlineAt: new Date().toISOString()
           });
         }
@@ -241,6 +250,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
             name: currentName,
             role: profile.role || userRole,
             terminal: profile.terminal || userTerminal,
+            avatarId: profile.avatarId || userAvatarId,
             onlineAt: new Date().toISOString()
           });
         }
@@ -537,7 +547,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
         id: msgId,
         senderName: userName,
         senderRole: userRole,
-        senderAvatar: userAvatar,
+        senderAvatar: String(userAvatarId || getDeterministicAvatarId(userName)),
         senderTerminal: userTerminal,
         recipient: selectedRecipient,
         text: finalMsgText,
@@ -667,73 +677,29 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
           flexShrink: 0
         }}
       >
-        {/* Left: macOS Traffic Light Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Tooltip title="Close (Ctrl+J)" side="bottom">
+        {/* Left: Clear Chat History Icon */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Tooltip title="Clear Chat History" side="bottom">
             <button
               type="button"
-              onClick={() => {
-                try { macAudio.playClick(); } catch {}
-                onClose();
-              }}
+              onClick={handleClearHistory}
               style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                background: '#ff5f56',
+                background: 'transparent',
                 border: 'none',
+                color: 'rgba(255, 255, 255, 0.45)',
                 cursor: 'pointer',
+                padding: '5px',
+                borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 0,
-                boxShadow: '0 1px 3px rgba(255, 95, 86, 0.5)'
+                transition: 'color 0.15s ease'
               }}
-            />
-          </Tooltip>
-          <Tooltip title="Minimize" side="bottom">
-            <button
-              type="button"
-              onClick={() => {
-                try { macAudio.playClick(); } catch {}
-                setIsMinimized(!isMinimized);
-              }}
-              style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                background: '#ffbd2e',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0,
-                boxShadow: '0 1px 3px rgba(255, 189, 46, 0.5)'
-              }}
-            />
-          </Tooltip>
-          <Tooltip title="Expand / Contract" side="bottom">
-            <button
-              type="button"
-              onClick={() => {
-                try { macAudio.playClick(); } catch {}
-                setIsExpanded(!isExpanded);
-              }}
-              style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                background: '#27c93f',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0,
-                boxShadow: '0 1px 3px rgba(39, 201, 63, 0.5)'
-              }}
-            />
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ff453a')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.45)')}
+            >
+              <Trash2 size={15} />
+            </button>
           </Tooltip>
         </div>
 
@@ -805,8 +771,8 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
           </button>
         </div>
 
-        {/* Right: Operator Badge & Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Right: Operator Badge & Window Controls (Moved from left to right) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             onClick={onOpenUserProfile}
             title={`${userName} (${userTerminal}) • Click for Sync Profile`}
@@ -827,16 +793,21 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                 width: '18px',
                 height: '18px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #007AFF, #5856D6)',
+                background: 'rgba(0, 122, 255, 0.2)',
+                border: '1px solid rgba(0, 122, 255, 0.5)',
+                boxShadow: '0 0 8px rgba(0, 122, 255, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#fff',
-                fontSize: '9px',
-                fontWeight: 700
+                overflow: 'hidden',
+                flexShrink: 0
               }}
             >
-              {userName.charAt(0).toUpperCase()}
+              <img
+                src={getAvatarUrl(userAvatarId, userName)}
+                alt="DP"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
             <span style={{ fontSize: '10.5px', color: '#e2e8f0', fontWeight: 500, maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {userName.split(' ')[0]}
@@ -852,27 +823,75 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
             />
           </div>
 
-          <Tooltip title="Clear Chat History" side="bottom">
-            <button
-              type="button"
-              onClick={handleClearHistory}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'rgba(255, 255, 255, 0.4)',
-                cursor: 'pointer',
-                padding: '4px',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'color 0.15s ease'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#ff453a')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.4)')}
-            >
-              <Trash2 size={13} />
-            </button>
-          </Tooltip>
+          {/* macOS Window Controls (Traffic Lights) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Tooltip title="Minimize" side="bottom">
+              <button
+                type="button"
+                onClick={() => {
+                  try { macAudio.playClick(); } catch {}
+                  setIsMinimized(!isMinimized);
+                }}
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#ffbd2e',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  boxShadow: '0 1px 3px rgba(255, 189, 46, 0.5)'
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="Expand / Contract" side="bottom">
+              <button
+                type="button"
+                onClick={() => {
+                  try { macAudio.playClick(); } catch {}
+                  setIsExpanded(!isExpanded);
+                }}
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#27c93f',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  boxShadow: '0 1px 3px rgba(39, 201, 63, 0.5)'
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="Close (Ctrl+J)" side="bottom">
+              <button
+                type="button"
+                onClick={() => {
+                  try { macAudio.playClick(); } catch {}
+                  onClose();
+                }}
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#ff5f56',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  boxShadow: '0 1px 3px rgba(255, 95, 86, 0.5)'
+                }}
+              />
+            </Tooltip>
+          </div>
         </div>
       </div>
 
@@ -936,7 +955,7 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
+                        gap: '5px',
                         padding: '3px 9px',
                         borderRadius: '9999px',
                         background: isSelected ? 'rgba(0, 122, 255, 0.35)' : 'rgba(255, 255, 255, 0.06)',
@@ -948,6 +967,25 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                         transition: 'all 0.15s ease'
                       }}
                     >
+                      <div
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          border: '1px solid rgba(255, 255, 255, 0.25)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <img
+                          src={getAvatarUrl(u.avatarId, u.name)}
+                          alt={u.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
                       <span>{shortName}</span>
                       {isMe && <span style={{ opacity: 0.5, fontSize: '9px' }}>(You)</span>}
                       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#34c759' }} />
@@ -1129,26 +1167,33 @@ export const ChattingPanel: React.FC<ChattingPanelProps> = ({
                             flexDirection: isMine ? 'row-reverse' : 'row'
                           }}
                         >
-                          {/* Mini Avatar */}
+                          {/* 3D Profile Avatar DP */}
                           <div
                             style={{
-                              width: '24px',
-                              height: '24px',
+                              width: '28px',
+                              height: '28px',
                               borderRadius: '50%',
-                              background: isMine
-                                ? 'linear-gradient(135deg, #007AFF, #5856D6)'
-                                : 'linear-gradient(135deg, #32ade6, #007AFF)',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.35)',
+                              border: isMine ? '1.5px solid #007AFF' : '1.5px solid rgba(255, 255, 255, 0.2)',
+                              background: 'rgba(255, 255, 255, 0.06)',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#ffffff',
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)'
+                              justifyContent: 'center'
                             }}
                           >
-                            {isMine ? userName.charAt(0).toUpperCase() : m.senderName.charAt(0).toUpperCase()}
+                            <img
+                              src={getAvatarUrl(
+                                isMine ? userAvatarId : (m.senderAvatar || onlineUsers.find(u => u.name === m.senderName)?.avatarId),
+                                isMine ? userName : m.senderName
+                              )}
+                              alt={m.senderName}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/avatars/1.webp';
+                              }}
+                            />
                           </div>
 
                           {/* Authentic Apple iMessage Bubble */}

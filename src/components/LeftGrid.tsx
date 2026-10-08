@@ -1,4 +1,3 @@
-import { SQLITE_SHORTCUTS } from '../data/sqliteData';
 import { resolveItemNameWithMode } from '../utils/itemExpansion';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { RawItem, EnterDirection } from '../types';

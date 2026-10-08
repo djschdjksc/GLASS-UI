@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, Terminal, Check, X, Tag } from 'lucide-react';
+import { User, Shield, Terminal, Check, X, Tag, Sparkles } from 'lucide-react';
 import { getUserProfile, setUserProfile, getUserPrefix } from '../services/supabaseClient';
+import { getAvatarUrl, getAllAvatarIds, getDeterministicAvatarId } from '../utils/avatarUtils';
 import { macAudio } from '../utils/macAudio';
 
 interface Props {
@@ -15,6 +16,7 @@ export const UserIdentityModal: React.FC<Props> = ({ isOpen, onClose, isInitialS
   const [isPrefixCustomized, setIsPrefixCustomized] = useState(false);
   const [role, setRole] = useState('Main Billing Counter');
   const [terminal, setTerminal] = useState('Counter #1');
+  const [avatarId, setAvatarId] = useState<number>(1);
 
   useEffect(() => {
     if (isOpen) {
@@ -24,6 +26,7 @@ export const UserIdentityModal: React.FC<Props> = ({ isOpen, onClose, isInitialS
       setRole(current.role || 'Main Billing Counter');
       setTerminal(current.terminal || 'Counter #1');
       setIsPrefixCustomized(Boolean(current.prefix));
+      setAvatarId(current.avatarId || getDeterministicAvatarId(current.name || 'User'));
     }
   }, [isOpen]);
 
@@ -34,13 +37,18 @@ export const UserIdentityModal: React.FC<Props> = ({ isOpen, onClose, isInitialS
     if (!isPrefixCustomized) {
       setPrefix(getUserPrefix(val));
     }
+    // If avatar was never explicitly set, update preview deterministically
+    const current = getUserProfile();
+    if (!current.avatarId) {
+      setAvatarId(getDeterministicAvatarId(val));
+    }
   };
 
   const handleSave = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
     const cleanPrefix = (prefix.trim() || getUserPrefix(trimmed)).toUpperCase().replace(/[^A-Z0-9]/g, '');
-    setUserProfile({ name: trimmed, prefix: cleanPrefix, role, terminal });
+    setUserProfile({ name: trimmed, prefix: cleanPrefix, role, terminal, avatarId });
     try {
       macAudio.playSuccess();
     } catch {}
@@ -156,6 +164,106 @@ export const UserIdentityModal: React.FC<Props> = ({ isOpen, onClose, isInitialS
                 transition: 'border-color 0.15s'
               }}
             />
+          </div>
+
+          {/* 3D Profile Avatar Picker */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.7)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <Sparkles size={12} color="#38bdf8" /> Choose Profile Avatar / DP
+              </label>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>
+                Selected: #{avatarId}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 12px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '14px'
+              }}
+            >
+              {/* Active Big Avatar Preview */}
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'rgba(0, 122, 255, 0.2)',
+                  border: '2px solid #007AFF',
+                  boxShadow: '0 0 14px rgba(0, 122, 255, 0.45)',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden'
+                }}
+              >
+                <img
+                  src={getAvatarUrl(avatarId, name)}
+                  alt={`Avatar #${avatarId}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+
+              {/* Scrollable Avatar Strip */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  padding: '4px 2px',
+                  flex: 1,
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(255, 255, 255, 0.2) transparent'
+                }}
+              >
+                {getAllAvatarIds().map((id) => {
+                  const isSelected = avatarId === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        setAvatarId(id);
+                        try { macAudio.playClick(); } catch {}
+                      }}
+                      title={`Avatar #${id}`}
+                      style={{
+                        position: 'relative',
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        border: isSelected ? '2px solid #007AFF' : '1px solid rgba(255, 255, 255, 0.12)',
+                        background: isSelected ? 'rgba(0, 122, 255, 0.35)' : 'rgba(255, 255, 255, 0.05)',
+                        cursor: 'pointer',
+                        padding: 0,
+                        overflow: 'hidden',
+                        transition: 'all 0.15s ease',
+                        transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                        boxShadow: isSelected ? '0 0 10px rgba(0, 122, 255, 0.6)' : 'none'
+                      }}
+                    >
+                      <img
+                        src={`/avatars/${id}.webp`}
+                        alt={`#${id}`}
+                        loading="lazy"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <p style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)', margin: '4px 0 0 0' }}>
+              Ye DP Chatting Panel aur Header me aapke profile ke sath sabhi counter par dikhai degi.
+            </p>
           </div>
 
           {/* Unique Bill Prefix */}

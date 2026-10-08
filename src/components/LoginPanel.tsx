@@ -37,45 +37,33 @@ export const LoginPanel = ({ onLogin }: { onLogin: () => void }) => {
     <div 
       className="login-container" 
       style={{ 
-        backgroundColor: '#e3e3e3',
+        backgroundColor: '#0f172a',
         position: 'relative',
         width: '100vw',
         height: '100vh',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
-      {/* 3D Model Background */}
+      {/* Lightweight CSS Aura Ambient Background */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
           zIndex: 1,
           width: '100%',
-          height: '100%'
+          height: '100%',
+          overflow: 'hidden',
+          pointerEvents: 'none'
         }}
       >
-        <div className="glow-1" />
-        <div className="glow-2" />
-        
-        {/* @ts-ignore */}
-        <spline-viewer logo-visibility="hidden" url="https://prod.spline.design/gdRg3rEPswIA6zJ5/scene.splinecode"></spline-viewer>
-        
-        {/* Hack to cover the Spline Logo with a color that matches the 3D scene background */}
-        <div 
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            width: '400px',
-            height: '150px',
-            backgroundColor: '#e3e3e3', /* Light gray to match the Spline background */
-            zIndex: 5,
-            pointerEvents: 'none'
-          }}
-        />
+        <div className="glow-1" style={{ opacity: 0.5 }} />
+        <div className="glow-2" style={{ opacity: 0.5 }} />
       </div>
 
-      {/* Right side: Login Form Floating */}
+      {/* Center: Login Form Floating */}
       <div 
         style={{
           position: 'relative',
@@ -84,19 +72,18 @@ export const LoginPanel = ({ onLogin }: { onLogin: () => void }) => {
           width: '100%',
           height: '100%',
           alignItems: 'center',
-          justifyContent: 'flex-end',
-          paddingRight: '8vw',
-          pointerEvents: 'none' // Allow clicking through to 3D model if outside form
+          justifyContent: 'center',
+          padding: '1rem'
         }}
       >
         <div 
           className="login-form-container"
           style={{
-            background: 'rgba(20, 20, 30, 0.35)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.3)',
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.25)',
             borderLeft: '1px solid rgba(255, 255, 255, 0.3)',
             padding: '3rem',
             borderRadius: '1.5rem',

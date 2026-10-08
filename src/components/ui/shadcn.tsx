@@ -791,7 +791,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     // Parse options from children (<option>) or props.options with smart icon deduction
     const parsedOptions: SelectOption[] = useMemo(() => {
       if (options && options.length > 0) {
-        return options.map((opt) => ({
+        return options.map((opt: SelectOption) => ({
           ...opt,
           icon: opt.icon !== undefined ? opt.icon : getSmartOptionIcon(opt.label, opt.value)
         }));
@@ -1662,6 +1662,7 @@ export interface InputNumberProps {
   placeholder?: string;
   style?: React.CSSProperties;
   className?: string;
+  addonAfter?: React.ReactNode;
 }
 
 export const InputNumber: React.FC<InputNumberProps> = ({
@@ -1674,7 +1675,8 @@ export const InputNumber: React.FC<InputNumberProps> = ({
   disabled = false,
   placeholder,
   style,
-  className = ''
+  className = '',
+  addonAfter
 }) => {
   const isControlled = value !== undefined;
   const [internalVal, setInternalVal] = useState<string>(
@@ -1698,7 +1700,7 @@ export const InputNumber: React.FC<InputNumberProps> = ({
     }
   };
 
-  return (
+  const inputEl = (
     <input
       type="number"
       min={min}
@@ -1713,7 +1715,7 @@ export const InputNumber: React.FC<InputNumberProps> = ({
         display: 'flex',
         height: '32px',
         width: '100%',
-        borderRadius: '6px',
+        borderRadius: addonAfter ? '6px 0 0 6px' : '6px',
         border: '1px solid #27272a',
         background: '#09090b',
         padding: '4px 10px',
@@ -1727,6 +1729,32 @@ export const InputNumber: React.FC<InputNumberProps> = ({
       }}
     />
   );
+
+  if (addonAfter) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        {inputEl}
+        <span style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '32px',
+          padding: '0 8px',
+          background: '#18181b',
+          border: '1px solid #27272a',
+          borderLeft: 'none',
+          borderRadius: '0 6px 6px 0',
+          fontSize: '11px',
+          color: '#a1a1aa',
+          whiteSpace: 'nowrap'
+        }}>
+          {addonAfter}
+        </span>
+      </div>
+    );
+  }
+
+  return inputEl;
 };
 
 // =========================================================================

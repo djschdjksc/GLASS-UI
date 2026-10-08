@@ -86,6 +86,7 @@ import {
   toast
 } from './ui/shadcn';
 import { getUserProfile, setUserProfile, getUserPrefix } from '../services/supabaseClient';
+import { getAvatarUrl, getAllAvatarIds, getDeterministicAvatarId } from '../utils/avatarUtils';
 import { supabaseSyncService } from '../services/supabaseSync';
 import { saveMediaToDB, clearMediaFromDB } from '../services/mediaStorage';
 import {
@@ -493,10 +494,11 @@ export const SettingsTabView: React.FC<Props> = ({
 
   const handleSelectBarcodePreset = (preset: BarcodePreset) => {
     macAudio.playPop();
+    const pAny = preset as any;
     const extraUpdates: Partial<BarcodeSystemConfig> = {};
-    if (preset.symbology) extraUpdates.symbology = preset.symbology;
-    if (preset.printGlassErpTags !== undefined) extraUpdates.printGlassErpTags = preset.printGlassErpTags;
-    if (preset.category === 'GLASS_LITE' || preset.category === 'GLASS_CRATE') {
+    if (pAny.symbology) extraUpdates.symbology = pAny.symbology;
+    if (pAny.printGlassErpTags !== undefined) extraUpdates.printGlassErpTags = pAny.printGlassErpTags;
+    if (pAny.category === 'GLASS_LITE' || pAny.category === 'GLASS_CRATE') {
       extraUpdates.printGlassErpTags = true;
     }
     handleUpdateBarcodeConfig({
@@ -549,6 +551,11 @@ export const SettingsTabView: React.FC<Props> = ({
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('modern_app_user_name') || 'Rohit Kumar');
   const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('modern_app_user_role') || 'Plant Supervisor');
   const [userAvatar, setUserAvatar] = useState<string>(() => localStorage.getItem('modern_app_user_avatar') || '');
+  const [userAvatarId, setUserAvatarId] = useState<number>(() => {
+    const saved = localStorage.getItem('modern_app_user_avatar_id');
+    if (saved) return parseInt(saved, 10);
+    return getDeterministicAvatarId(localStorage.getItem('modern_app_user_name') || 'Rohit');
+  });
   const [userTerminal, setUserTerminal] = useState<string>(() => localStorage.getItem('modern_app_user_terminal') || 'Station 01 (Bottero CNC)');
   const [userPhone, setUserPhone] = useState<string>(() => localStorage.getItem('modern_app_user_phone') || '+91 98765 43210');
   const [userStatus, setUserStatus] = useState<string>(() => localStorage.getItem('modern_app_user_status') || 'Active on Bottero CNC Cutting Line 1');
@@ -631,12 +638,14 @@ export const SettingsTabView: React.FC<Props> = ({
       name: trimmed,
       prefix: cleanPrefix,
       role: userRole,
-      terminal: userTerminal
+      terminal: userTerminal,
+      avatarId: userAvatarId
     });
     localStorage.setItem('modern_app_user_name', trimmed);
     localStorage.setItem('modern_app_user_prefix', cleanPrefix);
     localStorage.setItem('modern_app_user_role', userRole);
     localStorage.setItem('modern_app_user_avatar', userAvatar);
+    localStorage.setItem('modern_app_user_avatar_id', String(userAvatarId));
     localStorage.setItem('modern_app_user_terminal', userTerminal);
     localStorage.setItem('modern_app_user_phone', userPhone);
     localStorage.setItem('modern_app_user_status', userStatus);
@@ -1000,7 +1009,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   <div style={{ flex: 1 }}>
                     <ShadcnSelect
                       value={defaultPrinter || systemDefaultPrinter || ''}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         const selected = e.target.value;
                         setDefaultPrinter(selected);
                         macAudio.playClick();
@@ -1165,7 +1174,7 @@ export const SettingsTabView: React.FC<Props> = ({
                   <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Standard Paper Size</label>
                   <ShadcnSelect
                     value={printPaperSize}
-                    onChange={(e) => {
+                    onChange={(e: any) => {
                       setPrintPaperSize(e.target.value);
                       localStorage.setItem('modern_app_paper_size', e.target.value);
                     }}
@@ -2098,13 +2107,10 @@ export const SettingsTabView: React.FC<Props> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{ position: 'relative' }}>
                     <ShadcnAvatar size="xl" style={{ border: '2px solid #3f3f46', background: '#18181b', width: '64px', height: '64px' }}>
-                      {userAvatar ? (
-                        <ShadcnAvatarImage src={userAvatar} alt={userName} />
-                      ) : (
-                        <ShadcnAvatarFallback style={{ fontSize: '20px', fontWeight: 700, color: '#f4f4f5', background: '#27272a' }}>
-                          {userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'OP'}
-                        </ShadcnAvatarFallback>
-                      )}
+                      <ShadcnAvatarImage src={userAvatar || getAvatarUrl(userAvatarId, userName)} alt={userName} />
+                      <ShadcnAvatarFallback style={{ fontSize: '20px', fontWeight: 700, color: '#f4f4f5', background: '#27272a' }}>
+                        {userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'OP'}
+                      </ShadcnAvatarFallback>
                     </ShadcnAvatar>
                     {/* Live Presence Pulse Indicator */}
                     <span
@@ -2345,96 +2351,144 @@ export const SettingsTabView: React.FC<Props> = ({
 
                 <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   
-                  {/* Avatar Picker Studio */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', borderRadius: '8px', background: '#18181b', border: '1px solid #27272a' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#09090b', border: '1px solid #27272a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                      {userAvatar ? (
-                        <img src={userAvatar} alt="DP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ fontSize: '18px', fontWeight: 700, color: '#f4f4f5' }}>
-                          {userName.slice(0, 2).toUpperCase() || 'OP'}
+                  {/* 3D Avatar Picker Studio */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', borderRadius: '10px', background: '#18181b', border: '1px solid #27272a' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Sparkles size={14} style={{ color: '#38bdf8' }} />
+                        <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5' }}>
+                          Choose 3D Profile Avatar (DP)
                         </span>
-                      )}
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>
+                        Active DP: #{userAvatarId}
+                      </span>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <input
-                        type="file"
-                        ref={dpInputRef}
-                        accept="image/*"
-                        onChange={handleAvatarUpload}
-                        style={{ display: 'none' }}
-                      />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <ShadcnButton
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => dpInputRef.current?.click()}
-                          style={{ height: '28px', fontSize: '11px', background: '#27272a', color: '#f4f4f5' }}
-                        >
-                          Upload Photo
-                        </ShadcnButton>
-                        {userAvatar && (
-                          <ShadcnButton
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            style={{ height: '28px', fontSize: '11px', color: '#ef4444' }}
-                            onClick={() => {
-                              setUserAvatar('');
-                              localStorage.removeItem('modern_app_user_avatar');
-                              window.dispatchEvent(new Event('storage'));
-                              macAudio.playTrash();
-                            }}
-                          >
-                            Remove
-                          </ShadcnButton>
-                        )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      {/* Active Big Avatar Preview */}
+                      <div
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '50%',
+                          background: '#09090b',
+                          border: '2px solid #007AFF',
+                          boxShadow: '0 0 14px rgba(0, 122, 255, 0.45)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          flexShrink: 0
+                        }}
+                      >
+                        <img
+                          src={userAvatar || getAvatarUrl(userAvatarId, userName)}
+                          alt="DP"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
 
-                      {/* Quick Emoji Presets */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {['👨‍💼', '👩‍💼', '🧑‍💻', '⚡', '🏭', '🔬'].map((emoji) => (
-                          <button
-                            key={emoji}
+                      {/* Controls: Upload Custom / Remove */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <input
+                          type="file"
+                          ref={dpInputRef}
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          style={{ display: 'none' }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <ShadcnButton
                             type="button"
-                            onClick={() => {
-                              const canvas = document.createElement('canvas');
-                              canvas.width = 120;
-                              canvas.height = 120;
-                              const ctx = canvas.getContext('2d');
-                              if (ctx) {
-                                ctx.fillStyle = '#09090b';
-                                ctx.fillRect(0, 0, 120, 120);
-                                ctx.font = '64px sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillText(emoji, 60, 65);
-                                const url = canvas.toDataURL('image/png');
-                                setUserAvatar(url);
-                                localStorage.setItem('modern_app_user_avatar', url);
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => dpInputRef.current?.click()}
+                            style={{ height: '28px', fontSize: '11px', background: '#27272a', color: '#f4f4f5' }}
+                          >
+                            <Upload size={12} style={{ marginRight: '4px' }} />
+                            Upload Custom Photo
+                          </ShadcnButton>
+                          {userAvatar && (
+                            <ShadcnButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              style={{ height: '28px', fontSize: '11px', color: '#ef4444' }}
+                              onClick={() => {
+                                setUserAvatar('');
+                                localStorage.removeItem('modern_app_user_avatar');
                                 window.dispatchEvent(new Event('storage'));
-                                macAudio.playSuccess();
-                              }
+                                macAudio.playTrash();
+                              }}
+                            >
+                              Reset to 3D Avatar
+                            </ShadcnButton>
+                          )}
+                        </div>
+                        <span style={{ fontSize: '10.5px', color: '#71717a' }}>
+                          Neeche diye 3D avatars me se koi bhi select karein (DP har jagah sync hogi).
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 3D Avatars Grid Shelf */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
+                        gap: '8px',
+                        maxHeight: '120px',
+                        overflowY: 'auto',
+                        padding: '8px',
+                        background: '#09090b',
+                        borderRadius: '8px',
+                        border: '1px solid #27272a',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#3f3f46 transparent'
+                      }}
+                    >
+                      {getAllAvatarIds().map((id) => {
+                        const isSelected = userAvatarId === id && (!userAvatar || userAvatar === `/avatars/${id}.webp`);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            title={`3D Avatar #${id}`}
+                            onClick={() => {
+                              setUserAvatarId(id);
+                              setUserAvatar(`/avatars/${id}.webp`);
+                              localStorage.setItem('modern_app_user_avatar_id', String(id));
+                              localStorage.setItem('modern_app_user_avatar', `/avatars/${id}.webp`);
+                              setUserProfile({ avatarId: id });
+                              window.dispatchEvent(new Event('storage'));
+                              macAudio.playPop();
+                              onShowToast?.(`Avatar #${id} Selected!`, 'success');
                             }}
                             style={{
-                              width: '24px',
-                              height: '24px',
-                              borderRadius: '4px',
-                              border: '1px solid #27272a',
-                              background: '#09090b',
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer'
+                              position: 'relative',
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              border: isSelected ? '2px solid #007AFF' : '1px solid #27272a',
+                              background: isSelected ? 'rgba(0, 122, 255, 0.25)' : '#18181b',
+                              cursor: 'pointer',
+                              padding: 0,
+                              overflow: 'hidden',
+                              transition: 'all 0.15s ease',
+                              transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                              boxShadow: isSelected ? '0 0 10px rgba(0, 122, 255, 0.6)' : 'none'
                             }}
                           >
-                            {emoji}
+                            <img
+                              src={`/avatars/${id}.webp`}
+                              alt={`#${id}`}
+                              loading="lazy"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
                           </button>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -4095,7 +4149,7 @@ export const SettingsTabView: React.FC<Props> = ({
                     title="Strict 1-Bit Monochrome"
                     desc="Guarantees pure #000000 on #ffffff for thermal heads"
                     checked={barcodeConfig.colorMode === '1BIT_MONOCHROME'}
-                    onChange={(checked) => handleUpdateBarcodeConfig({ colorMode: checked ? '1BIT_MONOCHROME' : 'GRAYSCALE' })}
+                    onChange={(checked) => handleUpdateBarcodeConfig({ colorMode: (checked ? '1BIT_MONOCHROME' : 'GRAYSCALE') as any })}
                   />
                   <LuxuryToggle
                     title="Strict Boundary Overflow Guard"
@@ -5046,7 +5100,7 @@ export const SettingsTabView: React.FC<Props> = ({
                 .replace(/\{WIDTH_MM\}/g, String(barcodeConfig.widthMmGlass || currentBatchItem.widthMm))
                 .replace(/\{HEIGHT_MM\}/g, String(barcodeConfig.heightMmGlass || currentBatchItem.heightMm))
                 .replace(/\{GLASS_TYPE\}/g, barcodeConfig.glassType || currentBatchItem.glassType)
-                .replace(/\{THICKNESS\}/g, barcodeConfig.thicknessMm || currentBatchItem.thicknessMm)
+                .replace(/\{THICKNESS\}/g, barcodeConfig.thicknessMm || currentBatchItem.thickness)
                 .replace(/\{RACK_NO\}/g, barcodeConfig.rackNo || currentBatchItem.rackNo)
                 .replace(/\{SLOT_NO\}/g, barcodeConfig.slotNo || currentBatchItem.slotNo)
                 .replace(/\{PROCESS_ROUTE\}/g, barcodeConfig.processRoute || currentBatchItem.processRoute)
@@ -5166,7 +5220,7 @@ export const SettingsTabView: React.FC<Props> = ({
                       </span>
                     </div>
                     <span style={{ fontSize: '10px', color: '#71717a', display: 'block', marginTop: '1px' }}>
-                      {currentBatchItem.glassType} • {currentBatchItem.widthMm}×{currentBatchItem.heightMm}mm ({currentBatchItem.thicknessMm})
+                      {currentBatchItem.glassType} • {currentBatchItem.widthMm}×{currentBatchItem.heightMm}mm ({currentBatchItem.thickness})
                     </span>
                   </div>
 
@@ -5378,7 +5432,7 @@ export const SettingsTabView: React.FC<Props> = ({
                               JOB: {barcodeConfig.orderNo || currentBatchItem.orderNo} • {barcodeConfig.liteId || currentBatchItem.liteId}
                             </span>
                             <span style={{ fontSize: `${Math.round(8 * previewZoom)}px`, fontWeight: 800, color: '#000000' }}>
-                              {barcodeConfig.thicknessMm || currentBatchItem.thicknessMm}
+                              {barcodeConfig.thicknessMm || currentBatchItem.thickness}
                             </span>
                           </div>
 
@@ -5427,8 +5481,8 @@ export const SettingsTabView: React.FC<Props> = ({
                                 border: '1px solid #000000'
                               }}
                             >
-                              {generateDataMatrixSvgMatrix(`${currentBatchItem.orderNo}/${currentBatchItem.liteId}`).map((row, rI) =>
-                                row.map((cell, cI) => (
+                              {((generateDataMatrixSvgMatrix(`${currentBatchItem.orderNo}/${currentBatchItem.liteId}`) as any).cells || []).map((row: any, rI: number) =>
+                                row.map((cell: any, cI: number) => (
                                   <div key={`${rI}-${cI}`} style={{ background: cell ? '#000000' : '#ffffff' }} />
                                 ))
                               )}

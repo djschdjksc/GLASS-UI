@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { BillHeader } from '../types';
 import { Plus, Check, ChevronDown, Calendar, Moon, Sparkles, MessageSquare, Calculator, User, History, Building2, X } from 'lucide-react';
-import { SQLITE_PARTIES } from '../data/sqliteData';
 import { ShadcnDatePicker } from './common/ShadcnDatePicker';
 import { macAudio } from '../utils/macAudio';
 import { DOC_TYPES } from '../utils/billDocTypes';
@@ -40,9 +39,7 @@ const COMMON_PARTIES = [
   'Supertech Electro India Ltd'
 ];
 
-const REAL_PARTIES: string[] = (SQLITE_PARTIES && SQLITE_PARTIES.length > 0)
-  ? Array.from(new Set(SQLITE_PARTIES.map((p: any) => p.party_name).filter(Boolean)))
-  : COMMON_PARTIES;
+const REAL_PARTIES: string[] = COMMON_PARTIES;
 
 const TYPE_SELECTIONS = ['RETAIL', 'WHOLESALE', 'JOB WORK', 'INTER-STATE', 'EXPORT'];
 
@@ -85,25 +82,13 @@ export const AppleHeader: React.FC<Props> = ({
   const [partyList, setPartyList] = useState<HeaderPartyOption[]>(() => {
     const map = new Map<string, HeaderPartyOption>();
 
-    (SQLITE_PARTIES || []).forEach((p: any) => {
-      const name = (p.party_name || '').trim();
+    localDb.getParties().forEach((p) => {
+      const name = (p.name || '').trim();
       if (name && !map.has(name.toLowerCase())) {
         map.set(name.toLowerCase(), {
           name,
           district: (p.district || '').trim(),
           station: (p.station || '').trim()
-        });
-      }
-    });
-
-    localDb.getParties().forEach((p) => {
-      const name = (p.name || '').trim();
-      if (name) {
-        const existing = map.get(name.toLowerCase());
-        map.set(name.toLowerCase(), {
-          name,
-          district: (p.district || existing?.district || '').trim(),
-          station: (p.station || existing?.station || '').trim()
         });
       }
     });

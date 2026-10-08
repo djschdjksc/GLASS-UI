@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
 import type { RawItem, FinishedItem, BillItemGroup } from '../types';
-import { SQLITE_BILLS } from '../data/sqliteData';
 import { normalizeDocType, getBillCategory } from '../utils/billDocTypes';
 import { Tooltip } from './ui/shadcn';
 
@@ -190,22 +189,10 @@ export const BottomModeBar: React.FC<Props> = ({
       );
     }
 
-    // Priority 3: Search in SQLITE_BILLS with selected DocType
-    if (!matched && SQLITE_BILLS && SQLITE_BILLS.length > 0) {
-      const sqliteCategoryBills = SQLITE_BILLS.filter((b: any) => getBillCategory(b) === currentDoc);
-      matched = sqliteCategoryBills.find((b: any) => 
-        String(b.token) === cleanNum || String(b.token).toLowerCase() === qLower
-      ) || sqliteCategoryBills.find((b: any) => 
-        b.party && b.party.toLowerCase().includes(rawQ.toLowerCase())
-      );
-    }
-
     // If not matched under current DocType, check if it exists in another DocType to give smart feedback
     if (!matched) {
       const otherMatch = allBills.find(b => 
         b.token === cleanNum || String(b.token).toLowerCase() === qLower
-      ) || (SQLITE_BILLS || []).find((b: any) => 
-        String(b.token) === cleanNum || String(b.token).toLowerCase() === qLower
       );
 
       if (otherMatch) {

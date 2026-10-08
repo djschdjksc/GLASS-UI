@@ -2935,6 +2935,7 @@ export const OtherTabsView: React.FC<Props> = ({
             docType: (selectedBill as any).type || (selectedBill as any).docType || 'Bill',
             partyName: selectedBill.party || 'CASH SALE',
             typeSelection: 'Regular',
+            vehicleType: 'SELF',
             vehicleNo: selectedBill.vehicle,
             date: selectedBill.date,
             tokenNo: formatBillNumber(selectedBill.token || selectedBill.id)

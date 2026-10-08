@@ -1850,7 +1850,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                             <button
                               type="button"
                               onClick={() => {
-                                const newType = isRecv ? 'pay' : 'receive';
+                                const newType: 'pay' | 'receive' = isRecv ? 'pay' : 'receive';
                                 const updated = adjustments.map(a => a.id === adj.id ? { ...a, type: newType } : a);
                                 setAdjustments(updated);
                                 saveAdjustmentsCache(updated, balanceLabel);

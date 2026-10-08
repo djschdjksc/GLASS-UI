@@ -9,6 +9,8 @@
   --bg-desktop: #09090b;
   --apple-glass-bg: #121215;
   --apple-glass-border: #27272a;
+  --glass-blur: 10px;
+  --glass-opacity: 0.82;
   --apple-accent: #38bdf8;
   --apple-emerald: #10b981;
   --text-primary: #f8fafc;
@@ -129,9 +131,9 @@ input[type='number']::-webkit-outer-spin-button {
 }
 
 [data-theme="glass"] .glass-panel {
-  background: rgba(18, 22, 28, var(--glass-opacity, 0.55)) !important;
-  backdrop-filter: blur(var(--glass-blur, 26px)) !important;
-  -webkit-backdrop-filter: blur(var(--glass-blur, 26px)) !important;
+  background: rgba(18, 22, 28, var(--glass-opacity, 0.75)) !important;
+  backdrop-filter: blur(var(--glass-blur, 10px)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 10px)) !important;
   border: 1px solid var(--apple-glass-border) !important;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
 }
@@ -521,7 +523,8 @@ body {
   top: calc(100% + 6px);
   right: 0;
   background: rgba(10, 15, 25, 0.98) !important;
-  backdrop-filter: blur(60px) saturate(200%) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
@@ -2180,8 +2183,8 @@ body {
 .ant-dropdown-anim {
   animation: antSlideDown 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
   transform-origin: top center;
-  backdrop-filter: blur(60px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   background: rgba(10, 15, 25, 0.98) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8) !important;
 }
@@ -2716,8 +2719,8 @@ body {
   border-radius: 14px !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   border: 1px solid var(--border, #27272a) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   padding: 14px 44px 14px 18px !important;
 }
 
