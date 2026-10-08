@@ -18,7 +18,7 @@ import {
   saveSkipItemsBulk
 } from '../services/db/sqliteDb';
 import UnsavedChangesModal from './UnsavedChangesModal';
-import { Select as ShadcnSelect, Tooltip, toast } from './ui/shadcn';
+import { Select as ShadcnSelect, Tooltip, toast, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 import { useItemMode } from '../context/ItemModeContext';
 import { resolveItemNameWithMode } from '../utils/itemExpansion';
 
@@ -439,16 +439,33 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     }).length;
   }, [curSub, itemsForSelectedGroup, groupDuplicateMap]);
 
+  const lastSoundRef = useRef<number>(0);
+  const playNavSound = () => {
+    const now = performance.now();
+    if (now - lastSoundRef.current > 45) {
+      lastSoundRef.current = now;
+      macAudio.playHover();
+    }
+  };
+
   /* ─────────────────────────────────────────────────────────
      KEYBOARD HANDLER: UP, DOWN, LEFT, RIGHT, ENTER, ESC, DEL, INSERT
   ───────────────────────────────────────────────────────── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // NumLock and Clear guards: never delete or disrupt UI
+      if (e.key === 'NumLock' || e.code === 'NumLock' || e.key === 'Clear') {
+        return;
+      }
+
       const target  = e.target as HTMLElement;
       const tagName = target.tagName;
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName);
 
       if (isInput) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          return;
+        }
         /* ── navigation inside a row (Edit Mode) ── */
         if (e.key === 'Enter' || (e.key === 'ArrowRight' && !e.shiftKey)) {
           const row = target.closest('tr');
@@ -461,7 +478,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           const currIdx = inputs.indexOf(target as any);
           if (currIdx >= 0 && currIdx < inputs.length - 1) {
             e.preventDefault();
-            macAudio.playHover();
+            playNavSound();
             inputs[currIdx + 1].focus();
             if ((inputs[currIdx + 1] as HTMLInputElement).select)
               (inputs[currIdx + 1] as HTMLInputElement).select?.();
@@ -495,7 +512,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           const currIdx = inputs.indexOf(target as any);
           if (currIdx > 0) {
             e.preventDefault();
-            macAudio.playHover();
+            playNavSound();
             inputs[currIdx - 1].focus();
             if ((inputs[currIdx - 1] as HTMLInputElement).select)
               (inputs[currIdx - 1] as HTMLInputElement).select?.();
@@ -525,11 +542,11 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           if (idx === -1) {
             if (filteredItems.length > 0) {
               setSelectedItemId(filteredItems[0].id);
-              macAudio.playHover();
+              playNavSound();
             }
           } else if (idx < filteredItems.length - 1) {
             setSelectedItemId(filteredItems[idx + 1].id);
-            macAudio.playHover();
+            playNavSound();
           }
         } else {
           setActivePanel('subgroups');
@@ -537,11 +554,11 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           if (idx === -1) {
             if (filteredSubGroups.length > 0) {
               setSelectedMainGroupId(filteredSubGroups[0].id);
-              macAudio.playHover();
+              playNavSound();
             }
           } else if (idx < filteredSubGroups.length - 1) {
             setSelectedMainGroupId(filteredSubGroups[idx + 1].id);
-            macAudio.playHover();
+            playNavSound();
           }
         }
         return;
@@ -555,20 +572,20 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           const idx = filteredItems.findIndex(si => si.id === selectedItemId);
           if (idx > 0) {
             setSelectedItemId(filteredItems[idx - 1].id);
-            macAudio.playHover();
+            playNavSound();
           } else if (idx === -1 && filteredItems.length > 0) {
             setSelectedItemId(filteredItems[0].id);
-            macAudio.playHover();
+            playNavSound();
           }
         } else {
           setActivePanel('subgroups');
           const idx = filteredSubGroups.findIndex(s => s.id === selectedMainGroupId);
           if (idx > 0) {
             setSelectedMainGroupId(filteredSubGroups[idx - 1].id);
-            macAudio.playHover();
+            playNavSound();
           } else if (idx === -1 && filteredSubGroups.length > 0) {
             setSelectedMainGroupId(filteredSubGroups[0].id);
-            macAudio.playHover();
+            playNavSound();
           }
         }
         return;
@@ -598,8 +615,8 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
         }
       }
 
-      // Enter or Delete while delete confirmation modal is active → confirm immediately!
-      if (e.key === 'Enter' || e.key === 'Delete') {
+      // Enter while delete confirmation modal is active → confirm delete safely
+      if (e.key === 'Enter') {
         if (itemToDelete) {
           e.preventDefault();
           confirmDeleteItem();
@@ -781,18 +798,18 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
 
         {/* Table */}
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-              <tr style={{ borderBottom: '1px solid #27272a' }}>
-                <th style={{ width: DEFAULT_MAIN_COLS.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>#</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.mainGroup, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>MAIN GROUP</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.groupName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>GROUP NAME</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.sumCol, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>SUM COL</th>
-                <th style={{ width: DEFAULT_MAIN_COLS.items, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEMS</th>
-                <th style={{ width: 65, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+              <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                <TableHead style={{ width: DEFAULT_MAIN_COLS.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>#</TableHead>
+                <TableHead style={{ width: DEFAULT_MAIN_COLS.mainGroup, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>MAIN GROUP</TableHead>
+                <TableHead style={{ width: DEFAULT_MAIN_COLS.groupName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>GROUP NAME</TableHead>
+                <TableHead style={{ width: DEFAULT_MAIN_COLS.sumCol, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>SUM COL</TableHead>
+                <TableHead style={{ width: DEFAULT_MAIN_COLS.items, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEMS</TableHead>
+                <TableHead style={{ width: 65, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredSubGroups.map((sg, idx) => {
                 const isSelected = selectedMainGroupId === sg.id;
                 const isEditing  = editingGroupId      === sg.id;
@@ -808,17 +825,29 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                 }).length;
 
                 return (
-                  <tr
+                  <TableRow
                     key={sg.id}
+                    isSelected={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
                     ref={el => {
-                      if (isSelected && el) el.scrollIntoView({ block: 'nearest' });
+                      if (isSelected && el) {
+                        el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+                        if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+                          el.focus({ preventScroll: true });
+                        }
+                      }
                     }}
                     style={{
                       height: '28px',
                       borderBottom: '1px solid #27272a',
-                      background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
-                      outline: isSelected ? '1px solid #3f3f46' : 'none',
-                      outlineOffset: '-1px',
+                      background: isSelected
+                        ? 'rgba(56, 189, 248, 0.16)'
+                        : idx % 2 === 0
+                        ? 'rgba(24, 24, 27, 0.4)'
+                        : 'transparent',
+                      outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                      outlineOffset: '-2px',
+                      boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                       cursor: 'pointer',
                       transition: 'background 0.1s ease'
                     }}
@@ -977,11 +1006,11 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -1132,15 +1161,15 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
         {/* Table */}
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {curSub ? (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-                <tr style={{ borderBottom: '1px solid #27272a' }}>
-                  <th style={{ width: DEFAULT_SUB_COLS.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>#</th>
-                  <th style={{ padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME / PREFIX</th>
-                  <th style={{ width: 65, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                  <TableHead style={{ width: DEFAULT_SUB_COLS.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>#</TableHead>
+                  <TableHead style={{ padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME / PREFIX</TableHead>
+                  <TableHead style={{ width: 65, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredItems.map((si, idx) => {
                   const isSel  = selectedItemId === si.id;
                   const isEdit = editingItemId  === si.id;
@@ -1153,20 +1182,27 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                     : undefined;
 
                   return (
-                    <tr
+                    <TableRow
                       key={si.id}
+                      isSelected={isSel}
+                      tabIndex={isSel ? 0 : -1}
                       ref={el => {
-                        if (isSel && el) el.scrollIntoView({ block: 'nearest' });
+                        if (isSel && el) {
+                          el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+                          if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+                            el.focus({ preventScroll: true });
+                          }
+                        }
                       }}
                       style={{
                         height: '28px',
                         borderBottom: '1px solid #27272a',
                         background: isDuplicate
                           ? (isSel ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.1)')
-                          : (isSel ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent'),
-                        outline: isSel ? '1px solid #3f3f46' : 'none',
-                        outlineOffset: '-1px',
-                        boxShadow: isDuplicate ? 'inset 3px 0 0 #ff4d4f' : undefined,
+                          : (isSel ? 'rgba(56, 189, 248, 0.16)' : idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                        outline: isSel ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                        outlineOffset: '-2px',
+                        boxShadow: isSel ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : isDuplicate ? 'inset 3px 0 0 #ff4d4f' : undefined,
                         cursor: 'pointer',
                         transition: 'background 0.1s ease'
                       }}
@@ -1304,11 +1340,11 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                           )}
                         </div>
                       </td>
-                    </tr>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#52525b', fontSize: '13px', flexDirection: 'column', gap: '8px' }}>
               <Tag size={28} strokeWidth={1} color="#52525b" />
@@ -1445,117 +1481,119 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
 
             {/* List / Table */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 18px' }}>
-              <table className="apple-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
-                  <tr>
-                    <th style={{ width: 40, textAlign: 'center' }}>#</th>
-                    <th>MAIN GROUP NAME</th>
-                    <th style={{ width: 100, textAlign: 'center' }}>SUB GROUPS</th>
-                    <th style={{ width: 80, textAlign: 'center' }}>ITEMS</th>
-                    <th style={{ width: 90, textAlign: 'center' }}>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mainGroups.map((mg, idx) => {
-                    const isEditing = editingMainGroupId === mg.id;
-                    const subCount = subGroups.filter(s => s.mainGroupId === mg.id || s.mainGroup === mg.name).length;
-                    const itemCount = skipItems.filter(si => si.mainGroup === mg.name).length;
+              <div style={{ borderRadius: '6px', border: '1px solid #27272a', overflow: 'hidden' }}>
+                <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                    <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                      <TableHead style={{ width: 40, textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>#</TableHead>
+                      <TableHead style={{ color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>MAIN GROUP NAME</TableHead>
+                      <TableHead style={{ width: 100, textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>SUB GROUPS</TableHead>
+                      <TableHead style={{ width: 80, textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>ITEMS</TableHead>
+                      <TableHead style={{ width: 90, textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>ACTION</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mainGroups.map((mg, idx) => {
+                      const isEditing = editingMainGroupId === mg.id;
+                      const subCount = subGroups.filter(s => s.mainGroupId === mg.id || s.mainGroup === mg.name).length;
+                      const itemCount = skipItems.filter(si => si.mainGroup === mg.name).length;
 
-                    return (
-                      <tr key={mg.id} className="mac-table-row">
-                        <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '11px' }}>
-                          {idx + 1}
-                        </td>
-                        <td style={{ padding: '4px 8px' }}>
-                          {isEditing ? (
-                            <form
-                              onSubmit={e => {
-                                e.preventDefault();
-                                handleRenameMainGroup(mg.id, editingMainGroupName);
-                                setEditingMainGroupId(null);
-                              }}
-                              style={{ display: 'flex', gap: '4px' }}
-                            >
-                              <input
-                                type="text"
-                                value={editingMainGroupName}
-                                onChange={e => setEditingMainGroupName(e.target.value)}
-                                style={{
-                                  flex: 1,
-                                  background: 'rgba(255, 255, 255, 0.08)',
-                                  border: '1px solid #38bdf8',
-                                  borderRadius: '4px',
-                                  padding: '2px 6px',
-                                  fontSize: '11.5px',
-                                  color: '#fff',
-                                  outline: 'none'
+                      return (
+                        <TableRow key={mg.id} style={{ height: '32px', borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent' }}>
+                          <TableCell style={{ textAlign: 'center', color: '#94a3b8', fontSize: '11px', padding: '4px' }}>
+                            {idx + 1}
+                          </TableCell>
+                          <TableCell style={{ padding: '4px 8px' }}>
+                            {isEditing ? (
+                              <form
+                                onSubmit={e => {
+                                  e.preventDefault();
+                                  handleRenameMainGroup(mg.id, editingMainGroupName);
+                                  setEditingMainGroupId(null);
                                 }}
-                                autoFocus
-                              />
-                              <button type="submit" className="mac-btn primary" style={{ padding: '2px 6px' }}>
-                                <Check size={11} />
-                              </button>
+                                style={{ display: 'flex', gap: '4px' }}
+                              >
+                                <input
+                                  type="text"
+                                  value={editingMainGroupName}
+                                  onChange={e => setEditingMainGroupName(e.target.value)}
+                                  style={{
+                                    flex: 1,
+                                    background: '#18181b',
+                                    border: '1px solid #38bdf8',
+                                    borderRadius: '4px',
+                                    padding: '2px 6px',
+                                    fontSize: '11.5px',
+                                    color: '#fff',
+                                    outline: 'none'
+                                  }}
+                                  autoFocus
+                                />
+                                <button type="submit" className="mac-btn primary" style={{ padding: '2px 6px' }}>
+                                  <Check size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="mac-btn"
+                                  style={{ padding: '2px 6px' }}
+                                  onClick={() => setEditingMainGroupId(null)}
+                                >
+                                  <X size={11} />
+                                </button>
+                              </form>
+                            ) : (
+                              <div
+                                onDoubleClick={() => {
+                                  setEditingMainGroupId(mg.id);
+                                  setEditingMainGroupName(mg.name);
+                                }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                                title="Double click to rename"
+                              >
+                                <Folder size={13} color="#38bdf8" />
+                                <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '12px' }}>
+                                  {mg.name}
+                                </span>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700, fontSize: '11.5px', padding: '4px' }}>
+                            {subCount}
+                          </TableCell>
+                          <TableCell style={{ textAlign: 'center', color: '#34d399', fontWeight: 700, fontSize: '11.5px', padding: '4px' }}>
+                            {itemCount}
+                          </TableCell>
+                          <TableCell style={{ textAlign: 'center', padding: '2px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                               <button
                                 type="button"
                                 className="mac-btn"
-                                style={{ padding: '2px 6px' }}
-                                onClick={() => setEditingMainGroupId(null)}
+                                style={{ padding: '3px 6px', height: '22px' }}
+                                onClick={() => {
+                                  setEditingMainGroupId(mg.id);
+                                  setEditingMainGroupName(mg.name);
+                                }}
+                                title="Rename Main Group"
                               >
-                                <X size={11} />
+                                <Edit2 size={11} color="#94a3b8" />
                               </button>
-                            </form>
-                          ) : (
-                            <div
-                              onDoubleClick={() => {
-                                setEditingMainGroupId(mg.id);
-                                setEditingMainGroupName(mg.name);
-                              }}
-                              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-                              title="Double click to rename"
-                            >
-                              <Folder size={13} color="#38bdf8" />
-                              <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '12px' }}>
-                                {mg.name}
-                              </span>
+                              <button
+                                type="button"
+                                className="mac-btn danger"
+                                style={{ padding: '3px 6px', height: '22px' }}
+                                onClick={() => promptDeleteMainGroup(mg)}
+                                title="Delete Main Group"
+                              >
+                                <Trash2 size={11} />
+                              </button>
                             </div>
-                          )}
-                        </td>
-                        <td style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700, fontSize: '11.5px' }}>
-                          {subCount}
-                        </td>
-                        <td style={{ textAlign: 'center', color: '#34d399', fontWeight: 700, fontSize: '11.5px' }}>
-                          {itemCount}
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '2px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                            <button
-                              type="button"
-                              className="mac-btn"
-                              style={{ padding: '3px 6px', height: '22px' }}
-                              onClick={() => {
-                                setEditingMainGroupId(mg.id);
-                                setEditingMainGroupName(mg.name);
-                              }}
-                              title="Rename Main Group"
-                            >
-                              <Edit2 size={11} color="#94a3b8" />
-                            </button>
-                            <button
-                              type="button"
-                              className="mac-btn danger"
-                              style={{ padding: '3px 6px', height: '22px' }}
-                              onClick={() => promptDeleteMainGroup(mg)}
-                              title="Delete Main Group"
-                            >
-                              <Trash2 size={11} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
             {/* Footer */}

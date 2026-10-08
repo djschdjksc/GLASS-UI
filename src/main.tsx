@@ -12,7 +12,17 @@ window.addEventListener('keydown', (e) => {
       e.preventDefault();
     }
   }
+
+  // Globally intercept Ctrl+P and Ctrl+Shift+P at root capture phase so browser print never opens
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+    e.preventDefault();
+  }
 }, { capture: true });
+
+// Globally disable browser's native window.print() dialog permanently
+window.print = () => {
+  console.warn('[Direct Print Guard] Browser native window.print() blocked. Direct Python Print Engine active.');
+};
 
 window.addEventListener('wheel', () => {
   if (document.activeElement && (document.activeElement as HTMLElement).tagName === 'INPUT') {

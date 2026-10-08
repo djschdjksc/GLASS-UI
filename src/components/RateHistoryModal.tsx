@@ -16,8 +16,7 @@ import {
 } from 'lucide-react';
 import { localDb } from '../services/db/localDb';
 import { SQLITE_BILLS } from '../data/sqliteData';
-import type { FinishedItem, RawItem } from '../types';
-import { Tooltip } from './ui/shadcn';
+import { Tooltip, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 
 export interface RateHistoryItem {
   id: string;
@@ -720,54 +719,50 @@ export const RateHistoryModal: React.FC<Props> = ({
               </div>
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{
+            <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#18181b' }}>
+                <TableRow style={{
                   borderBottom: '1px solid #27272a',
-                  backgroundColor: '#18181b',
                   fontSize: '11px',
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   color: '#a1a1aa'
                 }}>
-                  <th style={{ padding: '9px 12px', width: '38px', textAlign: 'center' }}></th>
-                  <th style={{ padding: '9px 14px' }}>Item / Mould Specification</th>
-                  <th style={{ padding: '9px 14px', textAlign: 'right' }}>Recent Rate</th>
-                  <th style={{ padding: '9px 14px' }}>Most Recent Bill (Kab Gaya)</th>
-                  <th style={{ padding: '9px 14px' }}>Billed Party Context</th>
-                </tr>
-              </thead>
-              <tbody>
+                  <TableHead style={{ padding: '9px 12px', width: '38px', textAlign: 'center' }}></TableHead>
+                  <TableHead style={{ padding: '9px 14px' }}>Item / Mould Specification</TableHead>
+                  <TableHead style={{ padding: '9px 14px', textAlign: 'right' }}>Recent Rate</TableHead>
+                  <TableHead style={{ padding: '9px 14px' }}>Most Recent Bill (Kab Gaya)</TableHead>
+                  <TableHead style={{ padding: '9px 14px' }}>Billed Party Context</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredData.map((item) => {
                   const isSelected = selectedMoulds.has(item.mould);
 
                   return (
-                    <tr
+                    <TableRow
                       key={item.id}
                       onClick={() => toggleSelect(item.mould)}
                       style={{
-                        borderBottom: '1px solid #1c1917',
-                        backgroundColor: isSelected ? 'rgba(39, 39, 42, 0.45)' : 'transparent',
+                        borderBottom: '1px solid #27272a',
+                        backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.16)' : 'transparent',
+                        outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                        outlineOffset: '-2px',
+                        boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                         cursor: 'pointer',
                         transition: 'background-color 0.1s ease',
                         fontSize: '12.5px'
                       }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = '#141417';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
                     >
                       {/* Checkbox */}
-                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                      <TableCell style={{ padding: '10px 12px', textAlign: 'center' }}>
                         <div style={{
                           width: '16px',
                           height: '16px',
                           borderRadius: '4px',
-                          border: isSelected ? '1px solid #fafafa' : '1px solid #3f3f46',
-                          backgroundColor: isSelected ? '#fafafa' : 'transparent',
+                          border: isSelected ? '1px solid #38bdf8' : '1px solid #3f3f46',
+                          backgroundColor: isSelected ? '#38bdf8' : 'transparent',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -775,10 +770,10 @@ export const RateHistoryModal: React.FC<Props> = ({
                         }}>
                           {isSelected && <Check size={11} color="#09090b" strokeWidth={3} />}
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* Mould Specification */}
-                      <td style={{ padding: '10px 14px' }}>
+                      <TableCell style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 600, color: '#fafafa', fontSize: '13px' }}>
                             {item.mould}
@@ -823,10 +818,10 @@ export const RateHistoryModal: React.FC<Props> = ({
                             </span>
                           )}
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* Recent Rate */}
-                      <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                      <TableCell style={{ padding: '10px 14px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                           <span style={{
                             fontWeight: 700,
@@ -842,10 +837,10 @@ export const RateHistoryModal: React.FC<Props> = ({
                             </span>
                           )}
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* Sabse Recent Bill Kab Gaya (Date, Token, Time Ago) */}
-                      <td style={{ padding: '10px 14px' }}>
+                      <TableCell style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                           <Calendar size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
@@ -867,10 +862,10 @@ export const RateHistoryModal: React.FC<Props> = ({
                             </span>
                           </div>
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* Billed Party Context */}
-                      <td style={{ padding: '10px 14px', color: '#d4d4d8' }}>
+                      <TableCell style={{ padding: '10px 14px', color: '#d4d4d8' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <Building2 size={12} style={{ color: item.hasBilledToParty ? '#38bdf8' : '#71717a', flexShrink: 0 }} />
@@ -892,12 +887,12 @@ export const RateHistoryModal: React.FC<Props> = ({
                             </span>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
 

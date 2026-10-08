@@ -30,7 +30,13 @@ import {
   Pagination as ShadcnPagination,
   Select as ShadcnSelect,
   Tooltip,
-  toast
+  toast,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
 } from './ui/shadcn';
 import { useTableKeyboardNavigation } from '../hooks/useTableKeyboardNavigation';
 import { macAudio } from '../utils/macAudio';
@@ -1398,26 +1404,26 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
         }}
       >
         <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <Table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             {/* Header */}
-            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b', borderBottom: '1px solid #27272a' }}>
-              <tr>
-                <th style={{ padding: '10px 14px', width: '110px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>DATE</th>
-                <th style={{ padding: '10px 14px', width: '120px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>TYPE</th>
-                <th style={{ padding: '10px 14px', width: '110px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>VOUCHER #</th>
-                <th style={{ padding: '10px 14px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>PARTICULARS</th>
-                <th style={{ padding: '10px 14px', width: '130px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>DEBIT (Dr)</th>
-                <th style={{ padding: '10px 14px', width: '130px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>CREDIT (Cr)</th>
-                <th style={{ padding: '10px 14px', width: '140px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>BALANCE</th>
-                <th style={{ padding: '10px 14px', width: '70px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>ACTION</th>
-              </tr>
-            </thead>
+            <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b', borderBottom: '1px solid #27272a' }}>
+              <TableRow>
+                <TableHead style={{ padding: '10px 14px', width: '110px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>DATE</TableHead>
+                <TableHead style={{ padding: '10px 14px', width: '120px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>TYPE</TableHead>
+                <TableHead style={{ padding: '10px 14px', width: '110px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>VOUCHER #</TableHead>
+                <TableHead style={{ padding: '10px 14px', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>PARTICULARS</TableHead>
+                <TableHead style={{ padding: '10px 14px', width: '130px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>DEBIT (Dr)</TableHead>
+                <TableHead style={{ padding: '10px 14px', width: '130px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>CREDIT (Cr)</TableHead>
+                <TableHead style={{ padding: '10px 14px', width: '140px', textAlign: 'right', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>BALANCE</TableHead>
+                <TableHead style={{ padding: '10px 14px', width: '70px', textAlign: 'center', color: '#a1a1aa', fontWeight: 600, fontSize: '12px' }}>ACTION</TableHead>
+              </TableRow>
+            </TableHeader>
 
             {/* Body */}
-            <tbody>
+            <TableBody>
               {displayedEntries.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '48px 16px', color: '#71717a' }}>
+                <TableRow>
+                  <TableCell colSpan={8} style={{ textAlign: 'center', padding: '48px 16px', color: '#71717a' }}>
                     {isLoading ? (
                       'Loading ledger statement...'
                     ) : (
@@ -1431,8 +1437,8 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                         </div>
                       </div>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 paginatedEntries.map((item, idx) => {
                   const isSelected = selectedRowId === item.id;
@@ -1441,12 +1447,14 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                   const isCredit = item.credit > 0;
 
                   return (
-                    <tr
+                    <TableRow
                       key={item.id}
                       id={`ledger-row-${idx}`}
                       data-row-id={item.id}
                       data-row-index={idx}
                       data-row-selected={isSelected ? 'true' : undefined}
+                      isSelected={isSelected}
+                      tabIndex={isSelected ? 0 : -1}
                       onClick={() => {
                         setSelectedRowId(item.id);
                         macAudio.playClick();
@@ -1457,21 +1465,20 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                         }
                       }}
                       style={{
-                        background: isOpening
-                          ? 'rgba(245, 158, 11, 0.06)'
-                          : isSelected
-                          ? '#27272a'
+                        background: isSelected
+                          ? 'rgba(56, 189, 248, 0.16)'
+                          : isOpening
+                          ? 'rgba(245, 158, 11, 0.08)'
+                          : idx % 2 === 0
+                          ? 'rgba(24, 24, 27, 0.4)'
                           : 'transparent',
+                        outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                        outlineOffset: '-2px',
+                        boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                         borderBottom: '1px solid #18181b',
-                        borderLeft: isOpening ? '3px solid #f59e0b' : (isSelected ? '3px solid #38bdf8' : '3px solid transparent'),
+                        borderLeft: isOpening ? '3px solid #f59e0b' : undefined,
                         cursor: 'pointer',
                         transition: 'background-color 0.1s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected && !isOpening) e.currentTarget.style.background = '#18181b';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected && !isOpening) e.currentTarget.style.background = 'transparent';
                       }}
                     >
                       {/* Date */}
@@ -1645,12 +1652,12 @@ export const LedgerTabView: React.FC<Props> = ({ onBackToBill, onLoadBillToEdito
                           </Tooltip>
                         ) : null}
                       </td>
-                    </tr>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* Grand Totals Footer Row */}

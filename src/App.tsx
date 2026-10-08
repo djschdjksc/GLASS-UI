@@ -1274,8 +1274,9 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       }
 
       // Ctrl+P: Universal Print across all modules
-      if (isCtrlOrCmd && !e.shiftKey && !e.altKey && (e.key === 'p' || e.key === 'P')) {
+      if (isCtrlOrCmd && !e.altKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
+        e.stopPropagation();
         if (activeTabRef.current === 'F1') {
           openPrintRef.current?.('estimate');
         } else {
@@ -1528,6 +1529,11 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   // Accidental refresh / tab-close protection: Warn user if active bill has unsaved draft data
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Force commit active focused input/cell draft to state & localStorage before page unloads
+      if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
+        document.activeElement.blur();
+      }
+
       if (!isBillEmpty(header, rawItems, finishedItems)) {
         e.preventDefault();
         e.returnValue = '';
@@ -2968,6 +2974,17 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
     }
   };
 
+  // Grand total of all quantity/size columns in Left Table (Product Total table)
+  const leftGrandTotalAllCols = useMemo(() => {
+    return rawItems.reduce((acc, it) => {
+      let rowSum = (Number(it.qty) || 0) + (Number(it.uCap) || 0) + (Number(it.lCap) || 0);
+      dynamicCols.forEach(c => {
+        rowSum += Number((it as any)[c.field]) || 0;
+      });
+      return acc + rowSum;
+    }, 0);
+  }, [rawItems, dynamicCols]);
+
   return (
     <div 
       style={{
@@ -3151,6 +3168,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                       autoConvert={autoConvert}
                       autoItem={autoItem}
                       splitRowIndex={splitRowIndex}
+                      expectedTotalQty={leftGrandTotalAllCols}
                       rowHeight={rowHeight}
                       onSetRowHeight={setRowHeight}
                       tableFontSize={tableFontSize}
@@ -3541,7 +3559,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       />
 
       {/* Shadcn UI Native Toast (https://ui.shadcn.com/docs/components/toast) */}
-      <Toaster />
+      <Toaster position="bottom-left" />
 
     </div>
   );

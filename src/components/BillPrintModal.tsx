@@ -534,15 +534,14 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
         return;
       }
 
-      if (isCtrlOrCmd && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+      if (isCtrlOrCmd && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
-        window.print();
-        return;
-      }
-
-      if (isCtrlOrCmd && !e.shiftKey && (e.key === 'p' || e.key === 'P')) {
-        e.preventDefault();
-        handleDirectPrint(false);
+        e.stopPropagation();
+        if (e.shiftKey) {
+          handleDirectPrint(true);
+        } else {
+          handleDirectPrint(false);
+        }
         return;
       }
 
@@ -621,8 +620,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       }
     };
 
-    window.addEventListener('keydown', handleModalKeyDown);
-    return () => window.removeEventListener('keydown', handleModalKeyDown);
+    window.addEventListener('keydown', handleModalKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleModalKeyDown, { capture: true });
   }, [isOpen, printPayload, totalPages]);
 
   // Autofocus newly added adjustment row
@@ -746,8 +745,11 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       }
     } catch (err) {
       console.warn('Native direct-print network error:', err);
-      // Fast fallback to browser print
-      window.print();
+      setPrintStatusToast({ 
+        type: 'error', 
+        msg: 'Print Error: Python Native Print Engine (Port 5005) not responding. Please check server.' 
+      });
+      setTimeout(() => setPrintStatusToast(null), 5000);
     } finally {
       setIsPrintingNative(false);
     }
@@ -1556,7 +1558,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
               </span>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => handleDirectPrint(true)}
                 style={{
                   background: 'none',
                   border: 'none',

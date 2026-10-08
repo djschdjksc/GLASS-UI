@@ -9,8 +9,15 @@ import {
   Button as ShadcnButton,
   Input as ShadcnInput,
   Tooltip,
-  toast
+  toast,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
 } from './ui/shadcn';
+import { RotateCcw } from 'lucide-react';
 
 import {
   Plus,
@@ -192,6 +199,20 @@ export const ControlPanelView: React.FC = () => {
   const [skipItemsList, setSkipItemsList] = useState<any[]>([]);
   const [billItemsList, setBillItemsList] = useState<any[]>([]);
   const [conversionsList, setConversionsList] = useState<any[]>([]);
+  const [showRestoreModalGlobal, setShowRestoreModalGlobal] = useState(false);
+
+  const handleRestoreConversionsGlobal = async () => {
+    try {
+      macAudio.playSuccess();
+      await saveConversionsBulk(SQLITE_CONTROL_CONVERSIONS, 'replace');
+      setConversionsList(SQLITE_CONTROL_CONVERSIONS);
+      window.dispatchEvent(new CustomEvent('billapp_conversions_updated'));
+      toast.success('Defaults Restored', '56 default conversions restored successfully.');
+      setShowRestoreModalGlobal(false);
+    } catch (e: any) {
+      toast.error('Failed to restore conversions');
+    }
+  };
 
   // Fetch true database state on mount and keep synced from SQLite backend (Port 5006)
   useEffect(() => {
@@ -407,19 +428,37 @@ export const ControlPanelView: React.FC = () => {
     );
   }, [groups, tabSearch.MANAGE_GROUPS]);
 
-  // Auto-scroll selected row into view
+  // Auto-scroll selected row into view instantly and set DOM focus
   useEffect(() => {
     if (selectedGroupId && rowRefs.current[selectedGroupId]) {
-      rowRefs.current[selectedGroupId]?.scrollIntoView({
+      const el = rowRefs.current[selectedGroupId];
+      el.scrollIntoView({
         block: 'nearest',
-        behavior: 'smooth'
+        behavior: 'auto'
       });
+      if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+        el.focus({ preventScroll: true });
+      }
     }
   }, [selectedGroupId]);
+
+  const lastSoundRef = useRef<number>(0);
+  const playNavSound = () => {
+    const now = performance.now();
+    if (now - lastSoundRef.current > 45) {
+      lastSoundRef.current = now;
+      macAudio.playHover();
+    }
+  };
 
   // Global Keyboard Navigation (Up/Down, Ctrl+Up/Ctrl+Down Shifting, Enter Edit, Delete Key)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // NumLock and Clear guards: never delete or disrupt UI
+      if (e.key === 'NumLock' || e.code === 'NumLock' || e.key === 'Clear') {
+        return;
+      }
+
       if (groupToDelete) {
         if (e.key === 'Escape') setGroupToDelete(null);
         if (e.key === 'Enter') {
@@ -445,6 +484,9 @@ export const ControlPanelView: React.FC = () => {
 
       // If user is typing in an input
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          return;
+        }
         if (e.key === 'ArrowRight') {
           const target = e.target as HTMLInputElement;
           const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
@@ -563,7 +605,7 @@ export const ControlPanelView: React.FC = () => {
         // ArrowDown: Select Next Row
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          macAudio.playHover();
+          playNavSound();
           const nextIdx = currentIndex < filteredGroups.length - 1 ? currentIndex + 1 : currentIndex;
           setSelectedGroupId(filteredGroups[nextIdx].id);
           return;
@@ -572,7 +614,7 @@ export const ControlPanelView: React.FC = () => {
         // ArrowUp: Select Prev Row
         if (e.key === 'ArrowUp') {
           e.preventDefault();
-          macAudio.playHover();
+          playNavSound();
           const prevIdx = currentIndex > 0 ? currentIndex - 1 : 0;
           setSelectedGroupId(filteredGroups[prevIdx].id);
           return;
@@ -1248,13 +1290,27 @@ export const ControlPanelView: React.FC = () => {
             />
           )}
           {activeTab === 'MANAGE_CONVERSIONS' && (
-            <ExcelCsvActions<any>
-              entityName="Conversions Matrix"
-              filenamePrefix="Control_Conversions"
-              columns={conversionColumns}
-              data={getActiveTabData()}
-              onImport={handleImportConversions}
-            />
+            <>
+              <Tooltip title="Restore 56 original conversions into database" side="bottom">
+                <ShadcnButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRestoreModalGlobal(true)}
+                  style={{ height: '32px', fontSize: '12px', fontWeight: 600, gap: '5px', borderColor: '#3f3f46', color: '#e4e4e7' }}
+                >
+                  <RotateCcw size={13} />
+                  Restore Defaults
+                </ShadcnButton>
+              </Tooltip>
+              <ExcelCsvActions<any>
+                entityName="Conversions Matrix"
+                filenamePrefix="Control_Conversions"
+                columns={conversionColumns}
+                data={getActiveTabData()}
+                onImport={handleImportConversions}
+              />
+            </>
           )}
         </div>
       </div>
@@ -1269,199 +1325,212 @@ export const ControlPanelView: React.FC = () => {
           onPaste={handleGroupPaste}
         >
           {/* GROUPS DATA TABLE */}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', border: '1px solid #27272a', background: '#09090b' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-                <tr style={{ borderBottom: '1px solid #27272a' }}>
-                  <th style={{ width: `${colWidths.srNo}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    #
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('srNo', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.groupName}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    GROUP NAME
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('groupName', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.groupIndex}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    GROUP INDEX
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('groupIndex', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.weightPerPc}px`, padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    WEIGHT/PC
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('weightPerPc', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.pcsPerBox}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    PCS/BOX
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('pcsPerBox', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.multiplication}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    MULT.
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('multiplication', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.realItemName}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    REAL ITEM NAME
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('realItemName', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.skipEq}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    SKIP
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('skipEq', e)} title="Drag to resize column" />
-                  </th>
-                  <th style={{ width: `${colWidths.chainParent}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
-                    CHAIN PARENT
-                    <div className="th-resizer" onMouseDown={(e) => startColResize('chainParent', e)} title="Drag to resize column" />
-                  </th>
-
-                  <th style={{ width: '65px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
-                    ACTION
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredGroups.map((grp, idx) => {
-                  const isSelected = selectedGroupId === grp.id;
-                  const isEditing = editingGroupId === grp.id;
-                  const cellInput: React.CSSProperties = {
-                    width: '100%',
-                    background: '#27272a',
-                    border: '1px solid #3f3f46',
-                    outline: 'none',
-                    color: '#f4f4f5',
-                    fontSize: '12px',
-                    padding: '3px 7px',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    borderRadius: '4px',
-                    fontWeight: 500
-                  };
-                  const cellText: React.CSSProperties = {
-                    padding: '4px 10px',
-                    display: 'block',
-                    userSelect: 'text',
-                    color: '#f4f4f5',
-                    fontSize: '12px',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    fontWeight: 500
-                  };
-                  return (
-                    <tr
-                      key={grp.id}
-                      style={{
-                        height: `${activeRowHeight}px`,
-                        borderBottom: '1px solid #27272a',
-                        background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
-                        outline: isSelected ? '1px solid #3f3f46' : 'none',
-                        outlineOffset: '-1px',
-                        cursor: 'pointer',
-                        transition: 'background 0.1s ease'
-                      }}
-                      onClick={() => setSelectedGroupId(grp.id)}
-                      onDoubleClick={() => setEditingGroupId(grp.id)}
-                    >
-                      <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
-                        {idx + 1}
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input style={{ ...cellInput, fontWeight: 600 }} value={grp.groupName} onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)} autoFocus />
-                        ) : (
-                          <span style={{ ...cellText, fontWeight: 600 }}>{grp.groupName}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input style={{ ...cellInput, fontWeight: 600 }} value={grp.groupIndex} onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)} />
-                        ) : (
-                          <span style={{ ...cellText, fontWeight: 600, color: '#a1a1aa' }}>{grp.groupIndex}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input type="number" step="any" style={{ ...cellInput, textAlign: 'right' }} value={grp.weightPerPc} onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)} />
-                        ) : (
-                          <span style={{ ...cellText, textAlign: 'right' }}>{grp.weightPerPc}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input type="number" style={{ ...cellInput, textAlign: 'center' }} value={grp.pcsPerBox} onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)} />
-                        ) : (
-                          <span style={{ ...cellText, textAlign: 'center' }}>{grp.pcsPerBox}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input type="number" step="any" style={{ ...cellInput, textAlign: 'center' }} value={grp.multiplication} onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)} />
-                        ) : (
-                          <span style={{ ...cellText, textAlign: 'center' }}>{grp.multiplication}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input style={cellInput} value={grp.realItemName} onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)} />
-                        ) : (
-                          <span style={{ ...cellText, color: grp.realItemName ? '#f4f4f5' : '#52525b' }}>{grp.realItemName || '—'}</span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'center', padding: '2px' }}>
-                        <input
-                          type="checkbox"
-                          checked={grp.skipEq}
-                          disabled={!isEditing}
-                          onChange={e => handleCellChange(grp.id, 'skipEq', e.target.checked)}
-                          style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#f4f4f5', width: '14px', height: '14px' }}
-                        />
-                      </td>
-                      <td style={{ padding: '2px 4px' }}>
-                        {isEditing ? (
-                          <input style={cellInput} value={grp.chainParent} onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)} />
-                        ) : (
-                          <span style={{ ...cellText, color: grp.chainParent === 'NONE' ? '#52525b' : '#f4f4f5' }}>{grp.chainParent}</span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'center', padding: '2px 6px' }}>
-                        {isEditing ? (
-                          <Tooltip title="Save Group" side="left">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
-                              style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                padding: '2px 10px', height: '24px', borderRadius: '4px',
-                                background: '#f4f4f5', color: '#09090b',
-                                border: 'none', fontSize: '11px', fontWeight: 600,
-                                cursor: 'pointer', margin: '0 auto'
-                              }}
-                            >
-                              <Check size={11} /> Save
-                            </button>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title="Delete Group" side="left">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); handleDeleteGroup(grp.id); }}
-                              style={{
-                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                width: '24px', height: '24px', borderRadius: '4px',
-                                background: 'transparent', color: '#52525b',
-                                border: '1px solid transparent', cursor: 'pointer',
-                                transition: 'all 0.12s ease'
-                              }}
-                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
-                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </Tooltip>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            containerStyle={{
+              flex: 1,
+              minHeight: 0,
+              height: '100%',
+              overflow: 'auto',
+              borderRadius: '8px',
+              border: '1px solid #27272a',
+              background: '#09090b'
+            }}
+          >
+            <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+              <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                <TableHead style={{ width: `${colWidths.srNo}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                  #
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('srNo', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.groupName}px`, textAlign: 'left', position: 'relative', userSelect: 'none' }}>
+                  GROUP NAME
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('groupName', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.groupIndex}px`, textAlign: 'left', position: 'relative', userSelect: 'none' }}>
+                  GROUP INDEX
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('groupIndex', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.weightPerPc}px`, textAlign: 'right', position: 'relative', userSelect: 'none' }}>
+                  WEIGHT/PC
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('weightPerPc', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.pcsPerBox}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                  PCS/BOX
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('pcsPerBox', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.multiplication}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                  MULT.
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('multiplication', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.realItemName}px`, textAlign: 'left', position: 'relative', userSelect: 'none' }}>
+                  REAL ITEM NAME
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('realItemName', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.skipEq}px`, textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                  SKIP
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('skipEq', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: `${colWidths.chainParent}px`, textAlign: 'left', position: 'relative', userSelect: 'none' }}>
+                  CHAIN PARENT
+                  <div className="th-resizer" onMouseDown={(e) => startColResize('chainParent', e)} title="Drag to resize column" />
+                </TableHead>
+                <TableHead style={{ width: '65px', textAlign: 'center', position: 'relative', userSelect: 'none' }}>
+                  ACTION
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredGroups.map((grp, idx) => {
+                const isSelected = selectedGroupId === grp.id;
+                const isEditing = editingGroupId === grp.id;
+                const cellInput: React.CSSProperties = {
+                  width: '100%',
+                  background: '#18181b',
+                  border: '1px solid #3f3f46',
+                  outline: 'none',
+                  color: '#f4f4f5',
+                  fontSize: '12px',
+                  padding: '2px 6px',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  borderRadius: '4px',
+                  fontWeight: 500
+                };
+                const cellText: React.CSSProperties = {
+                  padding: '3px 8px',
+                  display: 'block',
+                  userSelect: 'text',
+                  color: '#f4f4f5',
+                  fontSize: '12px',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  fontWeight: 500
+                };
+                return (
+                  <TableRow
+                    key={grp.id}
+                    ref={el => { rowRefs.current[grp.id] = el; }}
+                    isSelected={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
+                    style={{
+                      height: `${activeRowHeight}px`,
+                      background: isSelected
+                        ? 'rgba(56, 189, 248, 0.16)'
+                        : idx % 2 === 0
+                        ? 'rgba(24, 24, 27, 0.4)'
+                        : 'transparent',
+                      outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                      outlineOffset: '-2px',
+                      boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedGroupId(grp.id)}
+                    onDoubleClick={() => setEditingGroupId(grp.id)}
+                  >
+                    <TableCell style={{ textAlign: 'center', color: '#71717a', fontSize: '11px', userSelect: 'none', padding: '3px 4px' }}>
+                      {idx + 1}
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input style={{ ...cellInput, fontWeight: 600 }} value={grp.groupName} onChange={e => handleCellChange(grp.id, 'groupName', e.target.value)} autoFocus />
+                      ) : (
+                        <span style={{ ...cellText, fontWeight: 600 }}>{grp.groupName}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input style={{ ...cellInput, fontWeight: 600 }} value={grp.groupIndex} onChange={e => handleCellChange(grp.id, 'groupIndex', e.target.value)} />
+                      ) : (
+                        <span style={{ ...cellText, fontWeight: 600, color: '#a1a1aa' }}>{grp.groupIndex}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input type="number" step="any" style={{ ...cellInput, textAlign: 'right' }} value={grp.weightPerPc} onChange={e => handleCellChange(grp.id, 'weightPerPc', parseFloat(e.target.value) || 0)} />
+                      ) : (
+                        <span style={{ ...cellText, textAlign: 'right' }}>{grp.weightPerPc}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input type="number" style={{ ...cellInput, textAlign: 'center' }} value={grp.pcsPerBox} onChange={e => handleCellChange(grp.id, 'pcsPerBox', parseInt(e.target.value, 10) || 1)} />
+                      ) : (
+                        <span style={{ ...cellText, textAlign: 'center' }}>{grp.pcsPerBox}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input type="number" step="any" style={{ ...cellInput, textAlign: 'center' }} value={grp.multiplication} onChange={e => handleCellChange(grp.id, 'multiplication', parseFloat(e.target.value) || 1)} />
+                      ) : (
+                        <span style={{ ...cellText, textAlign: 'center' }}>{grp.multiplication}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input style={cellInput} value={grp.realItemName} onChange={e => handleCellChange(grp.id, 'realItemName', e.target.value)} />
+                      ) : (
+                        <span style={{ ...cellText, color: grp.realItemName ? '#f4f4f5' : '#52525b' }}>{grp.realItemName || '—'}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ textAlign: 'center', padding: '2px' }}>
+                      <input
+                        type="checkbox"
+                        checked={grp.skipEq}
+                        disabled={!isEditing}
+                        onChange={e => handleCellChange(grp.id, 'skipEq', e.target.checked)}
+                        style={{ cursor: isEditing ? 'pointer' : 'default', accentColor: '#38bdf8', width: '14px', height: '14px' }}
+                      />
+                    </TableCell>
+                    <TableCell style={{ padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <input style={cellInput} value={grp.chainParent} onChange={e => handleCellChange(grp.id, 'chainParent', e.target.value)} />
+                      ) : (
+                        <span style={{ ...cellText, color: grp.chainParent === 'NONE' ? '#52525b' : '#f4f4f5' }}>{grp.chainParent}</span>
+                      )}
+                    </TableCell>
+                    <TableCell style={{ textAlign: 'center', padding: '2px 4px' }}>
+                      {isEditing ? (
+                        <Tooltip title="Save Group" side="left">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '4px',
+                              padding: '2px 10px', height: '22px', borderRadius: '4px',
+                              background: '#f4f4f5', color: '#09090b',
+                              border: 'none', fontSize: '11px', fontWeight: 600,
+                              cursor: 'pointer', margin: '0 auto'
+                            }}
+                          >
+                            <Check size={11} /> Save
+                          </button>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title="Delete Group" side="left">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteGroup(grp.id); }}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              width: '24px', height: '24px', borderRadius: '4px',
+                              background: 'transparent', color: '#71717a',
+                              border: '1px solid transparent', cursor: 'pointer',
+                              transition: 'all 0.12s ease'
+                            }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#71717a'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -1517,6 +1586,17 @@ export const ControlPanelView: React.FC = () => {
             macAudio.playSuccess();
           }}
           onCancel={() => setGroupToDelete(null)}
+        />
+      )}
+
+      {/* Restore Defaults Global Confirmation Modal */}
+      {showRestoreModalGlobal && (
+        <UnsavedChangesModal
+          titleText="Restore Default Conversions?"
+          descText="Kya aap default conversions (56 original rules) restore karna chahte hain? Database me default conversions replace ho jayengi."
+          discardLabel="Haan, Restore Karo"
+          onDiscard={handleRestoreConversionsGlobal}
+          onCancel={() => setShowRestoreModalGlobal(false)}
         />
       )}
     </div>

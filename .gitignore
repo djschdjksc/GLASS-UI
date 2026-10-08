@@ -28,6 +28,7 @@ __pycache__/
 *.pyc
 # SQLite Local Database
 *.db
+!billapp.db
 *.db-shm
 *.db-wal
 

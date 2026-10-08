@@ -66,7 +66,13 @@ import {
   Select as ShadcnSelect,
   Pagination as ShadcnPagination,
   DatePicker as ShadcnDatePicker,
-  Tooltip as ShadcnTooltip
+  Tooltip as ShadcnTooltip,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
 } from './ui/shadcn';
 import { useTableKeyboardNavigation } from '../hooks/useTableKeyboardNavigation';
 import { ExcelCsvActions, type CsvColumnDef } from './common/ExcelCsvActions';
@@ -3119,27 +3125,29 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 outline: 'none'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-                  <tr style={{ borderBottom: '1px solid #27272a' }}>
-                    <th style={{ width: '100px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ID</th>
-                    <th style={{ width: '60px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>TYPE</th>
-                    <th style={{ width: '95px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DATE</th>
-                    <th style={{ minWidth: '160px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>PARTY / REMARKS</th>
-                    <th style={{ minWidth: '240px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME (WITH SIZE)</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U CAP</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L CAP</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                  <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                    <TableHead style={{ width: '100px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ID</TableHead>
+                    <TableHead style={{ width: '60px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>TYPE</TableHead>
+                    <TableHead style={{ width: '95px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DATE</TableHead>
+                    <TableHead style={{ minWidth: '160px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>PARTY / REMARKS</TableHead>
+                    <TableHead style={{ minWidth: '240px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME (WITH SIZE)</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U CAP</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L CAP</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ACTION</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {inwardPageSlice.map((item, idx) => {
                     const isSelected = inwardSelectedIndex === idx;
                     return (
-                      <tr
+                      <TableRow
                         key={item.id}
                         id={`inward-row-${idx}`}
+                        isSelected={isSelected}
+                        tabIndex={isSelected ? 0 : -1}
                         onClick={() => {
                           setInwardSelectedIndex(idx);
                           macAudio.playClick();
@@ -3151,8 +3159,12 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         }}
                         style={{
                           borderBottom: '1px solid #27272a',
-                          background: isSelected ? '#27272a' : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
-                          borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
+                          background: isSelected
+                            ? 'rgba(56, 189, 248, 0.16)'
+                            : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                          outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                          outlineOffset: '-2px',
+                          boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                           cursor: item.rawVoucherId !== null ? 'pointer' : 'default',
                           transition: 'background-color 0.15s ease'
                         }}
@@ -3196,11 +3208,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             <span style={{ color: '#71717a', fontSize: '12px' }}>Bill</span>
                           )}
                         </td>
-                      </tr>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
             {/* Inward Pagination */}
             <ShadcnPagination
@@ -3308,27 +3320,29 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                 outline: 'none'
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-                  <tr style={{ borderBottom: '1px solid #27272a' }}>
-                    <th style={{ width: '90px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>BILL NO</th>
-                    <th style={{ width: '120px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DOC TYPE</th>
-                    <th style={{ width: '95px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DATE</th>
-                    <th style={{ minWidth: '160px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>PARTY NAME</th>
-                    <th style={{ minWidth: '240px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME (WITH SIZE)</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U CAP</th>
-                    <th style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L CAP</th>
-                    <th style={{ width: '50px', padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>VIEW</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                  <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                    <TableHead style={{ width: '90px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>BILL NO</TableHead>
+                    <TableHead style={{ width: '120px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DOC TYPE</TableHead>
+                    <TableHead style={{ width: '95px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>DATE</TableHead>
+                    <TableHead style={{ minWidth: '160px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>PARTY NAME</TableHead>
+                    <TableHead style={{ minWidth: '240px', padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>ITEM NAME (WITH SIZE)</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>QTY</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>U CAP</TableHead>
+                    <TableHead style={{ width: '75px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>L CAP</TableHead>
+                    <TableHead style={{ width: '50px', padding: '8px 10px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>VIEW</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {outwardPageSlice.map((item, idx) => {
                     const isSelected = outwardSelectedIndex === idx;
                     return (
-                      <tr
+                      <TableRow
                         key={item.id}
                         id={`outward-row-${idx}`}
+                        isSelected={isSelected}
+                        tabIndex={isSelected ? 0 : -1}
                         onClick={() => {
                           setOutwardSelectedIndex(idx);
                           macAudio.playClick();
@@ -3336,8 +3350,12 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                         onDoubleClick={() => { if (onOpenBillDetails) { onOpenBillDetails(item.billId); } }}
                         style={{
                           borderBottom: '1px solid #27272a',
-                          background: isSelected ? '#27272a' : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
-                          borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
+                          background: isSelected
+                            ? 'rgba(56, 189, 248, 0.16)'
+                            : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                          outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                          outlineOffset: '-2px',
+                          boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                           cursor: 'pointer',
                           transition: 'background-color 0.15s ease'
                         }}
@@ -3362,11 +3380,11 @@ export const StockInventoryView: React.FC<StockInventoryViewProps> = ({
                             </ShadcnButton>
                           </ShadcnTooltip>
                         </td>
-                      </tr>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
             {/* Outward Pagination */}
             <ShadcnPagination

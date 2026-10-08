@@ -1891,9 +1891,185 @@ export const Segmented: React.FC<SegmentedProps> = ({
   );
 };
 
+// =========================================================================
+// 15. SHADCN UI TABLE COMPONENTS (ui.shadcn.com/docs/components/table)
+// =========================================================================
+
+export const Table = React.forwardRef<
+  HTMLTableElement,
+  React.TableHTMLAttributes<HTMLTableElement> & { 
+    containerStyle?: React.CSSProperties;
+    containerClassName?: string;
+  }
+>(({ style, containerStyle, containerClassName = '', className = '', ...props }, ref) => (
+  <div 
+    className={`shadcn-table-wrapper ${containerClassName}`}
+    style={{
+      position: 'relative',
+      width: '100%',
+      overflow: 'auto',
+      borderRadius: '8px',
+      border: '1px solid var(--border, #27272a)',
+      background: 'var(--card, #09090b)',
+      ...containerStyle
+    }}
+  >
+    <table
+      ref={ref}
+      className={`shadcn-table ${className}`}
+      style={{
+        width: '100%',
+        captionSide: 'bottom',
+        fontSize: '12.5px',
+        borderCollapse: 'collapse',
+        color: 'var(--text-primary, #f4f4f5)',
+        fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+        ...style
+      }}
+      {...props}
+    />
+  </div>
+));
+Table.displayName = "Table";
+
+export const TableHeader = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ style, className = '', ...props }, ref) => (
+  <thead
+    ref={ref}
+    className={`shadcn-table-header ${className}`}
+    style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 10,
+      background: 'var(--muted, #18181b)',
+      borderBottom: '1px solid var(--border, #27272a)',
+      ...style
+    }}
+    {...props}
+  />
+));
+TableHeader.displayName = "TableHeader";
+
+export const TableBody = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ style, className = '', ...props }, ref) => (
+  <tbody
+    ref={ref}
+    className={`shadcn-table-body ${className}`}
+    style={{
+      ...style
+    }}
+    {...props}
+  />
+));
+TableBody.displayName = "TableBody";
+
+export const TableFooter = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ style, className = '', ...props }, ref) => (
+  <tfoot
+    ref={ref}
+    className={`shadcn-table-footer ${className}`}
+    style={{
+      borderTop: '1px solid var(--border, #27272a)',
+      background: 'var(--muted, #18181b)',
+      fontWeight: 600,
+      color: 'var(--text-primary, #f4f4f5)',
+      ...style
+    }}
+    {...props}
+  />
+));
+TableFooter.displayName = "TableFooter";
+
+export const TableRow = React.forwardRef<
+  HTMLTableRowElement,
+  React.HTMLAttributes<HTMLTableRowElement> & { isSelected?: boolean }
+>(({ style, isSelected, className = '', ...props }, ref) => (
+  <tr
+    ref={ref}
+    className={`shadcn-table-row ${isSelected ? 'selected' : ''} ${className}`}
+    style={{
+      borderBottom: '1px solid var(--border, rgba(39, 39, 42, 0.7))',
+      transition: 'background-color 0.12s ease',
+      background: isSelected ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
+      outline: isSelected ? '1px solid rgba(56, 189, 248, 0.35)' : 'none',
+      outlineOffset: '-1px',
+      ...style
+    }}
+    {...props}
+  />
+));
+TableRow.displayName = "TableRow";
+
+export const TableHead = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement>
+>(({ style, className = '', ...props }, ref) => (
+  <th
+    ref={ref}
+    className={`shadcn-table-head ${className}`}
+    style={{
+      height: '34px',
+      padding: '6px 10px',
+      textAlign: 'left',
+      verticalAlign: 'middle',
+      fontWeight: 700,
+      fontSize: '11px',
+      letterSpacing: '0.04em',
+      textTransform: 'uppercase',
+      color: 'var(--muted-foreground, #a1a1aa)',
+      userSelect: 'none',
+      ...style
+    }}
+    {...props}
+  />
+));
+TableHead.displayName = "TableHead";
+
+export const TableCell = React.forwardRef<
+  HTMLTableCellElement,
+  React.TdHTMLAttributes<HTMLTableCellElement>
+>(({ style, className = '', ...props }, ref) => (
+  <td
+    ref={ref}
+    className={`shadcn-table-cell ${className}`}
+    style={{
+      padding: '4px 8px',
+      verticalAlign: 'middle',
+      fontSize: '12px',
+      color: 'var(--text-primary, #f4f4f5)',
+      ...style
+    }}
+    {...props}
+  />
+));
+TableCell.displayName = "TableCell";
+
+export const TableCaption = React.forwardRef<
+  HTMLTableCaptionElement,
+  React.HTMLAttributes<HTMLTableCaptionElement>
+>(({ style, className = '', ...props }, ref) => (
+  <caption
+    ref={ref}
+    className={`shadcn-table-caption ${className}`}
+    style={{
+      marginTop: '8px',
+      fontSize: '11px',
+      color: 'var(--muted-foreground, #71717a)',
+      ...style
+    }}
+    {...props}
+  />
+));
+TableCaption.displayName = "TableCaption";
 
 // =========================================================================
-// 15. TOAST COMPONENT (ui.shadcn.com/docs/components/sonner)
+// 16. TOAST COMPONENT (ui.shadcn.com/docs/components/sonner)
 // =========================================================================
 export {
   toast,
@@ -1914,3 +2090,8 @@ export type {
   ToastVariant,
   ToastActionElement,
 } from './toast';
+
+// 17. MODERN UNIFIED DATA TABLE (ui.shadcn.com table standard)
+export { ModernDataTable } from '../common/ModernDataTable';
+export type { ModernDataTableProps, ModernTableColumn } from '../common/ModernDataTable';
+

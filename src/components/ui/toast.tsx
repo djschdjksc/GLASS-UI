@@ -161,7 +161,7 @@ export const Toaster: React.FC<{
   richColors?: boolean;
   closeButton?: boolean;
 }> = ({
-  position = 'bottom-right',
+  position = 'bottom-left',
   richColors = true,
   closeButton = true,
 }) => {

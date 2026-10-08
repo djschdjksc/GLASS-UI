@@ -34,6 +34,7 @@ interface Props {
   autoConvert?: boolean;
   autoItem?: boolean;
   items: FinishedItem[];
+  expectedTotalQty?: number;
   onUpdateItem: (id: string, field: keyof FinishedItem, value: any) => void;
   onBulkPaste: (pastedRows: any[], startRow?: number, startCol?: number) => void;
   onAddNewRow: () => void;
@@ -71,6 +72,7 @@ export const RightGrid: React.FC<Props> = ({
   autoItem = false,
   splitRowIndex = null,
   items,
+  expectedTotalQty,
   onUpdateItem,
   onBulkPaste,
   onAddNewRow,
@@ -244,6 +246,7 @@ export const RightGrid: React.FC<Props> = ({
 
   const totalQty = items.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
   const grandTotal = items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+  const isQtyMismatch = expectedTotalQty !== undefined && totalQty !== expectedTotalQty;
 
   const hasLots = useMemo(() => {
     return items.some(it => /\(lot 1\)/i.test(it?.mould || '')) && items.some(it => /\(lot 2\)/i.test(it?.mould || ''));
@@ -1640,8 +1643,33 @@ export const RightGrid: React.FC<Props> = ({
             <td style={{ color: '#a1a1aa', fontSize: '11px' }}>
               <AnimatedCounter value={items.filter(it => it.mould).length} suffix=" Moulds Active" />
             </td>
-            <td style={{ textAlign: 'center', color: '#ffffff', fontFamily: "'JetBrains Mono', monospace" }}>
-              <AnimatedCounter value={totalQty} />
+            <td 
+              style={{ 
+                textAlign: 'center', 
+                color: isQtyMismatch ? '#ef4444' : '#ffffff', 
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: isQtyMismatch ? 800 : 'normal'
+              }}
+            >
+              <Tooltip 
+                title={
+                  isQtyMismatch 
+                    ? `⚠️ Qty Mismatch: Summary Qty (${totalQty}) ≠ Product Total (${expectedTotalQty})` 
+                    : `Total Qty: ${totalQty}`
+                } 
+                placement="top" 
+                color="#0f172a"
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <AnimatedCounter 
+                    value={totalQty} 
+                    style={{ 
+                      color: isQtyMismatch ? '#ef4444' : '#ffffff',
+                      fontWeight: isQtyMismatch ? 800 : undefined
+                    }} 
+                  />
+                </span>
+              </Tooltip>
             </td>
             <td style={{ textAlign: 'center', color: '#a1a1aa' }}>-</td>
             <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '14px', color: '#34c759', fontFamily: "'JetBrains Mono', monospace" }}>

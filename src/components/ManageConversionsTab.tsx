@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { macAudio } from '../utils/macAudio';
 import { CosmicSearchInput } from './common/CosmicSearchInput';
-import { Search, Plus, Trash2, Check, Layers, Tag, Hash, Percent, FileText, Scale, Package, ClipboardPaste } from 'lucide-react';
+import { Plus, Trash2, Check, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
 import type { SqliteControlRow } from '../data/sqliteControlPanel';
 import { getConversions, saveConversionsBulk, deleteConversion } from '../services/db/sqliteDb';
 import UnsavedChangesModal from './UnsavedChangesModal';
-import { Pagination as ShadcnPagination } from './ui/shadcn';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  Pagination as ShadcnPagination,
+  Button as ShadcnButton,
+  Tooltip,
+  toast
+} from './ui/shadcn';
 
 const CONV_COL_DEFAULTS = {
   srNo: 40,
@@ -21,7 +32,7 @@ const CONV_COL_DEFAULTS = {
   weight: 90,
   realItemName: 240,
   groupName: 140,
-  actions: 50
+  actions: 60
 };
 
 export interface ManageConversionsTabProps {
@@ -39,25 +50,32 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [rowToDelete, setRowToDelete] = useState<{ item: SqliteControlRow; index: number } | null>(null);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(50);
 
+  // Debounced server save ref
+  const syncTimeoutRef = useRef<any>(null);
+
   const [colWidths, setColWidths] = useState(() => {
     try {
       const saved = localStorage.getItem('modern_conv_cols');
       return saved ? { ...CONV_COL_DEFAULTS, ...JSON.parse(saved) } : CONV_COL_DEFAULTS;
-    } catch { return CONV_COL_DEFAULTS; }
+    } catch {
+      return CONV_COL_DEFAULTS;
+    }
   });
 
+  // Fetch true database state once on mount
   useEffect(() => {
+    let isMounted = true;
     const fetchFromSqlite = async () => {
       try {
         const rows = await getConversions();
-        if (Array.isArray(rows)) {
+        if (isMounted && Array.isArray(rows) && rows.length > 0) {
           setConversions(rows);
-          return;
         }
       } catch (err) {
         console.warn('Could not fetch conversions directly from SQLite server:', err);
@@ -65,30 +83,47 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     };
 
     fetchFromSqlite();
-    window.addEventListener('billapp_conversions_updated', fetchFromSqlite);
-    return () => window.removeEventListener('billapp_conversions_updated', fetchFromSqlite);
+    return () => {
+      isMounted = false;
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
   }, []);
 
-  const saveToStorage = (data: SqliteControlRow[], syncToServer = true) => {
+  // Sync to local state and debounced SQLite backend
+  const syncConversions = (data: SqliteControlRow[], immediateServerSync = false) => {
     setConversions(data);
+
+    // Notify other components (like bill calculators) that conversions changed
     window.dispatchEvent(new CustomEvent('billapp_conversions_updated'));
 
-    if (syncToServer) {
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    if (immediateServerSync) {
       saveConversionsBulk(data, 'replace').catch(err => {
         console.error('Failed to sync conversions to SQLite DB:', err);
       });
+    } else {
+      syncTimeoutRef.current = setTimeout(() => {
+        saveConversionsBulk(data, 'replace').catch(err => {
+          console.error('Failed to sync conversions to SQLite DB:', err);
+        });
+      }, 350);
     }
   };
 
   const handleCellChange = (index: number, field: keyof SqliteControlRow, value: any) => {
     const updated = [...conversions];
     updated[index] = { ...updated[index], [field]: value };
-    saveToStorage(updated);
+    syncConversions(updated, false);
   };
 
   const handleAddNewRow = () => {
     macAudio.playClick();
-    const newRow: SqliteControlRow = {
+    const newId = `cp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const newRow: SqliteControlRow & { id: string } = {
+      id: newId,
       shortcut: '',
       conversion: '',
       size: '',
@@ -99,12 +134,21 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
       box_size: 1,
       weight_per_pcs: 0,
       real_item_name: '',
-      group_name: ''
+      group_name: 'General'
     };
     const next = [newRow, ...conversions];
-    saveToStorage(next);
+    syncConversions(next, true);
+    setCurrentPage(1);
     setSelectedIdx(0);
     setEditingIdx(0);
+
+    setTimeout(() => {
+      const firstInput = document.querySelector<HTMLInputElement>(`#conv-row-0 input`);
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    }, 50);
   };
 
   const promptDeleteRow = (item: SqliteControlRow, index: number) => {
@@ -117,7 +161,7 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     const { item, index } = rowToDelete;
     macAudio.playSuccess();
     const next = conversions.filter((_, i) => i !== index);
-    saveToStorage(next);
+    syncConversions(next, true);
 
     const targetKey = item.shortcut || (item as any).id;
     if (targetKey) {
@@ -141,6 +185,21 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     setRowToDelete(null);
   };
 
+  const confirmRestoreDefaults = async () => {
+    try {
+      macAudio.playSuccess();
+      const restored = [...SQLITE_CONTROL_CONVERSIONS];
+      syncConversions(restored, true);
+      toast.success('Defaults Restored', `Restored ${restored.length} default conversion rules successfully.`);
+      setShowRestoreModal(false);
+      setSelectedIdx(0);
+      setEditingIdx(null);
+    } catch (err) {
+      console.error('Failed to restore default conversions:', err);
+      toast.error('Restore Failed', 'Could not restore default conversions.');
+    }
+  };
+
   const handlePaste = (e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData('text');
     if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
@@ -148,37 +207,43 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     e.preventDefault();
     macAudio.playSuccess();
     const lines = text.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
-    const parsedRows: SqliteControlRow[] = lines.map(line => {
+    const parsedRows: SqliteControlRow[] = lines.map((line, idx) => {
       const cols = line.split('\t').map(c => c.trim());
       return {
+        id: `cp_${Date.now()}_${idx}`,
         shortcut: cols[0] || '',
         conversion: cols[1] || cols[0] || '',
-        u_cap: cols[2] !== undefined && !isNaN(Number(cols[2])) ? Number(cols[2]) : (cols[2] || 0),
-        l_cap: cols[3] !== undefined && !isNaN(Number(cols[3])) ? Number(cols[3]) : (cols[3] || 0),
-        multiplication: cols[4] ? Number(cols[4]) || 1 : 1,
-        color: cols[5] || '#ffffff',
-        box_size: cols[6] ? Number(cols[6]) || 1 : 1,
-        weight_per_pcs: cols[7] ? Number(cols[7]) || 0 : 0,
-        real_item_name: cols[8] || '',
-        group_name: cols[9] || ''
-      };
+        size: cols[2] !== undefined ? cols[2] : '',
+        u_cap: cols[3] !== undefined && !isNaN(Number(cols[3])) ? Number(cols[3]) : (cols[3] || 0),
+        l_cap: cols[4] !== undefined && !isNaN(Number(cols[4])) ? Number(cols[4]) : (cols[4] || 0),
+        multiplication: cols[5] ? Number(cols[5]) || 1 : 1,
+        color: cols[6] || '#ffffff',
+        box_size: cols[7] ? Number(cols[7]) || 1 : 1,
+        weight_per_pcs: cols[8] ? Number(cols[8]) || 0 : 0,
+        real_item_name: cols[9] || '',
+        group_name: cols[10] || 'General'
+      } as any;
     });
 
     if (parsedRows.length > 0) {
       const next = [...parsedRows, ...conversions];
-      saveToStorage(next);
+      syncConversions(next, true);
+      toast.success('Pasted Data', `Added ${parsedRows.length} conversion rows.`);
     }
   };
 
   const startColResize = (colKey: keyof typeof CONV_COL_DEFAULTS, e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    const startX = e.clientX; 
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
     const startW = colWidths[colKey] || 100;
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const newWidth = Math.max(35, startW + (moveEvent.clientX - startX));
-      setColWidths((prev:any) => {
+      setColWidths((prev: any) => {
         const next = { ...prev, [colKey]: newWidth };
-        try { localStorage.setItem('modern_conv_cols', JSON.stringify(next)); } catch {}
+        try {
+          localStorage.setItem('modern_conv_cols', JSON.stringify(next));
+        } catch {}
         return next;
       });
     };
@@ -194,13 +259,21 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const filtered = conversions.map((item, originalIndex) => ({ item, originalIndex }))
-    .filter(({ item }) =>
-      item.conversion.toLowerCase().includes(search.toLowerCase()) || 
-      item.shortcut.toLowerCase().includes(search.toLowerCase()) ||
-      item.real_item_name.toLowerCase().includes(search.toLowerCase()) ||
-      item.group_name.toLowerCase().includes(search.toLowerCase())
-    );
+  const filtered = useMemo(() => {
+    const q = (search || '').trim().toLowerCase();
+    return conversions
+      .map((item, originalIndex) => ({ item, originalIndex }))
+      .filter(({ item }) => {
+        if (!q) return true;
+        return (
+          (item.conversion || '').toLowerCase().includes(q) ||
+          (item.shortcut || '').toLowerCase().includes(q) ||
+          (item.real_item_name || '').toLowerCase().includes(q) ||
+          (item.group_name || '').toLowerCase().includes(q) ||
+          (item.size !== undefined && String(item.size).toLowerCase().includes(q))
+        );
+      });
+  }, [conversions, search]);
 
   // Reset page when search changes
   useEffect(() => {
@@ -213,32 +286,45 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage, pageSize]);
 
-  // Smoothly scroll selected row into view
+  // Instantly scroll selected row into view and set DOM focus without animation lag
   useEffect(() => {
     if (selectedIdx !== null) {
       const el = document.getElementById(`conv-row-${selectedIdx}`);
       if (el) {
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+          el.focus({ preventScroll: true });
+        }
       }
     }
   }, [selectedIdx]);
 
+  const lastSoundRef = useRef<number>(0);
+  const playNavSound = () => {
+    const now = performance.now();
+    if (now - lastSoundRef.current > 45) {
+      lastSoundRef.current = now;
+      macAudio.playHover();
+    }
+  };
+
   const cellInputStyle: React.CSSProperties = {
     width: '100%',
-    height: '100%',
-    background: '#27272a',
+    height: '24px',
+    background: '#18181b',
     border: '1px solid #3f3f46',
     outline: 'none',
     color: '#f4f4f5',
     fontSize: '12px',
-    padding: '3px 8px',
+    padding: '2px 6px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: '4px',
-    fontWeight: 500
+    fontWeight: 500,
+    transition: 'border-color 0.15s ease'
   };
 
   const cellTextStyle: React.CSSProperties = {
-    padding: '4px 10px',
+    padding: '3px 8px',
     fontSize: '12px',
     color: '#f4f4f5',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -249,11 +335,21 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
     fontWeight: 500
   };
 
-
+  // Keyboard navigation & safe guards
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // NumLock and Clear keys: Completely ignore, NEVER delete or trigger actions
+      if (e.key === 'NumLock' || e.code === 'NumLock' || e.key === 'Clear') {
+        return;
+      }
+
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
       if (isInput) {
+        // Natural deletion inside input field
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          return;
+        }
+
         if (e.key === 'Enter') {
           e.preventDefault();
           const target = e.target as HTMLElement;
@@ -270,7 +366,7 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
               return;
             }
           }
-          // Reached last cell of row -> finish / save editing!
+          // Reached last cell of row -> finish / save editing
           macAudio.playSuccess();
           setEditingIdx(null);
         } else if (e.key === 'ArrowRight') {
@@ -348,37 +444,45 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
       }
 
       if (paginatedFiltered.length === 0) return;
+
       const currentPos = paginatedFiltered.findIndex(f => f.originalIndex === selectedIdx);
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        macAudio.playHover();
         if (currentPos >= 0 && currentPos < paginatedFiltered.length - 1) {
           setSelectedIdx(paginatedFiltered[currentPos + 1].originalIndex);
+          playNavSound();
         } else if (currentPos === paginatedFiltered.length - 1) {
-          // Reached last row! Auto-focus Next Page button if available
+          // Reached last row of current page -> seamlessly jump to next page row 0!
           if (currentPage < totalPages) {
-            const nextBtn = document.getElementById('conv-pagination-next') as HTMLButtonElement | null;
-            if (nextBtn && !nextBtn.disabled) {
-              nextBtn.focus();
-              macAudio.playPop();
+            const nextP = currentPage + 1;
+            setCurrentPage(nextP);
+            const start = (nextP - 1) * pageSize;
+            const slice = filtered.slice(start, start + pageSize);
+            if (slice.length > 0) {
+              setSelectedIdx(slice[0].originalIndex);
+              playNavSound();
             }
           }
         } else if (currentPos === -1 && paginatedFiltered.length > 0) {
           setSelectedIdx(paginatedFiltered[0].originalIndex);
+          playNavSound();
         }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        macAudio.playHover();
         if (currentPos > 0) {
           setSelectedIdx(paginatedFiltered[currentPos - 1].originalIndex);
+          playNavSound();
         } else if (currentPos === 0) {
-          // Reached first row! Auto-focus Previous Page button if available
+          // Reached first row of current page -> seamlessly jump to previous page last row!
           if (currentPage > 1) {
-            const prevBtn = document.getElementById('conv-pagination-prev') as HTMLButtonElement | null;
-            if (prevBtn && !prevBtn.disabled) {
-              prevBtn.focus();
-              macAudio.playPop();
+            const prevP = currentPage - 1;
+            setCurrentPage(prevP);
+            const start = (prevP - 1) * pageSize;
+            const slice = filtered.slice(start, start + pageSize);
+            if (slice.length > 0) {
+              setSelectedIdx(slice[slice.length - 1].originalIndex);
+              playNavSound();
             }
           }
         }
@@ -393,340 +497,427 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [paginatedFiltered, selectedIdx, editingIdx, conversions, rowToDelete, currentPage, totalPages]);
+  }, [paginatedFiltered, selectedIdx, editingIdx, conversions, rowToDelete, currentPage, totalPages, filtered, pageSize]);
 
   useEffect(() => {
     if (onAddRef) {
       onAddRef.current = handleAddNewRow;
     }
-  }, [onAddRef]);
+  }, [onAddRef, conversions]);
 
   return (
-    <div 
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', overflow: 'hidden' }}
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        gap: '8px',
+        overflow: 'hidden'
+      }}
       onPaste={handlePaste}
     >
-      {/* Top Search & Actions Bar (only when not embedded in Control Panel) */}
-      {externalSearch === undefined && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {/* Top Bar for Standalone / Sub-toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0,
+          gap: '8px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {externalSearch === undefined && (
             <CosmicSearchInput
               value={search}
               onChange={setInternalSearch}
               width={260}
             />
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-              {filtered.length} conversions • In-Table Fast Edit • Bulk Paste Enabled (Ctrl+V)
-            </span>
-          </div>
-
-          <button className="mac-btn primary" onClick={handleAddNewRow}>
-            <Plus size={14} />
-            <span>Add Row</span>
-          </button>
+          )}
+          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+            {filtered.length} conversion rules • In-Table Fast Edit • Press <kbd style={{ padding: '1px 4px', background: '#27272a', borderRadius: '3px', border: '1px solid #3f3f46' }}>Insert</kbd> to add row
+          </span>
         </div>
-      )}
 
-      {/* Main Full-Width In-Table Editor */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderRadius: '8px', border: '1px solid #27272a', background: '#09090b' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-            <tr style={{ borderBottom: '1px solid #27272a' }}>
-              <th style={{ width: colWidths.srNo, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                #<div className="th-resizer" onMouseDown={e => startColResize('srNo', e)} />
-              </th>
-              <th style={{ width: colWidths.shortcut, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                SHORTCUT<div className="th-resizer" onMouseDown={e => startColResize('shortcut', e)} />
-              </th>
-              <th style={{ width: colWidths.conversion, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                CONVERSION<div className="th-resizer" onMouseDown={e => startColResize('conversion', e)} />
-              </th>
-              <th style={{ width: colWidths.size, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                SIZE (FT)<div className="th-resizer" onMouseDown={e => startColResize('size', e)} />
-              </th>
-              <th style={{ width: colWidths.uCap, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                U CAP<div className="th-resizer" onMouseDown={e => startColResize('uCap', e)} />
-              </th>
-              <th style={{ width: colWidths.lCap, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                L CAP<div className="th-resizer" onMouseDown={e => startColResize('lCap', e)} />
-              </th>
-              <th style={{ width: colWidths.multiplication, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                MULT<div className="th-resizer" onMouseDown={e => startColResize('multiplication', e)} />
-              </th>
-              <th style={{ width: colWidths.color, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                COLOR<div className="th-resizer" onMouseDown={e => startColResize('color', e)} />
-              </th>
-              <th style={{ width: colWidths.boxSize, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                BOX<div className="th-resizer" onMouseDown={e => startColResize('boxSize', e)} />
-              </th>
-              <th style={{ width: colWidths.weight, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                WT/PC<div className="th-resizer" onMouseDown={e => startColResize('weight', e)} />
-              </th>
-              <th style={{ width: colWidths.realItemName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                REAL ITEM NAME<div className="th-resizer" onMouseDown={e => startColResize('realItemName', e)} />
-              </th>
-              <th style={{ width: colWidths.groupName, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                GROUP NAME<div className="th-resizer" onMouseDown={e => startColResize('groupName', e)} />
-              </th>
-              <th style={{ width: '65px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative' }}>
-                ACTION
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedFiltered.map(({ item: conv, originalIndex }, idx) => {
-              const isSelected = selectedIdx === originalIndex;
-              const isEditing = editingIdx === originalIndex;
-              const shortcutDisplay = conv.shortcut.startsWith('__auto_') ? '' : conv.shortcut;
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Tooltip title="Restore 56 original conversions if rows were wiped or deleted">
+            <ShadcnButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRestoreModal(true)}
+              style={{
+                height: '28px',
+                fontSize: '11px',
+                fontWeight: 600,
+                gap: '5px',
+                borderColor: '#3f3f46',
+                color: '#e4e4e7'
+              }}
+            >
+              <RotateCcw size={12} />
+              Restore Defaults
+            </ShadcnButton>
+          </Tooltip>
 
-              return (
-                <tr 
-                  key={originalIndex} 
-                  id={`conv-row-${originalIndex}`}
-                  data-row-index={idx}
-                  style={{
-                    height: '28px',
-                    borderBottom: '1px solid #27272a',
-                    background: isSelected ? '#1c1c1f' : idx % 2 === 0 ? 'rgba(24,24,27,0.5)' : 'transparent',
-                    outline: isSelected ? '1px solid #3f3f46' : 'none',
-                    outlineOffset: '-1px',
-                    cursor: 'pointer',
-                    transition: 'background 0.1s ease'
-                  }}
-                  onClick={() => setSelectedIdx(originalIndex)}
-                  onDoubleClick={() => setEditingIdx(originalIndex)}
-                >
-                  {/* # */}
-                  <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px' }}>
-                    {idx + 1}
-                  </td>
-
-                  {/* SHORTCUT */}
-                  <td style={{ padding: '2px 4px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, fontWeight: 600 }}
-                        value={shortcutDisplay}
-                        onChange={e => handleCellChange(originalIndex, 'shortcut', e.target.value)}
-                        autoFocus
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 600 }}>
-                        {shortcutDisplay || '—'}
-                      </span>
-                    )}
-                  </td>
-
-
-                  {/* CONVERSION */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, fontWeight: 500, color: '#ffffff' }}
-                        value={conv.conversion}
-                        onChange={e => handleCellChange(originalIndex, 'conversion', e.target.value)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, fontWeight: 500, color: '#ffffff' }}>
-                        {conv.conversion || '—'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* SIZE (FT) */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
-                        value={conv.size !== undefined ? conv.size : ''}
-                        onChange={e => handleCellChange(originalIndex, 'size', e.target.value)}
-                        placeholder="e.g. 10 or 12"
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
-                        {conv.size ? `${conv.size} FT` : '—'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* U CAP */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, color: '#ffffff' }}
-                        value={conv.u_cap || ''}
-                        onChange={e => handleCellChange(originalIndex, 'u_cap', e.target.value)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
-                        {conv.u_cap || '—'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* L CAP */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, color: '#ffffff' }}
-                        value={conv.l_cap || ''}
-                        onChange={e => handleCellChange(originalIndex, 'l_cap', e.target.value)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
-                        {conv.l_cap || '—'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* MULTIPLICATION */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
-                        value={conv.multiplication ?? 1}
-                        onChange={e => handleCellChange(originalIndex, 'multiplication', parseFloat(e.target.value) || 1)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
-                        {conv.multiplication ?? 1}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* COLOR */}
-                  <td style={{ padding: '1px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                      {isEditing ? (
-                        <input
-                          type="color"
-                          value={conv.color && conv.color.startsWith('#') ? conv.color : '#ffffff'}
-                          onChange={e => handleCellChange(originalIndex, 'color', e.target.value)}
-                          style={{ width: '18px', height: '18px', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}
-                        />
-                      ) : (
-                        <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: conv.color || '#fff', border: '1px solid rgba(255,255,255,0.2)' }} />
-                      )}
-                    </div>
-                  </td>
-
-                  {/* BOX SIZE */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
-                        value={conv.box_size ?? 1}
-                        onChange={e => handleCellChange(originalIndex, 'box_size', parseFloat(e.target.value) || 1)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
-                        {conv.box_size ?? 1}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* WEIGHT PER PCS */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        step="any"
-                        style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
-                        value={conv.weight_per_pcs ?? 0}
-                        onChange={e => handleCellChange(originalIndex, 'weight_per_pcs', parseFloat(e.target.value) || 0)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
-                        {conv.weight_per_pcs ?? 0}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* REAL ITEM NAME */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, color: '#ffffff' }}
-                        value={conv.real_item_name || ''}
-                        onChange={e => handleCellChange(originalIndex, 'real_item_name', e.target.value)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, color: '#ffffff' }}>
-                        {conv.real_item_name || '—'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* GROUP NAME */}
-                  <td style={{ padding: '1px' }}>
-                    {isEditing ? (
-                      <input
-                        style={{ ...cellInputStyle, color: '#ffffff', fontWeight: 600 }}
-                        value={conv.group_name || ''}
-                        onChange={e => handleCellChange(originalIndex, 'group_name', e.target.value)}
-                      />
-                    ) : (
-                      <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 600 }}>
-                        {conv.group_name || '—'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* ACTIONS: SAVE OR DELETE BUTTON */}
-                  <td style={{ textAlign: 'center', padding: '2px 6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      {isEditing ? (
-                        <button
-                          type="button"
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            padding: '2px 10px', height: '24px', borderRadius: '4px',
-                            background: '#f4f4f5', color: '#09090b',
-                            border: 'none', fontSize: '11px', fontWeight: 600,
-                            cursor: 'pointer'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            macAudio.playSuccess();
-                            setEditingIdx(null);
-                          }}
-                          title="Save Row"
-                        >
-                          <Check size={11} /> Save
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            width: '24px', height: '24px', borderRadius: '4px',
-                            background: 'transparent', color: '#52525b',
-                            border: '1px solid transparent', cursor: 'pointer',
-                            transition: 'all 0.12s ease'
-                          }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525b'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            promptDeleteRow(conv, originalIndex);
-                          }}
-                          title="Delete conversion rule"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          {externalSearch === undefined && (
+            <ShadcnButton
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={handleAddNewRow}
+              style={{
+                height: '28px',
+                fontSize: '11px',
+                fontWeight: 600,
+                gap: '5px'
+              }}
+            >
+              <Plus size={12} />
+              Add Row
+            </ShadcnButton>
+          )}
+        </div>
       </div>
+
+      {/* Official Shadcn UI Table */}
+      <Table
+        containerStyle={{
+          flex: 1,
+          minHeight: 0,
+          height: '100%',
+          overflow: 'auto',
+          borderRadius: '8px',
+          border: '1px solid #27272a',
+          background: '#09090b'
+        }}
+      >
+        <TableHeader style={{ background: '#18181b', position: 'sticky', top: 0, zIndex: 10 }}>
+          <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+            <TableHead style={{ width: colWidths.srNo, textAlign: 'center', position: 'relative' }}>
+              #<div className="th-resizer" onMouseDown={e => startColResize('srNo', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.shortcut, position: 'relative' }}>
+              SHORTCUT<div className="th-resizer" onMouseDown={e => startColResize('shortcut', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.conversion, position: 'relative' }}>
+              CONVERSION<div className="th-resizer" onMouseDown={e => startColResize('conversion', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.size, textAlign: 'center', position: 'relative' }}>
+              SIZE (FT)<div className="th-resizer" onMouseDown={e => startColResize('size', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.uCap, position: 'relative' }}>
+              U CAP<div className="th-resizer" onMouseDown={e => startColResize('uCap', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.lCap, position: 'relative' }}>
+              L CAP<div className="th-resizer" onMouseDown={e => startColResize('lCap', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.multiplication, textAlign: 'center', position: 'relative' }}>
+              MULT<div className="th-resizer" onMouseDown={e => startColResize('multiplication', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.color, textAlign: 'center', position: 'relative' }}>
+              COLOR<div className="th-resizer" onMouseDown={e => startColResize('color', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.boxSize, textAlign: 'center', position: 'relative' }}>
+              BOX<div className="th-resizer" onMouseDown={e => startColResize('boxSize', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.weight, textAlign: 'center', position: 'relative' }}>
+              WT/PC<div className="th-resizer" onMouseDown={e => startColResize('weight', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.realItemName, position: 'relative' }}>
+              REAL ITEM NAME<div className="th-resizer" onMouseDown={e => startColResize('realItemName', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.groupName, position: 'relative' }}>
+              GROUP NAME<div className="th-resizer" onMouseDown={e => startColResize('groupName', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.actions, textAlign: 'center', position: 'relative' }}>
+              ACTION
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+
+        <TableBody>
+          {paginatedFiltered.map(({ item: conv, originalIndex }, idx) => {
+            const isSelected = selectedIdx === originalIndex;
+            const isEditing = editingIdx === originalIndex;
+            const shortcutDisplay = conv.shortcut.startsWith('__auto_') ? '' : conv.shortcut;
+
+            return (
+              <TableRow
+                key={originalIndex}
+                id={`conv-row-${originalIndex}`}
+                isSelected={isSelected}
+                tabIndex={isSelected ? 0 : -1}
+                style={{
+                  height: '28px',
+                  background: isSelected
+                    ? 'rgba(56, 189, 248, 0.16)'
+                    : idx % 2 === 0
+                    ? 'rgba(24, 24, 27, 0.4)'
+                    : 'transparent',
+                  outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                  outlineOffset: '-2px',
+                  boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setSelectedIdx(originalIndex)}
+                onDoubleClick={() => setEditingIdx(originalIndex)}
+              >
+                {/* # */}
+                <TableCell style={{ textAlign: 'center', color: '#71717a', fontSize: '11px', userSelect: 'none', padding: '3px 4px' }}>
+                  {(currentPage - 1) * pageSize + idx + 1}
+                </TableCell>
+
+                {/* SHORTCUT */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, fontWeight: 600 }}
+                      value={shortcutDisplay}
+                      onChange={e => handleCellChange(originalIndex, 'shortcut', e.target.value)}
+                      placeholder="e.g. G1"
+                      autoFocus
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, fontWeight: 600 }}>
+                      {shortcutDisplay || '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* CONVERSION */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, fontWeight: 500, color: '#ffffff' }}
+                      value={conv.conversion}
+                      onChange={e => handleCellChange(originalIndex, 'conversion', e.target.value)}
+                      placeholder="e.g. B.F.P-(G)"
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, fontWeight: 500, color: '#ffffff' }}>
+                      {conv.conversion || '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* SIZE (FT) */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
+                      value={conv.size !== undefined && conv.size !== null ? conv.size : ''}
+                      onChange={e => handleCellChange(originalIndex, 'size', e.target.value)}
+                      placeholder="e.g. 10 or 12"
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
+                      {conv.size !== undefined && conv.size !== null && String(conv.size).trim() !== ''
+                        ? `${conv.size} FT`
+                        : '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* U CAP */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, color: '#ffffff' }}
+                      value={conv.u_cap !== undefined ? conv.u_cap : ''}
+                      onChange={e => handleCellChange(originalIndex, 'u_cap', e.target.value)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, color: '#ffffff' }}>
+                      {conv.u_cap !== undefined && conv.u_cap !== null && String(conv.u_cap).trim() !== ''
+                        ? String(conv.u_cap)
+                        : '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* L CAP */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, color: '#ffffff' }}
+                      value={conv.l_cap !== undefined ? conv.l_cap : ''}
+                      onChange={e => handleCellChange(originalIndex, 'l_cap', e.target.value)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, color: '#ffffff' }}>
+                      {conv.l_cap !== undefined && conv.l_cap !== null && String(conv.l_cap).trim() !== ''
+                        ? String(conv.l_cap)
+                        : '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* MULTIPLICATION */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      step="any"
+                      style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
+                      value={conv.multiplication ?? 1}
+                      onChange={e => handleCellChange(originalIndex, 'multiplication', parseFloat(e.target.value) || 1)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
+                      {conv.multiplication ?? 1}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* COLOR */}
+                <TableCell style={{ padding: '2px 4px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                    {isEditing ? (
+                      <input
+                        type="color"
+                        value={conv.color && conv.color.startsWith('#') ? conv.color : '#ffffff'}
+                        onChange={e => handleCellChange(originalIndex, 'color', e.target.value)}
+                        style={{ width: '18px', height: '18px', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '50%',
+                          background: conv.color || '#fff',
+                          border: '1px solid rgba(255,255,255,0.2)'
+                        }}
+                      />
+                    )}
+                  </div>
+                </TableCell>
+
+                {/* BOX SIZE */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      step="any"
+                      style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
+                      value={conv.box_size ?? 1}
+                      onChange={e => handleCellChange(originalIndex, 'box_size', parseFloat(e.target.value) || 1)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
+                      {conv.box_size ?? 1}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* WEIGHT PER PCS */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      step="any"
+                      style={{ ...cellInputStyle, textAlign: 'center', color: '#ffffff' }}
+                      value={conv.weight_per_pcs ?? 0}
+                      onChange={e => handleCellChange(originalIndex, 'weight_per_pcs', parseFloat(e.target.value) || 0)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
+                      {conv.weight_per_pcs ?? 0}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* REAL ITEM NAME */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, color: '#ffffff' }}
+                      value={conv.real_item_name || ''}
+                      onChange={e => handleCellChange(originalIndex, 'real_item_name', e.target.value)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, color: '#ffffff' }}>
+                      {conv.real_item_name || '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* GROUP NAME */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      style={{ ...cellInputStyle, color: '#ffffff', fontWeight: 600 }}
+                      value={conv.group_name || ''}
+                      onChange={e => handleCellChange(originalIndex, 'group_name', e.target.value)}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, color: '#ffffff', fontWeight: 600 }}>
+                      {conv.group_name || '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* ACTIONS */}
+                <TableCell style={{ textAlign: 'center', padding: '2px 4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    {isEditing ? (
+                      <ShadcnButton
+                        type="button"
+                        variant="default"
+                        size="sm"
+                        style={{ height: '22px', fontSize: '10px', padding: '0 6px', gap: '3px' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          macAudio.playSuccess();
+                          setEditingIdx(null);
+                        }}
+                        title="Save Row"
+                      >
+                        <Check size={11} /> Save
+                      </ShadcnButton>
+                    ) : (
+                      <button
+                        type="button"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '4px',
+                          background: 'transparent',
+                          color: '#71717a',
+                          border: '1px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.12s ease'
+                        }}
+                        onMouseEnter={e => {
+                          (e.currentTarget as HTMLButtonElement).style.color = '#ef4444';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46';
+                        }}
+                        onMouseLeave={e => {
+                          (e.currentTarget as HTMLButtonElement).style.color = '#71717a';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent';
+                        }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          promptDeleteRow(conv, originalIndex);
+                        }}
+                        title="Delete conversion rule"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
 
       {/* Shadcn Pagination Footer */}
       {filtered.length > 0 && (
@@ -747,7 +938,7 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
               }
             }, 50);
           }}
-          onPageSizeChange={(s) => {
+          onPageSizeChange={s => {
             setPageSize(s);
             setCurrentPage(1);
           }}
@@ -767,6 +958,7 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
         />
       )}
 
+      {/* Row Delete Confirmation Modal */}
       {rowToDelete && (
         <UnsavedChangesModal
           titleText="Delete Conversion Rule?"
@@ -774,6 +966,17 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
           discardLabel="Haan, Delete Karo"
           onDiscard={confirmDeleteRow}
           onCancel={() => setRowToDelete(null)}
+        />
+      )}
+
+      {/* Restore Defaults Confirmation Modal */}
+      {showRestoreModal && (
+        <UnsavedChangesModal
+          titleText="Restore Default Conversions?"
+          descText="Kya aap default conversions (56 original rules) restore karna chahte hain? Current table data me default entries wapas reload ho jayengi."
+          discardLabel="Haan, Restore Karo"
+          onDiscard={confirmRestoreDefaults}
+          onCancel={() => setShowRestoreModal(false)}
         />
       )}
     </div>

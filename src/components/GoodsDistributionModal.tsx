@@ -9,6 +9,7 @@ import {
   Trash2,
   FileSpreadsheet
 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 
 interface Contributor {
   id: string;
@@ -201,56 +202,56 @@ export const GoodsDistributionModal: React.FC<Props> = ({
               </button>
             </div>
 
-            <table className="apple-table">
-              <thead>
-                <tr>
-                  <th>PARTY NAME</th>
-                  <th style={{ width: '160px', textAlign: 'right' }}>PAID AMOUNT (₹)</th>
-                  <th style={{ width: '100px', textAlign: 'right' }}>% SHARE</th>
-                  <th style={{ width: '50px', textAlign: 'center' }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contributors.map((c) => {
-                  const pct = totalPaid > 0 ? ((c.paidAmount / totalPaid) * 100).toFixed(1) : '0.0';
-                  return (
-                    <tr key={c.id} className="mac-table-row">
-                      <td>
-                        <input
-                          type="text"
-                          className="mac-input"
-                          value={c.name}
-                          onChange={(e) => handleUpdateContributor(c.id, 'name', e.target.value)}
-                          style={{ width: '100%', height: '26px', fontSize: '11.5px', color: '#ffffff', fontWeight: 600 }}
-                        />
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <input
-                          type="number"
-                          className="mac-input"
-                          value={c.paidAmount}
-                          onChange={(e) => handleUpdateContributor(c.id, 'paidAmount', Number(e.target.value))}
-                          style={{ width: '100%', height: '26px', fontSize: '11.5px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}
-                        />
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#38bdf8' }}>
-                        {pct}%
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          className="mac-btn"
-                          style={{ width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                          onClick={() => handleRemoveContributor(c.id)}
-                        >
-                          <Trash2 size={11} color="#f87171" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div style={{ borderRadius: '6px', border: '1px solid #27272a', overflow: 'hidden' }}>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <TableHeader style={{ background: '#18181b' }}>
+                  <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                    <TableHead style={{ padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PARTY NAME</TableHead>
+                    <TableHead style={{ width: '160px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PAID AMOUNT (₹)</TableHead>
+                    <TableHead style={{ width: '100px', padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>% SHARE</TableHead>
+                    <TableHead style={{ width: '50px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>ACTION</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contributors.map((c, idx) => {
+                    const pct = totalPaid > 0 ? ((c.paidAmount / totalPaid) * 100).toFixed(1) : '0.0';
+                    return (
+                      <TableRow key={c.id} style={{ height: '32px', borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent' }}>
+                        <TableCell style={{ padding: '3px 6px' }}>
+                          <input
+                            type="text"
+                            value={c.name}
+                            onChange={(e) => handleUpdateContributor(c.id, 'name', e.target.value)}
+                            style={{ width: '100%', height: '24px', background: '#18181b', border: '1px solid #3f3f46', borderRadius: '4px', padding: '2px 8px', fontSize: '11.5px', color: '#ffffff', fontWeight: 600, outline: 'none' }}
+                          />
+                        </TableCell>
+                        <TableCell style={{ padding: '3px 6px', textAlign: 'right' }}>
+                          <input
+                            type="number"
+                            value={c.paidAmount}
+                            onChange={(e) => handleUpdateContributor(c.id, 'paidAmount', Number(e.target.value))}
+                            style={{ width: '100%', height: '24px', background: '#18181b', border: '1px solid #3f3f46', borderRadius: '4px', padding: '2px 8px', fontSize: '11.5px', textAlign: 'right', color: '#34d399', fontWeight: 700, outline: 'none' }}
+                          />
+                        </TableCell>
+                        <TableCell style={{ padding: '3px 10px', textAlign: 'right', fontWeight: 700, color: '#38bdf8' }}>
+                          {pct}%
+                        </TableCell>
+                        <TableCell style={{ padding: '3px 6px', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            className="mac-btn"
+                            style={{ width: '22px', height: '22px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={() => handleRemoveContributor(c.id)}
+                          >
+                            <Trash2 size={11} color="#f87171" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           {/* Section 2: Calculated Goods Distribution Matrix */}
@@ -264,33 +265,33 @@ export const GoodsDistributionModal: React.FC<Props> = ({
               </span>
             </div>
 
-            <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-              <table className="apple-table">
-                <thead>
-                  <tr>
-                    <th>PARTY NAME</th>
-                    <th style={{ width: '65px', textAlign: 'center' }}>SHARE</th>
-                    <th>ITEM NAME</th>
-                    <th style={{ width: '70px', textAlign: 'right' }}>PCS QTY</th>
-                    <th style={{ width: '60px', textAlign: 'right' }}>BOXES</th>
-                    <th style={{ width: '80px', textAlign: 'right' }}>PRICE (₹)</th>
-                    <th style={{ width: '120px', textAlign: 'right' }}>TOTAL (+18% GST)</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div style={{ maxHeight: '240px', overflowY: 'auto', borderRadius: '6px', border: '1px solid #27272a' }}>
+              <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+                <TableHeader style={{ background: '#18181b', position: 'sticky', top: 0, zIndex: 5 }}>
+                  <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                    <TableHead style={{ padding: '7px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PARTY NAME</TableHead>
+                    <TableHead style={{ width: '65px', padding: '7px 6px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>SHARE</TableHead>
+                    <TableHead style={{ padding: '7px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>ITEM NAME</TableHead>
+                    <TableHead style={{ width: '70px', padding: '7px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PCS QTY</TableHead>
+                    <TableHead style={{ width: '60px', padding: '7px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>BOXES</TableHead>
+                    <TableHead style={{ width: '80px', padding: '7px 8px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>PRICE (₹)</TableHead>
+                    <TableHead style={{ width: '120px', padding: '7px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600 }}>TOTAL (+18% GST)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {calculatedRows.map((r, idx) => (
-                    <tr key={idx} className="mac-table-row">
-                      <td style={{ fontWeight: 600, color: '#f8fafc' }}>{r.party}</td>
-                      <td style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{r.sharePct}</td>
-                      <td style={{ color: '#cbd5e1' }}>{r.itemName}</td>
-                      <td style={{ textAlign: 'right', color: '#a78bfa', fontWeight: 700 }}>{r.pcsQty}</td>
-                      <td style={{ textAlign: 'right', color: '#cbd5e1' }}>{r.boxes}</td>
-                      <td style={{ textAlign: 'right', color: '#cbd5e1' }}>₹{r.price}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#34d399' }}>₹{r.totalGst.toLocaleString('en-IN')}</td>
-                    </tr>
+                    <TableRow key={idx} style={{ height: '30px', borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent' }}>
+                      <TableCell style={{ padding: '4px 10px', fontWeight: 600, color: '#f8fafc' }}>{r.party}</TableCell>
+                      <TableCell style={{ padding: '4px 6px', textAlign: 'center', color: '#38bdf8', fontWeight: 700 }}>{r.sharePct}</TableCell>
+                      <TableCell style={{ padding: '4px 10px', color: '#cbd5e1' }}>{r.itemName}</TableCell>
+                      <TableCell style={{ padding: '4px 8px', textAlign: 'right', color: '#a78bfa', fontWeight: 700 }}>{r.pcsQty}</TableCell>
+                      <TableCell style={{ padding: '4px 8px', textAlign: 'right', color: '#cbd5e1' }}>{r.boxes}</TableCell>
+                      <TableCell style={{ padding: '4px 8px', textAlign: 'right', color: '#cbd5e1' }}>₹{r.price}</TableCell>
+                      <TableCell style={{ padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: '#34d399' }}>₹{r.totalGst.toLocaleString('en-IN')}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         </div>

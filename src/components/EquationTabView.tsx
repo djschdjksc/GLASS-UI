@@ -17,7 +17,13 @@ import {
   CardTitle,
   CardContent,
   Pagination as ShadcnPagination,
-  Tooltip
+  Tooltip,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
 } from './ui/shadcn';
 import {
   Calculator,
@@ -612,51 +618,82 @@ export const EquationTabView: React.FC = () => {
     };
   }, [results]);
 
-  // Selected row auto-scroll
+  const lastSoundRef = useRef<number>(0);
+  const playNavSound = () => {
+    const now = performance.now();
+    if (now - lastSoundRef.current > 45) {
+      lastSoundRef.current = now;
+      macAudio.playHover();
+    }
+  };
+
+  // Selected row auto-scroll and DOM focus (instant zero-lag)
   useEffect(() => {
     if (selectedRowId) {
       const el = document.getElementById(`eq-row-${selectedRowId}`);
       if (el) {
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+          el.focus({ preventScroll: true });
+        }
       }
     }
   }, [selectedRowId]);
 
   // Keyboard navigation on Results table
   const handleTableKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'NumLock' || e.code === 'NumLock' || e.key === 'Clear') return;
     if (paginatedResults.length === 0) return;
+
     const currentIdx = paginatedResults.findIndex((r) => r.id === selectedRowId);
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      macAudio.playHover();
       if (currentIdx >= 0 && currentIdx < paginatedResults.length - 1) {
         setSelectedRowId(paginatedResults[currentIdx + 1].id);
+        playNavSound();
       } else if (currentIdx === paginatedResults.length - 1) {
+        // Last row reached -> auto-page flip to Next Page row 0!
         if (currentPage < totalPages) {
-          const nextBtn = document.getElementById('eq-pagination-next') as HTMLButtonElement | null;
-          if (nextBtn && !nextBtn.disabled) nextBtn.focus();
+          const nextP = currentPage + 1;
+          setCurrentPage(nextP);
+          const start = (nextP - 1) * pageSize;
+          const slice = filteredResults.slice(start, start + pageSize);
+          if (slice.length > 0) {
+            setSelectedRowId(slice[0].id);
+            playNavSound();
+          }
         }
       } else if (currentIdx === -1) {
         setSelectedRowId(paginatedResults[0].id);
+        playNavSound();
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      macAudio.playHover();
       if (currentIdx > 0) {
         setSelectedRowId(paginatedResults[currentIdx - 1].id);
+        playNavSound();
       } else if (currentIdx === 0) {
+        // First row reached -> auto-page flip to Previous Page last row!
         if (currentPage > 1) {
-          const prevBtn = document.getElementById('eq-pagination-prev') as HTMLButtonElement | null;
-          if (prevBtn && !prevBtn.disabled) prevBtn.focus();
+          const prevP = currentPage - 1;
+          setCurrentPage(prevP);
+          const start = (prevP - 1) * pageSize;
+          const slice = filteredResults.slice(start, start + pageSize);
+          if (slice.length > 0) {
+            setSelectedRowId(slice[slice.length - 1].id);
+            playNavSound();
+          }
         }
       }
     } else if (e.key === 'Home') {
       e.preventDefault();
       setSelectedRowId(paginatedResults[0].id);
+      playNavSound();
     } else if (e.key === 'End') {
       e.preventDefault();
       setSelectedRowId(paginatedResults[paginatedResults.length - 1].id);
+      playNavSound();
     }
   };
 
@@ -1743,26 +1780,26 @@ export const EquationTabView: React.FC = () => {
             outline: 'none'
           }}
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <th style={{ width: '36px', padding: '8px 6px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>#</th>
-                <th style={{ width: '170px', padding: '8px 10px', textAlign: 'left', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PARTY NAME</th>
-                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>% SHARE</th>
-                <th style={{ minWidth: '180px', padding: '8px 10px', textAlign: 'left', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>ITEM NAME</th>
-                <th style={{ width: '85px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PCS QTY</th>
-                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>BOXES</th>
-                <th style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>SQM/MULT</th>
-                <th style={{ width: '110px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>BILL QTY (SHARE)</th>
-                <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>WEIGHT (KG)</th>
-                <th style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PRICE (₹)</th>
-                <th style={{ width: '130px', padding: '8px 10px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>TOTAL (+18% GST)</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+            <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+              <TableRow style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <TableHead style={{ width: '36px', padding: '8px 6px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>#</TableHead>
+                <TableHead style={{ width: '170px', padding: '8px 10px', textAlign: 'left', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PARTY NAME</TableHead>
+                <TableHead style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>% SHARE</TableHead>
+                <TableHead style={{ minWidth: '180px', padding: '8px 10px', textAlign: 'left', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>ITEM NAME</TableHead>
+                <TableHead style={{ width: '85px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PCS QTY</TableHead>
+                <TableHead style={{ width: '75px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>BOXES</TableHead>
+                <TableHead style={{ width: '75px', padding: '8px 8px', textAlign: 'center', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>SQM/MULT</TableHead>
+                <TableHead style={{ width: '110px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>BILL QTY (SHARE)</TableHead>
+                <TableHead style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>WEIGHT (KG)</TableHead>
+                <TableHead style={{ width: '95px', padding: '8px 8px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>PRICE (₹)</TableHead>
+                <TableHead style={{ width: '130px', padding: '8px 10px', textAlign: 'right', color: '#94a3b8', fontSize: '10.5px', fontWeight: 600 }}>TOTAL (+18% GST)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {paginatedResults.length === 0 ? (
-                <tr>
-                  <td colSpan={11} style={{ textAlign: 'center', padding: '48px 10px', color: '#71717a', fontSize: '12.5px' }}>
+                <TableRow>
+                  <TableCell colSpan={11} style={{ textAlign: 'center', padding: '48px 10px', color: '#71717a', fontSize: '12.5px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                       <Layers size={28} style={{ color: '#3f3f46' }} />
                       <span>
@@ -1771,17 +1808,19 @@ export const EquationTabView: React.FC = () => {
                           : `No rows match "${tableSearchQuery}".`}
                       </span>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 paginatedResults.map((r, idx) => {
                   const isSelected = selectedRowId === r.id;
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
 
                   return (
-                    <tr
+                    <TableRow
                       key={r.id}
                       id={`eq-row-${r.id}`}
+                      isSelected={isSelected}
+                      tabIndex={isSelected ? 0 : -1}
                       onClick={() => {
                         setSelectedRowId(r.id);
                         macAudio.playClick();
@@ -1790,12 +1829,13 @@ export const EquationTabView: React.FC = () => {
                         height: '31px',
                         borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
                         background: isSelected
-                          ? 'rgba(56, 189, 248, 0.08)'
+                          ? 'rgba(56, 189, 248, 0.16)'
                           : idx % 2 === 0
-                          ? 'rgba(255, 255, 255, 0.015)'
+                          ? 'rgba(24, 24, 27, 0.4)'
                           : 'transparent',
-                        outline: isSelected ? '1px solid rgba(56, 189, 248, 0.25)' : 'none',
-                        outlineOffset: '-1px',
+                        outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                        outlineOffset: '-2px',
+                        boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                         cursor: 'pointer',
                         transition: 'background 0.12s ease'
                       }}
@@ -1893,11 +1933,11 @@ export const EquationTabView: React.FC = () => {
                       <td style={{ padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: '#f4f4f5', fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>
                         {formatINR(r.totalGst)}
                       </td>
-                    </tr>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
+            </TableBody>
 
             {/* ── STICKY TFOOT: Column-Aligned Totals Directly Under Each Column (Matching Enter Stock) ── */}
             <tfoot
@@ -2032,7 +2072,7 @@ export const EquationTabView: React.FC = () => {
                 </td>
               </tr>
             </tfoot>
-          </table>
+          </Table>
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────── */}

@@ -79,6 +79,7 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 shortcut TEXT NOT NULL,
                 conversion TEXT NOT NULL,
+                size TEXT DEFAULT '',
                 u_cap TEXT DEFAULT '0',
                 l_cap TEXT DEFAULT '0',
                 multiplication REAL DEFAULT 1.0,
@@ -93,6 +94,7 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 shortcut TEXT NOT NULL,
                 conversion TEXT NOT NULL,
+                size TEXT DEFAULT '',
                 u_cap TEXT DEFAULT '0',
                 l_cap TEXT DEFAULT '0',
                 multiplication REAL DEFAULT 1.0,
@@ -182,6 +184,13 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_party_receipts_party ON party_receipts(party);
             CREATE INDEX IF NOT EXISTS idx_ctrl_groups_name ON control_groups(group_name);
         """)
+
+        # Ensure size column exists in control_panel and conversions
+        for tbl in ('control_panel', 'conversions'):
+            try:
+                conn.execute(f"ALTER TABLE {tbl} ADD COLUMN size TEXT DEFAULT ''")
+            except Exception:
+                pass
 
         # Auto-seed default groups if empty
         grp_cnt = conn.execute("SELECT COUNT(*) FROM control_groups").fetchone()[0]
@@ -427,6 +436,7 @@ class DBHandler(BaseHTTPRequestHandler):
                         d['weightPerPcs'] = d.get('weight_per_pcs', 0.0)
                         d['realItemName'] = d.get('real_item_name', '')
                         d['groupName'] = d.get('group_name', '')
+                        d['size'] = d.get('size', '')
                         convs.append(d)
                     self.send_json(convs)
 
@@ -923,18 +933,19 @@ class DBHandler(BaseHTTPRequestHandler):
                     grp_name = str(c.get('group_name') or c.get('groupName', ''))
                     shortcut = str(c.get('shortcut', ''))
                     conversion = str(c.get('conversion', ''))
+                    size_val = str(c.get('size', '') if c.get('size') is not None else '')
 
                     conn.execute("""
                         INSERT OR REPLACE INTO control_panel
-                        (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                        (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
 
                     conn.execute("""
                         INSERT OR REPLACE INTO conversions
-                        (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                        (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
 
                     self.send_json({'success': True, 'id': cid})
 
@@ -942,8 +953,11 @@ class DBHandler(BaseHTTPRequestHandler):
                 elif path == '/api/db/conversions/bulk':
                     items = body if isinstance(body, list) else body.get('conversions', [])
                     if isinstance(body, dict) and body.get('mode') == 'replace':
-                        conn.execute("DELETE FROM control_panel")
-                        conn.execute("DELETE FROM conversions")
+                        if len(items) > 0 or body.get('allowEmpty') is True:
+                            conn.execute("DELETE FROM control_panel")
+                            conn.execute("DELETE FROM conversions")
+                        else:
+                            print("[DB] Warning: Refusing to wipe conversions table with empty items array without allowEmpty flag", flush=True)
                     for c in items:
                         cid = str(c.get('id') or f"cp_{c.get('shortcut', '')}_{c.get('conversion', '')}".lower().replace(' ', '_'))
                         u_cap = str(c.get('u_cap') if c.get('u_cap') is not None else c.get('uCap', '0'))
@@ -956,18 +970,19 @@ class DBHandler(BaseHTTPRequestHandler):
                         grp_name = str(c.get('group_name') or c.get('groupName', ''))
                         shortcut = str(c.get('shortcut', ''))
                         conversion = str(c.get('conversion', ''))
+                        size_val = str(c.get('size', '') if c.get('size') is not None else '')
 
                         conn.execute("""
                             INSERT OR REPLACE INTO control_panel
-                            (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                            (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
 
                         conn.execute("""
                             INSERT OR REPLACE INTO conversions
-                            (id, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (cid, shortcut, conversion, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                            (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
                     self.send_json({'success': True, 'count': len(items)})
 
                 # ── Save Bill Item Name ──

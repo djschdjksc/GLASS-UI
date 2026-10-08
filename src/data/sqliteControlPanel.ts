@@ -16,6 +16,7 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
   {
     "shortcut": "G1",
     "conversion": "B.F.P-(G)",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -23,11 +24,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "B1",
     "conversion": "B.F.P-(B)",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -35,11 +37,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "__auto_1783701271710",
     "conversion": "B.F.P-(G)-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -47,11 +50,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "__auto_1783701291910",
     "conversion": "B.F.P-(A)-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -59,11 +63,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "A1",
     "conversion": "B.F.P-(A)",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -71,11 +76,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "__auto_1783700664286",
     "conversion": "B.F.P-(A)-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -83,11 +89,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "__auto_1783700669046",
     "conversion": "B.F.P-(B)-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -95,11 +102,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "__auto_1783700673198",
     "conversion": "B.F.P-(B)-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -107,11 +115,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "G",
     "conversion": "GATTI",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -119,11 +128,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "E",
     "conversion": "ELFY",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -131,11 +141,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "C",
     "conversion": "CLIP",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -143,11 +154,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "B",
     "conversion": "BLACK",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -155,11 +167,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "S",
     "conversion": "SCREW",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -167,11 +180,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "R",
     "conversion": "RAJA",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -179,11 +193,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "T",
     "conversion": "BATTEN",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -191,11 +206,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "O",
     "conversion": "SILICON",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -203,11 +219,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "0",
     "conversion": "U.V",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -215,11 +232,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "UV"
   },
   {
     "shortcut": ".",
     "conversion": "UVD",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -227,11 +245,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "UV"
   },
   {
     "shortcut": "J",
     "conversion": "Jointer",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -239,11 +258,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "JOINTER"
   },
   {
     "shortcut": "F",
     "conversion": "Fluted Jointer",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -251,11 +271,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "JOINTER"
   },
   {
     "shortcut": "BS",
     "conversion": "BLACK-SCREW",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -263,11 +284,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "P",
     "conversion": "PERAMETER",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -275,11 +297,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "PERAMETER"
   },
   {
     "shortcut": "BG1",
     "conversion": "B.F.P-B-(G)",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -287,11 +310,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "A2",
     "conversion": "(A)-CM",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -299,11 +323,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "CM"
   },
   {
     "shortcut": "2",
     "conversion": "C.M",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -311,11 +336,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "CM"
   },
   {
     "shortcut": "__auto_1783700689142",
     "conversion": "C.M-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -323,11 +349,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "CM"
   },
   {
     "shortcut": "__auto_1783700693878",
     "conversion": "C.M-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -335,11 +362,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "CM"
   },
   {
     "shortcut": "1",
     "conversion": "B.F.P",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -347,11 +375,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "I",
     "conversion": "GOLDEN-PATTI",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -359,11 +388,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "A",
     "conversion": "GOLDEN-TAPE",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -371,11 +401,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "HARWARE"
   },
   {
     "shortcut": "8",
     "conversion": "L.U",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -383,11 +414,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "LOUWER"
   },
   {
     "shortcut": "9",
     "conversion": "L.A",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -395,11 +427,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "LOUWER"
   },
   {
     "shortcut": "`",
     "conversion": "CP",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -407,11 +440,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "LOUWER"
   },
   {
     "shortcut": "__auto_1783701280062",
     "conversion": "B.F.P-(G)-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -419,11 +453,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "BFP"
   },
   {
     "shortcut": "3",
     "conversion": "S.L",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -431,11 +466,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "4",
     "conversion": "T.G",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -443,11 +479,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "A4",
     "conversion": "T.G-(A)",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -455,11 +492,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "6",
     "conversion": "H.O",
+    "size": "",
     "u_cap": "Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -467,11 +505,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "__auto_1783700739862",
     "conversion": "T.G-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -479,11 +518,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "__auto_1783700736526",
     "conversion": "T.G-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -491,11 +531,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "__auto_1783700721638",
     "conversion": "S.L-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -503,11 +544,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "__auto_1783700725566",
     "conversion": "S.L-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -515,11 +557,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SL-TG-HO"
   },
   {
     "shortcut": "C5",
     "conversion": "F.P.C",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -527,11 +570,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "CG5",
     "conversion": "F.P.C.G",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -539,11 +583,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "G5",
     "conversion": "F.P.G",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -551,11 +596,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "5",
     "conversion": "F.P",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -563,11 +609,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "CGA5",
     "conversion": "F.P.C.G-(A)",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -575,11 +622,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700697870",
     "conversion": "F.P-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -587,11 +635,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700702101",
     "conversion": "F.P-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -599,11 +648,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700706654",
     "conversion": "F.P.C.G-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -611,11 +661,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700710686",
     "conversion": "F.P.C.G-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -623,11 +674,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700714598",
     "conversion": "F.P.G-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -635,11 +687,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700718246",
     "conversion": "F.P.G-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -647,11 +700,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "7",
     "conversion": "S.P",
+    "size": "",
     "u_cap": "Fluted Jointer",
     "l_cap": "Jointer",
     "multiplication": 1.0,
@@ -659,11 +713,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700728973",
     "conversion": "S.P-(Digital)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -671,11 +726,12 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   },
   {
     "shortcut": "__auto_1783700732781",
     "conversion": "S.P-(Digital-or-Golden)",
+    "size": "",
     "u_cap": "0.0",
     "l_cap": "0.0",
     "multiplication": 1.0,
@@ -683,7 +739,7 @@ export const SQLITE_CONTROL_CONVERSIONS: SqliteControlRow[] = [
     "box_size": 1.0,
     "weight_per_pcs": 0.0,
     "real_item_name": "",
-    "group_name": "General"
+    "group_name": "SP-FP"
   }
 ];
 
@@ -800,3 +856,4 @@ export const SQLITE_CONTROL_GROUPS: SqliteControlGroup[] = [
     "chain_parent": ""
   }
 ];
+

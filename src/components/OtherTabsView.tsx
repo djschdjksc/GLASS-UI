@@ -7,7 +7,7 @@ import { EquationTabView } from './EquationTabView';
 
 import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { AnimatedCounter } from './common/AnimatedCounter';
-import { Select as ShadcnSelect, Button as ShadcnButton, Input as ShadcnInput, Pagination as ShadcnPagination, Tooltip } from './ui/shadcn';
+import { Select as ShadcnSelect, Button as ShadcnButton, Input as ShadcnInput, Pagination as ShadcnPagination, Tooltip, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { NavKey } from '../types';
@@ -943,6 +943,7 @@ export const OtherTabsView: React.FC<Props> = ({
   };
 
   const [editingPartyId, setEditingPartyId] = useState<string | null>(null);
+  const [inlinePartyDraft, setInlinePartyDraft] = useState<Partial<PartyRecord> | null>(null);
 
   // Bill stats per party (bill counts and total turnover)
   const partyBillStats = useMemo(() => {
@@ -959,12 +960,11 @@ export const OtherTabsView: React.FC<Props> = ({
     return stats;
   }, [bills]);
 
-  // Filtered parties across name, phone, station, district, state, pincode, gstin - Newest first
+  // Filtered parties across name, phone, station, district, state, pincode, gstin - Stable persistent order
   const filteredParties = useMemo(() => {
     const q = partySearchQuery.trim().toLowerCase();
-    const sorted = [...parties].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-    if (!q) return sorted;
-    return sorted.filter(p => {
+    if (!q) return parties;
+    return parties.filter(p => {
       return (
         (p.name && p.name.toLowerCase().includes(q)) ||
         (p.phone && p.phone.toLowerCase().includes(q)) ||
@@ -1040,12 +1040,103 @@ export const OtherTabsView: React.FC<Props> = ({
     showPartyToast(`Successfully imported ${count} parties!`);
   }, [parties, saveParty]);
 
+  const lastSoundRef = useRef<number>(0);
+  const playNavSound = () => {
+    const now = performance.now();
+    if (now - lastSoundRef.current > 45) {
+      lastSoundRef.current = now;
+      macAudio.playHover();
+    }
+  };
+
+  const startInlineEdit = useCallback((party: PartyRecord, fieldToFocus = 'name') => {
+    macAudio.playClick();
+    setEditingPartyId(party.id);
+    setInlinePartyDraft({ ...party });
+    setTimeout(() => {
+      const rowEl = document.getElementById(`party-row-${party.id}`);
+      const input = (rowEl?.querySelector(`input[data-field="${fieldToFocus}"]`) || rowEl?.querySelector('input')) as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 35);
+  }, []);
+
+  const handleCommitInlineParty = useCallback(async (targetId?: string) => {
+    const idToSave = targetId || editingPartyId;
+    if (!idToSave || !inlinePartyDraft) {
+      setEditingPartyId(null);
+      setInlinePartyDraft(null);
+      return;
+    }
+    const original = parties.find(p => p.id === idToSave);
+    if (!original) {
+      setEditingPartyId(null);
+      setInlinePartyDraft(null);
+      return;
+    }
+    const finalRecord: PartyRecord = {
+      ...original,
+      ...inlinePartyDraft,
+      name: (inlinePartyDraft.name !== undefined ? inlinePartyDraft.name : (original.name || 'NEW PARTY')).trim() || original.name || 'NEW PARTY',
+      updatedAt: Date.now()
+    };
+    await saveParty(finalRecord);
+    setEditingPartyId(null);
+    setInlinePartyDraft(null);
+    macAudio.playSuccess();
+  }, [editingPartyId, inlinePartyDraft, parties, saveParty]);
+
+  const handleCancelInlineParty = useCallback(() => {
+    setEditingPartyId(null);
+    setInlinePartyDraft(null);
+  }, []);
+
+  const handleDraftChange = useCallback((field: keyof PartyRecord, value: any) => {
+    setInlinePartyDraft(prev => (prev ? { ...prev, [field]: value } : { [field]: value }));
+  }, []);
+
+  const handleStartNewParty = useCallback(async () => {
+    const newId = `P-${Date.now()}`;
+    const newRecord: PartyRecord = {
+      id: newId,
+      name: 'NEW PARTY',
+      phone: '',
+      station: '',
+      district: '',
+      state: '',
+      pincode: '',
+      city: '',
+      contact: 'NEW PARTY',
+      balance: 0,
+      limit: 500000,
+      gstin: '',
+      updatedAt: Date.now(),
+      synced: false
+    };
+    await saveParty(newRecord);
+    setPartyCurrentPage(1);
+    setSelectedPartyId(newId);
+    startInlineEdit(newRecord, 'name');
+    macAudio.playSuccess();
+  }, [saveParty, startInlineEdit]);
+
   // F5 Keyboard Navigation (Enter to edit/save, Delete key to delete row, Arrow keys to navigate)
   useEffect(() => {
     if (activeTab !== 'F5') return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // NumLock and Clear guards: never delete or disrupt UI
+      if (e.key === 'NumLock' || e.code === 'NumLock' || e.key === 'Clear') {
+        return;
+      }
+
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          return;
+        }
+
         if (e.key === 'ArrowRight') {
           const target = e.target as HTMLInputElement;
           const isFullSelect = target.selectionStart === 0 && target.selectionEnd === target.value?.length;
@@ -1057,7 +1148,7 @@ export const OtherTabsView: React.FC<Props> = ({
               const currIdx = inputs.indexOf(target as any);
               if (currIdx >= 0 && currIdx < inputs.length - 1) {
                 e.preventDefault();
-                macAudio.playHover();
+                playNavSound();
                 inputs[currIdx + 1].focus();
                 if ('select' in inputs[currIdx + 1]) (inputs[currIdx + 1] as HTMLInputElement).select();
                 return;
@@ -1075,7 +1166,7 @@ export const OtherTabsView: React.FC<Props> = ({
               const currIdx = inputs.indexOf(target as any);
               if (currIdx > 0) {
                 e.preventDefault();
-                macAudio.playHover();
+                playNavSound();
                 inputs[currIdx - 1].focus();
                 if ('select' in inputs[currIdx - 1]) (inputs[currIdx - 1] as HTMLInputElement).select();
                 return;
@@ -1090,7 +1181,7 @@ export const OtherTabsView: React.FC<Props> = ({
             const inputs = Array.from(row.querySelectorAll('input:not([disabled]), select:not([disabled])')) as (HTMLInputElement | HTMLSelectElement)[];
             const currIdx = inputs.indexOf(target as any);
             if (currIdx >= 0 && currIdx < inputs.length - 1) {
-              macAudio.playHover();
+              playNavSound();
               inputs[currIdx + 1].focus();
               if ('select' in inputs[currIdx + 1]) {
                 (inputs[currIdx + 1] as HTMLInputElement).select();
@@ -1099,12 +1190,11 @@ export const OtherTabsView: React.FC<Props> = ({
             }
           }
           // Reached last cell of row -> finish / save editing!
-          macAudio.playSuccess();
-          setEditingPartyId(null);
+          handleCommitInlineParty();
         } else if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
-          setEditingPartyId(null);
+          handleCancelInlineParty();
         }
         return;
       }
@@ -1113,7 +1203,7 @@ export const OtherTabsView: React.FC<Props> = ({
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        setEditingPartyId(null);
+        handleCancelInlineParty();
         setSelectedPartyId(null);
         return;
       }
@@ -1121,38 +1211,62 @@ export const OtherTabsView: React.FC<Props> = ({
       if (paginatedParties.length === 0) return;
       const currentIndex = paginatedParties.findIndex(p => p.id === selectedPartyId);
 
+      // Enter key on selected row: start inline editing party name immediately!
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedPartyId) {
+          const target = paginatedParties.find(p => p.id === selectedPartyId);
+          if (target) {
+            startInlineEdit(target, 'name');
+          }
+        } else if (paginatedParties.length > 0) {
+          setSelectedPartyId(paginatedParties[0].id);
+          startInlineEdit(paginatedParties[0], 'name');
+        }
+        return;
+      }
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        macAudio.playHover();
         if (currentIndex < paginatedParties.length - 1) {
           const nextIdx = currentIndex + 1;
           setSelectedPartyId(paginatedParties[nextIdx].id);
+          playNavSound();
         } else if (currentIndex === paginatedParties.length - 1) {
-          // Reached last row! Auto-focus Next Page button if available
+          // Reached last row! Auto-flip seamlessly to Next Page row 0!
           if (partyCurrentPage < totalPartyPages) {
-            const nextBtn = document.getElementById('parties-pagination-next') as HTMLButtonElement | null;
-            if (nextBtn && !nextBtn.disabled) {
-              nextBtn.focus();
-              macAudio.playPop();
+            const nextP = partyCurrentPage + 1;
+            setPartyCurrentPage(nextP);
+            const start = (nextP - 1) * PARTIES_PER_PAGE;
+            const slice = filteredParties.slice(start, start + PARTIES_PER_PAGE);
+            if (slice.length > 0) {
+              setSelectedPartyId(slice[0].id);
+              playNavSound();
             }
           }
+        } else if (currentIndex === -1 && paginatedParties.length > 0) {
+          setSelectedPartyId(paginatedParties[0].id);
+          playNavSound();
         }
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        macAudio.playHover();
         if (currentIndex > 0) {
           const prevIdx = currentIndex - 1;
           setSelectedPartyId(paginatedParties[prevIdx].id);
+          playNavSound();
         } else if (currentIndex === 0) {
-          // Reached first row! Auto-focus Previous Page button if available
+          // Reached first row! Auto-flip seamlessly to Previous Page last row!
           if (partyCurrentPage > 1) {
-            const prevBtn = document.getElementById('parties-pagination-prev') as HTMLButtonElement | null;
-            if (prevBtn && !prevBtn.disabled) {
-              prevBtn.focus();
-              macAudio.playPop();
+            const prevP = partyCurrentPage - 1;
+            setPartyCurrentPage(prevP);
+            const start = (prevP - 1) * PARTIES_PER_PAGE;
+            const slice = filteredParties.slice(start, start + PARTIES_PER_PAGE);
+            if (slice.length > 0) {
+              setSelectedPartyId(slice[slice.length - 1].id);
+              playNavSound();
             }
           }
         }
@@ -1205,8 +1319,10 @@ export const OtherTabsView: React.FC<Props> = ({
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (selectedPartyId) {
-          macAudio.playClick();
-          setEditingPartyId(selectedPartyId);
+          const target = paginatedParties.find(p => p.id === selectedPartyId);
+          if (target) {
+            startInlineEdit(target, 'name');
+          }
         }
         return;
       }
@@ -1233,14 +1349,17 @@ export const OtherTabsView: React.FC<Props> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, deleteParty, partyToDelete, partyCurrentPage, totalPartyPages]);
+  }, [activeTab, paginatedParties, selectedPartyId, editingPartyId, inlinePartyDraft, deleteParty, partyToDelete, partyCurrentPage, totalPartyPages, handleCommitInlineParty, handleCancelInlineParty, startInlineEdit, handleStartNewParty]);
 
-  // Auto-scroll selected party row smoothly into view on arrow navigation
+  // Auto-scroll selected party row instantly into view on arrow navigation and set DOM focus
   useEffect(() => {
     if (activeTab === 'F5' && selectedPartyId) {
       const el = document.getElementById(`party-row-${selectedPartyId}`);
       if (el) {
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        if (document.activeElement !== el && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+          el.focus({ preventScroll: true });
+        }
       }
     }
   }, [activeTab, selectedPartyId]);
@@ -1260,39 +1379,6 @@ export const OtherTabsView: React.FC<Props> = ({
     setIsEditingParty(true);
   };
 
-  const handleStartNewParty = async () => {
-    const newId = `P-${Date.now()}`;
-    const newRecord = {
-      id: newId,
-      name: 'NEW PARTY',
-      phone: '',
-      station: '',
-      district: '',
-      state: '',
-      pincode: '',
-      city: '',
-      contact: '',
-      balance: 0,
-      limit: 500000,
-      gstin: '',
-      updatedAt: Date.now() + 100000,
-      synced: false
-    };
-    await saveParty(newRecord);
-    setPartyCurrentPage(1);
-    setSelectedPartyId(newId);
-    setEditingPartyId(newId);
-    macAudio.playSuccess();
-  };
-
-  const handleInlinePartyChange = async (party: any, field: string, value: any) => {
-    const updated = {
-      ...party,
-      [field]: value,
-      updatedAt: Date.now()
-    };
-    await saveParty(updated);
-  };
 
   const handleBulkPartyPaste = async (e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData('text');
@@ -1904,10 +1990,29 @@ export const OtherTabsView: React.FC<Props> = ({
                         <td style={{ color: '#e2e8f0', fontWeight: 600, fontSize: '11px', paddingLeft: '8px' }}>
                           {displayFinishedItems.length} Moulds
                         </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#a78bfa', fontFamily: "'JetBrains Mono', monospace", paddingRight: '6px' }}>
-                          <Tooltip title={`Total Moulds Qty: ${totalFinishedQty}`} placement="top" color="#0f172a">
+                        <td 
+                          style={{ 
+                            textAlign: 'right', 
+                            fontWeight: 700, 
+                            color: totalFinishedQty !== grandTotalAllCols ? '#ef4444' : '#a78bfa', 
+                            fontFamily: "'JetBrains Mono', monospace", 
+                            paddingRight: '6px' 
+                          }}
+                        >
+                          <Tooltip 
+                            title={
+                              totalFinishedQty !== grandTotalAllCols 
+                                ? `⚠️ Qty Mismatch: Moulds Qty (${totalFinishedQty}) ≠ Product Total (${grandTotalAllCols})` 
+                                : `Total Moulds Qty: ${totalFinishedQty}`
+                            } 
+                            placement="top" 
+                            color="#0f172a"
+                          >
                             <span style={{ display: 'inline-block' }}>
-                              <AnimatedCounter value={totalFinishedQty} />
+                              <AnimatedCounter 
+                                value={totalFinishedQty} 
+                                style={{ color: totalFinishedQty !== grandTotalAllCols ? '#ef4444' : '#a78bfa' }}
+                              />
                             </span>
                           </Tooltip>
                         </td>
@@ -2319,57 +2424,57 @@ export const OtherTabsView: React.FC<Props> = ({
             ) : (
               /* ===== CLASSIC TABLE VIEW — PURE SHADCN DARK ZINC ===== */
               <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
-                    <tr style={{ borderBottom: '1px solid #27272a' }}>
-                      <th style={{ width: `${tableCols.f5Parties.index}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10, background: '#18181b' }}>
+                    <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                      <TableHead style={{ width: `${tableCols.f5Parties.index}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         #
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'index', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.name}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.name}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         PARTY NAME
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'name', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.phone}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.phone}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         PHONE NUMBER
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'phone', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.station}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.station}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         STATION
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'station', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.district}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.district}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         DISTRICT
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'district', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.state}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.state}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         STATE
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'state', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.pincode}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.pincode}px`, padding: '8px 10px', textAlign: 'left', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         PINCODE
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'pincode', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.bills}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.bills}px`, padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         BILLS
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'bills', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: `${tableCols.f5Parties.balance}px`, padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: `${tableCols.f5Parties.balance}px`, padding: '8px 10px', textAlign: 'right', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         BALANCE
                         <div className="th-resizer" onMouseDown={(e) => startResizeCol('f5Parties', 'balance', e)} title="Drag to resize" />
-                      </th>
-                      <th style={{ width: '85px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
+                      </TableHead>
+                      <TableHead style={{ width: '85px', padding: '8px 8px', textAlign: 'center', color: '#a1a1aa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', position: 'relative', userSelect: 'none' }}>
                         ACTION
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {paginatedParties.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} style={{ textAlign: 'center', padding: '30px 10px', color: '#71717a', fontSize: '12px' }}>
+                      <TableRow>
+                        <TableCell colSpan={10} style={{ textAlign: 'center', padding: '30px 10px', color: '#71717a', fontSize: '12px' }}>
                           No parties match "{partySearchQuery}". Click "Add Party Row" or paste Excel rows (Ctrl+V).
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ) : (
                       paginatedParties.map((p, idx) => {
                         const globalIdx = (partyCurrentPage - 1) * PARTIES_PER_PAGE + idx + 1;
@@ -2377,11 +2482,12 @@ export const OtherTabsView: React.FC<Props> = ({
                         const stat = partyBillStats[pNameKey] || { count: 0, total: 0 };
                         const isSelected = selectedPartyId === p.id;
                         const isEditing = editingPartyId === p.id;
+                        const draft = isEditing && inlinePartyDraft ? inlinePartyDraft : p;
 
                         const cellInputStyle: React.CSSProperties = {
                           width: '100%',
-                          background: '#27272a',
-                          border: '1px solid #3f3f46',
+                          background: '#18181b',
+                          border: '1px solid #38bdf8',
                           outline: 'none',
                           color: '#f4f4f5',
                           fontSize: '12px',
@@ -2405,99 +2511,146 @@ export const OtherTabsView: React.FC<Props> = ({
                         };
 
                         return (
-                          <tr
+                          <TableRow
                             key={p.id || idx}
                             id={`party-row-${p.id}`}
+                            isSelected={isSelected}
+                            tabIndex={isSelected ? 0 : -1}
                             style={{
                               height: `${activeRowHeight}px`,
                               borderBottom: '1px solid #27272a',
-                              background: isSelected ? '#1c1c1f' : 'transparent',
-                              outline: isSelected ? '1px solid #3f3f46' : 'none',
-                              outlineOffset: '-1px',
+                              background: isSelected
+                                ? 'rgba(56, 189, 248, 0.16)'
+                                : (idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent'),
+                              outline: isSelected ? '2px solid rgba(56, 189, 248, 0.75)' : 'none',
+                              outlineOffset: '-2px',
+                              boxShadow: isSelected ? 'inset 0 0 0 1px rgba(56, 189, 248, 0.3)' : 'none',
                               cursor: 'pointer',
                               transition: 'background 0.1s ease'
                             }}
                             onClick={() => setSelectedPartyId(p.id)}
-                            onDoubleClick={() => setEditingPartyId(p.id)}
+                            onDoubleClick={() => startInlineEdit(p, 'name')}
                           >
-                            <td style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px', position: 'relative' }}>
+                            <TableCell style={{ textAlign: 'center', color: '#52525b', fontSize: '11px', userSelect: 'none', padding: '4px 6px', position: 'relative' }}>
                               {globalIdx}
                               <div className="row-resizer" onMouseDown={handleRowResizeMouseDown} title="Drag to resize row height" />
-                            </td>
-                            <td style={{ padding: '2px 4px' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="name"
                                   type="text"
-                                  value={p.name || ''}
-                                  onChange={(e) => handleInlinePartyChange(p, 'name', e.target.value)}
+                                  value={draft.name !== undefined ? draft.name : (p.name || '')}
+                                  onChange={(e) => handleDraftChange('name', e.target.value)}
                                   style={{ ...cellInputStyle, fontWeight: 600 }}
+                                  placeholder="Party Name"
                                   autoFocus
                                 />
                               ) : (
-                                <span style={{ ...cellTextStyle, fontWeight: 600 }}>{p.name}</span>
+                                <span
+                                  style={{ ...cellTextStyle, fontWeight: 600 }}
+                                  onDoubleClick={() => startInlineEdit(p, 'name')}
+                                >
+                                  {p.name}
+                                </span>
                               )}
-                            </td>
-                            <td style={{ padding: '2px 4px' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="phone"
                                   type="text"
-                                  value={p.phone || ''}
-                                  onChange={(e) => handleInlinePartyChange(p, 'phone', e.target.value)}
+                                  value={draft.phone !== undefined ? draft.phone : (p.phone || '')}
+                                  onChange={(e) => handleDraftChange('phone', e.target.value)}
                                   style={cellInputStyle}
+                                  placeholder="Phone"
                                 />
                               ) : (
-                                <span style={cellTextStyle}>{p.phone || '—'}</span>
+                                <span
+                                  style={cellTextStyle}
+                                  onDoubleClick={() => startInlineEdit(p, 'phone')}
+                                >
+                                  {p.phone || '—'}
+                                </span>
                               )}
-                            </td>
-                            <td style={{ padding: '2px 4px' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="station"
                                   type="text"
-                                  value={p.station || p.city || ''}
-                                  onChange={(e) => handleInlinePartyChange(p, 'station', e.target.value)}
+                                  value={draft.station !== undefined ? draft.station : (p.station || p.city || '')}
+                                  onChange={(e) => handleDraftChange('station', e.target.value)}
                                   style={cellInputStyle}
+                                  placeholder="Station"
                                 />
                               ) : (
-                                <span style={cellTextStyle}>{p.station || p.city || '—'}</span>
+                                <span
+                                  style={cellTextStyle}
+                                  onDoubleClick={() => startInlineEdit(p, 'station')}
+                                >
+                                  {p.station || p.city || '—'}
+                                </span>
                               )}
-                            </td>
-                            <td style={{ padding: '2px 4px' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="district"
                                   type="text"
-                                  value={p.district || ''}
-                                  onChange={(e) => handleInlinePartyChange(p, 'district', e.target.value)}
+                                  value={draft.district !== undefined ? draft.district : (p.district || '')}
+                                  onChange={(e) => handleDraftChange('district', e.target.value)}
                                   style={cellInputStyle}
+                                  placeholder="District"
                                 />
                               ) : (
-                                <span style={cellTextStyle}>{p.district || '—'}</span>
+                                <span
+                                  style={cellTextStyle}
+                                  onDoubleClick={() => startInlineEdit(p, 'district')}
+                                >
+                                  {p.district || '—'}
+                                </span>
                               )}
-                            </td>
-                            <td style={{ padding: '2px 4px' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="state"
                                   type="text"
-                                  value={p.state || ''}
-                                  onChange={(e) => handleInlinePartyChange(p, 'state', e.target.value)}
+                                  value={draft.state !== undefined ? draft.state : (p.state || '')}
+                                  onChange={(e) => handleDraftChange('state', e.target.value)}
                                   style={cellInputStyle}
+                                  placeholder="State"
                                 />
                               ) : (
-                                <span style={cellTextStyle}>{p.state || '—'}</span>
+                                <span
+                                  style={cellTextStyle}
+                                  onDoubleClick={() => startInlineEdit(p, 'state')}
+                                >
+                                  {p.state || '—'}
+                                </span>
                               )}
-                            </td>
-                            <td style={{ padding: '2px 4px' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="pincode"
                                   type="text"
-                                  value={p.pincode || ''}
-                                  onChange={(e) => handleInlinePartyChange(p, 'pincode', e.target.value)}
+                                  value={draft.pincode !== undefined ? draft.pincode : (p.pincode || '')}
+                                  onChange={(e) => handleDraftChange('pincode', e.target.value)}
                                   style={cellInputStyle}
+                                  placeholder="Pincode"
                                 />
                               ) : (
-                                <span style={cellTextStyle}>{p.pincode || '—'}</span>
+                                <span
+                                  style={cellTextStyle}
+                                  onDoubleClick={() => startInlineEdit(p, 'pincode')}
+                                >
+                                  {p.pincode || '—'}
+                                </span>
                               )}
-                            </td>
-                            <td style={{ textAlign: 'center', padding: '4px 6px' }}>
+                            </TableCell>
+                            <TableCell style={{ textAlign: 'center', padding: '4px 6px' }}>
                               {stat.count > 0 ? (
                                 <span style={{ background: '#27272a', border: '1px solid #3f3f46', color: '#f4f4f5', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>
                                   {stat.count}
@@ -2505,13 +2658,14 @@ export const OtherTabsView: React.FC<Props> = ({
                               ) : (
                                 <span style={{ color: '#52525b', fontSize: '11px' }}>0</span>
                               )}
-                            </td>
-                            <td style={{ padding: '2px 4px', textAlign: 'right' }}>
+                            </TableCell>
+                            <TableCell style={{ padding: '2px 4px', textAlign: 'right' }}>
                               {isEditing ? (
                                 <input
+                                  data-field="balance"
                                   type="number"
-                                  value={p.balance !== undefined ? p.balance : 0}
-                                  onChange={(e) => handleInlinePartyChange(p, 'balance', parseFloat(e.target.value) || 0)}
+                                  value={draft.balance !== undefined ? draft.balance : (p.balance !== undefined ? p.balance : 0)}
+                                  onChange={(e) => handleDraftChange('balance', parseFloat(e.target.value) || 0)}
                                   style={{
                                     ...cellInputStyle,
                                     fontWeight: 600,
@@ -2519,35 +2673,56 @@ export const OtherTabsView: React.FC<Props> = ({
                                   }}
                                 />
                               ) : (
-                                <span style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: (p.balance || 0) < 0 ? '#ef4444' : '#f4f4f5' }}>
+                                <span
+                                  style={{ ...cellTextStyle, textAlign: 'right', fontWeight: 600, color: (p.balance || 0) < 0 ? '#ef4444' : '#f4f4f5' }}
+                                  onDoubleClick={() => startInlineEdit(p, 'balance')}
+                                >
                                   {(p.balance !== undefined ? p.balance : 0).toLocaleString('en-IN')}
                                 </span>
                               )}
-                            </td>
-                            <td style={{ textAlign: 'center', padding: '2px 6px' }}>
+                            </TableCell>
+                            <TableCell style={{ textAlign: 'center', padding: '2px 6px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 {isEditing ? (
-                                  <Tooltip title="Save Party (Enter)" side="bottom">
-                                    <button
-                                      type="button"
-                                      style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                        padding: '2px 10px', height: '24px', borderRadius: '4px',
-                                        background: '#f4f4f5', color: '#09090b',
-                                        border: 'none', fontSize: '11px', fontWeight: 600,
-                                        cursor: 'pointer'
-                                      }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        macAudio.playSuccess();
-                                        setEditingPartyId(null);
-                                      }}
-                                    >
-                                      <Check size={11} /> Save
-                                    </button>
-                                  </Tooltip>
+                                  <>
+                                    <Tooltip title="Save Party (Enter)" side="bottom">
+                                      <button
+                                        type="button"
+                                        style={{
+                                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                          padding: '2px 10px', height: '24px', borderRadius: '4px',
+                                          background: '#38bdf8', color: '#09090b',
+                                          border: 'none', fontSize: '11px', fontWeight: 600,
+                                          cursor: 'pointer'
+                                        }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCommitInlineParty(p.id);
+                                        }}
+                                      >
+                                        <Check size={11} /> Save
+                                      </button>
+                                    </Tooltip>
+                                    <Tooltip title="Cancel Edit (Esc)" side="bottom">
+                                      <button
+                                        type="button"
+                                        style={{
+                                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                          width: '24px', height: '24px', borderRadius: '4px',
+                                          background: '#27272a', color: '#a1a1aa',
+                                          border: '1px solid #3f3f46', cursor: 'pointer'
+                                        }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancelInlineParty();
+                                        }}
+                                      >
+                                        <X size={11} />
+                                      </button>
+                                    </Tooltip>
+                                  </>
                                 ) : (
-                                  <Tooltip title="Edit Party Details" side="bottom">
+                                  <Tooltip title="Edit Party Details (Enter)" side="bottom">
                                     <button
                                       type="button"
                                       style={{
@@ -2561,8 +2736,7 @@ export const OtherTabsView: React.FC<Props> = ({
                                       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'; }}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        macAudio.playClick();
-                                        setEditingPartyId(p.id);
+                                        startInlineEdit(p, 'name');
                                       }}
                                     >
                                       <Edit3 size={12} />
@@ -2570,14 +2744,14 @@ export const OtherTabsView: React.FC<Props> = ({
                                   </Tooltip>
                                 )}
                               </div>
-                            </td>
+                            </TableCell>
 
-                          </tr>
+                          </TableRow>
                         );
                       })
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>

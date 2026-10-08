@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Clock, Check, Printer, FileDiff, CheckCircle2, Receipt } from 'lucide-react';
-import { Select } from './ui/shadcn';
+import { Select, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/shadcn';
 import { localDb } from '../services/db/localDb';
 import type { BillRecord } from '../services/db/schema';
 import type { RawItem, BillHeader } from '../types';
@@ -467,31 +467,31 @@ export const PendingSlipModal: React.FC<Props> = ({
               </div>
 
               {pendingCalculation.pendingRows.length > 0 ? (
-                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  <table className="apple-table" style={{ width: '100%', fontSize: '11px' }}>
-                    <thead>
-                      <tr>
-                        <th style={{ width: '32px', textAlign: 'center' }}>#</th>
-                        <th>ITEM NAME</th>
-                        <th style={{ width: '100px', textAlign: 'right', color: '#38bdf8' }}>MAIN SLIP</th>
-                        <th style={{ width: '100px', textAlign: 'right', color: '#fb923c' }}>DISPATCHED</th>
-                        <th style={{ width: '110px', textAlign: 'right', color: '#fbbf24' }}>PENDING</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                <div style={{ maxHeight: '200px', overflowY: 'auto', borderRadius: '6px', border: '1px solid #27272a' }}>
+                  <Table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                    <TableHeader style={{ background: '#18181b', position: 'sticky', top: 0, zIndex: 5 }}>
+                      <TableRow style={{ borderBottom: '1px solid #27272a' }}>
+                        <TableHead style={{ width: '32px', textAlign: 'center', padding: '6px 4px', color: '#a1a1aa', fontSize: '10.5px', fontWeight: 600 }}>#</TableHead>
+                        <TableHead style={{ padding: '6px 8px', color: '#a1a1aa', fontSize: '10.5px', fontWeight: 600 }}>ITEM NAME</TableHead>
+                        <TableHead style={{ width: '100px', textAlign: 'right', padding: '6px 8px', color: '#38bdf8', fontSize: '10.5px', fontWeight: 600 }}>MAIN SLIP</TableHead>
+                        <TableHead style={{ width: '100px', textAlign: 'right', padding: '6px 8px', color: '#fb923c', fontSize: '10.5px', fontWeight: 600 }}>DISPATCHED</TableHead>
+                        <TableHead style={{ width: '110px', textAlign: 'right', padding: '6px 8px', color: '#fbbf24', fontSize: '10.5px', fontWeight: 600 }}>PENDING</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {pendingCalculation.pendingRows.map((p, idx) => (
-                        <tr key={p.item.id || idx} className="mac-table-row">
-                          <td style={{ textAlign: 'center', color: '#64748b' }}>{idx + 1}</td>
-                          <td style={{ fontWeight: 600, color: '#f8fafc' }}>{p.item.name}</td>
-                          <td style={{ textAlign: 'right', color: '#94a3b8', fontFamily: "'JetBrains Mono', monospace" }}>{p.mainRowTotal}</td>
-                          <td style={{ textAlign: 'right', color: '#cbd5e1', fontFamily: "'JetBrains Mono', monospace" }}>{p.dispRowTotal}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 800, color: '#fbbf24', fontFamily: "'JetBrains Mono', monospace" }}>
+                        <TableRow key={p.item.id || idx} style={{ height: '28px', borderBottom: '1px solid #27272a', background: idx % 2 === 0 ? 'rgba(24, 24, 27, 0.4)' : 'transparent' }}>
+                          <TableCell style={{ textAlign: 'center', color: '#64748b', padding: '4px 4px' }}>{idx + 1}</TableCell>
+                          <TableCell style={{ fontWeight: 600, color: '#f8fafc', padding: '4px 8px' }}>{p.item.name}</TableCell>
+                          <TableCell style={{ textAlign: 'right', color: '#94a3b8', fontFamily: "'JetBrains Mono', monospace", padding: '4px 8px' }}>{p.mainRowTotal}</TableCell>
+                          <TableCell style={{ textAlign: 'right', color: '#cbd5e1', fontFamily: "'JetBrains Mono', monospace", padding: '4px 8px' }}>{p.dispRowTotal}</TableCell>
+                          <TableCell style={{ textAlign: 'right', fontWeight: 800, color: '#fbbf24', fontFamily: "'JetBrains Mono', monospace", padding: '4px 8px' }}>
                             {p.pendingRowTotal}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '16px', color: '#34d399', fontSize: '11.5px', fontWeight: 600 }}>

@@ -46,7 +46,7 @@ export const CloudBillNotification: React.FC<Props> = ({
       style={{
         position: 'fixed',
         bottom: '24px',
-        right: '24px',
+        left: '24px',
         zIndex: 99999999,
         maxWidth: '390px',
         width: 'calc(100% - 48px)',
