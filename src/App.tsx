@@ -153,6 +153,8 @@ const getBillFingerprint = (h: BillHeader, raws: RawItem[], moulds: FinishedItem
       itemNames: (g.itemNames || []).map(n => n.trim()).filter(Boolean)
     }))
   });
+};
+
 export function resolveBillDynamicCols(bill: any): { field: string; label: string }[] {
   if (!bill) return [];
   const result: { field: string; label: string; size?: number }[] = [];
