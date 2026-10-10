@@ -26,7 +26,11 @@ import {
   Settings,
   Copy,
   FolderOpen,
-  FileCheck
+  FileCheck,
+  Send,
+  Users,
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react';
 import { macAudio } from '../utils/macAudio';
 import { localDb } from '../services/db/localDb';
@@ -163,6 +167,25 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     ? (Number(printSettings.loadingSlipRowsPerPage) || 27)
     : (Number(printSettings.estimateRowsPerPage) || 27);
 
+  // WhatsApp Modal & Target Number State
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState<boolean>(false);
+  const [primaryPhone, setPrimaryPhone] = useState<string>(() => {
+    try {
+      return localStorage.getItem('modern_primary_whatsapp') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [customPhoneInput, setCustomPhoneInput] = useState<string>('');
+  const [whatsAppTab, setWhatsAppTab] = useState<'party' | 'primary' | 'custom' | 'group'>('party');
+  const [customGroupLinkInput, setCustomGroupLinkInput] = useState<string>(() => {
+    try {
+      return localStorage.getItem('modern_default_whatsapp_group') || '';
+    } catch {
+      return '';
+    }
+  });
+
   // Return Bill Modal State
   const [isReturnModalOpen, setIsReturnModalOpen] = useState<boolean>(false);
   const [returnSearchQuery, setReturnSearchQuery] = useState<string>('');
@@ -208,6 +231,21 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       return undefined;
     }
   }, [header.partyName, isOpen]);
+
+  // Find party phone number
+  const activePartyPhone = useMemo<string>(() => {
+    if (!activePartyRecord) {
+      if (!header.partyName) return '';
+      const partyClean = header.partyName.trim().toLowerCase();
+      try {
+        const found = localDb.getParties().find(p => (p.name || '').trim().toLowerCase() === partyClean);
+        return (found?.phone || found?.contact || '').trim();
+      } catch {
+        return '';
+      }
+    }
+    return (activePartyRecord.phone || activePartyRecord.contact || '').trim();
+  }, [activePartyRecord, header.partyName]);
 
   // Lookup District for Party strictly by exact name match & non-empty district only
   const [partyDistrict, setPartyDistrict] = useState<string>('');
@@ -902,6 +940,87 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       return;
     }
     executeSaveAsImage(isCombined);
+  };
+
+  // WhatsApp Sharing Logic
+  const generateWhatsAppSummaryText = (): string => {
+    const docName = (header.docType || 'BILL').toUpperCase();
+    const party = displayPartyWithDistrict || 'Sir/Madam';
+    const bNum = formattedBillNo;
+    const dt = header.date || new Date().toISOString().split('T')[0];
+    const totalAmt = formatIndianCurrency(finalBalance);
+    const subTot = formatIndianCurrency(subTotal);
+    const totalQty = rawItems.reduce((acc, r) => acc + (Number(r.qty) || 0), 0);
+
+    let text = `📄 *${docName} #${bNum}*\n`;
+    text += `👤 *Party:* ${party}\n`;
+    text += `📅 *Date:* ${dt}\n`;
+    if (header.vehicleNo) text += `🚛 *Vehicle:* ${header.vehicleNo}\n`;
+    text += `📦 *Total Qty:* ${totalQty}\n`;
+    if (printMode !== 'loading_slip') {
+      text += `💰 *Sub Total:* ₹${subTot}\n`;
+      text += `💵 *${balanceLabel}:* ₹${totalAmt}\n`;
+    }
+    text += `\n📎 _Bill summary image copied to your clipboard (Press Ctrl+V to attach image)_`;
+    return text;
+  };
+
+  const sanitizePhoneForWhatsApp = (raw: string): string => {
+    let clean = (raw || '').replace(/[^0-9]/g, '');
+    if (clean.length === 10) clean = '91' + clean;
+    if (clean.startsWith('0') && clean.length === 11) clean = '91' + clean.slice(1);
+    return clean;
+  };
+
+  const handleSendWhatsApp = async (phoneOrGroupUrl?: string) => {
+    try { macAudio.playClick(); } catch {}
+
+    // Auto copy image to clipboard so user can just Ctrl+V in WhatsApp Web/App
+    try {
+      await executeCopyAsImage(totalPages > 1);
+    } catch {}
+
+    const summaryText = encodeURIComponent(generateWhatsAppSummaryText());
+
+    if (phoneOrGroupUrl && (phoneOrGroupUrl.includes('chat.whatsapp.com') || phoneOrGroupUrl.startsWith('http'))) {
+      // It's a WhatsApp Group Link
+      window.open(phoneOrGroupUrl, '_blank');
+      setPrintStatusToast({ type: 'success', msg: 'WhatsApp Group opened! Image copied (Press Ctrl+V)' });
+      setTimeout(() => setPrintStatusToast(null), 4000);
+      setIsWhatsAppModalOpen(false);
+      return;
+    }
+
+    const targetPhone = sanitizePhoneForWhatsApp(phoneOrGroupUrl || activePartyPhone);
+    let waUrl = `https://wa.me/?text=${summaryText}`;
+
+    if (targetPhone && targetPhone.length >= 10) {
+      waUrl = `https://wa.me/${targetPhone}?text=${summaryText}`;
+    }
+
+    window.open(waUrl, '_blank');
+    setPrintStatusToast({ 
+      type: 'success', 
+      msg: targetPhone ? `WhatsApp Web opened for ${targetPhone}! Image copied (Ctrl+V)` : 'WhatsApp opened! Image copied to clipboard (Ctrl+V)' 
+    });
+    setTimeout(() => setPrintStatusToast(null), 4500);
+    setIsWhatsAppModalOpen(false);
+  };
+
+  const savePrimaryPhone = (num: string) => {
+    const clean = num.trim();
+    setPrimaryPhone(clean);
+    try {
+      localStorage.setItem('modern_primary_whatsapp', clean);
+    } catch {}
+  };
+
+  const saveDefaultGroupLink = (link: string) => {
+    const clean = link.trim();
+    setCustomGroupLinkInput(clean);
+    try {
+      localStorage.setItem('modern_default_whatsapp_group', clean);
+    } catch {}
   };
 
   return (
@@ -1771,6 +1890,36 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                 <span>{totalPages > 1 ? `Save Page ${currentPage + 1}` : 'Save PNG'}</span>
               </button>
             </div>
+
+            {/* WhatsApp Share Button */}
+            <button
+              type="button"
+              onClick={() => {
+                try { macAudio.playClick(); } catch {}
+                setIsWhatsAppModalOpen(true);
+              }}
+              onMouseEnter={() => { try { macAudio.playHover(); } catch { } }}
+              title="Share bill details & copy image to WhatsApp (Party / Primary No / Groups)"
+              style={{
+                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                color: '#ffffff',
+                border: 'none',
+                height: '34px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '11.5px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 10px rgba(37, 211, 102, 0.3)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Send size={14} />
+              <span>Send WhatsApp {activePartyPhone ? `(${activePartyPhone})` : ''}</span>
+            </button>
 
             {/* ─── Adjustments / Extras Panel ─── */}
             {printMode !== 'loading_slip' && (
@@ -3139,6 +3288,365 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                   <span>Bina Rate Print Karein</span>
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            WHATSAPP SHARING DIALOG (Party, Primary No, Group)
+        ══════════════════════════════════════════ */}
+        {isWhatsAppModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(2, 6, 23, 0.85)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              zIndex: 99999999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+            onClick={() => setIsWhatsAppModalOpen(false)}
+          >
+            <div
+              className="anim-pop"
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '460px',
+                maxWidth: '94vw',
+                background: '#18181b',
+                border: '1px solid rgba(37, 211, 102, 0.4)',
+                borderRadius: '16px',
+                padding: '22px 24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(37, 211, 102, 0.2)',
+                color: '#f4f4f5'
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      background: 'rgba(37, 211, 102, 0.15)',
+                      border: '1px solid rgba(37, 211, 102, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#25D366'
+                    }}
+                  >
+                    <Send size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
+                      Share Bill on WhatsApp
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
+                      Bill summary + auto copied image ready to paste (Ctrl+V)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsWhatsAppModalOpen(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#a1a1aa',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Tabs for Destination */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: '#09090b', padding: '4px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                <button
+                  type="button"
+                  onClick={() => setWhatsAppTab('party')}
+                  style={{
+                    padding: '6px 4px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: whatsAppTab === 'party' ? '#25D366' : 'transparent',
+                    color: whatsAppTab === 'party' ? '#09090b' : '#a1a1aa',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Party No
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWhatsAppTab('primary')}
+                  style={{
+                    padding: '6px 4px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: whatsAppTab === 'primary' ? '#25D366' : 'transparent',
+                    color: whatsAppTab === 'primary' ? '#09090b' : '#a1a1aa',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Primary No
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWhatsAppTab('custom')}
+                  style={{
+                    padding: '6px 4px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: whatsAppTab === 'custom' ? '#25D366' : 'transparent',
+                    color: whatsAppTab === 'custom' ? '#09090b' : '#a1a1aa',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Other No
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWhatsAppTab('group')}
+                  style={{
+                    padding: '6px 4px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: whatsAppTab === 'group' ? '#25D366' : 'transparent',
+                    color: whatsAppTab === 'group' ? '#09090b' : '#a1a1aa',
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Group / Web
+                </button>
+              </div>
+
+              {/* TAB 1: Party Number */}
+              {whatsAppTab === 'party' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ background: '#09090b', padding: '12px 14px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                    <div style={{ fontSize: '11px', color: '#a1a1aa', marginBottom: '2px' }}>Party Name</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#38bdf8' }}>{displayPartyWithDistrict}</div>
+                    <div style={{ fontSize: '11px', color: '#a1a1aa', marginTop: '8px', marginBottom: '2px' }}>Registered Mobile Number</div>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: activePartyPhone ? '#25D366' : '#f87171' }}>
+                      {activePartyPhone || 'No number saved in Party Panel!'}
+                    </div>
+                  </div>
+                  {activePartyPhone ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSendWhatsApp(activePartyPhone)}
+                      style={{
+                        height: '40px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(37, 211, 102, 0.35)'
+                      }}
+                    >
+                      <Send size={15} />
+                      <span>Send to {activePartyPhone}</span>
+                    </button>
+                  ) : (
+                    <div style={{ fontSize: '11.5px', color: '#fbbf24', textAlign: 'center', background: 'rgba(251, 191, 36, 0.1)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(251, 191, 36, 0.25)' }}>
+                      💡 Tip: "Other No" tab me jakar manual number dalein ya Party panel me number save karein.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: Primary Number (e.g. Owner/Manager main number) */}
+              {whatsAppTab === 'primary' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ background: '#09090b', padding: '12px 14px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                    <div style={{ fontSize: '11.5px', color: '#e4e4e7', fontWeight: 600, marginBottom: '6px' }}>
+                      Aapka Primary / Main WhatsApp Number
+                    </div>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#a1a1aa' }}>
+                      Ye number save ho jayega taaki aap jab chahein bina dobara type kiye 1-click me kisi bhi bill ka data apne main number par bhej sakein.
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="e.g. 9876543210 (10 digits)"
+                      value={primaryPhone}
+                      onChange={e => savePrimaryPhone(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#18181b',
+                        border: '1px solid #3f3f46',
+                        borderRadius: '7px',
+                        padding: '8px 12px',
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  {primaryPhone && primaryPhone.replace(/[^0-9]/g, '').length >= 10 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSendWhatsApp(primaryPhone)}
+                      style={{
+                        height: '40px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(37, 211, 102, 0.35)'
+                      }}
+                    >
+                      <Send size={15} />
+                      <span>Send to Primary ({primaryPhone})</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: Custom / Other Number */}
+              {whatsAppTab === 'custom' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ background: '#09090b', padding: '12px 14px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                    <div style={{ fontSize: '11.5px', color: '#e4e4e7', fontWeight: 600, marginBottom: '6px' }}>
+                      Kisi Bhi Doosre Number Par Bhejein
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Mobile number dalein (e.g. 9812345678)"
+                      value={customPhoneInput}
+                      onChange={e => setCustomPhoneInput(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#18181b',
+                        border: '1px solid #3f3f46',
+                        borderRadius: '7px',
+                        padding: '8px 12px',
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        outline: 'none'
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!customPhoneInput.replace(/[^0-9]/g, '')}
+                    onClick={() => handleSendWhatsApp(customPhoneInput)}
+                    style={{
+                      height: '40px',
+                      borderRadius: '10px',
+                      background: customPhoneInput ? 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' : '#27272a',
+                      color: customPhoneInput ? '#ffffff' : '#71717a',
+                      border: 'none',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: customPhoneInput ? 'pointer' : 'not-allowed',
+                      boxShadow: customPhoneInput ? '0 4px 15px rgba(37, 211, 102, 0.35)' : 'none'
+                    }}
+                  >
+                    <Send size={15} />
+                    <span>Send to {customPhoneInput || 'Number'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* TAB 4: Group / Open Web */}
+              {whatsAppTab === 'group' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ background: '#09090b', padding: '12px 14px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                    <div style={{ fontSize: '11.5px', color: '#e4e4e7', fontWeight: 600, marginBottom: '4px' }}>
+                      👥 WhatsApp Group Mein Send Kaise Karein?
+                    </div>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#a1a1aa', lineHeight: 1.4 }}>
+                      WhatsApp ka direct group number nahi hota (invite link ya WhatsApp Web kholkar select kiya jata hai). Humne bill summary text link generate kiya hai aur <b>Bill Image automatically copy</b> kar di hai. Bas open karke group me <b>Ctrl+V</b> karein!
+                    </p>
+
+                    <div style={{ fontSize: '11px', color: '#71717a', marginBottom: '4px' }}>
+                      (Optional) Aapke WhatsApp Group ka Invite Link yahan save karein:
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://chat.whatsapp.com/..."
+                      value={customGroupLinkInput}
+                      onChange={e => saveDefaultGroupLink(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#18181b',
+                        border: '1px solid #3f3f46',
+                        borderRadius: '7px',
+                        padding: '6px 10px',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendWhatsApp(customGroupLinkInput || '')}
+                    style={{
+                      height: '40px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 15px rgba(37, 211, 102, 0.35)'
+                    }}
+                  >
+                    <Users size={16} />
+                    <span>{customGroupLinkInput ? 'Open Saved Group & Share' : 'Open WhatsApp & Pick Any Group'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
