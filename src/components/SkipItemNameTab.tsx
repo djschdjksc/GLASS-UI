@@ -1278,7 +1278,6 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                           padding: '2px 4px',
                           background: isDuplicate ? 'rgba(239, 68, 68, 0.08)' : undefined
                         }}
-                        title={dupeTooltip}
                       >
                         {isEdit ? (
                           <input
@@ -1305,19 +1304,49 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                             }}
                             autoFocus
                           />
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '6px' }}>
-                            <span 
-                              style={{ 
-                                ...cellText, 
-                                fontWeight: isDuplicate ? 700 : 600,
-                                color: isDuplicate ? '#ff4d4f' : cellText.color,
-                                textShadow: isDuplicate ? '0 0 8px rgba(255, 77, 79, 0.45)' : undefined
-                              }}
-                            >
-                              {si.itemPrefix || '—'}
-                            </span>
-                            {isDuplicate && (
+                        ) : isDuplicate ? (
+                          <Tooltip
+                            side="top"
+                            showArrow={true}
+                            style={{
+                              background: '#18181b',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              borderRadius: '8px',
+                              padding: '6px 10px',
+                              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 0 15px rgba(239, 68, 68, 0.25)',
+                              height: 'auto',
+                              whiteSpace: 'normal',
+                              maxWidth: '320px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px'
+                            }}
+                            content={
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11px', textAlign: 'left' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ color: '#ef4444', fontWeight: 700 }}>⚠️ DUPLICATE ITEM</span>
+                                  <span style={{ color: '#71717a', fontSize: '10px' }}>({totalOccurrences} times)</span>
+                                </div>
+                                <div style={{ color: '#e4e4e7', fontWeight: 600 }}>
+                                  "{si.itemPrefix}"
+                                </div>
+                                <div style={{ fontSize: '10.5px', color: '#a1a1aa', borderTop: '1px dashed #27272a', paddingTop: '3px', marginTop: '2px' }}>
+                                  Groups: <span style={{ color: '#38bdf8', fontWeight: 600 }}>{otherGroups.join(', ')}</span>
+                                </div>
+                              </div>
+                            }
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '6px', width: '100%' }}>
+                              <span 
+                                style={{ 
+                                  ...cellText, 
+                                  fontWeight: 700,
+                                  color: '#ff4d4f',
+                                  textShadow: '0 0 8px rgba(255, 77, 79, 0.45)'
+                                }}
+                              >
+                                {si.itemPrefix || '—'}
+                              </span>
                               <span
                                 style={{
                                   fontSize: '9.5px',
@@ -1335,7 +1364,19 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                               >
                                 DUPLICATE
                               </span>
-                            )}
+                            </div>
+                          </Tooltip>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '6px' }}>
+                            <span 
+                              style={{ 
+                                ...cellText, 
+                                fontWeight: 600,
+                                color: cellText.color
+                              }}
+                            >
+                              {si.itemPrefix || '—'}
+                            </span>
                           </div>
                         )}
                       </td>
