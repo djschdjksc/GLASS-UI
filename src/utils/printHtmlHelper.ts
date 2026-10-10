@@ -12,10 +12,10 @@ export const sanitizePrintName = (text: string): string => {
       return `(${insideParen})`;
     }
     if (outsideParen !== undefined) {
-      // Outside brackets: protect decimal dots between digits (e.g. 9.5), then replace other dots/hyphens with space
+      // Outside brackets: protect decimal dots between digits (e.g. 9.5), then remove non-decimal dots completely (e.g. C.M -> CM), replace hyphens with space
       return outsideParen
         .replace(/(?<=\d)\.(?=\d)/g, '__DECIMAL_DOT__')
-        .replace(/\./g, ' ')
+        .replace(/\./g, '')
         .replace(/-/g, ' ')
         .replace(/__DECIMAL_DOT__/g, '.');
     }

@@ -8,6 +8,10 @@ export interface SqliteControlRow {
   color: string;
   box_size: number;
   weight_per_pcs: number;
+  min_rate?: number;
+  max_rate?: number;
+  minRate?: number;
+  maxRate?: number;
   real_item_name: string;
   group_name: string;
 }

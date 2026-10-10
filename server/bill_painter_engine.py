@@ -35,9 +35,9 @@ def sanitize_print_name(text):
             return f"({m.group(1)})"
         outside = m.group(2)
         if outside is not None:
-            # Protect decimal numbers (e.g. 9.5), replace non-decimal dots and hyphens with space
+            # Protect decimal numbers (e.g. 9.5), remove non-decimal dots completely (e.g. C.M -> CM), replace hyphens with space
             protected = re.sub(r'(?<=\d)\.(?=\d)', '__DECIMAL_DOT__', outside)
-            cleaned = protected.replace('.', ' ').replace('-', ' ')
+            cleaned = protected.replace('.', '').replace('-', ' ')
             return cleaned.replace('__DECIMAL_DOT__', '.')
         return m.group(0)
     res = re.sub(r'\(([^)]*)\)|([^()]+)', repl, str(text))

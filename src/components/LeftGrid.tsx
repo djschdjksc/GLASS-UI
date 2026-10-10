@@ -774,7 +774,9 @@ export const LeftGrid: React.FC<Props> = ({
       }
 
       if (e.key === 'Insert') {
+        if (e.repeat) return;
         e.preventDefault();
+        e.stopPropagation();
         const targetRow = activeCell ? activeCell?.r + 1 : (selectedRows.length > 0 ? selectedRows[selectedRows.length - 1] + 1 : items.length);
         onInsertRow(targetRow);
         setTimeout(() => focusCell(targetRow, activeCell ? activeCell?.c : 0), 50);
@@ -782,10 +784,18 @@ export const LeftGrid: React.FC<Props> = ({
       }
 
       if ((e.ctrlKey || (e as any).metaKey) && (e.key === 'Delete' || e.key === 'Backspace')) {
+        const target = e.target as HTMLElement;
+        if (target && target.tagName === 'INPUT') {
+          return;
+        }
+        if (e.repeat) return;
         e.preventDefault();
+        e.stopPropagation();
         const targetRow = activeCell ? activeCell?.r : (selectedRows.length > 0 ? selectedRows[0] : 0);
-        onDeleteRows([targetRow]);
-        onToast(`Deleted Row #${targetRow + 1} (Ctrl+Delete)`, 'warning');
+        if (targetRow >= 0 && targetRow < filteredItems.length) {
+          onDeleteRows([targetRow]);
+          onToast(`Deleted Row #${targetRow + 1} (Ctrl+Delete)`, 'warning');
+        }
         return;
       }
 
@@ -1127,13 +1137,16 @@ export const LeftGrid: React.FC<Props> = ({
     // 1. CTRL + A: Select All Grid Cells
     if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
       e.preventDefault();
+      e.stopPropagation();
       selectAllGrid();
       return;
     }
 
     // 1. CTRL + DELETE: Instantly delete active row
     if ((e.ctrlKey || e.metaKey) && (e.key === 'Delete' || e.key === 'Backspace')) {
+      if (e.repeat) return;
       e.preventDefault();
+      e.stopPropagation();
       onDeleteRows([rowIndex]);
       onToast(`Deleted Row #${rowIndex + 1} (Ctrl+Delete)`, 'warning');
       const nextTargetRow = Math.min(rowIndex, filteredItems.length - 2);

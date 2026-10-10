@@ -93,3 +93,113 @@ export const extractSizeFromColLabel = (labelOrField: string): number => {
   }
   return 10;
 };
+
+export interface RateValidationResult {
+  isValid: boolean;
+  isTooLow: boolean;
+  isTooHigh: boolean;
+  minRate: number;
+  maxRate: number;
+  enteredRate: number;
+  mouldName: string;
+  matchedRuleName?: string;
+}
+
+/**
+ * Validates entered rate against mould min_rate and max_rate in conversions.
+ * Handles exact matching, normalized base product matching, and proportional size scaling.
+ */
+export const validateMouldRate = (
+  mouldName: string,
+  enteredRate: number,
+  conversions: any[] = []
+): RateValidationResult => {
+  const result: RateValidationResult = {
+    isValid: true,
+    isTooLow: false,
+    isTooHigh: false,
+    minRate: 0,
+    maxRate: 0,
+    enteredRate,
+    mouldName: mouldName || ''
+  };
+
+  if (!mouldName || !mouldName.trim() || enteredRate <= 0 || !Array.isArray(conversions) || conversions.length === 0) {
+    return result;
+  }
+
+  const cleanMould = mouldName.trim();
+  const mouldLower = cleanMould.toLowerCase();
+  const parsed = parseProductAndSize(cleanMould);
+  const normBase = parsed.normalizedBase;
+
+  // 1. Pass A: Exact match on conversion name
+  let matchedRule = conversions.find(c => {
+    const conv = String(c.conversion || '').trim().toLowerCase();
+    return conv && conv === mouldLower;
+  });
+
+  // 2. Pass B: Exact match on shortcut
+  if (!matchedRule) {
+    matchedRule = conversions.find(c => {
+      const code = String(c.shortcut || '').trim().toLowerCase();
+      return code && !code.startsWith('__auto_') && code === mouldLower;
+    });
+  }
+
+  // 3. Pass C: Match by base product name (removing size brackets/numbers)
+  if (!matchedRule && normBase) {
+    matchedRule = conversions.find(c => {
+      const conv = String(c.conversion || '').trim();
+      const cNorm = normalizeBaseProduct(conv);
+      return cNorm && cNorm === normBase;
+    });
+  }
+
+  // 4. Pass D: Match where mould starts with conversion name (longest first)
+  if (!matchedRule) {
+    const sorted = [...conversions].sort((a, b) => String(b.conversion || '').length - String(a.conversion || '').length);
+    matchedRule = sorted.find(c => {
+      const conv = String(c.conversion || '').trim().toLowerCase();
+      return conv && mouldLower.startsWith(conv);
+    });
+  }
+
+  if (!matchedRule) {
+    return result;
+  }
+
+  const rawMin = Number(matchedRule.min_rate !== undefined ? matchedRule.min_rate : matchedRule.minRate) || 0;
+  const rawMax = Number(matchedRule.max_rate !== undefined ? matchedRule.max_rate : matchedRule.maxRate) || 0;
+
+  if (rawMin <= 0 && rawMax <= 0) {
+    return result;
+  }
+
+  // Proportional size calculation if applicable
+  const ruleSize = Number(matchedRule.size) || 10;
+  const itemSize = parsed.hasSize && parsed.size > 0 ? parsed.size : ruleSize;
+
+  let effectiveMin = rawMin;
+  let effectiveMax = rawMax;
+
+  if (parsed.hasSize && ruleSize > 0 && itemSize !== ruleSize) {
+    if (rawMin > 0) effectiveMin = Math.round((rawMin / ruleSize) * itemSize);
+    if (rawMax > 0) effectiveMax = Math.round((rawMax / ruleSize) * itemSize);
+  }
+
+  result.minRate = effectiveMin;
+  result.maxRate = effectiveMax;
+  result.matchedRuleName = matchedRule.conversion || matchedRule.shortcut;
+
+  if (effectiveMin > 0 && enteredRate < effectiveMin) {
+    result.isValid = false;
+    result.isTooLow = true;
+  } else if (effectiveMax > 0 && enteredRate > effectiveMax) {
+    result.isValid = false;
+    result.isTooHigh = true;
+  }
+
+  return result;
+};
+

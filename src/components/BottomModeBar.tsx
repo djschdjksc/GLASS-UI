@@ -214,7 +214,10 @@ export const BottomModeBar: React.FC<Props> = ({
         vehicleNo: matched.vehicle || '',
         date: matched.date || new Date().toISOString().split('T')[0],
         rawItems: (matched.rawItems || []).map((r: any) => ({ ...r })),
-        finishedItems: (matched.finishedItems || []).map((f: any) => ({ ...f })),
+        finishedItems: (matched.finishedItems || []).map((f: any) => ({
+          ...f,
+          mould: (f.mould === 'Mould Name' || f.mould === 'Standard Mould') ? '' : (f.mould || '')
+        })),
         dynamicCols: matched.dynamicCols ? matched.dynamicCols.map((c: any) => ({ ...c })) : [],
         splitRowIndex: matched.splitRowIndex ?? null,
         customItemGroups: matched.customItemGroups || []

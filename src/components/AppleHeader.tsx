@@ -312,7 +312,9 @@ export const AppleHeader: React.FC<Props> = ({
             onFocus={() => setShowPartySuggestions(true)}
             onBlur={() => setTimeout(() => setShowPartySuggestions(false), 240)}
             onChange={(e) => {
-              onChange({ partyName: e.target.value });
+              const raw = e.target.value;
+              const formatted = raw ? raw.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase()) : '';
+              onChange({ partyName: formatted });
               setFocusedIndex(-1);
             }}
             onKeyDown={(e) => {
@@ -356,7 +358,7 @@ export const AppleHeader: React.FC<Props> = ({
                 setShowPartySuggestions(false);
               }
             }}
-            style={{ width: '100%', fontWeight: 500 }}
+            style={{ width: '100%', fontWeight: 500, textTransform: 'capitalize' }}
           />
 
           {showPartySuggestions && (
@@ -690,7 +692,11 @@ export const AppleHeader: React.FC<Props> = ({
                   id="modal-party-name"
                   type="text"
                   value={newPartyConfirm.name}
-                  onChange={(e) => setNewPartyConfirm(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const formatted = v ? v.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase()) : '';
+                    setNewPartyConfirm(prev => prev ? { ...prev, name: formatted } : null);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -708,7 +714,8 @@ export const AppleHeader: React.FC<Props> = ({
                     border: '1px solid #27272a',
                     borderRadius: '8px',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    textTransform: 'capitalize'
                   }}
                   onFocus={(e) => (e.target.style.borderColor = '#52525b')}
                   onBlur={(e) => (e.target.style.borderColor = '#27272a')}
@@ -725,7 +732,11 @@ export const AppleHeader: React.FC<Props> = ({
                   type="text"
                   value={newPartyConfirm.district}
                   placeholder="e.g. Jaipur, Kota, Delhi... (Optional)"
-                  onChange={(e) => setNewPartyConfirm(prev => prev ? { ...prev, district: e.target.value } : null)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const formatted = v ? v.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase()) : '';
+                    setNewPartyConfirm(prev => prev ? { ...prev, district: formatted } : null);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -742,7 +753,8 @@ export const AppleHeader: React.FC<Props> = ({
                     border: '1px solid #27272a',
                     borderRadius: '8px',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    textTransform: 'capitalize'
                   }}
                   onFocus={(e) => (e.target.style.borderColor = '#52525b')}
                   onBlur={(e) => (e.target.style.borderColor = '#27272a')}

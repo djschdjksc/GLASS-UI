@@ -123,6 +123,12 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   const [isPathCopied, setIsPathCopied] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Missing Rate Alert State (Checks for forgotten mould rates in Estimate / Summary modes)
+  const [missingRateAlert, setMissingRateAlert] = useState<{
+    items: FinishedItem[];
+    actionToProceed: () => void;
+  } | null>(null);
+
   // Print & Page Settings Modal State
   const [isPrintSettingsOpen, setIsPrintSettingsOpen] = useState<boolean>(false);
   const [printSettings, setPrintSettings] = useState<PrintSettings>(() => {
@@ -530,6 +536,10 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (e.key === 'Escape') {
         e.preventDefault();
+        if (missingRateAlert) {
+          setMissingRateAlert(null);
+          return;
+        }
         onClose();
         return;
       }
@@ -547,6 +557,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (isCtrlOrCmd && (e.key === 'e' || e.key === 'E')) {
         e.preventDefault();
+        e.stopPropagation();
         try { macAudio.playPop(); } catch { }
         setPrintMode('estimate');
         setCurrentPage(0);
@@ -555,6 +566,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (e.altKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
+        e.stopPropagation();
         try { macAudio.playPop(); } catch { }
         setPrintMode('summary_only');
         setCurrentPage(0);
@@ -563,6 +575,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (isCtrlOrCmd && (e.key === 'l' || e.key === 'L')) {
         e.preventDefault();
+        e.stopPropagation();
         try { macAudio.playPop(); } catch { }
         setPrintMode('loading_slip');
         setCurrentPage(0);
@@ -570,7 +583,9 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       }
 
       if (e.key === 'Insert') {
+        if (e.repeat) return;
         e.preventDefault();
+        e.stopPropagation();
         try { macAudio.playClick(); } catch { }
         handleAddAdjustment(e.shiftKey ? 'pay' : 'receive', e.shiftKey ? 'Pay' : 'Receive');
         return;
@@ -580,25 +595,31 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
       const isInputFocused = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
       if (!isInputFocused && !isCtrlOrCmd && !e.altKey) {
         if (e.key === '+' || e.key === '=') {
+          if (e.repeat) return;
           e.preventDefault();
+          e.stopPropagation();
           try { macAudio.playClick(); } catch { }
           handleAddAdjustment('receive', 'Receive');
           return;
         }
         if (e.key === '-' || e.key === '_') {
+          if (e.repeat) return;
           e.preventDefault();
+          e.stopPropagation();
           try { macAudio.playClick(); } catch { }
           handleAddAdjustment('pay', 'Pay');
           return;
         }
         if (e.key === 'r' || e.key === 'R') {
           e.preventDefault();
+          e.stopPropagation();
           try { macAudio.playClick(); } catch { }
           setIsReturnModalOpen(true);
           return;
         }
         if (e.key === 'b' || e.key === 'B') {
           e.preventDefault();
+          e.stopPropagation();
           try { macAudio.playClick(); } catch { }
           setIsOldBalanceModalOpen(true);
           return;
@@ -607,6 +628,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (e.key === 'PageDown' || (e.altKey && e.key === 'ArrowRight')) {
         e.preventDefault();
+        e.stopPropagation();
         try { macAudio.playPop(); } catch { }
         setCurrentPage(p => Math.min(totalPages - 1, p + 1));
         return;
@@ -614,6 +636,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
 
       if (e.key === 'PageUp' || (e.altKey && e.key === 'ArrowLeft')) {
         e.preventDefault();
+        e.stopPropagation();
         try { macAudio.playPop(); } catch { }
         setCurrentPage(p => Math.max(0, p - 1));
         return;
@@ -679,9 +702,15 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   };
 
   const handleUpdateAdjustment = (id: string, field: 'desc' | 'val', val: any) => {
+    let finalVal = val;
+    if (field === 'desc' && typeof val === 'string' && val.length > 0) {
+      finalVal = val.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase());
+    } else if (field === 'val') {
+      finalVal = Number(val) || 0;
+    }
     const updated = adjustments.map(a => {
       if (a.id === id) {
-        return { ...a, [field]: field === 'val' ? Number(val) || 0 : val };
+        return { ...a, [field]: finalVal };
       }
       return a;
     });
@@ -697,11 +726,27 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
   };
 
   const handleBalanceLabelChange = (newLabel: string) => {
-    setBalanceLabel(newLabel);
-    saveAdjustmentsCache(adjustments, newLabel);
+    const formatted = newLabel ? newLabel.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase()) : '';
+    setBalanceLabel(formatted);
+    saveAdjustmentsCache(adjustments, formatted);
   };
 
-  const handleDirectPrint = async (showDialog = false) => {
+
+  const checkMissingRates = (): FinishedItem[] => {
+    // Only check for Estimate and Summary modes (NOT for loading slip)
+    if (printMode !== 'estimate' && printMode !== 'summary_only') {
+      return [];
+    }
+    return (finishedItems || []).filter(it => {
+      const hasMould = Boolean(it.mould && it.mould.trim().length > 0);
+      const hasQty = Number(it.qty) > 0;
+      const hasPrice = Number(it.price) > 0;
+      // Item is flagged if it has a mould or qty, but price is missing / 0
+      return (hasMould || hasQty) && !hasPrice;
+    });
+  };
+
+  const executeDirectPrint = async (showDialog = false) => {
     try { macAudio.playSuccess(); } catch { }
 
     setIsPrintingNative(true);
@@ -755,6 +800,19 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     }
   };
 
+  const handleDirectPrint = async (showDialog = false) => {
+    const missing = checkMissingRates();
+    if (missing.length > 0) {
+      try { macAudio.playPop(); } catch {}
+      setMissingRateAlert({
+        items: missing,
+        actionToProceed: () => executeDirectPrint(showDialog)
+      });
+      return;
+    }
+    executeDirectPrint(showDialog);
+  };
+
   const handleCopyPdfPath = async () => {
     if (!lastSavedPdfPath) return;
     try {
@@ -776,7 +834,7 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     } catch {}
   };
 
-  const handleCopyAsImage = async (isCombined = false) => {
+  const executeCopyAsImage = async (isCombined = false) => {
     try { macAudio.playClick(); } catch { }
     let targetCanvas: HTMLCanvasElement | null = null;
     if (isCombined) {
@@ -801,7 +859,20 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     }
   };
 
-  const handleSaveAsImage = (isCombined = false) => {
+  const handleCopyAsImage = async (isCombined = false) => {
+    const missing = checkMissingRates();
+    if (missing.length > 0) {
+      try { macAudio.playPop(); } catch {}
+      setMissingRateAlert({
+        items: missing,
+        actionToProceed: () => executeCopyAsImage(isCombined)
+      });
+      return;
+    }
+    executeCopyAsImage(isCombined);
+  };
+
+  const executeSaveAsImage = (isCombined = false) => {
     try { macAudio.playClick(); } catch { }
     const cleanParty = (header.partyName || 'SALE').replace(/[^a-zA-Z0-9_-]/g, '_');
     const suffix = isCombined ? '_COMBINED' : (totalPages > 1 ? `_PAGE_${currentPage + 1}` : '');
@@ -818,6 +889,19 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
     if (targetCanvas) {
       downloadBillCanvasAsImage(targetCanvas, filename);
     }
+  };
+
+  const handleSaveAsImage = (isCombined = false) => {
+    const missing = checkMissingRates();
+    if (missing.length > 0) {
+      try { macAudio.playPop(); } catch {}
+      setMissingRateAlert({
+        items: missing,
+        actionToProceed: () => executeSaveAsImage(isCombined)
+      });
+      return;
+    }
+    executeSaveAsImage(isCombined);
   };
 
   return (
@@ -1899,7 +1983,8 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                             border: '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '5px',
                             color: '#ffffff',
-                            outline: 'none'
+                            outline: 'none',
+                            textTransform: 'capitalize'
                           }}
                         />
 
@@ -2888,6 +2973,171 @@ export const BillPrintModal: React.FC<BillPrintModalProps> = ({
                     <span>Done</span>
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Missing Rate Alert Modal (Estimate & Summary Only) ─── */}
+        {missingRateAlert && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              zIndex: 99999999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+              animation: 'fadeIn 0.15s ease'
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setMissingRateAlert(null);
+              }
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '480px',
+                background: '#18181b',
+                border: '1.5px solid #ef4444',
+                borderRadius: '18px',
+                padding: '24px',
+                boxShadow: '0 25px 60px -15px rgba(239, 68, 68, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                color: '#f4f4f5',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    background: 'rgba(239, 68, 68, 0.18)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px'
+                  }}
+                >
+                  ⚠️
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#f87171' }}>
+                    Rate Lagana Bhul Gaye Hain!
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#a1a1aa' }}>
+                    Missing Rate Warning ({printMode === 'estimate' ? 'Estimate' : 'Summary'} Mode)
+                  </p>
+                </div>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '13px', color: '#e4e4e7', lineHeight: 1.5 }}>
+                Print ya save karne se pehle kripya in moulds ka rate lagayein:
+              </p>
+
+              {/* Items List */}
+              <div
+                style={{
+                  maxHeight: '170px',
+                  overflowY: 'auto',
+                  background: '#09090b',
+                  border: '1px solid #27272a',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}
+              >
+                {missingRateAlert.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '4px 0',
+                      borderBottom: idx < missingRateAlert.items.length - 1 ? '1px solid #1f1f23' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', color: '#71717a' }}>#{idx + 1}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#38bdf8' }}>{item.mould || 'Unnamed Mould'}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '12px', color: '#a1a1aa' }}>{item.qty || 0} Pcs</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#ef4444', background: 'rgba(239, 68, 68, 0.12)', padding: '2px 8px', borderRadius: '4px' }}>
+                        Rate: ₹0
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { macAudio.playClick(); } catch {}
+                    setMissingRateAlert(null);
+                    onClose(); // Closes print modal so user is immediately back at the summary table to enter rate!
+                  }}
+                  style={{
+                    flex: 1,
+                    height: '38px',
+                    borderRadius: '9px',
+                    background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 14px rgba(56, 189, 248, 0.35)'
+                  }}
+                  autoFocus
+                >
+                  <span>✏️ Wapas Jaake Rate Lagayein</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { macAudio.playClick(); } catch {}
+                    const action = missingRateAlert.actionToProceed;
+                    setMissingRateAlert(null);
+                    action();
+                  }}
+                  style={{
+                    height: '38px',
+                    padding: '0 14px',
+                    borderRadius: '9px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    color: '#a1a1aa',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                    cursor: 'pointer'
+                  }}
+                  title="Proceed without setting rate"
+                >
+                  <span>Bina Rate Print Karein</span>
+                </button>
               </div>
             </div>
           </div>

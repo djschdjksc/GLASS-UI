@@ -57,6 +57,14 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
   const [subGroupToDelete, setSubGroupToDelete] = useState<SkipSubGroupSeed | null>(null);
   const [mainGroupToDelete, setMainGroupToDelete] = useState<SkipMainGroupSeed | null>(null);
 
+  // Duplicate Warning Modal State (Bill UI / UnsavedChangesModal style)
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    itemName: string;
+    existingGroups: string[];
+    onKeep: () => void;
+    onCancel: () => void;
+  } | null>(null);
+
   // Active Panel Navigation (subgroups or items)
   const [activePanel, setActivePanel] = useState<'subgroups' | 'items'>('items');
 
@@ -267,12 +275,35 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     handleItemChange(id, toSave);
 
     const cleanLower = toSave.trim().toLowerCase();
-    const alreadyExistsInGroup = itemsForSelectedGroup.some(
+    
+    // Find all groups where this itemPrefix already appears (excluding this item itself)
+    const duplicateMatches = skipItems.filter(
       si => si.id !== id && (si.itemPrefix || '').trim().toLowerCase() === cleanLower
     );
-    if (alreadyExistsInGroup) {
+
+    if (duplicateMatches.length > 0) {
       macAudio.playPop();
-      toast.warning('Duplicate Item', `"${toSave}" is already used in this group! Marked in red.`);
+      const groupNames = Array.from(new Set(
+        duplicateMatches.map(m => (m.groupName || subGroups.find(s => s.id === m.subGroupId)?.groupName || 'Unassigned').trim())
+      ));
+      
+      const groupListStr = groupNames.join(', ');
+      toast.warning('Duplicate Item Found', `"${toSave}" pehle se group(s): [${groupListStr}] me maujood hai!`);
+
+      // Trigger modal alert so the user immediately knows where the duplicate exists
+      setDuplicateWarning({
+        itemName: toSave,
+        existingGroups: groupNames,
+        onKeep: () => {
+          setDuplicateWarning(null);
+          setEditingItemId(null);
+        },
+        onCancel: () => {
+          // Revert or reopen editing
+          setDuplicateWarning(null);
+          setEditingItemId(id);
+        }
+      });
     }
 
     return toSave;
@@ -416,28 +447,40 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
     si.itemPrefix.toLowerCase().includes(itemSearch.toLowerCase())
   );
 
-  // Accurate Duplicate Item Analysis: strictly scoped WITHIN each group
-  // Key: `${groupKey}:::${cleanPrefix}`, Value: count of occurrences within that group
-  const groupDuplicateMap = useMemo(() => {
+  // Comprehensive Cross-Group Duplicate Detection
+  // 1. Map of each clean itemPrefix -> Set/Array of group names where it appears
+  const itemToGroupsMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    skipItems.forEach(si => {
+      const clean = (si.itemPrefix || '').trim().toLowerCase();
+      if (!clean) return;
+      const gName = (si.groupName || subGroups.find(s => s.id === si.subGroupId)?.groupName || 'Unassigned').trim();
+      const existing = map.get(clean) || [];
+      existing.push(gName);
+      map.set(clean, existing);
+    });
+    return map;
+  }, [skipItems, subGroups]);
+
+  // 2. Count of total occurrences of clean itemPrefix across ALL groups/items
+  const globalItemDuplicateCount = useMemo(() => {
     const counts = new Map<string, number>();
     skipItems.forEach(si => {
-      const gKey = (si.groupName || si.subGroupId || '').trim().toLowerCase();
       const clean = (si.itemPrefix || '').trim().toLowerCase();
-      if (!gKey || !clean) return;
-      const key = `${gKey}:::${clean}`;
-      counts.set(key, (counts.get(key) || 0) + 1);
+      if (!clean) return;
+      counts.set(clean, (counts.get(clean) || 0) + 1);
     });
     return counts;
   }, [skipItems]);
 
+  // 3. Count of duplicate items present in the currently selected group
   const curSubDupeCount = useMemo(() => {
     if (!curSub) return 0;
-    const gKey = (curSub.groupName || curSub.id || '').trim().toLowerCase();
     return itemsForSelectedGroup.filter(si => {
       const c = (si.itemPrefix || '').trim().toLowerCase();
-      return c && (groupDuplicateMap.get(`${gKey}:::${c}`) || 0) > 1;
+      return c && (globalItemDuplicateCount.get(c) || 0) > 1;
     }).length;
-  }, [curSub, itemsForSelectedGroup, groupDuplicateMap]);
+  }, [curSub, itemsForSelectedGroup, globalItemDuplicateCount]);
 
   const lastSoundRef = useRef<number>(0);
   const playNavSound = () => {
@@ -615,8 +658,13 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
         }
       }
 
-      // Enter while delete confirmation modal is active → confirm delete safely
+      // Enter while duplicate warning or delete confirmation modal is active
       if (e.key === 'Enter') {
+        if (duplicateWarning) {
+          e.preventDefault();
+          duplicateWarning.onKeep();
+          return;
+        }
         if (itemToDelete) {
           e.preventDefault();
           confirmDeleteItem();
@@ -632,6 +680,13 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           confirmDeleteMainGroup();
           return;
         }
+      }
+
+      // Escape while duplicate warning modal is active
+      if (e.key === 'Escape' && duplicateWarning) {
+        e.preventDefault();
+        duplicateWarning.onCancel();
+        return;
       }
 
       // Ctrl+Enter — enter edit mode on selected row
@@ -706,15 +761,16 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
   /* ─── shared styles — clean shadcn zinc ─── */
   const cellInput: React.CSSProperties = {
     width: '100%',
-    background: '#27272a',
-    border: '1px solid #3f3f46',
+    background: '#18181b',
+    border: '1px solid #38bdf8',
+    boxShadow: '0 0 0 2px rgba(56, 189, 248, 0.2)',
     outline: 'none',
     color: '#f4f4f5',
     fontSize: '12px',
     padding: '3px 8px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     borderRadius: '4px',
-    fontWeight: 500
+    fontWeight: 600
   };
   const cellText: React.CSSProperties = {
     padding: '4px 10px',
@@ -818,10 +874,9 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                   (si.groupName === sg.groupName && (!si.mainGroup || si.mainGroup === sg.mainGroup))
                 );
                 const itemCount  = groupItems.length;
-                const gKey = (sg.id || sg.groupName || '').trim().toLowerCase();
                 const groupDupeCount = groupItems.filter(si => {
                   const c = (si.itemPrefix || '').trim().toLowerCase();
-                  return c && (groupDuplicateMap.get(`${gKey}:::${c}`) || 0) > 1;
+                  return c && (globalItemDuplicateCount.get(c) || 0) > 1;
                 }).length;
 
                 return (
@@ -959,14 +1014,17 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                             type="button"
                             style={{
                               display: 'inline-flex', alignItems: 'center', gap: '4px',
-                              padding: '2px 10px', height: '24px', borderRadius: '4px',
-                              background: '#f4f4f5', color: '#09090b',
-                              border: 'none', fontSize: '11px', fontWeight: 600,
-                              cursor: 'pointer'
+                              padding: '2px 10px', height: '24px', borderRadius: '5px',
+                              background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+                              color: '#ffffff',
+                              border: 'none', fontSize: '11px', fontWeight: 700,
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 6px rgba(56, 189, 248, 0.35)',
+                              transition: 'all 0.15s ease'
                             }}
                             onClick={e => { e.stopPropagation(); macAudio.playSuccess(); setEditingGroupId(null); }}
                           >
-                            <Check size={11} /> Save
+                            <Check size={11} strokeWidth={2.5} /> Save
                           </button>
                         ) : (
                           <>
@@ -1173,12 +1231,12 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                 {filteredItems.map((si, idx) => {
                   const isSel  = selectedItemId === si.id;
                   const isEdit = editingItemId  === si.id;
-                  const curGroupKey = (curSub?.id || curSub?.groupName || si.subGroupId || si.groupName || '').trim().toLowerCase();
                   const cleanPrefix = (si.itemPrefix || '').trim().toLowerCase();
-                  const inThisGroupCount = cleanPrefix ? (groupDuplicateMap.get(`${curGroupKey}:::${cleanPrefix}`) || 0) : 0;
-                  const isDuplicate = cleanPrefix.length > 0 && inThisGroupCount > 1;
+                  const totalOccurrences = cleanPrefix ? (globalItemDuplicateCount.get(cleanPrefix) || 0) : 0;
+                  const isDuplicate = cleanPrefix.length > 0 && totalOccurrences > 1;
+                  const otherGroups = isDuplicate ? (itemToGroupsMap.get(cleanPrefix) || []) : [];
                   const dupeTooltip = isDuplicate
-                    ? `⚠️ Duplicate Item: "${si.itemPrefix}" appears ${inThisGroupCount} times in this group!`
+                    ? `⚠️ Duplicate Item: "${si.itemPrefix}" appears ${totalOccurrences} times across groups: [${otherGroups.join(', ')}]`
                     : undefined;
 
                   return (
@@ -1288,10 +1346,13 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                               type="button"
                               style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                padding: '2px 10px', height: '24px', borderRadius: '4px',
-                                background: '#f4f4f5', color: '#09090b',
-                                border: 'none', fontSize: '11px', fontWeight: 600,
-                                cursor: 'pointer'
+                                padding: '2px 10px', height: '24px', borderRadius: '5px',
+                                background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+                                color: '#ffffff',
+                                border: 'none', fontSize: '11px', fontWeight: 700,
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 6px rgba(56, 189, 248, 0.35)',
+                                transition: 'all 0.15s ease'
                               }}
                               onClick={e => {
                                 e.stopPropagation();
@@ -1300,7 +1361,7 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
                                 setEditingItemId(null);
                               }}
                             >
-                              <Check size={11} /> Save
+                              <Check size={11} strokeWidth={2.5} /> Save
                             </button>
                           ) : (
                             <>
@@ -1654,6 +1715,155 @@ export const SkipItemNameTab: React.FC<SkipItemNameTabProps> = ({
           onDiscard={confirmDeleteMainGroup}
           onCancel={() => setMainGroupToDelete(null)}
         />
+      )}
+
+      {/* ══════════════════════════════════════════
+          DUPLICATE WARNING MODAL (Bill UI Rate Warning Style)
+      ══════════════════════════════════════════ */}
+      {duplicateWarning && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(2, 6, 23, 0.75)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            zIndex: 99999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={duplicateWarning.onCancel}
+        >
+          <div
+            className="anim-pop"
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '440px',
+              maxWidth: '92vw',
+              background: '#18181b',
+              border: '1px solid #ef4444',
+              borderRadius: '14px',
+              padding: '20px 22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 25px rgba(239, 68, 68, 0.25)',
+              color: '#f4f4f5'
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ef4444',
+                  fontSize: '18px',
+                  flexShrink: 0
+                }}
+              >
+                ⚠️
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f87171' }}>
+                  Duplicate Item Alert
+                </h3>
+                <p style={{ margin: 0, fontSize: '11.5px', color: '#a1a1aa' }}>
+                  Yeh item pehle se doosre group me maujood hai
+                </p>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div
+              style={{
+                background: '#09090b',
+                border: '1px solid #27272a',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Item Name / Prefix</span>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: '#f87171' }}>{duplicateWarning.itemName}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: '2px' }}>
+                <span style={{ fontSize: '12px', color: '#a1a1aa', flexShrink: 0 }}>Found In Group(s)</span>
+                <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#38bdf8', textAlign: 'right', wordBreak: 'break-word', maxWidth: '240px' }}>
+                  {duplicateWarning.existingGroups.join(', ')}
+                </span>
+              </div>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '12px', color: '#d4d4d8', lineHeight: 1.4 }}>
+              Kya aap is item ko <span style={{ color: '#f87171', fontWeight: 600 }}>Duplicate</span> ke taur par save rakhna chahte hain ya wapas edit karna chahte hain?
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
+              <button
+                type="button"
+                onClick={duplicateWarning.onCancel}
+                style={{
+                  flex: 1,
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 10px rgba(56, 189, 248, 0.3)'
+                }}
+                autoFocus
+              >
+                <span>✏️ Wapas Edit Karein (Esc)</span>
+              </button>
+              <button
+                type="button"
+                onClick={duplicateWarning.onKeep}
+                style={{
+                  height: '36px',
+                  padding: '0 14px',
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  border: '1px solid #3f3f46',
+                  color: '#a1a1aa',
+                  fontWeight: 600,
+                  fontSize: '11.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = '#ef4444';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#ef4444';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa';
+                }}
+              >
+                Phir Bhi Rakhein (Enter)
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

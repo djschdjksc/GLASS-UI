@@ -3,6 +3,7 @@ import { macAudio } from '../utils/macAudio';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSettings } from '../context/SettingsContext';
 import { localDb } from '../services/db/localDb';
+import type { BillRecord, PartyRecord, StockItemRecord } from '../services/db/schema';
 import { getStoredBillPrefix, formatBillNumber } from '../utils/billDocTypes';
 import { getAuthConfig, setAuthConfig, type AuthConfig } from '../utils/authSecurity';
 import {
@@ -52,7 +53,12 @@ import {
   Laptop,
   Key,
   Clock,
-  Monitor
+  Monitor,
+  Users,
+  Package,
+  X,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import {
   Button,
@@ -332,10 +338,9 @@ export const SettingsTabView: React.FC<Props> = ({
       const idx = custom.detail?.index;
       if (idx === 1) { macAudio.playClick(); setActiveTab('GENERAL'); }
       else if (idx === 2) { macAudio.playClick(); setActiveTab('THEME'); }
-      else if (idx === 3) { macAudio.playClick(); setActiveTab('PROFILE'); }
-      else if (idx === 4) { macAudio.playClick(); setActiveTab('SHORTCUTS'); }
-      else if (idx === 5) { macAudio.playClick(); setActiveTab('BACKUP'); }
-      else if (idx === 6) { macAudio.playClick(); setActiveTab('BARCODE'); }
+      else if (idx === 3) { macAudio.playClick(); setActiveTab('SHORTCUTS'); }
+      else if (idx === 4) { macAudio.playClick(); setActiveTab('BARCODE'); }
+      else if (idx === 5 || idx === 6) { macAudio.playClick(); setActiveTab('GENERAL'); }
     };
     window.addEventListener('app-subtab-switch', handleSubtabSwitch);
     return () => window.removeEventListener('app-subtab-switch', handleSubtabSwitch);
@@ -473,6 +478,26 @@ export const SettingsTabView: React.FC<Props> = ({
   const [restoreMode, setRestoreMode] = useState<'merge' | 'overwrite'>('merge');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Granular Restore Inspection & Selection State
+  interface PendingRestoreData {
+    file: File;
+    parsed: any;
+    fileName: string;
+    fileDate: string;
+    hasConfig: boolean;
+    billsCount: number;
+    partiesCount: number;
+    stockCount: number;
+    restoreConfig: boolean;
+    restoreBills: boolean;
+    restoreParties: boolean;
+    restoreStock: boolean;
+    restoreMode: 'merge' | 'overwrite';
+  }
+  const [pendingRestore, setPendingRestore] = useState<PendingRestoreData | null>(null);
+  const [isRestoring, setIsRestoring] = useState<boolean>(false);
+  const [showAllAvatarsModal, setShowAllAvatarsModal] = useState<boolean>(false);
+
   // Comprehensive Barcode Designer & Hardware Scanner State
   const [barcodeSubTab, setBarcodeSubTab] = useState<BarcodeSubTab>('PRESETS');
   const [barcodeConfig, setBarcodeConfig] = useState<BarcodeSystemConfig>(loadBarcodeConfig);
@@ -569,21 +594,6 @@ export const SettingsTabView: React.FC<Props> = ({
   const [lastSyncTime, setLastSyncTime] = useState<string>('14s ago');
   const dpInputRef = useRef<HTMLInputElement>(null);
 
-  // Glass Factory Floor Specific State
-  const [operatorPunchId, setOperatorPunchId] = useState<string>(() => localStorage.getItem('modern_app_operator_punch_id') || 'GLS-9021');
-  const [assignedLine, setAssignedLine] = useState<string>(() => localStorage.getItem('modern_app_assigned_line') || 'Cutting Line 1 - Bottero CNC');
-  const [operatorShift, setOperatorShift] = useState<string>(() => localStorage.getItem('modern_app_operator_shift') || 'Shift A (08:00 AM - 04:00 PM)');
-  const [kioskPin, setKioskPin] = useState<string>(() => localStorage.getItem('modern_app_kiosk_pin') || '4082');
-  const [pinInputTest, setPinInputTest] = useState<string>('');
-  const [pinUnlockStatus, setPinUnlockStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
-  const [profileSubTab, setProfileSubTab] = useState<'IDENTITY' | 'SYNC' | 'DEVICES' | 'PIN' | 'AUDIT'>('IDENTITY');
-
-  // Granular Factory Sync Switches
-  const [syncProductionOrders, setSyncProductionOrders] = useState<boolean>(() => localStorage.getItem('sync_prod_orders') !== '0');
-  const [syncTemplates, setSyncTemplates] = useState<boolean>(() => localStorage.getItem('sync_templates') !== '0');
-  const [syncMachineRules, setSyncMachineRules] = useState<boolean>(() => localStorage.getItem('sync_machine_rules') !== '0');
-  const [syncOfflineCache, setSyncOfflineCache] = useState<boolean>(() => localStorage.getItem('sync_offline_cache') !== '0');
-
   // Sync profile live whenever changed anywhere in app
   useEffect(() => {
     const handleStorageUpdate = () => {
@@ -598,23 +608,6 @@ export const SettingsTabView: React.FC<Props> = ({
     window.addEventListener('storage', handleStorageUpdate);
     return () => window.removeEventListener('storage', handleStorageUpdate);
   }, []);
-
-  // Connected Factory Devices
-  const [pairedDevices, setPairedDevices] = useState<Array<{ id: string; name: string; station: string; type: string; lastSeen: string; isCurrent: boolean; ip: string; pingMs?: number }>>([
-    { id: 'dev-1', name: 'Bottero CNC Cutting Line 1', station: 'Station 01', type: 'CNC Terminal', lastSeen: 'This Device • Active Now', isCurrent: true, ip: '192.168.1.120', pingMs: 1 },
-    { id: 'dev-2', name: 'Dispatch QC Tablet (iPad Pro)', station: 'Station 04', type: 'Mobile QC', lastSeen: '8m ago', isCurrent: false, ip: '192.168.1.144', pingMs: 4 },
-    { id: 'dev-3', name: 'Central Accounts & Billing PC', station: 'Desk 01', type: 'Office PC', lastSeen: '24m ago', isCurrent: false, ip: '192.168.1.105', pingMs: 2 },
-    { id: 'dev-4', name: 'Thermal Barcode Station (TSC TE244)', station: 'Station 02', type: 'Thermal Print Server', lastSeen: '1m ago', isCurrent: false, ip: '192.168.1.132', pingMs: 2 }
-  ]);
-
-  // Audit Logs
-  const [auditLogs, setAuditLogs] = useState<Array<{ id: string; time: string; event: string; tag: string; op: string }>>([
-    { id: 'log-1', time: '12:10:45', event: 'Cloud Delta Sync Completed (48 glass items verified)', tag: 'SYNC', op: 'GLS-9021' },
-    { id: 'log-2', time: '12:08:12', event: 'Thermal Barcode TSPL Generated for ORD-9842 (Lite L-04/12)', tag: 'PRINT', op: 'GLS-9021' },
-    { id: 'log-3', time: '11:54:20', event: 'Operator Handover: Shift A verified by Quick PIN', tag: 'SECURITY', op: 'GLS-9021' },
-    { id: 'log-4', time: '11:32:00', event: 'Bottero CNC Cutting Line 1 connected to Plant Mesh', tag: 'NETWORK', op: 'SYSTEM' },
-    { id: 'log-5', time: '10:15:30', event: 'Stock Material Intake: 40 sheets 12mm Clear Float Glass logged', tag: 'STOCK', op: 'EMP-1022' }
-  ]);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -654,71 +647,102 @@ export const SettingsTabView: React.FC<Props> = ({
       prefix: cleanPrefix,
       role: userRole,
       terminal: userTerminal,
-      avatarId: userAvatarId
+      avatarId: userAvatarId,
+      avatar: userAvatar || getAvatarUrl(userAvatarId, trimmed)
     });
     localStorage.setItem('modern_app_user_name', trimmed);
     localStorage.setItem('modern_app_user_prefix', cleanPrefix);
     localStorage.setItem('modern_app_user_role', userRole);
-    localStorage.setItem('modern_app_user_avatar', userAvatar);
+    localStorage.setItem('modern_app_user_avatar', userAvatar || getAvatarUrl(userAvatarId, trimmed));
     localStorage.setItem('modern_app_user_avatar_id', String(userAvatarId));
     localStorage.setItem('modern_app_user_terminal', userTerminal);
-    localStorage.setItem('modern_app_user_phone', userPhone);
-    localStorage.setItem('modern_app_user_status', userStatus);
-    localStorage.setItem('modern_app_operator_punch_id', operatorPunchId);
-    localStorage.setItem('modern_app_assigned_line', assignedLine);
-    localStorage.setItem('modern_app_operator_shift', operatorShift);
-    localStorage.setItem('modern_app_kiosk_pin', kioskPin);
     localStorage.setItem('modern_app_auto_sync', autoCloudSync ? '1' : '0');
     localStorage.setItem('modern_app_sync_sound', soundOnSync ? '1' : '0');
-    localStorage.setItem('sync_prod_orders', syncProductionOrders ? '1' : '0');
-    localStorage.setItem('sync_templates', syncTemplates ? '1' : '0');
-    localStorage.setItem('sync_machine_rules', syncMachineRules ? '1' : '0');
-    localStorage.setItem('sync_offline_cache', syncOfflineCache ? '1' : '0');
     window.dispatchEvent(new Event('storage'));
-    onShowToast?.('Operator Profile & Factory Sync Settings Saved!', 'success');
+    onShowToast?.('Operator Profile & 2-Way Sync Settings Saved!', 'success');
     macAudio.playSuccess();
-    setAuditLogs(prev => [
-      { id: `log-${Date.now()}`, time: new Date().toLocaleTimeString(), event: 'Profile credentials & production line settings updated', tag: 'PROFILE', op: operatorPunchId },
-      ...prev.slice(0, 15)
-    ]);
   };
 
   const handleForceResync = async () => {
     setIsSyncingNow(true);
-    setSyncProgress(25);
     macAudio.playClick();
-    onShowToast?.('Synchronizing data with Cloud and plant counters...', 'info');
-    setTimeout(() => setSyncProgress(70), 300);
+    onShowToast?.('Synchronizing data with Cloud and other users...', 'info');
     try {
       await supabaseSyncService.pullAllCloudBills();
-      setSyncProgress(100);
       setLastSyncTime('Just now');
       macAudio.playSuccess();
-      onShowToast?.('All Glass Templates & Production Orders Synced!', 'success');
-      setAuditLogs(prev => [
-        { id: `log-${Date.now()}`, time: new Date().toLocaleTimeString(), event: 'All glass templates & production orders synced to cloud', tag: 'SYNC', op: operatorPunchId },
-        ...prev.slice(0, 15)
-      ]);
+      onShowToast?.('Data Synchronized! All users in sync.', 'success');
     } catch (err: any) {
       console.error('Cloud sync error:', err);
-      setSyncProgress(100);
       onShowToast?.('Sync notice: ' + (err.message || 'Offline mode active'), 'info');
     } finally {
-      setTimeout(() => setIsSyncingNow(false), 500);
+      setIsSyncingNow(false);
     }
   };
 
-  // Export JSON Backup
+  // Helper to capture Control Panel & Master Settings Snapshot
+  const getControlPanelSnapshot = useCallback(() => {
+    let printSettings = {};
+    let rawColsConfig = {};
+    let mouldList = [];
+    try { printSettings = JSON.parse(localStorage.getItem('modern_print_settings') || '{}'); } catch {}
+    try { rawColsConfig = JSON.parse(localStorage.getItem('modern_raw_cols_config') || '{}'); } catch {}
+    try { mouldList = JSON.parse(localStorage.getItem('modern_mould_list') || '[]'); } catch {}
+
+    return {
+      slipPrefix,
+      slipHeaderTitle,
+      billPrefix,
+      tallyNavigation,
+      autoConvertMode,
+      stickyShortcuts,
+      itemAutoSuggest,
+      themeMode,
+      bgImage,
+      barcodeConfig,
+      printSettings,
+      rawColsConfig,
+      mouldList,
+      userProfile: {
+        userName,
+        userPrefix,
+        userRole,
+        userTerminal,
+        userAvatarId,
+        userAvatar
+      }
+    };
+  }, [slipPrefix, slipHeaderTitle, billPrefix, tallyNavigation, autoConvertMode, stickyShortcuts, itemAutoSuggest, themeMode, bgImage, barcodeConfig, userName, userPrefix, userRole, userTerminal, userAvatarId, userAvatar]);
+
+  // Export JSON Backup with Granular Scope Selection
   const handleExportBackup = () => {
     macAudio.playClick();
+    if (!backupIncludeConfig && !backupIncludeBills && !backupIncludeParties && !backupIncludeStock) {
+      onShowToast?.('Please select at least one module (Control Panel, Bills, Parties, or Stock) to export!', 'warning');
+      return;
+    }
+
     const exportBundle: Record<string, any> = {
       app: 'Modern Summary OS',
       version: '2.5.0',
       timestamp: new Date().toISOString(),
+      scope: {
+        controlPanel: backupIncludeConfig,
+        bills: backupIncludeBills,
+        parties: backupIncludeParties,
+        stock: backupIncludeStock
+      },
+      counts: {
+        bills: backupIncludeBills ? bills.length : 0,
+        parties: backupIncludeParties ? parties.length : 0,
+        stock: backupIncludeStock ? stockItems.length : 0
+      },
       data: {}
     };
 
     if (backupIncludeConfig) {
+      exportBundle.data.controlPanel = getControlPanelSnapshot();
+      // Legacy backward-compatible keys
       exportBundle.data.slipPrefix = slipPrefix;
       exportBundle.data.slipHeaderTitle = slipHeaderTitle;
       exportBundle.data.themeMode = themeMode;
@@ -733,41 +757,219 @@ export const SettingsTabView: React.FC<Props> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const dateStr = new Date().toISOString().slice(0, 10);
+    const scopes: string[] = [];
+    if (backupIncludeConfig) scopes.push('Config');
+    if (backupIncludeBills) scopes.push('Bills');
+    if (backupIncludeParties) scopes.push('Parties');
+    if (backupIncludeStock) scopes.push('Stock');
+    const scopeLabel = scopes.length === 4 ? 'Full' : scopes.join('_');
+
     a.href = url;
-    a.download = `Summary_Backup_${dateStr}.json`;
+    a.download = `Summary_Backup_${scopeLabel}_${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    onShowToast('Backup exported successfully! File downloaded.', 'success');
+    onShowToast?.(`Backup exported successfully (${scopeLabel})! File downloaded.`, 'success');
   };
 
-  // Restore JSON Backup
+  // Inspect Selected Backup File & Open Granular Restore Modal
   const handleRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = ''; // Reset input to allow selecting same file again
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const parsed = JSON.parse(ev.target?.result as string);
-        if (!parsed.data) throw new Error('Invalid format: missing data payload');
-        macAudio.playClick();
-        if (window.confirm(`File "${file.name}" verified! Mode: ${restoreMode.toUpperCase()}.\nRestore now?`)) {
-          if (parsed.data.slipPrefix) setSlipPrefix(parsed.data.slipPrefix);
-          if (parsed.data.themeMode && onChangeThemeMode) onChangeThemeMode(parsed.data.themeMode);
-          if (parsed.data.bgImage) onSelectBgImage(parsed.data.bgImage);
-          onShowToast(`Database restored successfully from "${file.name}"!`, 'success');
+        const rawJson = JSON.parse(ev.target?.result as string);
+        const data = rawJson.data || rawJson;
+
+        const fileBills = Array.isArray(data.bills) ? data.bills : (Array.isArray(rawJson.bills) ? rawJson.bills : []);
+        const fileParties = Array.isArray(data.parties) ? data.parties : (Array.isArray(rawJson.parties) ? rawJson.parties : []);
+        const fileStock = Array.isArray(data.stockItems) ? data.stockItems : (Array.isArray(rawJson.stockItems) ? rawJson.stockItems : []);
+        const hasCfg = Boolean(data.controlPanel || data.slipPrefix || data.themeMode || data.bgImage || data.barcodeConfig || data.printSettings);
+
+        if (!hasCfg && fileBills.length === 0 && fileParties.length === 0 && fileStock.length === 0) {
+          throw new Error('This file does not contain recognized Control Panel settings, Bills, Parties, or Stock data.');
         }
+
+        macAudio.playPop();
+        setPendingRestore({
+          file,
+          parsed: data,
+          fileName: file.name,
+          fileDate: rawJson.timestamp || rawJson.exportDate || (file.lastModified ? new Date(file.lastModified).toLocaleDateString('en-IN') : 'Unknown Date'),
+          hasConfig: hasCfg,
+          billsCount: fileBills.length,
+          partiesCount: fileParties.length,
+          stockCount: fileStock.length,
+          restoreConfig: hasCfg,
+          restoreBills: fileBills.length > 0,
+          restoreParties: fileParties.length > 0,
+          restoreStock: fileStock.length > 0,
+          restoreMode: restoreMode
+        });
       } catch (err: any) {
-        onShowToast(`Failed to parse backup: ${err.message}`, 'error');
+        macAudio.playError();
+        onShowToast?.(`Failed to parse backup: ${err.message}`, 'error');
       }
     };
     reader.readAsText(file);
   };
 
+  // Execute Selective Restore with Merge or Overwrite
+  const handleExecuteRestore = async () => {
+    if (!pendingRestore) return;
+    const { parsed, restoreConfig, restoreBills, restoreParties, restoreStock, restoreMode: mode } = pendingRestore;
+
+    if (!restoreConfig && !restoreBills && !restoreParties && !restoreStock) {
+      onShowToast?.('Please select at least one module to restore!', 'warning');
+      return;
+    }
+
+    setIsRestoring(true);
+    try {
+      let bCount = 0;
+      let pCount = 0;
+      let sCount = 0;
+      let cDone = false;
+
+      // 1. Control Panel
+      if (restoreConfig) {
+        const cp = parsed.controlPanel || parsed;
+        if (cp.slipPrefix) {
+          localStorage.setItem('modern_setting_slip_prefix', cp.slipPrefix);
+          setSlipPrefix(cp.slipPrefix);
+        }
+        if (cp.slipHeaderTitle) {
+          localStorage.setItem('modern_setting_slip_title', cp.slipHeaderTitle);
+          setSlipHeaderTitle(cp.slipHeaderTitle);
+        }
+        if (cp.billPrefix) {
+          localStorage.setItem('modern_setting_bill_prefix', cp.billPrefix);
+          setBillPrefix(cp.billPrefix);
+        }
+        if (cp.tallyNavigation !== undefined) {
+          localStorage.setItem('modern_setting_tally_nav', cp.tallyNavigation ? '1' : '0');
+          setTallyNavigation(Boolean(cp.tallyNavigation));
+        }
+        if (cp.autoConvertMode !== undefined) {
+          localStorage.setItem('modern_setting_autoconv', cp.autoConvertMode ? '1' : '0');
+          setAutoConvertMode(Boolean(cp.autoConvertMode));
+        }
+        if (cp.stickyShortcuts !== undefined) {
+          localStorage.setItem('modern_setting_sticky', cp.stickyShortcuts ? '1' : '0');
+          setStickyShortcuts(Boolean(cp.stickyShortcuts));
+        }
+        if (cp.itemAutoSuggest !== undefined) {
+          localStorage.setItem('modern_setting_item_auto', cp.itemAutoSuggest ? '1' : '0');
+          setItemAutoSuggest(Boolean(cp.itemAutoSuggest));
+        }
+        if (cp.themeMode && onChangeThemeMode) {
+          onChangeThemeMode(cp.themeMode);
+        }
+        if (cp.bgImage && onSelectBgImage) {
+          onSelectBgImage(cp.bgImage);
+        }
+        if (cp.barcodeConfig) {
+          saveBarcodeConfig(cp.barcodeConfig);
+          setBarcodeConfig(cp.barcodeConfig);
+        }
+        if (cp.printSettings) {
+          localStorage.setItem('modern_print_settings', JSON.stringify(cp.printSettings));
+        }
+        if (cp.rawColsConfig) {
+          localStorage.setItem('modern_raw_cols_config', JSON.stringify(cp.rawColsConfig));
+        }
+        if (cp.mouldList) {
+          localStorage.setItem('modern_mould_list', JSON.stringify(cp.mouldList));
+        }
+        if (cp.userProfile) {
+          if (cp.userProfile.userName) {
+            localStorage.setItem('modern_app_user_name', cp.userProfile.userName);
+            setUserName(cp.userProfile.userName);
+          }
+          if (cp.userProfile.userAvatarId) {
+            localStorage.setItem('modern_app_user_avatar_id', String(cp.userProfile.userAvatarId));
+            setUserAvatarId(Number(cp.userProfile.userAvatarId));
+          }
+          if (cp.userProfile.userAvatar) {
+            localStorage.setItem('modern_app_user_avatar', cp.userProfile.userAvatar);
+            setUserAvatar(cp.userProfile.userAvatar);
+          }
+        }
+        cDone = true;
+      }
+
+      // 2. Bills
+      if (restoreBills) {
+        const incomingBills: BillRecord[] = Array.isArray(parsed.bills) ? parsed.bills : [];
+        if (incomingBills.length > 0) {
+          if (mode === 'overwrite') {
+            localStorage.setItem('modern_saved_custom_bills', '[]');
+            localStorage.setItem('modern_deleted_bill_ids', '[]');
+          }
+          for (const b of incomingBills) {
+            if (b && (b.id || b.token)) {
+              await localDb.saveBill(b, true);
+              bCount++;
+            }
+          }
+        }
+      }
+
+      // 3. Parties
+      if (restoreParties) {
+        const incomingParties: PartyRecord[] = Array.isArray(parsed.parties) ? parsed.parties : [];
+        if (incomingParties.length > 0) {
+          if (mode === 'overwrite') {
+            localStorage.setItem('modern_saved_custom_parties', '[]');
+            localStorage.setItem('modern_deleted_party_ids', '[]');
+          }
+          for (const p of incomingParties) {
+            if (p && (p.id || p.name)) {
+              await localDb.saveParty(p, true);
+              pCount++;
+            }
+          }
+        }
+      }
+
+      // 4. Stock
+      if (restoreStock) {
+        const incomingStock: StockItemRecord[] = Array.isArray(parsed.stockItems) ? parsed.stockItems : [];
+        if (incomingStock.length > 0) {
+          for (const s of incomingStock) {
+            if (s && s.id) {
+              await localDb.saveStockItem(s, true);
+              sCount++;
+            }
+          }
+        }
+      }
+
+      window.dispatchEvent(new Event('storage'));
+      macAudio.playSuccess();
+      setPendingRestore(null);
+
+      const summaryParts: string[] = [];
+      if (cDone) summaryParts.push('Control Panel');
+      if (bCount > 0) summaryParts.push(`${bCount} Bills`);
+      if (pCount > 0) summaryParts.push(`${pCount} Parties`);
+      if (sCount > 0) summaryParts.push(`${sCount} Stock Items`);
+
+      onShowToast?.(`Restore complete! ${summaryParts.join(', ')} loaded.`, 'success');
+    } catch (err: any) {
+      macAudio.playError();
+      onShowToast?.(`Restore error: ${err.message}`, 'error');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: '8px', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
       {/* ========================================================================= */}
       {/* TOP HEADER: APPLE CONTROL CENTER & SYSTEM SETTINGS SEGMENTED TAB BAR       */}
       {/* ========================================================================= */}
@@ -880,17 +1082,9 @@ export const SettingsTabView: React.FC<Props> = ({
                 <Palette size={13} style={{ marginRight: 6 }} />
                 <span>Theme & Wallpaper</span>
               </ShadcnTabsTrigger>
-              <ShadcnTabsTrigger value="PROFILE">
-                <User size={13} style={{ marginRight: 6 }} />
-                <span>User Profile & Sync</span>
-              </ShadcnTabsTrigger>
               <ShadcnTabsTrigger value="SHORTCUTS">
                 <Keyboard size={13} style={{ marginRight: 6 }} />
                 <span>Shortcuts & NumPad</span>
-              </ShadcnTabsTrigger>
-              <ShadcnTabsTrigger value="BACKUP">
-                <Database size={13} style={{ marginRight: 6 }} />
-                <span>Backup & Restore</span>
               </ShadcnTabsTrigger>
               <ShadcnTabsTrigger value="BARCODE">
                 <Barcode size={13} style={{ marginRight: 6 }} />
@@ -901,151 +1095,336 @@ export const SettingsTabView: React.FC<Props> = ({
         </div>
       </div>
 
+            {/* ========================================================================= */}
+      {/* TAB 0: UNIFIED GENERAL SETTINGS (SHADCN/UI INDUSTRIAL CARDS)              */}
       {/* ========================================================================= */}
-      {/* TAB 0: GENERAL SETTINGS (GERNAL SETTING - DEFAULT PRINTER & SYSTEM CONFIG) */}
-      {/* ========================================================================= */}
-      {activeTab === 'GENERAL' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '12px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: Default Hardware & PyQt6 Native Vector Spooler */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              overflowY: 'auto',
-              background: '#09090b',
-              border: '1px solid #27272a',
-              borderRadius: '10px'
-            }}
-          >
-            {/* Header: Default Printer Configuration */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#38bdf8'
-                  }}
-                >
-                  <Printer size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#f4f4f5', letterSpacing: '-0.2px' }}>
-                    DEFAULT SYSTEM PRINTER
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    Native PyQt6 Vector Print Spooler (:5005) • Direct Hardware Output
-                  </div>
-                </div>
-              </div>
-
-              {/* Server Engine Status Pill */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {printerEngineStatus === 'online' ? (
+      {(activeTab === 'GENERAL' || activeTab === 'PROFILE' || activeTab === 'BACKUP') && (
+        <div
+          style={{
+            flex: 1,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
+            gap: '16px',
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '8px 12px'
+          }}
+        >
+          {/* CARD 1: USER PROFILE & 2-WAY MULTI-USER LIVE SYNC */}
+          <ShadcnCard style={{ background: '#121215', border: '1px solid #27272a', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
+            <ShadcnCardHeader style={{ padding: '14px 18px', borderBottom: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ShadcnCardTitle style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: '#f4f4f5' }}>
+                  <User size={16} style={{ color: '#38bdf8' }} />
+                  <span>User Profile & 2-Way Sync</span>
+                </ShadcnCardTitle>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span
                     style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      background: 'rgba(34, 197, 94, 0.15)',
-                      color: '#4ade80',
-                      border: '1px solid rgba(34, 197, 94, 0.4)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
-                    SPOOLER ONLINE (:5005)
-                  </span>
-                ) : printerEngineStatus === 'checking' ? (
-                  <span
-                    style={{
-                      fontSize: '10px',
+                      fontSize: '11px',
                       fontWeight: 600,
                       padding: '3px 8px',
                       borderRadius: '12px',
-                      background: 'rgba(234, 179, 8, 0.15)',
-                      color: '#facc15',
-                      border: '1px solid rgba(234, 179, 8, 0.3)'
-                    }}
-                  >
-                    DETECTING...
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      background: 'rgba(239, 68, 68, 0.15)',
-                      color: '#f87171',
-                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      background: 'rgba(34, 197, 94, 0.12)',
+                      color: '#4ade80',
+                      border: '1px solid rgba(34, 197, 94, 0.3)',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '4px'
+                      gap: '5px'
                     }}
                   >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
-                    SERVER OFFLINE
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} />
+                    Live Sync Active
                   </span>
-                )}
-              </div>
-            </div>
-
-            {/* Printer Selection Card */}
-            <div
-              style={{
-                background: '#18181b',
-                border: '1px solid #27272a',
-                borderRadius: '8px',
-                padding: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px'
-              }}
-            >
-              <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#e4e4e7', marginBottom: '6px', display: 'block' }}>
-                  Select Default Windows Printer:
-                </label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div style={{ flex: 1 }}>
-                    <ShadcnSelect
-                      value={defaultPrinter || systemDefaultPrinter || ''}
-                      onChange={(e: any) => {
-                        const selected = e.target.value;
-                        setDefaultPrinter(selected);
-                        macAudio.playClick();
-                        onShowToast?.(`Default printer set to: ${selected}`, 'success');
-                      }}
-                      style={{ width: '100%', height: '36px' }}
+                  <Tooltip title="Force 2-Way Sync Now (Multi-User Data Exchange)" side="bottom">
+                    <ShadcnButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleForceResync}
+                      disabled={isSyncingNow}
+                      style={{ height: '32px', width: '32px', padding: 0, background: '#18181b', border: '1px solid #3f3f46', color: '#f4f4f5', borderRadius: '6px' }}
                     >
-                      {availablePrinters.length > 0 ? (
-                        availablePrinters.map((p) => (
-                          <option key={p} value={p} data-category="Available Printers">
-                            {p} {p === systemDefaultPrinter ? '★ (Windows Default)' : ''}
-                          </option>
-                        ))
-                      ) : (
-                        <option value={defaultPrinter || 'Default Printer'} data-category="System Printer">
-                          {defaultPrinter || 'Default System Printer'}
-                        </option>
-                      )}
-                    </ShadcnSelect>
+                      <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} />
+                    </ShadcnButton>
+                  </Tooltip>
+                  <Tooltip title="Save Profile & Prefix Changes" side="bottom">
+                    <ShadcnButton
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={handleSaveProfile}
+                      style={{ height: '32px', width: '32px', padding: 0, background: '#0284c7', color: '#ffffff', borderRadius: '6px' }}
+                    >
+                      <Check size={14} />
+                    </ShadcnButton>
+                  </Tooltip>
+                </div>
+              </div>
+            </ShadcnCardHeader>
+
+            <ShadcnCardContent style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+              {/* Avatar Studio with all 34 3D Avatars and Expandable Grid */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(24, 24, 27, 0.6)', padding: '10px 14px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <ShadcnAvatar size="lg" style={{ width: '48px', height: '48px', border: '2px solid #38bdf8', background: '#18181b', boxShadow: '0 0 14px rgba(56, 189, 248, 0.35)' }}>
+                    <ShadcnAvatarImage src={userAvatar || getAvatarUrl(userAvatarId, userName)} alt={userName} />
+                    <ShadcnAvatarFallback style={{ fontSize: '14px', fontWeight: 700, color: '#f4f4f5' }}>
+                      {userName.slice(0, 2).toUpperCase() || 'OP'}
+                    </ShadcnAvatarFallback>
+                  </ShadcnAvatar>
+                  <Tooltip title="Upload Custom Profile Photo" side="bottom">
+                    <button
+                      type="button"
+                      onClick={() => dpInputRef.current?.click()}
+                      style={{
+                        position: 'absolute',
+                        bottom: '-2px',
+                        right: '-2px',
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        background: '#38bdf8',
+                        border: '1.5px solid #09090b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#09090b',
+                        padding: 0
+                      }}
+                    >
+                      <Camera size={10} />
+                    </button>
+                  </Tooltip>
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#e4e4e7' }}>Operator Avatar</span>
+                      <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700, background: 'rgba(56, 189, 248, 0.1)', padding: '1px 7px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                        Avatar #{userAvatarId}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        macAudio.playPop();
+                        setShowAllAvatarsModal(true);
+                      }}
+                      style={{
+                        background: 'rgba(56, 189, 248, 0.08)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                        color: '#38bdf8',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Sparkles size={11} />
+                      <span>View All 34</span>
+                    </button>
                   </div>
 
+                  {/* Horizontal Scroll Strip with All 34 Avatars */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '6px',
+                      alignItems: 'center',
+                      overflowX: 'auto',
+                      padding: '3px 2px',
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: 'rgba(255, 255, 255, 0.15) transparent'
+                    }}
+                  >
+                    {getAllAvatarIds().map((avId) => {
+                      const isSel = userAvatarId === avId;
+                      return (
+                        <button
+                          key={avId}
+                          type="button"
+                          onClick={() => {
+                            macAudio.playPop();
+                            setUserAvatarId(avId);
+                            const url = getAvatarUrl(avId, userName);
+                            setUserAvatar(url);
+                            localStorage.setItem('modern_app_user_avatar_id', String(avId));
+                            localStorage.setItem('modern_app_user_avatar', url);
+                            window.dispatchEvent(new Event('storage'));
+                          }}
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            flexShrink: 0,
+                            border: isSel ? '2px solid #38bdf8' : '1px solid #3f3f46',
+                            background: isSel ? 'rgba(56, 189, 248, 0.2)' : '#18181b',
+                            padding: 0,
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            transform: isSel ? 'scale(1.15)' : 'scale(1)',
+                            boxShadow: isSel ? '0 0 8px rgba(56, 189, 248, 0.6)' : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                          title={`Avatar #${avId}`}
+                        >
+                          <img
+                            src={getAvatarUrl(avId, userName)}
+                            alt={`Avatar ${avId}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            loading="lazy"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* User Inputs Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>User / Operator Name</label>
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '36px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
+                      color: '#f4f4f5',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <Tooltip title="User Prefix for non-conflicting multi-user bills (e.g. R-, V-)" side="top">
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>User Prefix</label>
+                      <input
+                        type="text"
+                        value={userPrefix}
+                        onChange={(e) => {
+                          const clean = e.target.value.toUpperCase();
+                          setUserPrefix(clean);
+                          setIsPrefixCustomized(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          height: '36px',
+                          background: '#18181b',
+                          border: '1px solid #3f3f46',
+                          borderRadius: '6px',
+                          padding: '0 12px',
+                          color: '#38bdf8',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  </Tooltip>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Station / Desk</label>
+                  <input
+                    type="text"
+                    value={userTerminal}
+                    onChange={(e) => setUserTerminal(e.target.value)}
+                    placeholder="e.g. Counter 01"
+                    style={{
+                      width: '100%',
+                      height: '36px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
+                      color: '#f4f4f5',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Sync Options Strip */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(24, 24, 27, 0.6)', padding: '10px 14px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                  <Tooltip title="Automatic real-time sync with other users on the network" side="top">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#f4f4f5', fontWeight: 500, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={autoCloudSync}
+                        onChange={(e) => setAutoCloudSync(e.target.checked)}
+                        style={{ accentColor: '#38bdf8', cursor: 'pointer', width: '15px', height: '15px' }}
+                      />
+                      <span>Auto 2-Way Sync</span>
+                    </label>
+                  </Tooltip>
+                  <Tooltip title="Play audio chime when data syncs from other users" side="top">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#f4f4f5', fontWeight: 500, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={soundOnSync}
+                        onChange={(e) => setSoundOnSync(e.target.checked)}
+                        style={{ accentColor: '#38bdf8', cursor: 'pointer', width: '15px', height: '15px' }}
+                      />
+                      <span>Sync Audio</span>
+                    </label>
+                  </Tooltip>
+                </div>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>
+                  Last Synced: {lastSyncTime}
+                </span>
+              </div>
+            </ShadcnCardContent>
+          </ShadcnCard>
+
+          {/* CARD 2: DEFAULT PRINTER & HARDWARE ROUTING */}
+          <ShadcnCard style={{ background: '#121215', border: '1px solid #27272a', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
+            <ShadcnCardHeader style={{ padding: '14px 18px', borderBottom: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ShadcnCardTitle style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: '#f4f4f5' }}>
+                  <Printer size={16} style={{ color: '#38bdf8' }} />
+                  <span>Default Printer & Hardware</span>
+                </ShadcnCardTitle>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: printerEngineStatus === 'online' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                      color: printerEngineStatus === 'online' ? '#4ade80' : '#f87171',
+                      border: `1px solid ${printerEngineStatus === 'online' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: printerEngineStatus === 'online' ? '#22c55e' : '#ef4444' }} />
+                    {printerEngineStatus === 'online' ? 'Spooler Online (:5005)' : 'Spooler Offline'}
+                  </span>
                   <Tooltip title="Refresh Windows Printers List" side="bottom">
                     <ShadcnButton
                       type="button"
@@ -1053,117 +1432,57 @@ export const SettingsTabView: React.FC<Props> = ({
                       size="sm"
                       onClick={fetchPrintersList}
                       disabled={isPrinterChecking}
-                      style={{
-                        height: '36px',
-                        padding: '0 12px',
-                        background: '#27272a',
-                        color: '#f4f4f5',
-                        border: '1px solid #3f3f46',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
+                      style={{ height: '32px', width: '32px', padding: 0, background: '#18181b', border: '1px solid #3f3f46', color: '#f4f4f5', borderRadius: '6px' }}
                     >
                       <RefreshCw size={13} className={isPrinterChecking ? 'animate-spin' : ''} />
-                      <span>Refresh</span>
+                    </ShadcnButton>
+                  </Tooltip>
+                  <Tooltip title="Print Calibration Test Page" side="bottom">
+                    <ShadcnButton
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={handleTestPrint}
+                      disabled={isTestPrinting || printerEngineStatus === 'offline'}
+                      style={{ height: '32px', width: '32px', padding: 0, background: '#0284c7', color: '#ffffff', borderRadius: '6px' }}
+                    >
+                      <Printer size={14} />
                     </ShadcnButton>
                   </Tooltip>
                 </div>
               </div>
+            </ShadcnCardHeader>
 
-              {/* Printer Hardware Info Details */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '8px',
-                  background: '#09090b',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #27272a'
-                }}
-              >
+            <ShadcnCardContent style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Select Windows Printer</label>
+                <ShadcnSelect
+                  value={defaultPrinter || systemDefaultPrinter || ''}
+                  onChange={(e: any) => {
+                    const selected = e.target.value;
+                    setDefaultPrinter(selected);
+                    macAudio.playClick();
+                    onShowToast?.(`Default printer set to: ${selected}`, 'success');
+                  }}
+                  style={{ width: '100%', height: '36px', fontSize: '13px' }}
+                >
+                  {availablePrinters.length > 0 ? (
+                    availablePrinters.map((p) => (
+                      <option key={p} value={p}>
+                        {p} {p === systemDefaultPrinter ? '★ (Windows Default)' : ''}
+                      </option>
+                    ))
+                  ) : (
+                    <option value={defaultPrinter || 'Default Printer'}>
+                      {defaultPrinter || 'Default System Printer'}
+                    </option>
+                  )}
+                </ShadcnSelect>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ fontSize: '10.5px', color: '#71717a' }}>Current Default:</div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {defaultPrinter || systemDefaultPrinter || 'Windows Default'}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '10.5px', color: '#71717a' }}>Spool Mode:</div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>
-                    Direct PyQt6 Vector (Zero Web Print)
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons: Test Print */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
-                <span style={{ fontSize: '11px', color: '#71717a' }}>
-                  Sends a vector calibration test page directly to this printer
-                </span>
-                <Tooltip title="Dispatch High-Resolution Calibration Test Page" side="bottom">
-                  <ShadcnButton
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    onClick={handleTestPrint}
-                    disabled={isTestPrinting || printerEngineStatus === 'offline'}
-                    style={{
-                      background: '#0284c7',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      fontSize: '11.5px',
-                      height: '32px',
-                      padding: '0 14px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Printer size={13} />
-                    <span>{isTestPrinting ? 'Printing...' : 'Print Test Page'}</span>
-                  </ShadcnButton>
-                </Tooltip>
-              </div>
-            </div>
-
-            {/* Quality & Zero Web Print Notice */}
-            <div
-              style={{
-                background: 'rgba(56, 189, 248, 0.05)',
-                border: '1px solid rgba(56, 189, 248, 0.2)',
-                borderRadius: '8px',
-                padding: '12px',
-                display: 'flex',
-                gap: '10px',
-                alignItems: 'flex-start'
-              }}
-            >
-              <Info size={16} style={{ color: '#38bdf8', flexShrink: 0, marginTop: '2px' }} />
-              <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.45 }}>
-                <strong style={{ color: '#f4f4f5' }}>Zero Web Printer Policy Active:</strong> Web browser printing is permanently bypassed across Estimate, Loading Slip, Multi-Party Distribution (F3), and Ledgers. Every document is rendered directly by the native Python vector engine at the printer's native DPI.
-              </div>
-            </div>
-
-            {/* Hardware Routing & Paper Size Card */}
-            <div
-              style={{
-                background: '#18181b',
-                border: '1px solid #27272a',
-                borderRadius: '8px',
-                padding: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px'
-              }}
-            >
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5', textTransform: 'uppercase' }}>
-                Station & Hardware Routing
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Counter / Station Name</label>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Counter / Station Name</label>
                   <input
                     type="text"
                     value={stationName}
@@ -1173,406 +1492,527 @@ export const SettingsTabView: React.FC<Props> = ({
                     }}
                     style={{
                       width: '100%',
-                      height: '32px',
-                      background: '#09090b',
-                      border: '1px solid #27272a',
-                      borderRadius: '5px',
-                      padding: '0 8px',
+                      height: '36px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
                       color: '#f4f4f5',
-                      fontSize: '11.5px',
+                      fontSize: '13px',
+                      fontWeight: 500,
                       outline: 'none',
                       boxSizing: 'border-box'
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Standard Paper Size</label>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Standard Paper Size</label>
                   <ShadcnSelect
                     value={printPaperSize}
                     onChange={(e: any) => {
                       setPrintPaperSize(e.target.value);
                       localStorage.setItem('modern_app_paper_size', e.target.value);
                     }}
-                    style={{ width: '100%', height: '32px' }}
+                    style={{ width: '100%', height: '36px', fontSize: '13px' }}
                   >
-                    <option value="A4" data-category="Cut Sheet Paper">A4 (Portrait 210 x 297 mm)</option>
-                    <option value="A4_LANDSCAPE" data-category="Cut Sheet Paper">A4 (Landscape)</option>
-                    <option value="THERMAL_3INCH" data-category="Thermal Roll">3-Inch Thermal Roll (80mm)</option>
-                    <option value="THERMAL_4INCH" data-category="Shipping Label">4-Inch Shipping Label (100mm)</option>
+                    <option value="A4">A4 (Portrait 210 x 297 mm)</option>
+                    <option value="A4_LANDSCAPE">A4 (Landscape)</option>
+                    <option value="THERMAL_3INCH">3-Inch Thermal Roll (80mm)</option>
+                    <option value="THERMAL_4INCH">4-Inch Shipping Label (100mm)</option>
                   </ShadcnSelect>
                 </div>
               </div>
-            </div>
-          </div>
+            </ShadcnCardContent>
+          </ShadcnCard>
 
-          {/* Right Column: General Workflow, Document Naming & Toggles */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              overflowY: 'auto',
-              background: '#09090b',
-              border: '1px solid #27272a',
-              borderRadius: '10px'
-            }}
-          >
-            <div style={{ borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
-              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#f4f4f5' }}>
-                GENERAL WORKFLOW & SYSTEM PREFERENCES
-              </div>
-              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                Key navigation styles, numbering formats & audio feedback
-              </div>
-            </div>
-
-            {/* Bill & Slip Prefix & Numbering */}
-            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5' }}>
-                Document Numbering & Bill Formats
-              </div>
-
-              {/* Bill Number Prefix & Format */}
-              <div style={{ borderBottom: '1px solid #27272a', paddingBottom: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#e4e4e7' }}>
-                    Bill Number Format / Prefix (Bill History)
-                  </label>
-                  <span style={{ 
-                    fontSize: '10px', 
-                    fontFamily: "'JetBrains Mono', monospace", 
-                    background: 'rgba(56, 189, 248, 0.1)', 
-                    color: '#38bdf8', 
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    padding: '2px 8px', 
-                    borderRadius: '4px' 
-                  }}>
-                    Preview: #{formatBillNumber('2', billPrefix)}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    value={billPrefix}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setBillPrefix(v);
-                      localStorage.setItem('modern_setting_bill_prefix', v);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleApplyBillPrefix();
-                      }
-                    }}
-                    placeholder="e.g. REAL-, INV-, BILL-"
-                    style={{
-                      flex: 1,
-                      height: '32px',
-                      background: '#09090b',
-                      border: '1px solid #27272a',
-                      borderRadius: '5px',
-                      padding: '0 8px',
-                      color: '#f4f4f5',
-                      fontSize: '11.5px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <button
+          {/* CARD 3: DOCUMENT NUMBERING & PREFIXES */}
+          <ShadcnCard style={{ background: '#121215', border: '1px solid #27272a', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
+            <ShadcnCardHeader style={{ padding: '14px 18px', borderBottom: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ShadcnCardTitle style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: '#f4f4f5' }}>
+                  <FileText size={16} style={{ color: '#38bdf8' }} />
+                  <span>Document Numbering & Prefixes</span>
+                </ShadcnCardTitle>
+                <Tooltip title="Apply Bill Prefix to All Historical Bills in Database" side="bottom">
+                  <ShadcnButton
                     type="button"
+                    variant="outline"
+                    size="sm"
                     disabled={isUpdatingBills}
                     onClick={() => handleApplyBillPrefix()}
-                    style={{
-                      background: isUpdatingBills ? '#27272a' : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                      border: '1px solid #38bdf8',
-                      color: '#ffffff',
-                      borderRadius: '5px',
-                      padding: '0 12px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: isUpdatingBills ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.15s ease'
-                    }}
-                    title="Update all existing bills in history to this prefix"
+                    style={{ height: '32px', width: '32px', padding: 0, background: '#18181b', border: '1px solid #3f3f46', color: '#f4f4f5', borderRadius: '6px' }}
                   >
-                    <RefreshCw size={12} className={isUpdatingBills ? 'animate-spin' : ''} />
-                    <span>Apply to All Bills</span>
-                  </button>
-                </div>
-                <div style={{ fontSize: '10px', color: '#71717a' }}>
-                  Yahan set karne par Bill History ke sabhi bills (jaise #{formatBillNumber('1', billPrefix)}, #{formatBillNumber('2', billPrefix)}) aur naye bills isi format me generate aur display honge.
-                </div>
+                    <RefreshCw size={13} className={isUpdatingBills ? 'animate-spin' : ''} />
+                  </ShadcnButton>
+                </Tooltip>
               </div>
-              <div>
-                <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Slip Number Prefix</label>
-                <input
-                  type="text"
-                  value={slipPrefix}
-                  onChange={(e) => {
-                    setSlipPrefix(e.target.value);
-                    localStorage.setItem('modern_setting_slip_prefix', e.target.value);
-                  }}
-                  placeholder="e.g. S-, INV-, BILL-"
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    background: '#09090b',
-                    border: '1px solid #27272a',
-                    borderRadius: '5px',
-                    padding: '0 8px',
-                    color: '#f4f4f5',
-                    fontSize: '11.5px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '10.5px', color: '#71717a', display: 'block', marginBottom: '4px' }}>Default Slip Header Title</label>
-                <input
-                  type="text"
-                  value={slipHeaderTitle}
-                  onChange={(e) => {
-                    setSlipHeaderTitle(e.target.value);
-                    localStorage.setItem('modern_setting_slip_title', e.target.value);
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    background: '#09090b',
-                    border: '1px solid #27272a',
-                    borderRadius: '5px',
-                    padding: '0 8px',
-                    color: '#f4f4f5',
-                    fontSize: '11.5px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
+            </ShadcnCardHeader>
 
-            {/* App Security & Login Password (ID & Password Protection) */}
-            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
-                    background: authConfig.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.15)',
-                    border: authConfig.enabled ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(234, 179, 8, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: authConfig.enabled ? '#4ade80' : '#facc15'
-                  }}>
-                    {authConfig.enabled ? <Lock size={15} /> : <Unlock size={15} />}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#f4f4f5' }}>
-                      Security & Login Password
-                    </div>
-                    <div style={{ fontSize: '10.5px', color: '#71717a' }}>
-                      Apne hisab se User ID & Password set karein ya remove karein
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status Badge */}
-                <span style={{
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  padding: '3px 8px',
-                  borderRadius: '12px',
-                  background: authConfig.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.12)',
-                  color: authConfig.enabled ? '#4ade80' : '#facc15',
-                  border: authConfig.enabled ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(234, 179, 8, 0.35)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: authConfig.enabled ? '#22c55e' : '#eab308' }} />
-                  {authConfig.enabled ? 'PASSWORD ACTIVE (LOCKED)' : 'NO PASSWORD (AUTO-OPEN)'}
-                </span>
-              </div>
-
-              {/* ID Input */}
+            <ShadcnCardContent style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
               <div>
-                <label style={{ fontSize: '10.5px', color: '#a1a1aa', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
-                  User ID / Login ID
-                </label>
-                <input
-                  type="text"
-                  value={authLoginIdInput}
-                  onChange={(e) => setAuthLoginIdInput(e.target.value)}
-                  placeholder="e.g. BillTrack.org or rohit"
-                  style={{
-                    width: '100%',
-                    height: '32px',
-                    background: '#09090b',
-                    border: '1px solid #27272a',
-                    borderRadius: '5px',
-                    padding: '0 8px',
-                    color: '#f4f4f5',
-                    fontSize: '11.5px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* Password Input */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <label style={{ fontSize: '10.5px', color: '#a1a1aa', fontWeight: 600 }}>
-                    Password
-                  </label>
-                  <span style={{ fontSize: '10px', color: '#71717a' }}>
-                    (Khali chhodne par login panel nahi aayega)
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Bill Number Prefix (History)</label>
+                  <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 600 }}>
+                    Preview: #{formatBillNumber('1', billPrefix)}
                   </span>
                 </div>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={billPrefix}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setBillPrefix(v);
+                    localStorage.setItem('modern_setting_bill_prefix', v);
+                  }}
+                  placeholder="e.g. REAL-, INV-, BILL-"
+                  style={{
+                    width: '100%',
+                    height: '36px',
+                    background: '#18181b',
+                    border: '1px solid #3f3f46',
+                    borderRadius: '6px',
+                    padding: '0 12px',
+                    color: '#f4f4f5',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '12px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Slip Prefix</label>
+                    <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 600 }}>
+                      #{slipPrefix}001
+                    </span>
+                  </div>
                   <input
-                    type={showAuthPassword ? 'text' : 'password'}
-                    value={authPasswordInput}
-                    onChange={(e) => setAuthPasswordInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSaveSecurityCredentials();
-                      }
+                    type="text"
+                    value={slipPrefix}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSlipPrefix(v);
+                      localStorage.setItem('modern_setting_slip_prefix', v);
                     }}
-                    placeholder="Naya password likhein ya khali chhod kar remove karein"
+                    placeholder="e.g. S-"
                     style={{
                       width: '100%',
-                      height: '32px',
-                      background: '#09090b',
-                      border: '1px solid #27272a',
-                      borderRadius: '5px',
-                      padding: '0 34px 0 8px',
+                      height: '36px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
                       color: '#f4f4f5',
-                      fontSize: '11.5px',
+                      fontSize: '13px',
+                      fontWeight: 500,
                       outline: 'none',
                       boxSizing: 'border-box'
                     }}
                   />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Default Slip Header Title</label>
+                  <input
+                    type="text"
+                    value={slipHeaderTitle}
+                    onChange={(e) => {
+                      setSlipHeaderTitle(e.target.value);
+                      localStorage.setItem('modern_setting_slip_title', e.target.value);
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '36px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
+                      color: '#f4f4f5',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+            </ShadcnCardContent>
+          </ShadcnCard>
+
+          {/* CARD 4: DATABASE BACKUP & RESTORE */}
+          <ShadcnCard style={{ background: '#121215', border: '1px solid #27272a', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
+            <ShadcnCardHeader style={{ padding: '14px 18px', borderBottom: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ShadcnCardTitle style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: '#f4f4f5' }}>
+                  <Database size={16} style={{ color: '#38bdf8' }} />
+                  <span>Database Backup & Restore</span>
+                </ShadcnCardTitle>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      color: '#94a3b8',
+                      padding: '3px 10px',
+                      borderRadius: '12px',
+                      background: '#18181b',
+                      border: '1px solid #27272a',
+                      fontWeight: 500
+                    }}
+                  >
+                    {parties.length} Parties • {bills.length} Bills • {stockItems.length} Stock
+                  </span>
+                </div>
+              </div>
+            </ShadcnCardHeader>
+
+            <ShadcnCardContent style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+              {/* Scope Selection Box */}
+              <div style={{ background: 'rgba(24, 24, 27, 0.6)', border: '1px solid #27272a', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#e4e4e7' }}>
+                    Select Backup / Export Scope:
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setShowAuthPassword(!showAuthPassword)}
+                    onClick={() => {
+                      macAudio.playPop();
+                      const allSelected = backupIncludeConfig && backupIncludeBills && backupIncludeParties && backupIncludeStock;
+                      setBackupIncludeConfig(!allSelected);
+                      setBackupIncludeBills(!allSelected);
+                      setBackupIncludeParties(!allSelected);
+                      setBackupIncludeStock(!allSelected);
+                    }}
                     style={{
-                      position: 'absolute',
-                      right: '8px',
                       background: 'none',
                       border: 'none',
-                      color: '#71717a',
+                      color: '#38bdf8',
+                      fontSize: '11px',
+                      fontWeight: 600,
                       cursor: 'pointer',
-                      padding: '2px',
-                      display: 'flex',
-                      alignItems: 'center'
+                      padding: '2px 4px'
                     }}
-                    title={showAuthPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showAuthPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    {(backupIncludeConfig && backupIncludeBills && backupIncludeParties && backupIncludeStock) ? 'Deselect All' : 'Select All (Full Backup)'}
                   </button>
+                </div>
+
+                {/* 4 Interactive Category Tiles */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {/* Scope 1: Control Panel */}
+                  <div
+                    onClick={() => { macAudio.playClick(); setBackupIncludeConfig(!backupIncludeConfig); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: backupIncludeConfig ? 'rgba(167, 139, 250, 0.12)' : '#18181b',
+                      border: backupIncludeConfig ? '1px solid rgba(167, 139, 250, 0.4)' : '1px solid #27272a',
+                      cursor: 'pointer',
+                      transition: 'all 0.12s ease'
+                    }}
+                  >
+                    {backupIncludeConfig ? <CheckSquare size={15} color="#a78bfa" /> : <Square size={15} color="#52525b" />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: backupIncludeConfig ? '#f4f4f5' : '#a1a1aa' }}>
+                        Control Panel
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#71717a' }}>
+                        Prefixes, Moulds, Print & Display
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scope 2: Bills */}
+                  <div
+                    onClick={() => { macAudio.playClick(); setBackupIncludeBills(!backupIncludeBills); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: backupIncludeBills ? 'rgba(56, 189, 248, 0.12)' : '#18181b',
+                      border: backupIncludeBills ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid #27272a',
+                      cursor: 'pointer',
+                      transition: 'all 0.12s ease'
+                    }}
+                  >
+                    {backupIncludeBills ? <CheckSquare size={15} color="#38bdf8" /> : <Square size={15} color="#52525b" />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: backupIncludeBills ? '#f4f4f5' : '#a1a1aa' }}>
+                        Bills & Invoices
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#71717a' }}>
+                        {bills.length} Bill Vouchers recorded
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scope 3: Parties */}
+                  <div
+                    onClick={() => { macAudio.playClick(); setBackupIncludeParties(!backupIncludeParties); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: backupIncludeParties ? 'rgba(52, 211, 153, 0.12)' : '#18181b',
+                      border: backupIncludeParties ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid #27272a',
+                      cursor: 'pointer',
+                      transition: 'all 0.12s ease'
+                    }}
+                  >
+                    {backupIncludeParties ? <CheckSquare size={15} color="#34d399" /> : <Square size={15} color="#52525b" />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: backupIncludeParties ? '#f4f4f5' : '#a1a1aa' }}>
+                        Party Directory
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#71717a' }}>
+                        {parties.length} Party Accounts & Balances
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scope 4: Stock */}
+                  <div
+                    onClick={() => { macAudio.playClick(); setBackupIncludeStock(!backupIncludeStock); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: backupIncludeStock ? 'rgba(251, 191, 36, 0.12)' : '#18181b',
+                      border: backupIncludeStock ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid #27272a',
+                      cursor: 'pointer',
+                      transition: 'all 0.12s ease'
+                    }}
+                  >
+                    {backupIncludeStock ? <CheckSquare size={15} color="#fbbf24" /> : <Square size={15} color="#52525b" />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: backupIncludeStock ? '#f4f4f5' : '#a1a1aa' }}>
+                        Stock & Inventory
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: '#71717a' }}>
+                        {stockItems.length} Stock & Mould Items
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Security Actions Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
-                <button
-                  type="button"
-                  onClick={handleSaveSecurityCredentials}
-                  style={{
-                    flex: 1,
-                    height: '32px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    border: '1px solid #34d399',
-                    borderRadius: '5px',
-                    color: '#ffffff',
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <Check size={13} />
-                  <span>Save ID & Password</span>
-                </button>
-
-                {authConfig.password && (
-                  <button
+              {/* Action Buttons Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                <Tooltip title="Export selected modules as a JSON backup file" side="top">
+                  <ShadcnButton
                     type="button"
-                    onClick={handleRemovePassword}
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportBackup}
                     style={{
-                      height: '32px',
-                      background: 'rgba(239, 68, 68, 0.15)',
-                      border: '1px solid rgba(239, 68, 68, 0.35)',
-                      borderRadius: '5px',
-                      color: '#ef4444',
-                      fontSize: '11px',
+                      height: '40px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      color: '#38bdf8',
+                      fontSize: '12.5px',
                       fontWeight: 600,
-                      padding: '0 12px',
-                      cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px'
+                      justifyContent: 'center',
+                      gap: '8px',
+                      borderRadius: '8px'
                     }}
-                    title="Remove password so the app opens directly without login panel"
                   >
-                    <Unlock size={12} />
-                    <span>Remove Password</span>
-                  </button>
-                )}
-              </div>
-            </div>
+                    <Download size={15} />
+                    <span>
+                      Export Backup JSON ({[backupIncludeConfig, backupIncludeBills, backupIncludeParties, backupIncludeStock].filter(Boolean).length} / 4)
+                    </span>
+                  </ShadcnButton>
+                </Tooltip>
 
-            {/* Toggles */}
-            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <LuxuryToggle
-                title="Tally / Marg ERP Enter Key Navigation"
-                desc="Pressing Enter advances from input to input, Tab jumps columns, and Down Arrow jumps to the next row."
-                checked={tallyNavigation}
-                onChange={(val) => {
-                  setTallyNavigation(val);
-                  localStorage.setItem('modern_setting_tally_nav', val ? '1' : '0');
-                  onShowToast?.(`Tally navigation ${val ? 'enabled' : 'disabled'}`, 'info');
-                }}
+                <Tooltip title="Inspect and selectively restore from any backup JSON file" side="top">
+                  <ShadcnButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      height: '40px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      color: '#34d399',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <Upload size={15} />
+                    <span>Restore / Import File...</span>
+                  </ShadcnButton>
+                </Tooltip>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(24, 24, 27, 0.6)', padding: '8px 12px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                <span style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: 500 }}>Default Restore Policy:</span>
+                <Segmented
+                  value={restoreMode}
+                  onChange={(val: any) => setRestoreMode(val as 'merge' | 'overwrite')}
+                  options={[
+                    { label: 'Merge Existing', value: 'merge' },
+                    { label: 'Clean Overwrite', value: 'overwrite' }
+                  ]}
+                />
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleRestoreFile}
+                style={{ display: 'none' }}
               />
-              <LuxuryToggle
-                title="Fast Item Autocomplete"
-                desc="Shows instant search dropdown when typing party names, moulds, and inventory items."
-                checked={itemAutoSuggest}
-                onChange={(val) => {
-                  setItemAutoSuggest(val);
-                  localStorage.setItem('modern_setting_item_auto', val ? '1' : '0');
-                }}
-              />
-              <LuxuryToggle
-                title="Sound Effects (macAudio Engine)"
-                desc="Play tactile feedback audio on click, enter key, save, and print spooling events."
-                checked={audioFeedback}
-                onChange={(val) => {
-                  setAudioFeedback(val);
-                  if (val) macAudio.playSuccess();
-                }}
-              />
-            </div>
-          </div>
+            </ShadcnCardContent>
+          </ShadcnCard>
+
+          {/* CARD 5: APP SECURITY & LOGIN PASSWORD */}
+          <ShadcnCard style={{ background: '#121215', border: '1px solid #27272a', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
+            <ShadcnCardHeader style={{ padding: '14px 18px', borderBottom: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ShadcnCardTitle style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: '#f4f4f5' }}>
+                  {authConfig.enabled ? <Lock size={16} style={{ color: '#4ade80' }} /> : <Unlock size={16} style={{ color: '#facc15' }} />}
+                  <span>App Security & Login Lock</span>
+                </ShadcnCardTitle>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: authConfig.enabled ? 'rgba(34, 197, 94, 0.12)' : 'rgba(234, 179, 8, 0.12)',
+                      color: authConfig.enabled ? '#4ade80' : '#facc15',
+                      border: `1px solid ${authConfig.enabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: authConfig.enabled ? '#22c55e' : '#eab308' }} />
+                    {authConfig.enabled ? 'Password Active' : 'No Password'}
+                  </span>
+                  <Tooltip title="Save Login ID & Password" side="bottom">
+                    <ShadcnButton
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={handleSaveSecurityCredentials}
+                      style={{ height: '32px', width: '32px', padding: 0, background: '#10b981', color: '#ffffff', borderRadius: '6px' }}
+                    >
+                      <Check size={14} />
+                    </ShadcnButton>
+                  </Tooltip>
+                  {authConfig.password && (
+                    <Tooltip title="Remove Password (Opens directly without login panel)" side="bottom">
+                      <ShadcnButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRemovePassword}
+                        style={{ height: '32px', width: '32px', padding: 0, background: '#18181b', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444', borderRadius: '6px' }}
+                      >
+                        <Unlock size={13} />
+                      </ShadcnButton>
+                    </Tooltip>
+                  )}
+                </div>
+              </div>
+            </ShadcnCardHeader>
+
+            <ShadcnCardContent style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>User ID / Login ID</label>
+                  <input
+                    type="text"
+                    value={authLoginIdInput}
+                    onChange={(e) => setAuthLoginIdInput(e.target.value)}
+                    placeholder="e.g. BillTrack.org"
+                    style={{
+                      width: '100%',
+                      height: '36px',
+                      background: '#18181b',
+                      border: '1px solid #3f3f46',
+                      borderRadius: '6px',
+                      padding: '0 12px',
+                      color: '#f4f4f5',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Password</label>
+                    <span style={{ fontSize: '11px', color: '#71717a' }}>(Blank = Auto-open)</span>
+                  </div>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input
+                      type={showAuthPassword ? 'text' : 'password'}
+                      value={authPasswordInput}
+                      onChange={(e) => setAuthPasswordInput(e.target.value)}
+                      placeholder="Enter password"
+                      style={{
+                        width: '100%',
+                        height: '36px',
+                        background: '#18181b',
+                        border: '1px solid #3f3f46',
+                        borderRadius: '6px',
+                        padding: '0 36px 0 12px',
+                        color: '#f4f4f5',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthPassword(!showAuthPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        background: 'none',
+                        border: 'none',
+                        color: '#a1a1aa',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title={showAuthPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showAuthPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ShadcnCardContent>
+          </ShadcnCard>
         </div>
       )}
 
-      {/* ========================================================================= */}
+{/* ========================================================================= */}
       {/* TAB 1: THEME & BACKGROUND (ALAG TAB - BACKGROUND COLOR & WALLPAPER)       */}
       {/* ========================================================================= */}
       {activeTab === 'THEME' && (
@@ -2108,1647 +2548,13 @@ export const SettingsTabView: React.FC<Props> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: USER PROFILE & MULTI-DEVICE SYNC (2026 INDUSTRIAL SHADCN/UI)        */}
-      {/* ========================================================================= */}
-      {activeTab === 'PROFILE' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', minHeight: 0, overflowY: 'auto', padding: '4px 8px' }}>
-          
-          {/* 1. Header Profile Banner (Linear / Vercel Ultra-Modern Card) */}
-          <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-            <ShadcnCardContent style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-                
-                {/* Left: Avatar with Live Pulse Status & Credentials */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ position: 'relative' }}>
-                    <ShadcnAvatar size="xl" style={{ border: '2px solid #3f3f46', background: '#18181b', width: '64px', height: '64px' }}>
-                      <ShadcnAvatarImage src={userAvatar || getAvatarUrl(userAvatarId, userName)} alt={userName} />
-                      <ShadcnAvatarFallback style={{ fontSize: '20px', fontWeight: 700, color: '#f4f4f5', background: '#27272a' }}>
-                        {userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'OP'}
-                      </ShadcnAvatarFallback>
-                    </ShadcnAvatar>
-                    {/* Live Presence Pulse Indicator */}
-                    <span
-                      title="Operator Active & Connected"
-                      style={{
-                        position: 'absolute',
-                        bottom: '2px',
-                        right: '2px',
-                        width: '14px',
-                        height: '14px',
-                        borderRadius: '50%',
-                        background: '#10b981',
-                        border: '2px solid #09090b',
-                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.8)'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-                      <h2 style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '-0.4px', color: '#f4f4f5', margin: 0 }}>
-                        {userName || 'Rohit Kumar'}
-                      </h2>
-                      <ShadcnBadge variant="default" style={{ fontSize: '10.5px', fontWeight: 600, background: '#f4f4f5', color: '#09090b' }}>
-                        {userRole}
-                      </ShadcnBadge>
-                      <ShadcnBadge variant="outline" style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#38bdf8', borderColor: '#27272a' }}>
-                        {operatorShift.split(' ')[0]} {operatorShift.split(' ')[1] || ''}
-                      </ShadcnBadge>
-                      <span
-                        style={{
-                          fontSize: '10.5px',
-                          fontFamily: 'monospace',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          border: '1px solid #27272a',
-                          background: '#18181b',
-                          color: '#a1a1aa'
-                        }}
-                      >
-                        PUNCH: {operatorPunchId}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', marginTop: '5px', fontSize: '12px', color: '#71717a' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Layers size={13} style={{ color: '#a1a1aa' }} />
-                        <strong style={{ color: '#f4f4f5', fontWeight: 500 }}>{assignedLine}</strong>
-                      </span>
-                      <span>•</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Monitor size={13} style={{ color: '#a1a1aa' }} />
-                        <span>{userTerminal}</span>
-                      </span>
-                      <span>•</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Wifi size={13} style={{ color: '#10b981' }} />
-                        <span style={{ color: '#10b981', fontFamily: 'monospace' }}>LAN 192.168.1.120 (1ms)</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right: Quick Action Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShadcnButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      macAudio.playClick();
-                      setProfileSubTab('PIN');
-                    }}
-                    style={{ background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5' }}
-                  >
-                    <Key size={13} style={{ color: '#a1a1aa' }} />
-                    <span>Quick Kiosk PIN</span>
-                  </ShadcnButton>
-
-                  <ShadcnButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleForceResync}
-                    disabled={isSyncingNow}
-                    style={{ background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5' }}
-                  >
-                    <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} style={{ color: '#a1a1aa' }} />
-                    <span>{isSyncingNow ? 'Syncing...' : 'Sync Cloud'}</span>
-                  </ShadcnButton>
-
-                  <ShadcnButton
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    onClick={handleSaveProfile}
-                    style={{ background: '#f4f4f5', color: '#09090b', fontWeight: 600 }}
-                  >
-                    <Check size={14} />
-                    <span>Save Changes</span>
-                  </ShadcnButton>
-                </div>
-              </div>
-
-              {/* Quick Industrial Status Metric Strip */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '8px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid #27272a'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
-                  <Activity size={16} style={{ color: '#10b981' }} />
-                  <div>
-                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Today's Output</span>
-                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>48 Glass Lites Cut</span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
-                  <Zap size={16} style={{ color: '#38bdf8' }} />
-                  <div>
-                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Batch Yield</span>
-                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>98.4% Kerf Optimization</span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
-                  <Cloud size={16} style={{ color: '#a855f7' }} />
-                  <div>
-                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Cloud Replication</span>
-                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>Realtime • {lastSyncTime}</span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#18181b', border: '1px solid #27272a', padding: '8px 12px', borderRadius: '8px' }}>
-                  <HardDrive size={16} style={{ color: '#fbbf24' }} />
-                  <div>
-                    <span style={{ fontSize: '10px', color: '#71717a', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Resilience</span>
-                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5', fontFamily: 'monospace' }}>0 Pending • 7d Cache</span>
-                  </div>
-                </div>
-              </div>
-            </ShadcnCardContent>
-          </ShadcnCard>
-
-          {/* 2. Sub-Navigation TabsList (Linear / Supabase Style) */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#18181b',
-              padding: '3px',
-              borderRadius: '8px',
-              border: '1px solid #27272a'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-              {[
-                { key: 'IDENTITY', label: 'Operator & Shift', icon: <User size={13} /> },
-                { key: 'SYNC', label: 'Cloud & Local Sync', icon: <Cloud size={13} /> },
-                { key: 'DEVICES', label: 'Workstations & Devices', icon: <Laptop size={13} /> },
-                { key: 'PIN', label: 'Security & Quick PIN', icon: <Key size={13} /> },
-                { key: 'AUDIT', label: 'Shift Audit Log', icon: <Clock size={13} /> }
-              ].map(tab => {
-                const isActive = profileSubTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => {
-                      macAudio.playClick();
-                      setProfileSubTab(tab.key as any);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 14px',
-                      fontSize: '12px',
-                      fontWeight: isActive ? 600 : 500,
-                      borderRadius: '6px',
-                      border: isActive ? '1px solid #3f3f46' : '1px solid transparent',
-                      cursor: 'pointer',
-                      background: isActive ? '#27272a' : 'transparent',
-                      color: isActive ? '#f4f4f5' : '#71717a',
-                      boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = '#a1a1aa';
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = '#71717a';
-                        e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div style={{ paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace' }}>
-                Cluster Node: <strong>GLS-NODE-01</strong>
-              </span>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* SUBTAB 1: OPERATOR & PRODUCTION SHIFT IDENTITY                            */}
-          {/* ========================================================================= */}
-          {profileSubTab === 'IDENTITY' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
-              
-              {/* Card 1: Factory Operator Credentials */}
-              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                  <ShadcnCardTitle style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <User size={15} style={{ color: '#a1a1aa' }} />
-                    Operator Credentials & Production Line
-                  </ShadcnCardTitle>
-                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                    Shift roster assignment, punch ID code, and factory floor machine station.
-                  </ShadcnCardDescription>
-                </ShadcnCardHeader>
-
-                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  
-                  {/* 3D Avatar Picker Studio */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px', borderRadius: '10px', background: '#18181b', border: '1px solid #27272a' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Sparkles size={14} style={{ color: '#38bdf8' }} />
-                        <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5' }}>
-                          Choose 3D Profile Avatar (DP)
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '11px', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>
-                        Active DP: #{userAvatarId}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      {/* Active Big Avatar Preview */}
-                      <div
-                        style={{
-                          width: '60px',
-                          height: '60px',
-                          borderRadius: '50%',
-                          background: '#09090b',
-                          border: '2px solid #007AFF',
-                          boxShadow: '0 0 14px rgba(0, 122, 255, 0.45)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden',
-                          flexShrink: 0
-                        }}
-                      >
-                        <img
-                          src={userAvatar || getAvatarUrl(userAvatarId, userName)}
-                          alt="DP"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      </div>
-
-                      {/* Controls: Upload Custom / Remove */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <input
-                          type="file"
-                          ref={dpInputRef}
-                          accept="image/*"
-                          onChange={handleAvatarUpload}
-                          style={{ display: 'none' }}
-                        />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <ShadcnButton
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => dpInputRef.current?.click()}
-                            style={{ height: '28px', fontSize: '11px', background: '#27272a', color: '#f4f4f5' }}
-                          >
-                            <Upload size={12} style={{ marginRight: '4px' }} />
-                            Upload Custom Photo
-                          </ShadcnButton>
-                          {userAvatar && (
-                            <ShadcnButton
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              style={{ height: '28px', fontSize: '11px', color: '#ef4444' }}
-                              onClick={() => {
-                                setUserAvatar('');
-                                localStorage.removeItem('modern_app_user_avatar');
-                                window.dispatchEvent(new Event('storage'));
-                                macAudio.playTrash();
-                              }}
-                            >
-                              Reset to 3D Avatar
-                            </ShadcnButton>
-                          )}
-                        </div>
-                        <span style={{ fontSize: '10.5px', color: '#71717a' }}>
-                          Neeche diye 3D avatars me se koi bhi select karein (DP har jagah sync hogi).
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 3D Avatars Grid Shelf */}
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
-                        gap: '8px',
-                        maxHeight: '120px',
-                        overflowY: 'auto',
-                        padding: '8px',
-                        background: '#09090b',
-                        borderRadius: '8px',
-                        border: '1px solid #27272a',
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: '#3f3f46 transparent'
-                      }}
-                    >
-                      {getAllAvatarIds().map((id) => {
-                        const isSelected = userAvatarId === id && (!userAvatar || userAvatar === `/avatars/${id}.webp`);
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            title={`3D Avatar #${id}`}
-                            onClick={() => {
-                              setUserAvatarId(id);
-                              setUserAvatar(`/avatars/${id}.webp`);
-                              localStorage.setItem('modern_app_user_avatar_id', String(id));
-                              localStorage.setItem('modern_app_user_avatar', `/avatars/${id}.webp`);
-                              setUserProfile({ avatarId: id, avatar: `/avatars/${id}.webp` });
-                              macAudio.playPop();
-                              onShowToast?.(`Avatar #${id} Selected!`, 'success');
-                            }}
-                            style={{
-                              position: 'relative',
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              border: isSelected ? '2px solid #007AFF' : '1px solid #27272a',
-                              background: isSelected ? 'rgba(0, 122, 255, 0.25)' : '#18181b',
-                              cursor: 'pointer',
-                              padding: 0,
-                              overflow: 'hidden',
-                              transition: 'all 0.15s ease',
-                              transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-                              boxShadow: isSelected ? '0 0 10px rgba(0, 122, 255, 0.6)' : 'none'
-                            }}
-                          >
-                            <img
-                              src={`/avatars/${id}.webp`}
-                              alt={`#${id}`}
-                              loading="lazy"
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Operator Name & Punch Code */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Operator Display Name</ShadcnLabel>
-                      <ShadcnInput
-                        type="text"
-                        value={userName}
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        placeholder="e.g. Rohit Kumar"
-                        style={{ height: '34px', fontSize: '12px' }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Operator Code / Punch ID</ShadcnLabel>
-                      <ShadcnInput
-                        type="text"
-                        value={operatorPunchId}
-                        onChange={(e) => setOperatorPunchId(e.target.value.toUpperCase())}
-                        placeholder="e.g. GLS-9021"
-                        style={{ height: '34px', fontSize: '12px', fontFamily: 'monospace' }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Assigned Production Line */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Assigned Production Line</ShadcnLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-                      {[
-                        'Cutting Line 1 - Bottero CNC',
-                        'Cutting Line 2 - Bystronic',
-                        'Furnace 1 - Landglass Toughening',
-                        'DGU Insulating Unit - Lisec',
-                        'Lamination Autoclave Line',
-                        'Dispatch & Final QC Deck'
-                      ].map((line) => {
-                        const isSelected = assignedLine === line;
-                        return (
-                          <button
-                            key={line}
-                            type="button"
-                            onClick={() => {
-                              setAssignedLine(line);
-                              macAudio.playClick();
-                            }}
-                            style={{
-                              padding: '8px 10px',
-                              borderRadius: '6px',
-                              border: isSelected ? '1px solid #38bdf8' : '1px solid #27272a',
-                              background: isSelected ? '#18181b' : '#09090b',
-                              color: isSelected ? '#f4f4f5' : '#a1a1aa',
-                              fontSize: '11px',
-                              fontWeight: isSelected ? 600 : 400,
-                              textAlign: 'left',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            {line}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Operator Shift Timing */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Factory Shift Roster</ShadcnLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-                      {[
-                        { key: 'Shift A (06:00 AM - 02:00 PM)', label: 'Shift A (06:00 AM – 02:00 PM)' },
-                        { key: 'Shift B (02:00 PM - 10:00 PM)', label: 'Shift B (02:00 PM – 10:00 PM)' },
-                        { key: 'Shift C (10:00 PM - 06:00 AM)', label: 'Shift C (10:00 PM – 06:00 AM)' },
-                        { key: 'General (09:00 AM - 06:00 PM)', label: 'General (09:00 AM – 06:00 PM)' }
-                      ].map((s) => {
-                        const isSelected = operatorShift.includes(s.key.split(' ')[0]);
-                        return (
-                          <button
-                            key={s.key}
-                            type="button"
-                            onClick={() => {
-                              setOperatorShift(s.key);
-                              macAudio.playClick();
-                            }}
-                            style={{
-                              padding: '8px 10px',
-                              borderRadius: '6px',
-                              border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
-                              background: isSelected ? '#27272a' : '#09090b',
-                              color: isSelected ? '#ffffff' : '#71717a',
-                              fontSize: '11px',
-                              fontWeight: isSelected ? 600 : 400,
-                              textAlign: 'center',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            {s.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </ShadcnCardContent>
-              </ShadcnCard>
-
-              {/* Card 2: Role, Multi-Device Bill Clash Guard & Station */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                
-                {/* Department & Machine Role */}
-                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Counter Role & Department</ShadcnCardTitle>
-                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                      Authorization level for cutting lists, price override, and dispatch tokens.
-                    </ShadcnCardDescription>
-                  </ShadcnCardHeader>
-
-                  <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-                      {['Plant Supervisor', 'CNC Cutting Operator', 'Quality Control Lead', 'Accounts & Dispatch Admin'].map((r) => {
-                        const isSelected = userRole === r;
-                        return (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => {
-                              setUserRole(r);
-                              macAudio.playClick();
-                            }}
-                            style={{
-                              padding: '8px 10px',
-                              borderRadius: '6px',
-                              border: isSelected ? '1px solid #f4f4f5' : '1px solid #27272a',
-                              background: isSelected ? '#27272a' : '#18181b',
-                              color: isSelected ? '#ffffff' : '#a1a1aa',
-                              fontSize: '11.5px',
-                              fontWeight: isSelected ? 600 : 400,
-                              textAlign: 'left',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            {r}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Machine Terminal Identifier */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                      <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Machine Terminal</ShadcnLabel>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-                        {['Station 01 (Bottero CNC)', 'Station 02 (Furnace Desk)', 'Station 03 (Godown PC)', 'Station 04 (QC iPad)'].map((t) => {
-                          const isSelected = userTerminal.includes(t.split(' ')[1] || t);
-                          return (
-                            <button
-                              key={t}
-                              type="button"
-                              onClick={() => {
-                                setUserTerminal(t);
-                                macAudio.playClick();
-                              }}
-                              style={{
-                                padding: '6px 8px',
-                                borderRadius: '6px',
-                                border: isSelected ? '1px solid #38bdf8' : '1px solid #27272a',
-                                background: isSelected ? '#18181b' : '#09090b',
-                                color: isSelected ? '#f4f4f5' : '#71717a',
-                                fontSize: '11px',
-                                fontWeight: isSelected ? 600 : 400,
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              {t}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Phone & Live Broadcast Presence */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Contact Phone</ShadcnLabel>
-                        <ShadcnInput
-                          type="text"
-                          value={userPhone}
-                          onChange={(e) => setUserPhone(e.target.value)}
-                          placeholder="+91 98765 43210"
-                          style={{ height: '32px', fontSize: '11.5px' }}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Live Presence Status</ShadcnLabel>
-                        <ShadcnInput
-                          type="text"
-                          value={userStatus}
-                          onChange={(e) => setUserStatus(e.target.value)}
-                          placeholder="Active on Cutting Line 1"
-                          style={{ height: '32px', fontSize: '11.5px' }}
-                        />
-                      </div>
-                    </div>
-                  </ShadcnCardContent>
-                </ShadcnCard>
-
-                {/* Multi-Device Bill Clash Guard */}
-                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Unique Bill Token Prefix</ShadcnCardTitle>
-                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                      Guarantees no duplicate invoice numbers when multiple cutting desks bill simultaneously.
-                    </ShadcnCardDescription>
-                  </ShadcnCardHeader>
-
-                  <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <ShadcnInput
-                      type="text"
-                      value={userPrefix}
-                      onChange={(e) => {
-                        setUserPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                        setIsPrefixCustomized(true);
-                      }}
-                      placeholder="e.g. ROHIT, LINE1, WH1"
-                      style={{
-                        height: '34px',
-                        fontFamily: 'monospace',
-                        fontWeight: 700,
-                        letterSpacing: '1px'
-                      }}
-                    />
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        background: '#18181b',
-                        border: '1px solid #27272a'
-                      }}
-                    >
-                      <span style={{ fontSize: '11px', color: '#71717a' }}>Sequence Preview:</span>
-                      <ShadcnBadge variant="outline" style={{ fontFamily: 'monospace', color: '#38bdf8', fontSize: '11px' }}>
-                        {userPrefix ? `${userPrefix}-1, ${userPrefix}-2, ${userPrefix}-3...` : 'BILL-1, BILL-2...'}
-                      </ShadcnBadge>
-                    </div>
-                  </ShadcnCardContent>
-                </ShadcnCard>
-              </div>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* SUBTAB 2: CLOUD & LOCAL REALTIME SYNC ENGINE                               */}
-          {/* ========================================================================= */}
-          {profileSubTab === 'SYNC' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
-              
-              {/* Left: Real-Time Replication Status & Granular Switches */}
-              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Cloud size={16} style={{ color: '#a1a1aa' }} />
-                      <ShadcnCardTitle style={{ fontSize: '14px' }}>Real-Time Cloud & Plant Sync</ShadcnCardTitle>
-                    </div>
-                    <ShadcnBadge
-                      variant="secondary"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        color: '#10b981',
-                        border: '1px solid rgba(16, 185, 129, 0.3)',
-                        fontSize: '11px'
-                      }}
-                    >
-                      <CheckCircle2 size={12} />
-                      Live Replicating
-                    </ShadcnBadge>
-                  </div>
-                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                    Replicates cutting lists, glass order updates, and inventory between cutting floor and central cloud ERP.
-                  </ShadcnCardDescription>
-                </ShadcnCardHeader>
-
-                <ShadcnCardContent style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  
-                  {/* Sync Status Banner */}
-                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <span style={{ color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <HardDrive size={14} style={{ color: '#71717a' }} />
-                        Local Offline Queue: <strong style={{ color: '#f4f4f5' }}>0 Pending Jobs</strong>
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace' }}>
-                        Last Sync: {lastSyncTime}
-                      </span>
-                    </div>
-
-                    {/* Progress Bar when syncing */}
-                    {isSyncingNow && (
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: '#38bdf8', marginBottom: '4px' }}>
-                          <span>Replicating production batches...</span>
-                          <span style={{ fontFamily: 'monospace' }}>{syncProgress}%</span>
-                        </div>
-                        <ShadcnProgress value={syncProgress} indicatorColor="#38bdf8" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Granular Auto-Sync Toggles */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid #27272a', paddingTop: '10px' }}>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
-                      <div>
-                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Auto-Sync Cutting Orders & Batches
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
-                          Automatically pull incoming glass jobs from ERP every 2 minutes.
-                        </div>
-                      </div>
-                      <ShadcnSwitch
-                        checked={syncProductionOrders}
-                        onCheckedChange={(val: boolean) => {
-                          setSyncProductionOrders(val);
-                          localStorage.setItem('sync_prod_orders', val ? '1' : '0');
-                          macAudio.playClick();
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
-                      <div>
-                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Barcode & Thermal Label Templates Backup
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
-                          Synchronize custom 50x30 / 100x50 mm templates across all line printers.
-                        </div>
-                      </div>
-                      <ShadcnSwitch
-                        checked={syncTemplates}
-                        onCheckedChange={(val: boolean) => {
-                          setSyncTemplates(val);
-                          localStorage.setItem('sync_templates', val ? '1' : '0');
-                          macAudio.playClick();
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
-                      <div>
-                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Machine Configurations & CNC Rules
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
-                          Propagate glass margin, kerf cutting width & tolerance settings.
-                        </div>
-                      </div>
-                      <ShadcnSwitch
-                        checked={syncMachineRules}
-                        onCheckedChange={(val: boolean) => {
-                          setSyncMachineRules(val);
-                          localStorage.setItem('sync_machine_rules', val ? '1' : '0');
-                          macAudio.playClick();
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
-                      <div>
-                        <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#f4f4f5' }}>
-                          Offline Resilience Local Cache
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#71717a' }}>
-                          Retain last 7 days cutting jobs on device if factory Wi-Fi cuts out.
-                        </div>
-                      </div>
-                      <ShadcnSwitch
-                        checked={syncOfflineCache}
-                        onCheckedChange={(val: boolean) => {
-                          setSyncOfflineCache(val);
-                          localStorage.setItem('sync_offline_cache', val ? '1' : '0');
-                          macAudio.playClick();
-                        }}
-                      />
-                    </div>
-                  </div>
-                </ShadcnCardContent>
-
-                <ShadcnCardFooter style={{ borderTop: '1px solid #27272a', background: '#121215', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#71717a', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Wifi size={13} style={{ color: '#10b981' }} /> Plant LAN: 192.168.1.120 (1ms latency)
-                  </span>
-                  <ShadcnButton
-                    type="button"
-                    size="sm"
-                    onClick={handleForceResync}
-                    disabled={isSyncingNow}
-                    style={{ background: '#f4f4f5', color: '#09090b', fontWeight: 600, height: '32px' }}
-                  >
-                    <RefreshCw size={13} className={isSyncingNow ? 'animate-spin' : ''} />
-                    <span>{isSyncingNow ? 'Syncing...' : 'Sync Now'}</span>
-                  </ShadcnButton>
-                </ShadcnCardFooter>
-              </ShadcnCard>
-
-              {/* Right: Network Latency, Storage & Bandwidth Stats */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                
-                {/* Network & Latency Health */}
-                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Plant Network Diagnostics</ShadcnCardTitle>
-                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                      Latency to central Supabase cloud and local cutting table LAN.
-                    </ShadcnCardDescription>
-                  </ShadcnCardHeader>
-
-                  <ShadcnCardContent style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-                        <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 500 }}>Central Cloud Server</span>
-                      </div>
-                      <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#38bdf8' }}>18ms (Fast)</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-                        <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 500 }}>Bottero CNC Cutting LAN</span>
-                      </div>
-                      <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#10b981' }}>1.2ms (Zero Lag)</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8' }} />
-                        <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 500 }}>Thermal Label Server</span>
-                      </div>
-                      <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#a1a1aa' }}>2.0ms</span>
-                    </div>
-                  </ShadcnCardContent>
-                </ShadcnCard>
-
-                {/* Storage Health */}
-                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Storage & Replication Health</ShadcnCardTitle>
-                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                      IndexedDB & LocalStorage footprint on this terminal.
-                    </ShadcnCardDescription>
-                  </ShadcnCardHeader>
-
-                  <ShadcnCardContent style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#a1a1aa', marginBottom: '4px' }}>
-                        <span>Local Cache Utilization</span>
-                        <span style={{ fontFamily: 'monospace', color: '#f4f4f5' }}>2.4 MB / 50 MB (4.8%)</span>
-                      </div>
-                      <ShadcnProgress value={4.8} indicatorColor="#10b981" />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a', fontSize: '11.5px' }}>
-                      <span style={{ color: '#71717a' }}>Synchronized Invoices</span>
-                      <span style={{ color: '#f4f4f5', fontFamily: 'monospace', fontWeight: 600 }}>{bills.length} Records</span>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '6px', background: '#18181b', border: '1px solid #27272a', fontSize: '11.5px' }}>
-                      <span style={{ color: '#71717a' }}>Thermal Presets</span>
-                      <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>{BARCODE_PRESETS.length} Templates Active</span>
-                    </div>
-                  </ShadcnCardContent>
-                </ShadcnCard>
-              </div>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* SUBTAB 3: CONNECTED WORKSTATIONS & FACTORY DEVICES                         */}
-          {/* ========================================================================= */}
-          {profileSubTab === 'DEVICES' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px' }}>
-              
-              {/* Paired Devices List */}
-              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Laptop size={16} style={{ color: '#a1a1aa' }} />
-                      <ShadcnCardTitle style={{ fontSize: '14px' }}>Active Factory Floor Terminals</ShadcnCardTitle>
-                    </div>
-                    <ShadcnBadge variant="outline" style={{ fontSize: '10.5px', fontFamily: 'monospace' }}>
-                      {pairedDevices.length} Connected
-                    </ShadcnBadge>
-                  </div>
-                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                    CNC cutting stations, mobile QC inspection tablets, and office billing computers paired with your profile.
-                  </ShadcnCardDescription>
-                </ShadcnCardHeader>
-
-                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {pairedDevices.map((device) => (
-                    <div
-                      key={device.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 14px',
-                        borderRadius: '8px',
-                        background: device.isCurrent ? '#18181b' : '#0f0f12',
-                        border: device.isCurrent ? '1px solid #3f3f46' : '1px solid #27272a',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div
-                          style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '8px',
-                            background: '#09090b',
-                            border: '1px solid #27272a',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          {device.type.includes('CNC') ? (
-                            <Monitor size={18} style={{ color: '#38bdf8' }} />
-                          ) : device.type.includes('QC') ? (
-                            <Smartphone size={18} style={{ color: '#10b981' }} />
-                          ) : device.type.includes('Print') ? (
-                            <Printer size={18} style={{ color: '#fbbf24' }} />
-                          ) : (
-                            <Laptop size={18} style={{ color: '#a855f7' }} />
-                          )}
-                        </div>
-
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#f4f4f5' }}>
-                              {device.name}
-                            </span>
-                            {device.isCurrent && (
-                              <span style={{ fontSize: '9.5px', background: '#27272a', color: '#f4f4f5', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                                THIS DEVICE
-                              </span>
-                            )}
-                          </div>
-                          <span style={{ fontSize: '11px', color: '#71717a', display: 'block', marginTop: '2px' }}>
-                            {device.type} • {device.station} • IP: <code style={{ color: '#a1a1aa' }}>{device.ip}</code>
-                          </span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '11px', color: device.isCurrent ? '#10b981' : '#71717a', fontFamily: 'monospace' }}>
-                          {device.lastSeen}
-                        </span>
-                        
-                        <button
-                          type="button"
-                          onClick={() => {
-                            macAudio.playPop();
-                            onShowToast?.(`Ping to ${device.name} (${device.ip}): ${device.pingMs || 1.4}ms OK`, 'success');
-                          }}
-                          style={{
-                            background: '#18181b',
-                            border: '1px solid #27272a',
-                            color: '#a1a1aa',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '10.5px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <Wifi size={11} />
-                          Ping
-                        </button>
-
-                        {!device.isCurrent && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              macAudio.playTrash();
-                              setPairedDevices(prev => prev.filter(d => d.id !== device.id));
-                              onShowToast?.(`Unlinked workstation ${device.name}`, 'info');
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid #27272a',
-                              color: '#ef4444',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '10.5px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Unlink
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </ShadcnCardContent>
-              </ShadcnCard>
-
-              {/* Pair New Machine Terminal Card */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                  <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Pair New Machine Station</ShadcnCardTitle>
-                    <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                      Enter this one-time 6-digit PIN on any tablet or cutting table terminal to pair immediately.
-                    </ShadcnCardDescription>
-                  </ShadcnCardHeader>
-
-                  <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-                    <div
-                      style={{
-                        padding: '14px 24px',
-                        borderRadius: '8px',
-                        background: '#18181b',
-                        border: '1px dashed #38bdf8',
-                        textAlign: 'center',
-                        width: '100%',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <span style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '1px', display: 'block' }}>
-                        ONE-TIME PAIRING CODE
-                      </span>
-                      <span style={{ fontSize: '26px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace', letterSpacing: '4px' }}>
-                        749-218
-                      </span>
-                      <span style={{ fontSize: '10px', color: '#a1a1aa', display: 'block', marginTop: '2px' }}>
-                        Expires in 09:42 minutes • Plant Wi-Fi Only
-                      </span>
-                    </div>
-
-                    <ShadcnButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        macAudio.playClick();
-                        onShowToast?.('New terminal pairing code generated: 832-504', 'success');
-                      }}
-                      style={{ width: '100%', background: '#18181b', border: '1px solid #27272a', color: '#f4f4f5' }}
-                    >
-                      <RefreshCw size={13} />
-                      Generate Fresh Code
-                    </ShadcnButton>
-                  </ShadcnCardContent>
-                </ShadcnCard>
-              </div>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* SUBTAB 4: SECURITY & QUICK KIOSK PIN                                      */}
-          {/* ========================================================================= */}
-          {profileSubTab === 'PIN' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
-              
-              {/* Quick PIN Configuration */}
-              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Key size={16} style={{ color: '#a1a1aa' }} />
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Factory Kiosk Quick-Switch PIN</ShadcnCardTitle>
-                  </div>
-                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                    On the factory floor, operators change shifts without re-typing long master passwords. A 4-digit PIN enables 1-second machine handover.
-                  </ShadcnCardDescription>
-                </ShadcnCardHeader>
-
-                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>
-                      Current 4-Digit Handover PIN:
-                    </ShadcnLabel>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {[0, 1, 2, 3].map((idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            width: '44px',
-                            height: '48px',
-                            borderRadius: '8px',
-                            border: '1px solid #3f3f46',
-                            background: '#18181b',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '20px',
-                            fontWeight: 700,
-                            fontFamily: 'monospace',
-                            color: '#f4f4f5'
-                          }}
-                        >
-                          {kioskPin[idx] || '•'}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Change Kiosk PIN (4 Digits)</ShadcnLabel>
-                    <ShadcnInput
-                      type="password"
-                      maxLength={4}
-                      value={kioskPin}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
-                        setKioskPin(val);
-                      }}
-                      placeholder="e.g. 4082"
-                      style={{ height: '36px', fontSize: '16px', letterSpacing: '4px', fontFamily: 'monospace' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <ShadcnLabel style={{ fontSize: '11px', color: '#a1a1aa' }}>Station Auto-Lock Timer</ShadcnLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                      {['Never (Kiosk)', '15 Minutes', '30 Minutes', 'Shift End (8h)'].map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          style={{
-                            padding: '6px 8px',
-                            borderRadius: '6px',
-                            border: t.includes('Never') ? '1px solid #38bdf8' : '1px solid #27272a',
-                            background: t.includes('Never') ? '#18181b' : '#09090b',
-                            color: t.includes('Never') ? '#f4f4f5' : '#71717a',
-                            fontSize: '11px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </ShadcnCardContent>
-              </ShadcnCard>
-
-              {/* Interactive PIN Verification Test Sandbox */}
-              <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-                <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                  <ShadcnCardTitle style={{ fontSize: '14px' }}>Test Kiosk Switch Simulation</ShadcnCardTitle>
-                  <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                    Verify that your 4-digit PIN works seamlessly during operator handover.
-                  </ShadcnCardDescription>
-                </ShadcnCardHeader>
-
-                <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-                  <div
-                    style={{
-                      width: '100%',
-                      background: '#18181b',
-                      border: '1px solid #27272a',
-                      borderRadius: '8px',
-                      padding: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                  >
-                    <span style={{ fontSize: '11.5px', color: '#a1a1aa', fontWeight: 500 }}>
-                      Enter Kiosk PIN to Handover Station:
-                    </span>
-
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={pinInputTest}
-                      onChange={(e) => setPinInputTest(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
-                      placeholder="••••"
-                      style={{
-                        width: '140px',
-                        height: '42px',
-                        background: '#09090b',
-                        border: '1px solid #3f3f46',
-                        borderRadius: '6px',
-                        color: '#f4f4f5',
-                        textAlign: 'center',
-                        fontSize: '24px',
-                        fontFamily: 'monospace',
-                        letterSpacing: '8px',
-                        outline: 'none'
-                      }}
-                    />
-
-                    <ShadcnButton
-                      type="button"
-                      size="sm"
-                      onClick={() => {
-                        if (pinInputTest === kioskPin) {
-                          macAudio.playSuccess();
-                          setPinUnlockStatus('SUCCESS');
-                          onShowToast?.(`Station Handover Verified: Operator ${operatorPunchId} Active!`, 'success');
-                          setTimeout(() => setPinUnlockStatus('IDLE'), 3000);
-                        } else {
-                          macAudio.playPosError();
-                          setPinUnlockStatus('ERROR');
-                          onShowToast?.('Incorrect Kiosk PIN. Access denied.', 'warning');
-                        }
-                      }}
-                      style={{
-                        background: pinUnlockStatus === 'SUCCESS' ? '#10b981' : pinUnlockStatus === 'ERROR' ? '#ef4444' : '#f4f4f5',
-                        color: pinUnlockStatus === 'SUCCESS' || pinUnlockStatus === 'ERROR' ? '#ffffff' : '#09090b',
-                        fontWeight: 600,
-                        width: '100%',
-                        height: '34px'
-                      }}
-                    >
-                      {pinUnlockStatus === 'SUCCESS' ? (
-                        <>
-                          <Check size={14} />
-                          <span>Handover Verified (1s)</span>
-                        </>
-                      ) : pinUnlockStatus === 'ERROR' ? (
-                        <>
-                          <Shield size={14} />
-                          <span>PIN Mismatch</span>
-                        </>
-                      ) : (
-                        <span>Simulate Station Switch</span>
-                      )}
-                    </ShadcnButton>
-                  </div>
-                </ShadcnCardContent>
-              </ShadcnCard>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* SUBTAB 5: SHIFT AUDIT & OPERATOR ACTIVITY LOG                             */}
-          {/* ========================================================================= */}
-          {profileSubTab === 'AUDIT' && (
-            <ShadcnCard style={{ background: '#09090b', border: '1px solid #27272a' }}>
-              <ShadcnCardHeader style={{ padding: '16px 20px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Clock size={16} style={{ color: '#a1a1aa' }} />
-                    <ShadcnCardTitle style={{ fontSize: '14px' }}>Shift Activity & Industrial Event Audit</ShadcnCardTitle>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const csvContent = 'data:text/csv;charset=utf-8,' +
-                          'Time,Event,Tag,Operator\n' +
-                          auditLogs.map(l => `"${l.time}","${l.event}","${l.tag}","${l.op}"`).join('\n');
-                        const encodedUri = encodeURI(csvContent);
-                        const link = document.createElement('a');
-                        link.setAttribute('href', encodedUri);
-                        link.setAttribute('download', `factory_audit_shift_${operatorPunchId}.csv`);
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        macAudio.playSuccess();
-                        onShowToast?.('Exported Shift Audit (.CSV)!', 'success');
-                      }}
-                      style={{
-                        background: '#18181b',
-                        border: '1px solid #27272a',
-                        color: '#f4f4f5',
-                        padding: '4px 10px',
-                        borderRadius: '5px',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <Download size={12} />
-                      Export .CSV
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuditLogs([]);
-                        macAudio.playTrash();
-                        onShowToast?.('Shift audit log cleared', 'info');
-                      }}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid #27272a',
-                        color: '#71717a',
-                        padding: '4px 8px',
-                        borderRadius: '5px',
-                        fontSize: '11px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-                <ShadcnCardDescription style={{ fontSize: '12px' }}>
-                  Immutable chronological log of production batches, barcode labels generated, and peer sync operations.
-                </ShadcnCardDescription>
-              </ShadcnCardHeader>
-
-              <ShadcnCardContent style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {auditLogs.length === 0 ? (
-                  <div style={{ padding: '30px', textAlign: 'center', color: '#71717a', fontSize: '12px' }}>
-                    No audit records logged yet in this shift.
-                  </div>
-                ) : (
-                  auditLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        background: '#18181b',
-                        border: '1px solid #27272a',
-                        fontSize: '12px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '11px', color: '#71717a', fontFamily: 'monospace', minWidth: '55px' }}>
-                          {log.time}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontFamily: 'monospace',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            fontWeight: 600,
-                            border: '1px solid #27272a',
-                            background: '#09090b',
-                            color: log.tag === 'SYNC' ? '#10b981' : log.tag === 'PRINT' ? '#38bdf8' : log.tag === 'SECURITY' ? '#a855f7' : '#a1a1aa'
-                          }}
-                        >
-                          {log.tag}
-                        </span>
-                        <span style={{ color: '#f4f4f5' }}>{log.event}</span>
-                      </div>
-
-                      <span style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#71717a' }}>
-                        OP: {log.op}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </ShadcnCardContent>
-            </ShadcnCard>
-          )}
-
-        </div>
-      )}
-      {/* ========================================================================= */}
       {/* TAB 3: KEYBOARD SHORTCUTS & NUMPAD ENGINE (ACETERNITY STYLE VISUALIZER)   */}
       {/* ========================================================================= */}
       {activeTab === 'SHORTCUTS' && (
         <KeyboardShortcutsVisualizer />
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 3: BACKUP & RESTORE (ALAG TAB - JSON, EXCEL, RESTORE)                 */}
-      {/* ========================================================================= */}
-      {activeTab === 'BACKUP' && (
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', minHeight: 0, overflow: 'hidden' }}>
-          {/* Left Column: Instant Backup & Cloud Export */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              overflowY: 'auto'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block' }}>
-                  INSTANT DATABASE BACKUP
-                </span>
-                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                  Download entire offline database snapshot
-                </span>
-              </div>
-              <Button
-                onClick={handleExportBackup}
-                style={{
-                  height: '34px',
-                  fontWeight: 800,
-                  fontSize: '11.5px',
-                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                  border: 'none',
-                  color: '#ffffff',
-                  boxShadow: '0 2px 10px rgba(56, 189, 248, 0.4)'
-                }}
-              >
-                <Download size={14} />
-                Download JSON Backup
-              </Button>
-            </div>
 
-            {/* Checklist of what to include using LuxuryToggle */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#cbd5e1' }}>
-                BACKUP SCOPE SELECTION
-              </span>
-
-              <LuxuryToggle
-                title="System Configuration & Preferences"
-                desc="Includes Slip Prefix, Themes, and Barcode setup"
-                checked={backupIncludeConfig}
-                onChange={setBackupIncludeConfig}
-                badge="CONFIG"
-              />
-
-              <LuxuryToggle
-                title="Parties & Customer Master Ledger"
-                desc="Includes Station, Contact, and Current Balance records"
-                checked={backupIncludeParties}
-                onChange={setBackupIncludeParties}
-                badge={`${parties.length} PARTIES`}
-              />
-
-              <LuxuryToggle
-                title="Invoices & Sale Vouchers"
-                desc="Includes all historical bills, raw items, and mould transactions"
-                checked={backupIncludeBills}
-                onChange={setBackupIncludeBills}
-                badge={`${bills.length} BILLS`}
-              />
-
-              <LuxuryToggle
-                title="Stock & Inventory Catalogue"
-                desc="Includes Item codes, Rack allocations, and Units"
-                checked={backupIncludeStock}
-                onChange={setBackupIncludeStock}
-                badge={`${stockItems.length} ITEMS`}
-              />
-            </div>
-          </div>
-
-          {/* Right Column: Restore Database & Stats */}
-          <div
-            className="glass-panel"
-            style={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              overflowY: 'auto'
-            }}
-          >
-
-            {/* Legacy Desktop Backup Import */}
-            <div style={{ background: 'rgba(255, 170, 0, 0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 170, 0, 0.3)', marginBottom: '14px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#fbbf24', display: 'block', marginBottom: '2px' }}>
-                LEGACY BACKUP MIGRATION
-              </span>
-              <span style={{ fontSize: '10px', color: '#fcd34d', display: 'block', marginBottom: '8px' }}>
-                Import Settings & Skips from old BillApp_Backup.json (Desktop)
-              </span>
-              <Button
-                onClick={() => {
-                  import('../data/BillApp_Backup.json').then(legacy => {
-                    const data = legacy.default || legacy;
-                    let count = 0;
-                    
-                    if (data.control_panel && data.control_panel.length > 0) {
-                       localStorage.setItem('billapp_conversions', JSON.stringify(data.control_panel));
-                       const convRules = data.control_panel.map((c: any, i: number) => ({
-                          id: 'conv-' + Date.now() + i,
-                          shortcut: c.shortcut || '',
-                          conversion: c.conversion || '',
-                          applyRatio: false, uCap: c.u_cap || '0', lCap: c.l_cap || '0'
-                       }));
-                       localStorage.setItem('ctrl_conv_rules_v3', JSON.stringify(convRules));
-                       count++;
-                    }
-
-                    if (data.skip_items && data.skip_items.length > 0) {
-                       const si = data.skip_items.map((s: any, i: number) => ({
-                          id: 'si-json-' + i,
-                          subGroupId: s.group_name || 'sg-1',
-                          mainGroup: s.main_group || '',
-                          groupName: s.group_name || '',
-                          itemPrefix: s.item_prefix || ''
-                       }));
-                       localStorage.setItem('billapp_skip_items', JSON.stringify(si));
-                       count++;
-                    }
-                    if (data.skip_groups && data.skip_groups.length > 0) {
-                       const sg = data.skip_groups.map((s: any, i: number) => ({
-                          id: s.group_name || ('sg-json-' + i),
-                          mainGroupId: s.main_group || 'mg-1',
-                          mainGroup: s.main_group || '',
-                          groupName: s.group_name || '',
-                          sumColumn: s.sum_column || 'QTY'
-                       }));
-                       localStorage.setItem('billapp_skip_sub_groups', JSON.stringify(sg));
-                    }
-                    if (data.main_groups && data.main_groups.length > 0) {
-                       const mg = data.main_groups.map((m: any, i: number) => ({
-                          id: (typeof m === 'string' ? m : m.main_group) || ('mg-json-' + i),
-                          name: (typeof m === 'string' ? m : m.main_group) || ''
-                       }));
-                       localStorage.setItem('billapp_skip_main_groups', JSON.stringify(mg));
-                    }
-                    localStorage.setItem('billapp_skip_version_v5', 'true');
-
-                    toast.success('Backup Imported', `Legacy Backup Imported Successfully! ${count} sections loaded.`);
-                  }).catch(e => {
-                    console.error(e);
-                    toast.error('Import Failed', 'Could not load BillApp_Backup.json from src/data/');
-                  });
-                }}
-                style={{
-                  width: '100%',
-                  height: '34px',
-                  fontWeight: 800,
-                  fontSize: '11.5px',
-                  background: 'linear-gradient(135deg, #d97706, #fbbf24)',
-                  color: '#090d16',
-                  border: 'none',
-                  boxShadow: '0 2px 10px rgba(251, 191, 36, 0.4)'
-                }}
-              >
-                <Database size={14} />
-                Load BillApp_Backup.json
-              </Button>
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', display: 'block', marginBottom: '2px' }}>
-                RESTORE FROM FILE
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                Upload previously exported .json database snapshot
-              </span>
-            </div>
-
-            {/* Restore Mode Switch with Ant Design Segmented */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#f8fafc' }}>Restore Conflict Policy</span>
-              <Segmented
-                value={restoreMode}
-                onChange={(val: any) => setRestoreMode(val as 'merge' | 'overwrite')}
-                options={[
-                  { label: 'Merge Existing', value: 'merge' },
-                  { label: 'Clean Overwrite', value: 'overwrite' }
-                ]}
-              />
-            </div>
-
-            {/* Upload Dropzone */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                border: '2px dashed rgba(56, 189, 248, 0.4)',
-                borderRadius: '10px',
-                padding: '24px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                background: 'rgba(56, 189, 248, 0.05)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <Upload size={24} color="#38bdf8" />
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc', display: 'block' }}>
-                  Click to select backup .json file
-                </span>
-                <span style={{ fontSize: '9.5px', color: '#94a3b8' }}>
-                  Supports all Modern Summary OS backup versions
-                </span>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleRestoreFile}
-                style={{ display: 'none' }}
-              />
-            </div>
-
-            {/* Storage Stats Card */}
-            <div
-              style={{
-                background: 'rgba(0, 0, 0, 0.35)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>LOCALSTORAGE USAGE</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#34d399', fontFamily: 'monospace' }}>
-                  ~428 KB / 5 MB
-                </span>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>TOTAL INVOICES</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>
-                  {bills.length} Records
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
 
 
@@ -5692,6 +4498,431 @@ export const SettingsTabView: React.FC<Props> = ({
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {/* ─── SELECTIVE RESTORE INSPECTOR MODAL ─── */}
+      {pendingRestore && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 99999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.15s ease'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isRestoring) {
+              setPendingRestore(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              width: '540px',
+              maxWidth: '95vw',
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '12px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              padding: '22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Database size={16} color="#38bdf8" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f4f4f5' }}>
+                    Restore / Import Backup
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#a1a1aa' }}>
+                    Inspecting file: <strong style={{ color: '#38bdf8' }}>{pendingRestore.fileName}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isRestoring}
+                onClick={() => setPendingRestore(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#71717a',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* File Details Chip */}
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: '#a1a1aa' }}>
+              <span>Backup Date: <strong style={{ color: '#f4f4f5' }}>{pendingRestore.fileDate}</strong></span>
+              <span style={{ color: '#34d399', fontWeight: 600 }}>✓ Verified JSON Format</span>
+            </div>
+
+            {/* Scope Selection */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#e4e4e7' }}>
+                  Choose Modules to Restore:
+                </label>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Select individual or all</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {/* Module 1: Control Panel */}
+                <div
+                  onClick={() => {
+                    if (pendingRestore.hasConfig && !isRestoring) {
+                      macAudio.playClick();
+                      setPendingRestore(prev => prev ? { ...prev, restoreConfig: !prev.restoreConfig } : null);
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    background: pendingRestore.restoreConfig ? 'rgba(167, 139, 250, 0.12)' : '#18181b',
+                    border: pendingRestore.restoreConfig ? '1px solid rgba(167, 139, 250, 0.4)' : '1px solid #27272a',
+                    cursor: pendingRestore.hasConfig ? 'pointer' : 'not-allowed',
+                    opacity: pendingRestore.hasConfig ? 1 : 0.5,
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {pendingRestore.restoreConfig ? <CheckSquare size={16} color="#a78bfa" /> : <Square size={16} color="#52525b" />}
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5' }}>Control Panel & Master Config</div>
+                      <div style={{ fontSize: '10.5px', color: '#a1a1aa' }}>App Prefixes, Moulds, Print & Display Defaults</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: pendingRestore.hasConfig ? '#a78bfa' : '#71717a' }}>
+                    {pendingRestore.hasConfig ? 'Ready' : 'Not in file'}
+                  </span>
+                </div>
+
+                {/* Module 2: Bills */}
+                <div
+                  onClick={() => {
+                    if (pendingRestore.billsCount > 0 && !isRestoring) {
+                      macAudio.playClick();
+                      setPendingRestore(prev => prev ? { ...prev, restoreBills: !prev.restoreBills } : null);
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    background: pendingRestore.restoreBills ? 'rgba(56, 189, 248, 0.12)' : '#18181b',
+                    border: pendingRestore.restoreBills ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid #27272a',
+                    cursor: pendingRestore.billsCount > 0 ? 'pointer' : 'not-allowed',
+                    opacity: pendingRestore.billsCount > 0 ? 1 : 0.5,
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {pendingRestore.restoreBills ? <CheckSquare size={16} color="#38bdf8" /> : <Square size={16} color="#52525b" />}
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5' }}>Bills & Invoices</div>
+                      <div style={{ fontSize: '10.5px', color: '#a1a1aa' }}>Vouchers, Items, Quantities, and Adjustments</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: pendingRestore.billsCount > 0 ? '#38bdf8' : '#71717a' }}>
+                    {pendingRestore.billsCount > 0 ? `${pendingRestore.billsCount} Bills` : 'Not in file'}
+                  </span>
+                </div>
+
+                {/* Module 3: Parties */}
+                <div
+                  onClick={() => {
+                    if (pendingRestore.partiesCount > 0 && !isRestoring) {
+                      macAudio.playClick();
+                      setPendingRestore(prev => prev ? { ...prev, restoreParties: !prev.restoreParties } : null);
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    background: pendingRestore.restoreParties ? 'rgba(52, 211, 153, 0.12)' : '#18181b',
+                    border: pendingRestore.restoreParties ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid #27272a',
+                    cursor: pendingRestore.partiesCount > 0 ? 'pointer' : 'not-allowed',
+                    opacity: pendingRestore.partiesCount > 0 ? 1 : 0.5,
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {pendingRestore.restoreParties ? <CheckSquare size={16} color="#34d399" /> : <Square size={16} color="#52525b" />}
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5' }}>Party Directory</div>
+                      <div style={{ fontSize: '10.5px', color: '#a1a1aa' }}>Party Names, Stations, Phones, and Ledger Balances</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: pendingRestore.partiesCount > 0 ? '#34d399' : '#71717a' }}>
+                    {pendingRestore.partiesCount > 0 ? `${pendingRestore.partiesCount} Parties` : 'Not in file'}
+                  </span>
+                </div>
+
+                {/* Module 4: Stock */}
+                <div
+                  onClick={() => {
+                    if (pendingRestore.stockCount > 0 && !isRestoring) {
+                      macAudio.playClick();
+                      setPendingRestore(prev => prev ? { ...prev, restoreStock: !prev.restoreStock } : null);
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    background: pendingRestore.restoreStock ? 'rgba(251, 191, 36, 0.12)' : '#18181b',
+                    border: pendingRestore.restoreStock ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid #27272a',
+                    cursor: pendingRestore.stockCount > 0 ? 'pointer' : 'not-allowed',
+                    opacity: pendingRestore.stockCount > 0 ? 1 : 0.5,
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {pendingRestore.restoreStock ? <CheckSquare size={16} color="#fbbf24" /> : <Square size={16} color="#52525b" />}
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#f4f4f5' }}>Stock & Inventory</div>
+                      <div style={{ fontSize: '10.5px', color: '#a1a1aa' }}>Stock Items, UOM, and Warehouse Racks</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: pendingRestore.stockCount > 0 ? '#fbbf24' : '#71717a' }}>
+                    {pendingRestore.stockCount > 0 ? `${pendingRestore.stockCount} Items` : 'Not in file'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Restore Policy */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#18181b', padding: '8px 12px', borderRadius: '8px', border: '1px solid #27272a' }}>
+              <div>
+                <span style={{ fontSize: '12px', color: '#f4f4f5', fontWeight: 600, display: 'block' }}>Restore Policy:</span>
+                <span style={{ fontSize: '10.5px', color: '#71717a' }}>
+                  {pendingRestore.restoreMode === 'merge' ? 'Merge with existing records without data loss' : 'Clean overwrite will replace current records'}
+                </span>
+              </div>
+              <Segmented
+                value={pendingRestore.restoreMode}
+                onChange={(val: any) => setPendingRestore(prev => prev ? { ...prev, restoreMode: val as 'merge' | 'overwrite' } : null)}
+                options={[
+                  { label: 'Merge Existing', value: 'merge' },
+                  { label: 'Clean Overwrite', value: 'overwrite' }
+                ]}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+              <ShadcnButton
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isRestoring}
+                onClick={() => setPendingRestore(null)}
+                style={{ height: '36px', padding: '0 16px', background: '#18181b', border: '1px solid #3f3f46', color: '#a1a1aa' }}
+              >
+                Cancel
+              </ShadcnButton>
+
+              <ShadcnButton
+                type="button"
+                variant="default"
+                size="sm"
+                disabled={isRestoring || (!pendingRestore.restoreConfig && !pendingRestore.restoreBills && !pendingRestore.restoreParties && !pendingRestore.restoreStock)}
+                onClick={handleExecuteRestore}
+                style={{
+                  height: '36px',
+                  padding: '0 18px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {isRestoring ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                <span>{isRestoring ? 'Restoring Database...' : 'Confirm & Restore Selected'}</span>
+              </ShadcnButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── ALL 34 3D OPERATOR AVATARS MODAL ─── */}
+      {showAllAvatarsModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 99999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.15s ease'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAllAvatarsModal(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              width: '560px',
+              maxWidth: '95vw',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              background: '#09090b',
+              border: '1px solid #27272a',
+              borderRadius: '14px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={16} color="#38bdf8" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f4f4f5' }}>
+                    Operator Avatar Studio (All 34 3D Avatars)
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#a1a1aa' }}>
+                    Choose any 3D avatar for your operator profile & counter. Current: <strong style={{ color: '#38bdf8' }}>Avatar #{userAvatarId}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAllAvatarsModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#71717a',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Grid of All 34 Avatars */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))',
+                gap: '10px',
+                padding: '4px',
+                maxHeight: '420px',
+                overflowY: 'auto'
+              }}
+            >
+              {getAllAvatarIds().map((avId) => {
+                const isSel = userAvatarId === avId;
+                return (
+                  <button
+                    key={avId}
+                    type="button"
+                    onClick={() => {
+                      macAudio.playPop();
+                      setUserAvatarId(avId);
+                      const url = getAvatarUrl(avId, userName);
+                      setUserAvatar(url);
+                      localStorage.setItem('modern_app_user_avatar_id', String(avId));
+                      localStorage.setItem('modern_app_user_avatar', url);
+                      window.dispatchEvent(new Event('storage'));
+                      onShowToast?.(`Avatar #${avId} selected for ${userName}!`, 'success');
+                      setShowAllAvatarsModal(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '6px',
+                      borderRadius: '10px',
+                      background: isSel ? 'rgba(56, 189, 248, 0.15)' : '#18181b',
+                      border: isSel ? '2px solid #38bdf8' : '1px solid #27272a',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: isSel ? '0 0 14px rgba(56, 189, 248, 0.4)' : 'none'
+                    }}
+                    title={`Select Avatar #${avId}`}
+                  >
+                    <div
+                      style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        background: '#121215'
+                      }}
+                    >
+                      <img
+                        src={getAvatarUrl(avId, userName)}
+                        alt={`Avatar ${avId}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        loading="lazy"
+                      />
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: isSel ? 700 : 500,
+                        color: isSel ? '#38bdf8' : '#a1a1aa'
+                      }}
+                    >
+                      #{avId}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>

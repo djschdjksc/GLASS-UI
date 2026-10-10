@@ -93,6 +93,8 @@ def init_db():
                 color TEXT DEFAULT '#000000',
                 box_size REAL DEFAULT 1.0,
                 weight_per_pcs REAL DEFAULT 0.0,
+                min_rate REAL DEFAULT 0.0,
+                max_rate REAL DEFAULT 0.0,
                 real_item_name TEXT DEFAULT '',
                 group_name TEXT DEFAULT '',
                 updated_at INTEGER NOT NULL
@@ -108,6 +110,8 @@ def init_db():
                 color TEXT DEFAULT '#000000',
                 box_size REAL DEFAULT 1.0,
                 weight_per_pcs REAL DEFAULT 0.0,
+                min_rate REAL DEFAULT 0.0,
+                max_rate REAL DEFAULT 0.0,
                 real_item_name TEXT DEFAULT '',
                 group_name TEXT DEFAULT '',
                 updated_at INTEGER NOT NULL
@@ -192,10 +196,18 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_ctrl_groups_name ON control_groups(group_name);
         """)
 
-        # Ensure size column exists in control_panel and conversions
+        # Ensure size, min_rate, max_rate columns exist in control_panel and conversions
         for tbl in ('control_panel', 'conversions'):
             try:
                 conn.execute(f"ALTER TABLE {tbl} ADD COLUMN size TEXT DEFAULT ''")
+            except Exception:
+                pass
+            try:
+                conn.execute(f"ALTER TABLE {tbl} ADD COLUMN min_rate REAL DEFAULT 0.0")
+            except Exception:
+                pass
+            try:
+                conn.execute(f"ALTER TABLE {tbl} ADD COLUMN max_rate REAL DEFAULT 0.0")
             except Exception:
                 pass
 
@@ -478,6 +490,10 @@ class DBHandler(BaseHTTPRequestHandler):
                         d['realItemName'] = d.get('real_item_name', '')
                         d['groupName'] = d.get('group_name', '')
                         d['size'] = d.get('size', '')
+                        d['min_rate'] = float(d.get('min_rate') or 0.0)
+                        d['max_rate'] = float(d.get('max_rate') or 0.0)
+                        d['minRate'] = d['min_rate']
+                        d['maxRate'] = d['max_rate']
                         convs.append(d)
                     self.send_json(convs)
 
@@ -990,18 +1006,20 @@ class DBHandler(BaseHTTPRequestHandler):
                     shortcut = str(c.get('shortcut', ''))
                     conversion = str(c.get('conversion', ''))
                     size_val = str(c.get('size', '') if c.get('size') is not None else '')
+                    min_rate = float(c.get('min_rate') if c.get('min_rate') is not None else c.get('minRate', 0.0) or 0.0)
+                    max_rate = float(c.get('max_rate') if c.get('max_rate') is not None else c.get('maxRate', 0.0) or 0.0)
 
                     conn.execute("""
                         INSERT OR REPLACE INTO control_panel
-                        (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                        (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, min_rate, max_rate, real_item_name, group_name, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, min_rate, max_rate, real_name, grp_name, now))
 
                     conn.execute("""
                         INSERT OR REPLACE INTO conversions
-                        (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                        (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, min_rate, max_rate, real_item_name, group_name, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, min_rate, max_rate, real_name, grp_name, now))
 
                     self.send_json({'success': True, 'id': cid})
 
@@ -1027,18 +1045,20 @@ class DBHandler(BaseHTTPRequestHandler):
                         shortcut = str(c.get('shortcut', ''))
                         conversion = str(c.get('conversion', ''))
                         size_val = str(c.get('size', '') if c.get('size') is not None else '')
+                        min_rate = float(c.get('min_rate') if c.get('min_rate') is not None else c.get('minRate', 0.0) or 0.0)
+                        max_rate = float(c.get('max_rate') if c.get('max_rate') is not None else c.get('maxRate', 0.0) or 0.0)
 
                         conn.execute("""
                             INSERT OR REPLACE INTO control_panel
-                            (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                            (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, min_rate, max_rate, real_item_name, group_name, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, min_rate, max_rate, real_name, grp_name, now))
 
                         conn.execute("""
                             INSERT OR REPLACE INTO conversions
-                            (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, real_item_name, group_name, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, real_name, grp_name, now))
+                            (id, shortcut, conversion, size, u_cap, l_cap, multiplication, color, box_size, weight_per_pcs, min_rate, max_rate, real_item_name, group_name, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (cid, shortcut, conversion, size_val, u_cap, l_cap, multiplication, color, box_size, weight, min_rate, max_rate, real_name, grp_name, now))
                     self.send_json({'success': True, 'count': len(items)})
 
                 # ── Save Bill Item Name ──

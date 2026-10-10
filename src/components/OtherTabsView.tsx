@@ -1095,7 +1095,11 @@ export const OtherTabsView: React.FC<Props> = ({
   }, []);
 
   const handleDraftChange = useCallback((field: keyof PartyRecord, value: any) => {
-    setInlinePartyDraft(prev => (prev ? { ...prev, [field]: value } : { [field]: value }));
+    let finalVal = value;
+    if (typeof value === 'string' && value.length > 0 && ['name', 'station', 'district', 'state', 'city', 'contact'].includes(field as string)) {
+      finalVal = value.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase());
+    }
+    setInlinePartyDraft(prev => (prev ? { ...prev, [field]: finalVal } : { [field]: finalVal }));
   }, []);
 
   const handleStartNewParty = useCallback(async () => {
@@ -2160,10 +2164,12 @@ export const OtherTabsView: React.FC<Props> = ({
                 placeholder="Search party, phone, city..."
                 value={partySearchQuery}
                 onChange={(e) => {
-                  setPartySearchQuery(e.target.value);
+                  const v = e.target.value;
+                  const formatted = v ? v.replace(/(^|[\s\-_/(\[])([a-z])/g, (_, boundary, char) => boundary + char.toUpperCase()) : '';
+                  setPartySearchQuery(formatted);
                   setPartyCurrentPage(1);
                 }}
-                style={{ width: '100%', height: '32px', paddingLeft: '30px', fontSize: '12px' }}
+                style={{ width: '100%', height: '32px', paddingLeft: '30px', fontSize: '12px', textTransform: 'capitalize' }}
               />
             </div>
 
@@ -2612,7 +2618,7 @@ export const OtherTabsView: React.FC<Props> = ({
                                   type="text"
                                   value={draft.name !== undefined ? draft.name : (p.name || '')}
                                   onChange={(e) => handleDraftChange('name', e.target.value)}
-                                  style={{ ...cellInputStyle, fontWeight: 600 }}
+                                  style={{ ...cellInputStyle, fontWeight: 600, textTransform: 'capitalize' }}
                                   placeholder="Party Name"
                                   autoFocus
                                 />
@@ -2651,7 +2657,7 @@ export const OtherTabsView: React.FC<Props> = ({
                                   type="text"
                                   value={draft.station !== undefined ? draft.station : (p.station || p.city || '')}
                                   onChange={(e) => handleDraftChange('station', e.target.value)}
-                                  style={cellInputStyle}
+                                  style={{ ...cellInputStyle, textTransform: 'capitalize' }}
                                   placeholder="Station"
                                 />
                               ) : (
@@ -2670,7 +2676,7 @@ export const OtherTabsView: React.FC<Props> = ({
                                   type="text"
                                   value={draft.district !== undefined ? draft.district : (p.district || '')}
                                   onChange={(e) => handleDraftChange('district', e.target.value)}
-                                  style={cellInputStyle}
+                                  style={{ ...cellInputStyle, textTransform: 'capitalize' }}
                                   placeholder="District"
                                 />
                               ) : (
@@ -2689,7 +2695,7 @@ export const OtherTabsView: React.FC<Props> = ({
                                   type="text"
                                   value={draft.state !== undefined ? draft.state : (p.state || '')}
                                   onChange={(e) => handleDraftChange('state', e.target.value)}
-                                  style={cellInputStyle}
+                                  style={{ ...cellInputStyle, textTransform: 'capitalize' }}
                                   placeholder="State"
                                 />
                               ) : (

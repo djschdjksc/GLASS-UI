@@ -30,6 +30,8 @@ const CONV_COL_DEFAULTS = {
   color: 75,
   boxSize: 80,
   weight: 90,
+  minRate: 85,
+  maxRate: 85,
   realItemName: 240,
   groupName: 140,
   actions: 60
@@ -133,6 +135,8 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
       color: '#ffffff',
       box_size: 1,
       weight_per_pcs: 0,
+      min_rate: 0,
+      max_rate: 0,
       real_item_name: '',
       group_name: 'General'
     };
@@ -626,6 +630,12 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
             <TableHead style={{ width: colWidths.weight, textAlign: 'center', position: 'relative' }}>
               WT/PC<div className="th-resizer" onMouseDown={e => startColResize('weight', e)} />
             </TableHead>
+            <TableHead style={{ width: colWidths.minRate, textAlign: 'center', position: 'relative' }}>
+              MIN RATE<div className="th-resizer" onMouseDown={e => startColResize('minRate', e)} />
+            </TableHead>
+            <TableHead style={{ width: colWidths.maxRate, textAlign: 'center', position: 'relative' }}>
+              MAX RATE<div className="th-resizer" onMouseDown={e => startColResize('maxRate', e)} />
+            </TableHead>
             <TableHead style={{ width: colWidths.realItemName, position: 'relative' }}>
               REAL ITEM NAME<div className="th-resizer" onMouseDown={e => startColResize('realItemName', e)} />
             </TableHead>
@@ -826,6 +836,48 @@ export const ManageConversionsTab: React.FC<ManageConversionsTabProps> = ({
                   ) : (
                     <span style={{ ...cellTextStyle, textAlign: 'center', color: '#ffffff' }}>
                       {conv.weight_per_pcs ?? 0}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* MIN RATE */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      step="any"
+                      style={{ ...cellInputStyle, textAlign: 'center', color: '#34d399', fontWeight: 600 }}
+                      value={conv.min_rate !== undefined && conv.min_rate !== 0 ? conv.min_rate : (conv.minRate !== undefined && conv.minRate !== 0 ? conv.minRate : '')}
+                      placeholder="Min ₹"
+                      onChange={e => {
+                        const val = parseFloat(e.target.value) || 0;
+                        handleCellChange(originalIndex, 'min_rate', val);
+                      }}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, textAlign: 'center', color: (conv.min_rate || conv.minRate) ? '#34d399' : '#71717a', fontWeight: 600 }}>
+                      {(conv.min_rate || conv.minRate) ? `₹${conv.min_rate || conv.minRate}` : '—'}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* MAX RATE */}
+                <TableCell style={{ padding: '2px 4px' }}>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      step="any"
+                      style={{ ...cellInputStyle, textAlign: 'center', color: '#fbbf24', fontWeight: 600 }}
+                      value={conv.max_rate !== undefined && conv.max_rate !== 0 ? conv.max_rate : (conv.maxRate !== undefined && conv.maxRate !== 0 ? conv.maxRate : '')}
+                      placeholder="Max ₹"
+                      onChange={e => {
+                        const val = parseFloat(e.target.value) || 0;
+                        handleCellChange(originalIndex, 'max_rate', val);
+                      }}
+                    />
+                  ) : (
+                    <span style={{ ...cellTextStyle, textAlign: 'center', color: (conv.max_rate || conv.maxRate) ? '#fbbf24' : '#71717a', fontWeight: 600 }}>
+                      {(conv.max_rate || conv.maxRate) ? `₹${conv.max_rate || conv.maxRate}` : '—'}
                     </span>
                   )}
                 </TableCell>

@@ -8,6 +8,10 @@ import { CosmicSearchInput } from './common/CosmicSearchInput';
 import { Search, CornerDownRight, Settings, ArrowDown, ArrowLeft, ArrowUp, Copy, ClipboardPaste, ChevronDown, ChevronsUpDown, Check, Plus, Trash2, History, Boxes } from 'lucide-react';
 import { AnimatedCounter } from './common/AnimatedCounter';
 import { Tooltip } from './ui/shadcn';
+import { SQLITE_CONTROL_CONVERSIONS } from '../data/sqliteControlPanel';
+import { validateMouldRate } from '../utils/mouldUtils';
+import type { RateValidationResult } from '../utils/mouldUtils';
+import { macAudio } from '../utils/macAudio';
 
 const evaluateMathExpression = (val: string): number => {
   const clean = val.replace(/^=/, '').replace(/[₹,]/g, '').trim();
@@ -31,6 +35,7 @@ interface CellCoord {
 }
 
 interface Props {
+  conversions?: any[];
   autoConvert?: boolean;
   autoItem?: boolean;
   items: FinishedItem[];
@@ -93,9 +98,72 @@ export const RightGrid: React.FC<Props> = ({
   onLoadOldPrice,
   onActiveRowChange,
   onOpenItemGroups,
-  customItemGroupsCount = 0
+  customItemGroupsCount = 0,
+  conversions = []
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Rate Warning Popup state when user enters rate outside [min, max]
+  const [rateWarning, setRateWarning] = useState<{
+    item: FinishedItem;
+    rowIndex: number;
+    evaluatedPrice: number;
+    validation: RateValidationResult;
+    pendingNextCell?: { r: number; c: number; isNewRow: boolean };
+  } | null>(null);
+
+  const handleCloseRateWarning = (keepPrice: boolean) => {
+    if (!rateWarning) return;
+    const { item, rowIndex, evaluatedPrice, pendingNextCell } = rateWarning;
+    setRateWarning(null);
+
+    if (keepPrice) {
+      macAudio.playSuccess();
+      onUpdateItem(item.id, 'price', evaluatedPrice);
+      setCellDrafts(prev => {
+        const next = { ...prev };
+        delete next[rowIndex + '-2'];
+        return next;
+      });
+      if (pendingNextCell) {
+        if (pendingNextCell.isNewRow) {
+          onAddNewRow();
+        }
+        setTimeout(() => {
+          focusCell(pendingNextCell.r, pendingNextCell.c);
+          setActiveCell({ r: pendingNextCell.r, c: pendingNextCell.c });
+          setAnchorCell({ r: pendingNextCell.r, c: pendingNextCell.c });
+          setSelectedCellKeys(new Set([`${pendingNextCell.r}-${pendingNextCell.c}`]));
+        }, pendingNextCell.isNewRow ? 50 : 10);
+      }
+    } else {
+      macAudio.playClick();
+      setTimeout(() => {
+        focusCell(rowIndex, 2);
+        setActiveCell({ r: rowIndex, c: 2 });
+        setAnchorCell({ r: rowIndex, c: 2 });
+        setSelectedCellKeys(new Set([`${rowIndex}-2`]));
+        const input = document.getElementById(`right-cell-${rowIndex}-2`) as HTMLInputElement | null;
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 50);
+    }
+  };
+
+  useEffect(() => {
+    if (!rateWarning) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCloseRateWarning(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+  }, [rateWarning]);
   
   // Header Sorting: A to Z / Z to A and Small to Large / Large to Small
   const [sortField, setSortField] = useState<'mould' | 'qty' | 'price' | 'total' | null>(null);
@@ -401,7 +469,7 @@ export const RightGrid: React.FC<Props> = ({
     if (!item) return;
     const draftKey = rowIndex + '-0';
     const rawVal = cellDrafts[draftKey] !== undefined ? cellDrafts[draftKey] : (item.mould || '');
-    if (!rawVal.trim()) {
+    if (!rawVal.trim() || rawVal.trim() === 'Mould Name' || rawVal.trim() === 'Standard Mould') {
       if (item.mould !== '') onUpdateItem(item.id, 'mould', '');
       setCellDrafts(prev => {
         const next = { ...prev };
@@ -440,6 +508,17 @@ export const RightGrid: React.FC<Props> = ({
         onUpdateItem(item.id, 'qty', evaluated);
       } else if (field === 'price') {
         onUpdateItem(item.id, 'price', evaluated);
+        if (evaluated > 0) {
+          const activeConvs = (conversions && conversions.length > 0) ? conversions : SQLITE_CONTROL_CONVERSIONS;
+          const validation = validateMouldRate(item.mould, evaluated, activeConvs);
+          if (!validation.isValid) {
+            if (validation.isTooLow) {
+              onToast(`⚠️ ${item.mould}: Rate ₹${evaluated} minimum rate (₹${validation.minRate}) se kam hai!`, 'warning');
+            } else if (validation.isTooHigh) {
+              onToast(`⚠️ ${item.mould}: Rate ₹${evaluated} maximum rate (₹${validation.maxRate}) se zyada hai!`, 'warning');
+            }
+          }
+        }
       }
       setCellDrafts(prev => {
         const next = { ...prev };
@@ -500,7 +579,9 @@ export const RightGrid: React.FC<Props> = ({
       }
 
       if (e.key === 'Insert') {
+        if (e.repeat) return;
         e.preventDefault();
+        e.stopPropagation();
         const targetRow = activeCell ? activeCell?.r + 1 : (selectedRows.length > 0 ? selectedRows[selectedRows.length - 1] + 1 : items.length);
         onInsertRow(targetRow);
         setTimeout(() => focusCell(targetRow, activeCell ? activeCell?.c : 0), 50);
@@ -508,10 +589,18 @@ export const RightGrid: React.FC<Props> = ({
       }
 
       if ((e.ctrlKey || (e as any).metaKey) && (e.key === 'Delete' || e.key === 'Backspace')) {
+        const target = e.target as HTMLElement;
+        if (target && target.tagName === 'INPUT') {
+          return;
+        }
+        if (e.repeat) return;
         e.preventDefault();
+        e.stopPropagation();
         const targetRow = activeCell ? activeCell?.r : (selectedRows.length > 0 ? selectedRows[0] : 0);
-        onDeleteRows([targetRow]);
-        onToast(`Deleted Row #${targetRow + 1} (Ctrl+Delete)`, 'warning');
+        if (targetRow >= 0 && targetRow < filteredItems.length) {
+          onDeleteRows([targetRow]);
+          onToast(`Deleted Row #${targetRow + 1} (Ctrl+Delete)`, 'warning');
+        }
         return;
       }
 
@@ -727,13 +816,16 @@ export const RightGrid: React.FC<Props> = ({
     // 1. CTRL + A: Select All Grid Cells
     if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
       e.preventDefault();
+      e.stopPropagation();
       selectAllGrid();
       return;
     }
 
     // 1. CTRL + DELETE: Instantly delete active row
     if ((e.ctrlKey || e.metaKey) && (e.key === 'Delete' || e.key === 'Backspace')) {
+      if (e.repeat) return;
       e.preventDefault();
+      e.stopPropagation();
       onDeleteRows([rowIndex]);
       onToast(`Deleted Row #${rowIndex + 1} (Ctrl+Delete)`, 'warning');
       const nextTargetRow = Math.min(rowIndex, filteredItems.length - 2);
@@ -750,7 +842,6 @@ export const RightGrid: React.FC<Props> = ({
 
     if (e.key === 'Enter') {
       e.preventDefault();
-      commitCell(rowIndex, colIndex, field);
 
       let nextRow = rowIndex;
       let nextCol = colIndex;
@@ -776,6 +867,35 @@ export const RightGrid: React.FC<Props> = ({
       }
 
       const isNewRow = nextRow >= filteredItems.length;
+
+      // Rate Check on Enter in Price cell
+      if (field === 'price') {
+        const item = filteredItems[rowIndex];
+        if (item) {
+          const draftKey = rowIndex + '-2';
+          const rawText = cellDrafts[draftKey] !== undefined ? cellDrafts[draftKey] : (item.price === 0 ? '' : String(item.price));
+          const evaluated = evaluateMathExpression(rawText);
+          if (evaluated > 0) {
+            const activeConvs = (conversions && conversions.length > 0) ? conversions : SQLITE_CONTROL_CONVERSIONS;
+            const validation = validateMouldRate(item.mould, evaluated, activeConvs);
+
+            if (!validation.isValid && (validation.isTooLow || validation.isTooHigh)) {
+              macAudio.playPop();
+              setRateWarning({
+                item,
+                rowIndex,
+                evaluatedPrice: evaluated,
+                validation,
+                pendingNextCell: { r: nextRow, c: nextCol, isNewRow }
+              });
+              return;
+            }
+          }
+        }
+      }
+
+      commitCell(rowIndex, colIndex, field);
+
       if (isNewRow) {
         onAddNewRow();
       }
@@ -1467,7 +1587,7 @@ export const RightGrid: React.FC<Props> = ({
                       data-np-target={rIdx === 0 ? '4-1' : (rIdx === filteredItems.length - 1 ? '4-2' : undefined)}
                       type="text"
                       className="excel-cell-input"
-                      value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : (item.mould || '')}
+                      value={cellDrafts[rIdx + '-0'] !== undefined ? cellDrafts[rIdx + '-0'] : ((item.mould === 'Mould Name' || item.mould === 'Standard Mould') ? '' : (item.mould || ''))}
                       autoComplete="off"
                       autoCorrect="off"
                       autoCapitalize="off"
@@ -1729,6 +1849,156 @@ export const RightGrid: React.FC<Props> = ({
           onToast(`Cleared row #${idx + 1}`, 'info');
         }}
       />
+
+      {/* ─── Rate Warning Popup (Triggered on Enter when rate is too low or too high) ─── */}
+      {rateWarning && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.78)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            zIndex: 99999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.15s ease'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleCloseRateWarning(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '430px',
+              background: '#18181b',
+              border: `1.5px solid ${rateWarning.validation.isTooLow ? '#f59e0b' : '#ef4444'}`,
+              borderRadius: '16px',
+              padding: '22px 24px',
+              boxShadow: `0 25px 60px -15px ${rateWarning.validation.isTooLow ? 'rgba(245, 158, 11, 0.25)' : 'rgba(239, 68, 68, 0.25)'}, 0 0 0 1px rgba(255, 255, 255, 0.08)`,
+              color: '#f4f4f5',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}
+          >
+            {/* Icon + Title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: rateWarning.validation.isTooLow ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: `1px solid ${rateWarning.validation.isTooLow ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '22px'
+                }}
+              >
+                {rateWarning.validation.isTooLow ? '⚠️' : '🚨'}
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: rateWarning.validation.isTooLow ? '#fbbf24' : '#f87171' }}>
+                  {rateWarning.validation.isTooLow ? 'Rate Bahut Kam Hai!' : 'Rate Bahut Zyada Hai!'}
+                </h3>
+                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#a1a1aa' }}>
+                  {rateWarning.validation.isTooLow ? 'Entered rate is below minimum permitted rate' : 'Entered rate exceeds maximum permitted rate'}
+                </p>
+              </div>
+            </div>
+
+            {/* Info Card */}
+            <div
+              style={{
+                background: '#09090b',
+                border: '1px solid #27272a',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Mould Name</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#38bdf8' }}>{rateWarning.item.mould || '—'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Lagaya Gaya Rate</span>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: rateWarning.validation.isTooLow ? '#fbbf24' : '#f87171' }}>
+                  ₹{rateWarning.evaluatedPrice}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed #27272a' }}>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Permitted Range</span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#e4e4e7' }}>
+                  Min: <span style={{ color: '#34d399' }}>₹{rateWarning.validation.minRate || '0'}</span>
+                  {'  •  '}
+                  Max: <span style={{ color: '#f59e0b' }}>₹{rateWarning.validation.maxRate || '—'}</span>
+                </span>
+              </div>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '12px', color: '#d4d4d8', lineHeight: 1.4 }}>
+              {rateWarning.validation.isTooLow
+                ? `Aapne ₹${rateWarning.evaluatedPrice} rate lagaya hai, jabki iska minimum rate ₹${rateWarning.validation.minRate} set hai.`
+                : `Aapne ₹${rateWarning.evaluatedPrice} rate lagaya hai, jabki iska maximum rate ₹${rateWarning.validation.maxRate} set hai.`}
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={() => handleCloseRateWarning(false)}
+                style={{
+                  flex: 1,
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 10px rgba(56, 189, 248, 0.3)'
+                }}
+                autoFocus
+              >
+                <span>✏️ Rate Change Karein (Enter / Esc)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCloseRateWarning(true)}
+                style={{
+                  height: '36px',
+                  padding: '0 14px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#a1a1aa',
+                  fontWeight: 600,
+                  fontSize: '11px',
+                  cursor: 'pointer'
+                }}
+              >
+                <span>Keep ₹{rateWarning.evaluatedPrice}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

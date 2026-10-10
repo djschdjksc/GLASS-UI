@@ -125,6 +125,43 @@ export const createBlankFinishedItems = (): FinishedItem[] => {
   }));
 };
 
+export const sanitizeLoadedFinishedItems = (items: any[]): FinishedItem[] => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return createBlankFinishedItems();
+  }
+
+  const cleaned: FinishedItem[] = items
+    .map((f, idx) => {
+      const rawMould = String(f?.mould || '').trim();
+      const isDummyName = rawMould === 'Mould Name' || rawMould === 'Standard Mould' || rawMould === '-';
+      return {
+        id: String(f?.id || Date.now() + idx),
+        mould: isDummyName ? '' : rawMould,
+        qty: Number(f?.qty) || 0,
+        price: Number(f?.price) || 0,
+        total: Number(f?.total) || 0,
+        selected: false
+      };
+    })
+    .filter(f => {
+      return f.mould !== '' || f.qty > 0 || f.price > 0 || f.total > 0;
+    });
+
+  const padCount = Math.max(0, 8 - cleaned.length);
+  for (let i = 0; i < padCount; i++) {
+    cleaned.push({
+      id: `fin-${Date.now()}-${i}`,
+      mould: '',
+      qty: 0,
+      price: 0,
+      total: 0,
+      selected: false
+    });
+  }
+
+  return cleaned.length > 0 ? cleaned : createBlankFinishedItems();
+};
+
 function loadStored<T>(key: string, defaultValue: T): T {
   try {
     const val = localStorage.getItem(key);
@@ -317,7 +354,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       const saved = localStorage.getItem('modern_app_finished_items');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return sanitizeLoadedFinishedItems(parsed);
       }
     } catch {}
     return createBlankFinishedItems();
@@ -909,7 +946,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         } catch {}
       }
       setRawItems(target.rawItems || []);
-      setFinishedItems(target.finishedItems || []);
+      setFinishedItems(sanitizeLoadedFinishedItems(target.finishedItems));
       const resolvedCols = resolveBillDynamicCols(target);
       setDynamicCols(resolvedCols);
       setCustomItemGroups(target.customItemGroups || []);
@@ -997,7 +1034,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         } catch {}
       }
       setRawItems(target.rawItems || []);
-      setFinishedItems(target.finishedItems || []);
+      setFinishedItems(sanitizeLoadedFinishedItems(target.finishedItems));
       const resolvedCols = resolveBillDynamicCols(target);
       setDynamicCols(resolvedCols);
       setCustomItemGroups(target.customItemGroups || []);
@@ -1047,6 +1084,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
   const confirmClearDialogRef = useRef<{ isOpen: boolean; tokenNo: string } | null>(null);
   const dialogFocusRef = useRef<'save' | 'discard' | 'cancel'>('save');
   const activeTabRef = useRef<any>('F1');
+  const isSlipOpenRef = useRef(false);
+  const isGoodsModalOpenRef = useRef(false);
 
   // Global Browser Interceptor: Disable Chrome shortcuts and Chrome native contextmenu
   useEffect(() => {
@@ -1071,8 +1110,8 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
     // 2. Intercept and block Chrome default keyboard shortcuts
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // 0. Confirm Clear Dialog Modal Controls (Handled by UnsavedChangesModal)
-      if (confirmClearDialogRef.current?.isOpen) {
+      // 0. Confirm Clear Dialog & Modal Guards: when modals are open, do not trigger background shortcuts
+      if (confirmClearDialogRef.current?.isOpen || isSlipOpenRef.current || isGoodsModalOpenRef.current) {
         return;
       }
 
@@ -1137,12 +1176,10 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
         }
       }
 
-      // Insert Key: Universal Add Row / Record
+      // Insert Key: Universal Add Row / Record (in F1, LeftGrid/RightGrid handles Insert directly at cursor position)
       if (e.key === 'Insert' && !isCtrlOrCmd && !e.altKey) {
-        e.preventDefault();
-        if (activeTabRef.current === 'F1') {
-          handleAddRawItem();
-        } else {
+        if (activeTabRef.current !== 'F1') {
+          e.preventDefault();
           window.dispatchEvent(new CustomEvent('app-insert-row'));
         }
         return;
@@ -1474,7 +1511,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
       } catch {}
     }
     setRawItems(slip.rawItems || []);
-    setFinishedItems(slip.finishedItems || []);
+    setFinishedItems(sanitizeLoadedFinishedItems(slip.finishedItems));
     const resolvedCols = resolveBillDynamicCols(slip);
     setDynamicCols(resolvedCols);
     setCustomItemGroups(slip.customItemGroups || foundBill?.customItemGroups || []);
@@ -1576,8 +1613,10 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
 
   // Modals
   const [isSlipOpen, setIsSlipOpen] = useState<boolean>(false);
+  isSlipOpenRef.current = isSlipOpen;
   const [printModalMode, setPrintModalMode] = useState<'estimate' | 'summary_only' | 'loading_slip'>('estimate');
   const [isGoodsModalOpen, setIsGoodsModalOpen] = useState<boolean>(false);
+  isGoodsModalOpenRef.current = isGoodsModalOpen;
   const [isOcrOpen, setIsOcrOpen] = useState<boolean>(false);
   const [isNoteOpen, setIsNoteOpen] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(false);
@@ -3268,6 +3307,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                         setEnterDirection(dir);
                       }}
                       onActiveRowChange={handleActiveRightRowChange}
+                      conversions={appConversions.length > 0 ? appConversions : SQLITE_CONTROL_CONVERSIONS}
                       isActiveTable={activeTable === 'right'}
                       onActivateTable={() => setActiveTable('right')}
                     />
@@ -3356,17 +3396,7 @@ function AppContent({ themeMode, onChangeThemeMode }: AppContentProps) {
                   }
                   setRawItems(loadedRaws);
 
-                  const loadedFinished = (bill.finishedItems || []).map((f: any) => ({ ...f }));
-                  const padFinishedCount = Math.max(0, 8 - loadedFinished.length);
-                  for (let i = 0; i < padFinishedCount; i++) {
-                    loadedFinished.push({
-                      id: String(Date.now() + 50 + i),
-                      mould: 'Mould Name',
-                      qty: 0,
-                      price: 0,
-                      total: 0
-                    });
-                  }
+                  const loadedFinished = sanitizeLoadedFinishedItems(bill.finishedItems);
                   setFinishedItems(loadedFinished);
                   const resolvedCols = resolveBillDynamicCols(bill);
                   setDynamicCols(resolvedCols);

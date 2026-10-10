@@ -59,7 +59,7 @@ class LocalDatabase {
           })),
           finishedItems: (raw.finishedItems || []).map((f: any, idx: number) => ({
             id: String(f.id || idx + 1),
-            mould: f.mould || 'Standard Mould',
+            mould: (f.mould === 'Mould Name' || f.mould === 'Standard Mould') ? '' : (f.mould || ''),
             qty: Number(f.qty || 0),
             price: Number(f.price || 0),
             total: Number(f.total || 0)
@@ -347,7 +347,7 @@ class LocalDatabase {
           })),
           finishedItems: (raw.finishedItems || []).map((f: any, idx: number) => ({
             id: String(f.id || idx + 1),
-            mould: f.mould || 'Standard Mould',
+            mould: (f.mould === 'Mould Name' || f.mould === 'Standard Mould') ? '' : (f.mould || ''),
             qty: Number(f.qty || 0),
             price: Number(f.price || 0),
             total: Number(f.total || 0)
